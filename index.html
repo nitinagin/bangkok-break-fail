@@ -86,7 +86,7 @@ new GLTFLoader().load(TUKTUK_GLB,glb=>{
   // Fit the vehicle into the established collision/camera footprint.
   const scale=Math.min(2.4/sz.x,2.5/sz.y,3.5/sz.z);holder.scale.setScalar(scale);
   // Tripo exports vary in heading: rotate 180 degrees so the visible vehicle is rear-facing.
-  holder.rotation.y=Math.PI;
+  holder.rotation.y=Math.PI/2;
   car.add(holder);realTukTuk=holder;
   for(const child of car.children){if(child!==holder)child.visible=false}
   console.info('V0.9 real tuk-tuk loaded');
