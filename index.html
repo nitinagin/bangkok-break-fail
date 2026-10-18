@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><meta name="theme-color" content="#13142d"><title>Bangkok Break Fail V0.3</title>
 <style>*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#15152f;color:white;font-family:system-ui,-apple-system,sans-serif;touch-action:none}canvas{display:block;width:100%;height:100%}#hud{position:fixed;left:0;right:0;top:env(safe-area-inset-top);display:flex;justify-content:space-between;padding:12px 15px;font-weight:900;text-shadow:0 2px 5px #101020;pointer-events:none}#score{font-size:23px}#status{text-align:right;font-size:15px}#hint{position:fixed;bottom:calc(env(safe-area-inset-bottom) + 16px);left:0;right:0;text-align:center;text-shadow:0 2px 4px #000;font-size:14px;font-weight:900;pointer-events:none}#overlay{position:fixed;inset:0;background:#101127c9;display:grid;place-items:center;padding:20px}#panel{width:min(390px,100%);padding:22px 18px;border-radius:22px;background:#28234e;border:3px solid #ffe35c;text-align:center;box-shadow:0 20px 50px #0008}h1{font-size:34px;line-height:1.07;color:#ffe35c;text-shadow:3px 3px #f14c77;margin:4px 0 16px}p{line-height:1.5}button{font:900 19px system-ui;background:#ffe35c;color:#27203e;border:0;border-radius:14px;padding:15px 25px}small{display:block;margin-top:14px;color:#d8d5ed}#error{display:none;position:fixed;inset:0;background:#211a3c;padding:30px;z-index:9}</style></head>
-<body><div id="hud"><div id="score">0 PTS</div><div id="status">60 KM/H<br>❤️❤️❤️</div></div><div id="hint">TILT TO STEER</div><div id="overlay"><div id="panel"><h1>🛺 BANGKOK<br>BREAK FAIL!</h1><p>V0.9.5 — AUTO VEHICLE AXIS</p><p>NO BRAKES. NO RULES.<br>JUST BANGKOK.</p><p>เอียงมือถือเพื่อหลบสิ่งกีดขวาง</p><button id="start">START CHAOS</button><small>Hold phone comfortably before starting.<br>Drag left/right if tilt is unavailable.</small></div></div><div id="error">3D could not load. Please check your internet connection and refresh Safari.</div>
+<body><div id="hud"><div id="score">0 PTS</div><div id="status">60 KM/H<br>❤️❤️❤️</div></div><div id="hint">TILT TO STEER</div><div id="overlay"><div id="panel"><h1>🛺 BANGKOK<br>BREAK FAIL!</h1><p>V1.0 — BANGKOK STREET VISUALS</p><p>NO BRAKES. NO RULES.<br>JUST BANGKOK.</p><p>เอียงมือถือเพื่อหลบสิ่งกีดขวาง</p><button id="start">START CHAOS</button><small>Hold phone comfortably before starting.<br>Drag left/right if tilt is unavailable.</small></div></div><div id="error">3D could not load. Please check your internet connection and refresh Safari.</div>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"}}</script>
 <script type="module">
 import * as THREE from "three";
@@ -18,8 +18,43 @@ function ball(r,m,x=0,y=0,z=0){const o=new THREE.Mesh(new THREE.SphereGeometry(r
 function wheel(x,z){const o=new THREE.Mesh(new THREE.CylinderGeometry(.38,.38,.22,12),M.wheel);o.rotation.z=Math.PI/2;o.position.set(x,.38,z);return o}
 const ground=cube(180,.1,230,M.grass,0,-.12,-60);scene.add(ground);const road=cube(11,.12,230,M.road,0,0,-60);scene.add(road);
 const stripes=[];for(let i=0;i<23;i++){for(const x of [-1.85,1.85]){const s=cube(.12,.025,2.7,M.stripe,x,.08,-i*10+10);scene.add(s);stripes.push(s)}}
-const props=[];function building(x,z,i){const g=new THREE.Group();const h=3+(i%5)*1.7;g.add(cube(3.5,h,4,[M.pink,M.gold,M.glass,M.purple,M.green][i%5],0,h/2,0));for(let j=0;j<3;j++)g.add(cube(.6,.65,.03,M.gold,-.95+j*.9,Math.min(h-.8,1.8),2.02));g.position.set(x,0,z);scene.add(g);props.push(g)}
-for(let i=0;i<32;i++){building(-9.5,-i*7+14,i);building(9.5,-i*7+14,i+2)}
+// Bangkok street set: shophouses, awnings, shutters, windows, signs and cables.
+const props=[];
+const shopPaint=[mat(0xe9b28d),mat(0xa6d4bd),mat(0xf0d4a3),mat(0xaac5d6),mat(0xe8aab6)];
+const shopTrim=mat(0xf7eee0),shutter=mat(0x7c8589),awningColors=[mat(0xb73543),mat(0x2d9a8a),mat(0xf2a53b)];
+const signMaterials=[mat(0xbd3237),mat(0x146c86),mat(0x23865a)];
+function building(x,z,i){
+ const g=new THREE.Group(),h=5.2+(i%4)*1.3,paint=shopPaint[i%shopPaint.length];
+ g.add(cube(3.9,h,5,paint,0,h/2,0));
+ g.add(cube(4.15,.22,5.2,shopTrim,0,h+.08,0));
+ // Facade faces the road, with ground floor shutter and striped awning.
+ const front=x<0?2.56:-2.56;
+ g.add(cube(2.6,2.0,.09,shutter,0,1.18,front));
+ for(let j=0;j<8;j++)g.add(cube(2.55,.035,.11,shopTrim,0,.3+j*.24,front+(x<0?.06:-.06)));
+ const canopy=cube(3.8,.12,1.0,awningColors[i%3],0,2.45,front+(x<0?.48:-.48));g.add(canopy);
+ for(let floor=0;floor<2;floor++)for(let j=0;j<2;j++){
+ const wy=3.65+floor*1.4;if(wy>h-.6)continue;
+ g.add(cube(.83,.85,.09,M.glass,(j-.5)*1.7,wy,front));
+ g.add(cube(.9,.08,.12,shopTrim,(j-.5)*1.7,wy+.46,front));
+ g.add(cube(.08,.9,.13,shopTrim,(j-.5)*1.7,wy,front));
+ }
+ const sign=cube(2.7,.62,.12,signMaterials[i%3],0,2.94,front+(x<0?.07:-.07));g.add(sign);
+ // Decorative shop lettering blocks avoid relying on device fonts.
+ for(let k=0;k<4;k++)g.add(cube(.25,.17,.14,shopTrim,-.8+k*.53,2.94,front+(x<0?.15:-.15)));
+ if(i%3===0){g.add(cube(.14,1.7,.14,shopTrim,1.6,3.7,front));g.add(cube(.95,.12,.18,awningColors[i%3],1.1,4.45,front))}
+ g.position.set(x,0,z);scene.add(g);props.push(g);
+}
+for(let i=0;i<26;i++){building(-9.3,-i*8+14,i);building(9.3,-i*8+14,i+2)}
+// Overhead utility wires, low polygon count and no textures.
+const cableMat=mat(0x32313c);
+for(const side of [-1,1])for(let i=0;i<12;i++){
+ const z=10-i*17;
+ const pole=cube(.11,8,.11,cableMat,side*6.95,4,z);scene.add(pole);
+ for(let n=0;n<2;n++){
+ const cable=new THREE.Mesh(new THREE.CylinderGeometry(.024,.024,17,5),cableMat);
+ cable.rotation.x=Math.PI/2;cable.position.set(side*(6.95+n*.19),7.15-n*.34,z-8.5);scene.add(cable);
+ }
+}
 const car=new THREE.Group();
 const trim=mat(0xf6f0db),chrome=mat(0xb9d5d9),seat=mat(0x773a61),dark=mat(0x18283c);
 function tube(points,r,m){const path=new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(...p)));const mesh=new THREE.Mesh(new THREE.TubeGeometry(path,Math.max(8,points.length*5),r,7,false),m);car.add(mesh);return mesh}
@@ -90,7 +125,7 @@ new GLTFLoader().load(TUKTUK_GLB,glb=>{
   const holder=new THREE.Group();holder.add(raw);
   holder.rotation.y=lengthAlongX?Math.PI/2:0;
   const longitudinal=Math.max(sz.x,sz.z),width=Math.min(sz.x,sz.z);
-  const scale=Math.min(2.3/width,2.5/sz.y,3.35/longitudinal);
+  const scale=Math.min(2.65/width,2.8/sz.y,3.75/longitudinal);
   holder.scale.setScalar(scale);
   car.add(holder);realTukTuk=holder;
   console.info('Tuk-tuk axis aligned', {lengthAlongX, width, longitudinal});
