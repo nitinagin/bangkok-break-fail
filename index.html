@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><meta name="theme-color" content="#13142d"><title>Bangkok Break Fail V0.3</title>
 <style>*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#15152f;color:white;font-family:system-ui,-apple-system,sans-serif;touch-action:none}canvas{display:block;width:100%;height:100%}#hud{position:fixed;left:0;right:0;top:env(safe-area-inset-top);display:flex;justify-content:space-between;padding:12px 15px;font-weight:900;text-shadow:0 2px 5px #101020;pointer-events:none}#score{font-size:23px}#status{text-align:right;font-size:15px}#hint{position:fixed;bottom:calc(env(safe-area-inset-bottom) + 16px);left:0;right:0;text-align:center;text-shadow:0 2px 4px #000;font-size:14px;font-weight:900;pointer-events:none}#overlay{position:fixed;inset:0;background:#101127c9;display:grid;place-items:center;padding:20px}#panel{width:min(390px,100%);padding:22px 18px;border-radius:22px;background:#28234e;border:3px solid #ffe35c;text-align:center;box-shadow:0 20px 50px #0008}h1{font-size:34px;line-height:1.07;color:#ffe35c;text-shadow:3px 3px #f14c77;margin:4px 0 16px}p{line-height:1.5}button{font:900 19px system-ui;background:#ffe35c;color:#27203e;border:0;border-radius:14px;padding:15px 25px}small{display:block;margin-top:14px;color:#d8d5ed}#error{display:none;position:fixed;inset:0;background:#211a3c;padding:30px;z-index:9}</style></head>
-<body><div id="hud"><div id="score">0 PTS</div><div id="status">60 KM/H<br>❤️❤️❤️</div></div><style>#vehicleTools{position:fixed;right:10px;bottom:calc(env(safe-area-inset-bottom) + 55px);z-index:3;display:flex;align-items:center;gap:5px;background:#16152dc9;border:1px solid #ffffff55;border-radius:12px;padding:6px 7px;font:700 12px system-ui;color:white}#vehicleTools button{padding:8px 10px;font-size:13px;border-radius:7px}#vehicleTools span{min-width:35px;text-align:center}</style><div id="vehicleTools"><span>CAR</span><button id="rotLeft" aria-label="Rotate car left">↶</button><span id="angleLabel">90°</span><button id="rotRight" aria-label="Rotate car right">↷</button></div><div id="hint">TILT TO STEER</div><div id="overlay"><div id="panel"><h1>🛺 BANGKOK<br>BREAK FAIL!</h1><p>V0.9.3 — VEHICLE ORIENTATION CALIBRATION</p><p>NO BRAKES. NO RULES.<br>JUST BANGKOK.</p><p>เอียงมือถือเพื่อหลบสิ่งกีดขวาง</p><button id="start">START CHAOS</button><small>Hold phone comfortably before starting.<br>Drag left/right if tilt is unavailable.</small></div></div><div id="error">3D could not load. Please check your internet connection and refresh Safari.</div>
+<body><div id="hud"><div id="score">0 PTS</div><div id="status">60 KM/H<br>❤️❤️❤️</div></div><div id="hint">TILT TO STEER</div><div id="overlay"><div id="panel"><h1>🛺 BANGKOK<br>BREAK FAIL!</h1><p>V0.9.4 — FIXED TUK TUK ORIENTATION</p><p>NO BRAKES. NO RULES.<br>JUST BANGKOK.</p><p>เอียงมือถือเพื่อหลบสิ่งกีดขวาง</p><button id="start">START CHAOS</button><small>Hold phone comfortably before starting.<br>Drag left/right if tilt is unavailable.</small></div></div><div id="error">3D could not load. Please check your internet connection and refresh Safari.</div>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"}}</script>
 <script type="module">
 import * as THREE from "three";
@@ -71,10 +71,8 @@ car.add(cube(.62,.22,.08,M.gold,0,.93,1.49));
 car.add(cube(.4,.12,.09,M.black,0,.93,1.55));
 scene.add(car);
 // V0.9 AI generated vehicle, using the procedural car until the GLB is ready.
-// Persist manual model orientation; the source GLB uses an unpredictable heading.
-let vehicleAngle=90;
-try{const saved=Number(localStorage.getItem('bbf-vehicle-angle'));if(Number.isFinite(saved))vehicleAngle=((saved%360)+360)%360}catch(e){}
-function setVehicleAngle(deg){vehicleAngle=((deg%360)+360)%360;if(realTukTuk)realTukTuk.rotation.y=vehicleAngle*Math.PI/180;try{localStorage.setItem('bbf-vehicle-angle',String(vehicleAngle))}catch(e){}document.getElementById('angleLabel').textContent=vehicleAngle+'°'}
+// Fixed orientation verified from iPhone screenshot: rear of vehicle faces the camera.
+const vehicleAngle=90;
 const TUKTUK_GLB='https://v3b.fal.media/files/b/0aaedcfd/U0gjvaaq8RuKQVt3a8zrE_model.glb';
 let realTukTuk=null;
 new GLTFLoader().load(TUKTUK_GLB,glb=>{
@@ -196,6 +194,5 @@ addEventListener('deviceorientation',e=>{if(Number.isFinite(e.gamma)){hasMotion=
 renderer.domElement.addEventListener('pointerdown',e=>{drag=THREE.MathUtils.clamp((e.clientX/innerWidth-.5)*2.3,-1,1);renderer.domElement.setPointerCapture(e.pointerId)});
 renderer.domElement.addEventListener('pointermove',e=>{if(drag!==null)drag=THREE.MathUtils.clamp((e.clientX/innerWidth-.5)*2.3,-1,1)});
 renderer.domElement.addEventListener('pointerup',()=>drag=null);renderer.domElement.addEventListener('pointercancel',()=>drag=null);
-$('angleLabel').textContent=vehicleAngle+'°';$('rotLeft').onclick=()=>setVehicleAngle(vehicleAngle-90);$('rotRight').onclick=()=>setVehicleAngle(vehicleAngle+90);
 $('start').onclick=async()=>{try{if(window.DeviceOrientationEvent&&typeof DeviceOrientationEvent.requestPermission==='function')await DeviceOrientationEvent.requestPermission()}catch(e){}reset()};
 </script></body></html>
