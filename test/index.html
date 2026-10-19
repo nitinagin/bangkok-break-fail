@@ -25,7 +25,7 @@ const roadStuds=[];for(let i=0;i<12;i++){const stud=cube(.22,.025,.38,M.gold,0,.
 const props=[];const storyProps=[];let nightCount=0,grandmaTriggeredNight=0,grandmaChase=null;const nightLength=2400;const storyMat={wood:mat(0x7d4134),roof:mat(0xb52c35),gold:mat(0xf6c847),leaf:mat(0x5b9b39),cloth:mat(0xe85c4c),ghost:mat(0xd8d1ed)};
 const shopPaint=[mat(0xb6534d),mat(0x9b7760),mat(0xd2aa77),mat(0x796f76),mat(0xb17865)];
 const shopTrim=mat(0xfff5d1),shutter=mat(0x655781),shopShadow=mat(0x39365b),windowGlow=mat(0xffe7a1),awningColors=[mat(0xff366e),mat(0x00cba9),mat(0xff9f20)];
-const signMaterials=[mat(0xff267a),mat(0x086bd8),mat(0x1cbf7a)];const neonSigns=[new THREE.MeshBasicMaterial({color:0xff3d96}),new THREE.MeshBasicMaterial({color:0x22ffe0}),new THREE.MeshBasicMaterial({color:0xffd64d})];const daySigns=signMaterials.slice();function applyDistrict(i){if(i===districtIndex)return;districtIndex=i;districtLabel.textContent=['☀️ BANGKOK DAYTIME','🌃 YAOWARAT NIGHT · TEST 6.5','🚧 RAMA II CONSTRUCTION · TEST 6.5'][i];for(let k=0;k<3;k++)signMaterials[k]=i===1?neonSigns[k]:daySigns[k];for(const b of props){if(b.userData.sign)b.userData.sign.material=signMaterials[b.userData.signIndex%3]}const rama=i===2;M.grass.color.setHex(rama?0x78746d:0x34333b);M.road.color.setHex(rama?0x777b81:0x56535c);M.stripe.color.setHex(rama?0xe5e1d3:0xe2c579);shoulderPaint.color.setHex(rama?0x77736e:0x444148);curbPaint.color.setHex(rama?0x9d968b:0x756866);hint.textContent=['🛺 WELCOME TO BANGKOK!','🏮 WELCOME TO YAOWARAT!','🌇 SUNSET DRIVE!'][i]}
+const signMaterials=[mat(0xff267a),mat(0x086bd8),mat(0x1cbf7a)];const neonSigns=[new THREE.MeshBasicMaterial({color:0xff3d96}),new THREE.MeshBasicMaterial({color:0x22ffe0}),new THREE.MeshBasicMaterial({color:0xffd64d})];const daySigns=signMaterials.slice();function applyDistrict(i){if(i===districtIndex)return;districtIndex=i;districtLabel.textContent=['☀️ BANGKOK DAYTIME','🌃 YAOWARAT NIGHT · TEST 6.6','🚧 RAMA II CONSTRUCTION · TEST 6.6'][i];for(let k=0;k<3;k++)signMaterials[k]=i===1?neonSigns[k]:daySigns[k];for(const b of props){if(b.userData.sign)b.userData.sign.material=signMaterials[b.userData.signIndex%3]}const rama=i===2;M.grass.color.setHex(rama?0x78746d:0x34333b);M.road.color.setHex(rama?0x777b81:0x56535c);M.stripe.color.setHex(rama?0xe5e1d3:0xe2c579);shoulderPaint.color.setHex(rama?0x77736e:0x444148);curbPaint.color.setHex(rama?0x9d968b:0x756866);hint.textContent=['🛺 WELCOME TO BANGKOK!','🏮 WELCOME TO YAOWARAT!','🌇 SUNSET DRIVE!'][i]}
 function makeRoadsideStory(kind,side,z){const g=new THREE.Group();if(kind==='shrine'){g.add(cube(1.5,.25,1.3,storyMat.wood,0,.55,0));for(const sx of [-.53,.53])for(const sz of [-.42,.42])g.add(cube(.12,1.55,.12,storyMat.gold,sx,1.4,sz));g.add(cube(1.9,.3,1.65,storyMat.roof,0,2.25,0));g.add(cube(.55,.8,.52,storyMat.gold,0,1.4,0))}else{g.add(cube(2.4,.95,1.45,storyMat.wood,0,.7,0));g.add(cube(2.65,.15,1.8,storyMat.cloth,0,1.65,0));for(let i=0;i<5;i++){const d=new THREE.Mesh(new THREE.IcosahedronGeometry(.24,0),M.durian);d.position.set((i-2)*.38,1.3,(i%2)*.34-.2);g.add(d)}const vendor=new THREE.Group();vendor.add(cube(.45,.8,.34,storyMat.cloth,0,1.48,0));vendor.add(ball(.34,M.skin,0,2.07,0));vendor.add(ball(.37,M.black,0,2.36,.02));vendor.add(ball(.08,M.white,-.13,2.1,-.29));vendor.add(ball(.08,M.white,.13,2.1,-.29));const arm=cube(.13,.63,.14,M.skin,-.37,1.55,0);vendor.add(arm);vendor.position.x=-.85;g.add(vendor);g.userData.vendorArm=arm;g.userData.vendorFruit=ball(.29,M.durian,-.35,1.65,-.4);g.add(g.userData.vendorFruit)}g.position.set(side*7.35,0,z);scene.add(g);storyProps.push({g,kind,side,triggered:false,dropTime:0});return g}
 function makeGrandma(){const g=new THREE.Group();g.add(cube(.72,1.25,.48,storyMat.ghost,0,1.18,0));g.add(ball(.44,M.skin,0,2.06,0));g.add(ball(.49,storyMat.ghost,0,2.37,.06));g.add(ball(.10,M.black,-.13,2.08,-.30));g.add(ball(.10,M.black,.13,2.08,-.30));g.add(cube(.23,.045,.05,M.red,0,1.88,-.34));const arms=[],legs=[];for(const side of [-1,1]){const leg=cube(.16,.86,.18,storyMat.ghost,side*.25,.52,0);g.add(leg);legs.push(leg);const arm=cube(.13,.82,.16,M.skin,side*.49,1.35,0);g.add(arm);arms.push(arm)}g.userData.runArms=arms;g.userData.runLegs=legs;return g}
 function facadeMaterial(seed){const c=document.createElement('canvas');c.width=256;c.height=512;const a=c.getContext('2d');const colors=['#b18a69','#94745c','#9b8370','#b8a58b','#827365'];a.fillStyle=colors[seed%colors.length];a.fillRect(0,0,256,512);for(let y=0;y<512;y+=11){a.fillStyle='rgba(25,19,17,.075)';a.fillRect(0,y,256,1)}a.fillStyle='#3a3430';for(let floor=0;floor<4;floor++){const y=26+floor*112;for(let col=0;col<2;col++){const x=28+col*115;a.fillStyle='#c8b39b';a.fillRect(x-5,y-5,91,88);a.fillStyle='#242a32';a.fillRect(x,y,81,77);a.fillStyle=floor%2?'#735e42':'#3b4144';a.fillRect(x+5,y+5,71,66);a.fillStyle='rgba(255,205,107,.45)';a.fillRect(x+8,y+8,28,61);a.fillStyle='#c8aa78';a.fillRect(x+38,y,5,77);a.fillRect(x,y+37,81,4)}}a.fillStyle='rgba(39,25,22,.25)';for(let k=0;k<130;k++){const x=(k*71+seed*19)%256,y=(k*137+seed*31)%512;a.fillRect(x,y,2,3)}const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return new THREE.MeshLambertMaterial({map:t})}
@@ -63,7 +63,54 @@ for(let i=0;i<(mobile?31:34);i++){building(-8.4,-i*6.0+14,i);building(8.4,-i*6.0
 
 const asphaltDetail=new THREE.Mesh(new THREE.PlaneGeometry(13.4,225),roadSurfaceTexture());asphaltDetail.rotation.x=-Math.PI/2;asphaltDetail.position.set(0,.065,-93);scene.add(asphaltDetail);
 const roadGlow=new THREE.MeshBasicMaterial({color:0xa52842,transparent:true,opacity:.23,depthWrite:false});for(const side of [-1,1]){const glow=new THREE.Mesh(new THREE.PlaneGeometry(.48,205),roadGlow);glow.rotation.x=-Math.PI/2;glow.position.set(side*5.9,.072,-91);scene.add(glow);}for(let i=0;i<12;i++){const z=9-i*18;for(const side of [-1,1]){const lamp=new THREE.Group();lamp.add(cube(.065,5.4,.065,brickTrim,0,2.7,0));lamp.add(cube(1.15,.065,.065,brickTrim,-side*.55,5.4,0));lamp.add(ball(.16,warmNeon,-side*1.1,5.33,0));lamp.position.set(side*6.7,0,z);scene.add(lamp);props.push(lamp)}}
-const ramaStructures=[];const bridgeConcrete=mat(0x9da3a5),bridgeRail=mat(0xe0ac54),workOrange=mat(0xd86b36);for(let k=0;k<2;k++){const viaduct=new THREE.Group();for(const z of [-25,0,25]){for(const side of [-1,1])viaduct.add(cube(1.1,8.2,1.2,bridgeConcrete,side*6.9,4.1,z));viaduct.add(cube(14,.55,1.5,bridgeConcrete,0,8.25,z))}for(const z of [-15,15]){viaduct.add(cube(13.2,.8,28,bridgeConcrete,0,9.1,z));for(const side of [-1,1])viaduct.add(cube(.2,.65,28,workOrange,side*6.5,9.75,z))}viaduct.position.z=-45-k*99;viaduct.userData.startZ=viaduct.position.z;viaduct.visible=false;scene.add(viaduct);ramaStructures.push(viaduct)}
+// Rama II segmented elevated highway: unfinished deck joint, precast girders and safety equipment.
+const ramaStructures=[];
+const bridgeConcrete=new THREE.MeshLambertMaterial({color:0x9da3a5,flatShading:false});
+const bridgeUnderside=new THREE.MeshLambertMaterial({color:0x737b80,flatShading:false});
+const bridgeRail=mat(0xe0ac54),workOrange=mat(0xd86b36);
+const bridgeJoint=mat(0x454a4b),bridgeSteel=mat(0x775d4c);
+const bridgeReflector=new THREE.MeshBasicMaterial({color:0xffe6b0});
+const coneWhite=new THREE.MeshBasicMaterial({color:0xf8eee0});
+const reflectorGeo=new THREE.BoxGeometry(.14,.19,.72);
+const coneGeo=new THREE.ConeGeometry(.38,1.05,7);
+const coneBandGeo=new THREE.CylinderGeometry(.22,.29,.19,7);
+for(let k=0;k<2;k++){
+ const viaduct=new THREE.Group();
+ // Piers and cap beams stay outside the driving lanes.
+ for(const z of [-25,0,25]){
+  for(const side of [-1,1]){
+   viaduct.add(cube(2.1,.65,2.3,bridgeUnderside,side*6.9,.32,z));
+   viaduct.add(cube(1.1,8.2,1.2,bridgeConcrete,side*6.9,4.1,z));
+  }
+  viaduct.add(cube(14,.55,1.5,bridgeUnderside,0,8.25,z));
+ }
+ // The two precast spans leave an unfinished expansion gap.
+ for(const z of [-15,15]){
+  viaduct.add(cube(13.2,.8,28,bridgeConcrete,0,9.1,z));
+  for(const x of [-4.1,0,4.1])viaduct.add(cube(.58,.62,27.2,bridgeUnderside,x,8.4,z));
+  for(const side of [-1,1])viaduct.add(cube(.22,.65,28,workOrange,side*6.5,9.75,z));
+  viaduct.add(cube(12.9,.035,.18,bridgeJoint,0,9.52,z<0?-1.25:1.25));
+ }
+ // Starter bars protrude into the gap, rather than a solid crossbar.
+ for(const x of [-4,-2,0,2,4])viaduct.add(cube(.09,.09,2.4,bridgeSteel,x,9.18,0));
+ // Reflective markers on elevated edges share a single draw call.
+ const reflectors=new THREE.InstancedMesh(reflectorGeo,bridgeReflector,12);
+ let ri=0;for(const z of [-24,-15,-6,6,15,24])for(const side of [-1,1])
+  reflectors.setMatrixAt(ri++,new THREE.Matrix4().makeTranslation(side*6.65,9.84,z));
+ reflectors.instanceMatrix.needsUpdate=true;viaduct.add(reflectors);
+ // Roadwork cones remain outside the drivable asphalt.
+ const cones=new THREE.InstancedMesh(coneGeo,workOrange,6);
+ const bands=new THREE.InstancedMesh(coneBandGeo,coneWhite,6);
+ let ci=0;for(const z of [-23,0,23])for(const side of [-1,1]){
+  cones.setMatrixAt(ci,new THREE.Matrix4().makeTranslation(side*8.0,.54,z));
+  bands.setMatrixAt(ci,new THREE.Matrix4().makeTranslation(side*8.0,.57,z));
+  ci++;
+ }
+ cones.instanceMatrix.needsUpdate=true;bands.instanceMatrix.needsUpdate=true;
+ viaduct.add(cones,bands);
+ viaduct.position.z=-45-k*99;viaduct.userData.startZ=viaduct.position.z;
+ viaduct.visible=false;scene.add(viaduct);ramaStructures.push(viaduct);
+}
 // Lightweight roadside shops: shared canvas materials, no external assets.
 const roadsideShops=[];
 function shopBillboard(text,bg,fg){const c=document.createElement('canvas');c.width=512;c.height=160;const p=c.getContext('2d');p.fillStyle=bg;p.fillRect(0,0,512,160);p.fillStyle=fg;p.font='bold 70px sans-serif';p.textAlign='center';p.textBaseline='middle';p.fillText(text,256,84,488);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return new THREE.MeshBasicMaterial({map:t,side:THREE.DoubleSide})}
