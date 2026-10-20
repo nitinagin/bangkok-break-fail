@@ -144,8 +144,31 @@ for(let k=0;k<2;k++){
 const roadsideShops=[];
 function shopBillboard(text,bg,fg){const c=document.createElement('canvas');c.width=512;c.height=160;const p=c.getContext('2d');p.fillStyle=bg;p.fillRect(0,0,512,160);p.fillStyle=fg;p.font='bold 70px sans-serif';p.textAlign='center';p.textBaseline='middle';p.fillText(text,256,84,488);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return new THREE.MeshBasicMaterial({map:t,side:THREE.DoubleSide})}
 const convenienceSign=shopBillboard('7-ELEVEN','#087a45','#ffffff'),lotusSign=shopBillboard('Lotus’s','#1761aa','#ffffff'),dormSign=shopBillboard('หอพักหญิง','#a6428b','#ffffff');
-function roadsideStore(kind,side,z,stage){const g=new THREE.Group(),body=mat(kind==='lotus'?0xe9e8df:kind==='dorm'?0xc9b4c9:0xe6dfce),sign=kind==='lotus'?lotusSign:kind==='dorm'?dormSign:convenienceSign;g.add(cube(5,kind==='dorm'?10:4.4,7,body,0,kind==='dorm'?5:2.2,0));g.add(cube(5.2,.35,7.2,mat(0x555c61),0,kind==='dorm'?10:4.5,0));g.add(cube(4.4,1.65,.13,mat(0x354c55),0,1.5,3.56));const board=new THREE.Mesh(new THREE.PlaneGeometry(4.8,1.5),sign);board.position.set(0,kind==='dorm'?5.1:3.7,3.66);g.add(board);if(kind==='seven'){g.add(cube(5,.25,.3,mat(0xf18828),0,2.75,3.62));g.add(cube(5,.16,.3,mat(0xc52731),0,2.55,3.63))}if(kind==='dorm')for(let y=6.5;y<9.6;y+=1.6)for(const x of [-1.4,1.4])g.add(cube(1.15,1.05,.1,mat(0x41526c),x,y,3.59));g.rotation.y=side<0?Math.PI/2:-Math.PI/2;g.position.set(side*8.6,0,z);g.scale.setScalar(kind==='dorm'?1:1.3);g.visible=false;scene.add(g);roadsideShops.push({g,stage,startZ:z});}
-roadsideStore('seven',-1,-22,1);roadsideStore('seven',1,-112,1);roadsideStore('seven',-1,-35,2);roadsideStore('seven',1,-132,2);roadsideStore('lotus',1,-83,2);roadsideStore('dorm',-1,-145,2);
+// Brand signs only: no oversized standalone shop buildings blocking Yaowarat.
+function roadsideStore(kind,side,z,stage){
+ const g=new THREE.Group();
+ const sign=kind==='lotus'?lotusSign:kind==='dorm'?dormSign:convenienceSign;
+ const isYaowarat=stage===1;
+ const width=kind==='lotus'?4.5:kind==='dorm'?3.6:3.1;
+ const board=new THREE.Mesh(new THREE.PlaneGeometry(width,kind==='lotus'?1.5:1.15),sign);
+ board.rotation.y=side<0?Math.PI/2:-Math.PI/2;
+ board.position.set(side*(isYaowarat?6.13:8.3),isYaowarat?4.15:5.2,0);
+ g.add(board);
+ if(!isYaowarat){
+  // Rama II: compact roadside signpost, not a fake shop building.
+  const pole=mat(0x737c7e);
+  g.add(cube(.13,4.65,.13,pole,side*8.3,2.35,0));
+  g.add(cube(.17,.12,width,pole,side*8.3,4.55,0));
+ }
+ g.position.z=z;g.visible=false;scene.add(g);
+ roadsideShops.push({g,stage,startZ:z});
+}
+roadsideStore('seven',-1,-22,1);
+roadsideStore('seven',1,-112,1);
+roadsideStore('seven',-1,-35,2);
+roadsideStore('seven',1,-132,2);
+roadsideStore('lotus',1,-83,2);
+roadsideStore('dorm',-1,-145,2);
 // Rama II roadside Thai temple: stylized ordination hall, layered gables and chedi.
 function roadsideTemple(side,z){const g=new THREE.Group(),ivory=mat(0xf2dfb1),roof=mat(0x9e2933),gold=mat(0xe8b64b),trim=mat(0xf7d66a);g.add(cube(6.8,.55,10,ivory,0,.35,0));g.add(cube(5.6,4.2,8.5,ivory,0,2.75,0));for(const x of [-2.5,2.5])for(const zz of [-3.5,-1.2,1.2,3.5])g.add(cube(.27,3.8,.27,gold,x,2.6,zz));for(let tier=0;tier<3;tier++){const w=7.4-tier*.9,y=5.05+tier*.75;const left=cube(w/2,.25,10.2-tier*.6,roof,-w/4,y,0),right=cube(w/2,.25,10.2-tier*.6,roof,w/4,y,0);left.rotation.z=.33;right.rotation.z=-.33;g.add(left,right);g.add(cube(.17,.24,10.2-tier*.6,trim,0,y+.47,0))}g.add(cube(1.45,2.8,.12,gold,0,1.9,4.32));for(const x of [-1.7,1.7])g.add(cube(.8,1.25,.12,mat(0x4d6a85),x,2.6,4.33));const chedi=new THREE.Group();chedi.add(cube(2.6,1.2,2.6,ivory,0,.6,0));const spire=new THREE.Mesh(new THREE.ConeGeometry(1.25,6,8),gold);spire.position.y=4.2;chedi.add(spire);chedi.position.set(-5.3,0,-1.7);g.add(chedi);g.rotation.y=side<0?Math.PI/2:-Math.PI/2;g.position.set(side*11.6,0,z);g.scale.setScalar(1.28);g.visible=false;scene.add(g);roadsideShops.push({g,stage:2,startZ:z});}
 roadsideTemple(1,-62);roadsideTemple(-1,-157);
