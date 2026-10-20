@@ -90,7 +90,7 @@ function building(x,z,i){
  if(i%3===0){g.add(cube(.14,1.7,.14,shopTrim,1.6,3.7,front));g.add(cube(.95,.12,.18,awningColors[i%3],1.1,4.45,front))}
  const plaque=new THREE.Mesh(new THREE.PlaneGeometry(2.65,1.05),shopSignMaterials[i%shopSignMaterials.length]);plaque.position.set(0,3.12,front+(x<0?.21:-.21));plaque.rotation.y=x<0?0:Math.PI;g.add(plaque);
 if(i%2===0){const hanging=new THREE.Mesh(new THREE.PlaneGeometry(1.1,3.5),neonBladeMaterials[i%neonBladeMaterials.length]);hanging.position.set(x<0?1.75:-1.75,5.8,front+(x<0?-.8:.8));hanging.rotation.y=x<0?-.75:.75;g.add(hanging);g.add(cube(.09,.09,1.25,oldGold,x<0?1.75:-1.75,7.5,front));}
-if(i%3===1){const grille=cube(2.9,2.1,.09,glassDark,0,1.17,front+(x<0?.12:-.12));g.add(grille);for(let q=-2;q<=2;q++)g.add(cube(.055,2.15,.13,oldGold,q*.52,1.17,front+(x<0?.2:-.2)))}if(i%3===0){const light=ball(.19,warmNeon,0,2.37,front+(x<0?.68:-.68));g.add(light)}if(i%5===0){const lantern=ball(.24,redNeon,0,2.15,front+(x<0?1.0:-1.0));g.add(lantern);g.add(cube(.06,.24,.06,oldGold,0,2.5,front+(x<0?1.0:-1.0)));}g.rotation.y=Math.PI/2;g.position.set(x,0,z);scene.add(g);props.push(g);if(i%3!==1){const blade=new THREE.Mesh(new THREE.PlaneGeometry(i%4===0?1.9:1.35,i%4===0?4.8:3.45),neonBladeMaterials[(i*3+(x>0?2:0))%neonBladeMaterials.length]);blade.position.set(x<0?-4.85:4.85,i%4===0?5.8:6.2,z+(i%4===0?1.8:-.7));scene.add(blade);props.push(blade);}
+if(i%3===1){const grille=cube(2.9,2.1,.09,glassDark,0,1.17,front+(x<0?.12:-.12));g.add(grille);for(let q=-2;q<=2;q++)g.add(cube(.055,2.15,.13,oldGold,q*.52,1.17,front+(x<0?.2:-.2)))}if(i%3===0){const light=ball(.19,warmNeon,0,2.37,front+(x<0?.68:-.68));g.add(light)}if(i%5===0){const lantern=ball(.24,redNeon,0,2.15,front+(x<0?1.0:-1.0));g.add(lantern);g.add(cube(.06,.24,.06,oldGold,0,2.5,front+(x<0?1.0:-1.0)));}g.rotation.y=Math.PI/2;g.position.set(x,0,z);scene.add(g);props.push(g);if(i%3!==1&&!((x<0&&i===6)||(x>0&&i===23))){const blade=new THREE.Mesh(new THREE.PlaneGeometry(i%4===0?1.9:1.35,i%4===0?4.8:3.45),neonBladeMaterials[(i*3+(x>0?2:0))%neonBladeMaterials.length]);blade.position.set(x<0?-4.85:4.85,i%4===0?5.8:6.2,z+(i%4===0?1.8:-.7));scene.add(blade);props.push(blade);}
 }
 for(let i=0;i<(mobile?31:34);i++){building(-8.4,-i*6.0+14,i);building(8.4,-i*6.0+14,i+2)}
 
@@ -166,11 +166,11 @@ function roadsideStore(kind,side,z,stage){
  const width=isYaowarat?2.75:kind==='lotus'?4.5:kind==='dorm'?3.6:3.1;
  const board=new THREE.Mesh(new THREE.PlaneGeometry(width,isYaowarat?1.16:1.4),sign);
  // Face the approaching player, mounted just above the ground-floor awning.
- board.position.set(side*(isYaowarat?5.72:8.3),isYaowarat?3.05:5.2,0);
+ board.position.set(side*(isYaowarat?5.48:8.3),isYaowarat?3.12:5.2,0);
  g.add(board);
  if(isYaowarat){
   // Thin dark fascia visually connects the sign to the existing shophouse.
-  g.add(cube(width+.14,1.28,.10,mat(0x24242b),side*5.72,3.05,-.065));
+  g.add(cube(width+.14,1.28,.10,mat(0x24242b),side*5.52,3.12,-.065));
  }else{
   const pole=mat(0x737c7e);
   g.add(cube(.13,4.65,.13,pole,side*8.3,2.35,0));
