@@ -147,27 +147,36 @@ for(let k=0;k<2;k++){
 // Lightweight roadside shops: shared canvas materials, no external assets.
 const roadsideShops=[];
 function shopBillboard(text,bg,fg){const c=document.createElement('canvas');c.width=512;c.height=160;const p=c.getContext('2d');p.fillStyle=bg;p.fillRect(0,0,512,160);p.fillStyle=fg;p.font='bold 70px sans-serif';p.textAlign='center';p.textBaseline='middle';p.fillText(text,256,84,488);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return new THREE.MeshBasicMaterial({map:t,side:THREE.DoubleSide})}
-const convenienceSign=shopBillboard('7-ELEVEN','#087a45','#ffffff'),lotusSign=shopBillboard('Lotus’s','#1761aa','#ffffff'),dormSign=shopBillboard('หอพักหญิง','#a6428b','#ffffff');
-// Brand signs only: no oversized standalone shop buildings blocking Yaowarat.
+// A compact storefront-mounted 7-Eleven lightbox. No freestanding building.
+function sevenFacadeMaterial(){
+ const c=document.createElement('canvas');c.width=512;c.height=220;const p=c.getContext('2d');
+ p.fillStyle='#f7f7ee';p.fillRect(0,0,512,220);
+ p.fillStyle='#00834b';p.fillRect(0,0,512,24);p.fillRect(0,195,512,25);
+ p.fillStyle='#e85e24';p.fillRect(0,25,512,16);p.fillRect(0,178,512,16);
+ p.fillStyle='#e62930';p.fillRect(0,42,512,10);
+ p.fillStyle='#e62930';p.font='bold 112px sans-serif';p.textAlign='center';p.textBaseline='middle';p.fillText('7',105,115);
+ p.fillStyle='#087447';p.font='bold 72px sans-serif';p.fillText('ELEVEN',318,119);
+ const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;
+ return new THREE.MeshBasicMaterial({map:t,side:THREE.DoubleSide});
+}
+const convenienceSign=sevenFacadeMaterial(),lotusSign=shopBillboard('Lotus’s','#1761aa','#ffffff'),dormSign=shopBillboard('หอพักหญิง','#a6428b','#ffffff');
 function roadsideStore(kind,side,z,stage){
- const g=new THREE.Group();
+ const g=new THREE.Group(),isYaowarat=stage===1;
  const sign=kind==='lotus'?lotusSign:kind==='dorm'?dormSign:convenienceSign;
- const isYaowarat=stage===1;
- const width=kind==='lotus'?4.5:kind==='dorm'?3.6:3.1;
- const board=new THREE.Mesh(new THREE.PlaneGeometry(width,kind==='lotus'?1.5:1.15),sign);
- // Face the approaching player (+Z), matching the existing Yaowarat storefront facades.
- board.rotation.y=0;
- board.position.set(side*(isYaowarat?6.35:8.3),isYaowarat?4.15:5.2,0);
+ const width=isYaowarat?2.75:kind==='lotus'?4.5:kind==='dorm'?3.6:3.1;
+ const board=new THREE.Mesh(new THREE.PlaneGeometry(width,isYaowarat?1.16:1.4),sign);
+ // Face the approaching player, mounted just above the ground-floor awning.
+ board.position.set(side*(isYaowarat?5.72:8.3),isYaowarat?3.05:5.2,0);
  g.add(board);
- if(!isYaowarat){
-  // Rama II: compact roadside signpost, not a fake shop building.
+ if(isYaowarat){
+  // Thin dark fascia visually connects the sign to the existing shophouse.
+  g.add(cube(width+.14,1.28,.10,mat(0x24242b),side*5.72,3.05,-.065));
+ }else{
   const pole=mat(0x737c7e);
   g.add(cube(.13,4.65,.13,pole,side*8.3,2.35,0));
-  g.add(cube(.17,.12,width,pole,side*8.3,4.55,0));
  }
- // Yaowarat signs sit on the road-facing storefront plane, not inside the building mesh.
- g.position.z=isYaowarat?z+4.0:z;g.visible=false;scene.add(g);
- roadsideShops.push({g,stage,startZ:isYaowarat?z+4.0:z});
+ g.position.z=z;g.visible=false;scene.add(g);
+ roadsideShops.push({g,stage,startZ:z});
 }
 roadsideStore('seven',-1,-22,1);
 roadsideStore('seven',1,-112,1);
