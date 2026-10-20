@@ -592,7 +592,20 @@ const marketStalls=[],marketCanopies=[],marketBumps=[];
 const canalGroup=new THREE.Group(),canalWater=mat(0x167c91),canalEdge=mat(0xb7ad92),canalBoat=mat(0x865337);
 canalGroup.add(cube(9,.07,220,canalWater,8.2,-.16,-86));
 canalGroup.add(cube(.28,.38,220,canalEdge,3.65,.12,-86));
-for(let i=0;i<10;i++){const boat=new THREE.Group();boat.add(cube(1.2,.32,2.6,canalBoat,0,0,0));boat.add(cube(.8,.12,1.8,mat(0xd2b078),0,.24,0));boat.position.set(6.5+(i%3)*1.2,-.02,-12-i*19);canalGroup.add(boat);}
+// Low-poly fruit boats and striped parasols make the canal readable on mobile.
+const fruitColors=[mat(0xe8b82f),mat(0xe65b37),mat(0x78b34c)],umbrellaColors=[mat(0xffd45c),mat(0xf26e83),mat(0x5bc6bb)];
+for(let i=0;i<10;i++){
+ const boat=new THREE.Group();
+ boat.add(cube(1.2,.32,2.6,canalBoat,0,0,0));
+ boat.add(cube(1.05,.12,2.25,mat(0xd2b078),0,.24,0));
+ for(let j=0;j<6;j++)boat.add(ball(.18,fruitColors[(i+j)%3],(j%2?1:-1)*.27,.45,(Math.floor(j/2)-1)*.57));
+ boat.add(cube(.055,1.65,.055,canalEdge,0,1.17,0));
+ const parasol=new THREE.Group();
+ for(let k=0;k<6;k++){const panel=new THREE.Mesh(new THREE.ConeGeometry(.87,.44,3,1),umbrellaColors[(i+k)%3]);panel.rotation.y=k*Math.PI/3;panel.position.y=0;panel.scale.set(.68,1,.68);parasol.add(panel);}
+ parasol.position.y=2.06;boat.add(parasol);
+ boat.position.set(6.5+(i%3)*1.2,-.02,-12-i*19);
+ canalGroup.add(boat);
+}
 canalGroup.visible=false;scene.add(canalGroup);
 const marketCanvas=document.createElement('canvas');marketCanvas.width=512;marketCanvas.height=128;
 const marketCtx=marketCanvas.getContext('2d');marketCtx.fillStyle='#241b39';marketCtx.fillRect(0,0,512,128);
