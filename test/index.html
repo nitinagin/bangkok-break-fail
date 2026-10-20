@@ -153,7 +153,7 @@ function roadsideStore(kind,side,z,stage){
  const board=new THREE.Mesh(new THREE.PlaneGeometry(width,kind==='lotus'?1.5:1.15),sign);
  // Face the approaching player (+Z), matching the existing Yaowarat storefront facades.
  board.rotation.y=0;
- board.position.set(side*(isYaowarat?5.72:8.3),isYaowarat?4.15:5.2,0);
+ board.position.set(side*(isYaowarat?6.35:8.3),isYaowarat?4.15:5.2,0);
  g.add(board);
  if(!isYaowarat){
   // Rama II: compact roadside signpost, not a fake shop building.
@@ -162,8 +162,8 @@ function roadsideStore(kind,side,z,stage){
   g.add(cube(.17,.12,width,pole,side*8.3,4.55,0));
  }
  // Yaowarat signs sit on the road-facing storefront plane, not inside the building mesh.
- g.position.z=isYaowarat?z+2.75:z;g.visible=false;scene.add(g);
- roadsideShops.push({g,stage,startZ:isYaowarat?z+2.75:z});
+ g.position.z=isYaowarat?z+4.0:z;g.visible=false;scene.add(g);
+ roadsideShops.push({g,stage,startZ:isYaowarat?z+4.0:z});
 }
 roadsideStore('seven',-1,-22,1);
 roadsideStore('seven',1,-112,1);
@@ -224,8 +224,8 @@ for(const side of [-1,1]){
  cockpit.add(cube(.38,.30,.075,cockpitChrome,side*1.12,.05,-1.55));
  cockpit.add(cube(.29,.22,.078,cockpitMat,side*1.12,.05,-1.60));
 }
-cockpitTube([[-1.18,.94,-1.58],[-.65,.98,-1.58],[0,1.01,-1.58],[.65,.98,-1.58],[1.18,.94,-1.58]],.065,cockpitGold);
-cockpit.add(cube(2.4,.16,.52,cockpitRed,0,1.09,-1.63));
+// Remove the overhead trim from the camera view; keep the lower dashboard and side frame.
+// Upper windshield crossbar removed to expose the street.
 const speedDial=new THREE.Group();speedDial.position.set(0,-.67,-1.37);cockpit.add(speedDial);
 const dialFace=new THREE.Mesh(new THREE.CylinderGeometry(.18,.18,.045,20),cockpitMat);dialFace.rotation.x=Math.PI/2;speedDial.add(dialFace);
 const dialRim=new THREE.Mesh(new THREE.TorusGeometry(.18,.025,6,22),cockpitGold);speedDial.add(dialRim);
