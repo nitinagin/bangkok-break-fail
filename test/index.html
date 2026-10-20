@@ -314,13 +314,41 @@ for(const side of [-1,1]){part(g,cube(.075,1.17,.08,taxiChrome,side*.79,1.83,.71
 part(g,cube(1.38,.53,.07,taxiGlass,0,1.83,.79));part(g,cube(1.52,.08,.12,taxiChrome,0,2.28,.78));for(const side of [-1,1]){part(g,cube(.075,.55,.09,taxiChrome,side*.72,1.84,.78));part(g,cube(.11,.12,1.48,taxiChrome,side*.8,1.25,-.16));}part(g,cube(.72,.6,.8,tukBlue,0,.94,.91));part(g,cube(.72,.12,.12,taxiChrome,0,.66,1.32));part(g,cube(1.25,.32,.16,tukRed,0,.58,1.23));const front=new THREE.Mesh(new THREE.CylinderGeometry(.38,.38,.22,10),M.wheel);front.rotation.z=Math.PI/2;front.position.set(0,.39,1.32);part(g,front);part(g,cube(.63,.18,.3,taxiLight,0,2.53,.22));part(g,cube(1.46,.12,.09,taxiChrome,0,.55,1.27));part(g,cube(.85,.13,.55,tukRed,0,1.3,-.63));return g}
 function makeBike(){
  const g=new THREE.Group();
- for(const z of [-.86,.9]){const w=new THREE.Mesh(new THREE.CylinderGeometry(.43,.43,.16,10),bikeMetal);w.rotation.z=Math.PI/2;w.position.set(0,.43,z);part(g,w)}
- part(g,cube(.35,.2,1.52,bikeMetal,0,.72,0));
- part(g,cube(.5,.4,.8,bikeYellow,0,1,.2));
- part(g,cube(.52,.13,.66,bikeMetal,0,1.13,-.4));
- part(g,cube(.48,.62,.38,bikeBlue,0,1.63,-.3));
- part(g,ball(.34,M.gold,0,2.2,-.22));part(g,ball(.16,M.white,0,2.22,.06));
- part(g,cube(.72,.09,.1,bikeMetal,0,1.53,.7));
+ const orange=new THREE.MeshStandardMaterial({color:0xf4511e,roughness:.48});
+ const dark=new THREE.MeshStandardMaterial({color:0x20232b,roughness:.85});
+ const skin=new THREE.MeshStandardMaterial({color:0xe9ae86,roughness:.94});
+ const pink=new THREE.MeshStandardMaterial({color:0xf02d79,roughness:.78});
+ const helmet=new THREE.MeshStandardMaterial({color:0xff6728,roughness:.32});
+ const hairBike=new THREE.MeshStandardMaterial({color:0x482322,roughness:.9});
+ for(const z of [-.83,.88]){
+  const w=new THREE.Mesh(new THREE.CylinderGeometry(.43,.43,.16,14),dark);w.rotation.z=Math.PI/2;w.position.set(0,.44,z);part(g,w);
+  const rim=new THREE.Mesh(new THREE.TorusGeometry(.29,.035,6,16),bikeMetal);rim.rotation.y=Math.PI/2;rim.position.set(.09,.44,z);part(g,rim);
+ }
+ part(g,cube(.31,.19,1.5,bikeMetal,0,.66,0));
+ part(g,cube(.64,.43,.85,orange,0,.97,.32));
+ part(g,cube(.5,.16,.85,dark,0,1.12,-.36));
+ part(g,cube(.53,.66,.21,orange,0,1.03,.76));
+ part(g,cube(.56,.12,.12,bikeMetal,0,1.55,.91));
+ part(g,ball(.16,M.white,0,1.22,.9));
+ // Dek waen driver: orange helmet, dark clothes and hands on bars.
+ part(g,cube(.45,.66,.34,dark,0,1.64,.06));
+ part(g,ball(.27,skin,0,2.12,.22));
+ part(g,ball(.32,helmet,0,2.36,.2));
+ part(g,cube(.35,.09,.09,dark,0,2.32,.46));
+ for(const x of [-.23,.23]){
+  const arm=part(g,cube(.13,.53,.13,skin,x,1.66,.46));arm.rotation.x=-.48;
+  part(g,cube(.16,.49,.17,dark,x,1.05,-.18));
+ }
+ // Skoy passenger: pink shirt, orange helmet and flowing hair.
+ part(g,cube(.4,.56,.31,pink,0,1.66,-.59));
+ part(g,ball(.25,skin,0,2.13,-.58));
+ part(g,ball(.31,helmet,0,2.36,-.59));
+ for(const x of [-.28,.28]){
+  const lock=part(g,ball(.19,hairBike,x,2.12,-.77));lock.scale.set(.65,1.55,.65);
+  const leg=part(g,cube(.14,.68,.14,skin,x,1.02,-.83));leg.rotation.x=.45;
+  part(g,cube(.22,.11,.33,dark,x,.72,-.56));
+ }
+ part(g,cube(.5,.25,.25,orange,0,1.1,-.88));
  return g
 }
 function makeYaksha(){const g=new THREE.Group();
