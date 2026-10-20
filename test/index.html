@@ -144,6 +144,43 @@ for(let k=0;k<2;k++){
  viaduct.position.z=-45-k*99;viaduct.userData.startZ=viaduct.position.z;
  viaduct.visible=false;scene.add(viaduct);ramaStructures.push(viaduct);
 }
+// Rama II construction corridor: road-edge Jersey barriers, work platforms,
+// unfinished rebar cages and crane silhouettes. All outside the playable lanes.
+const siteConcrete=new THREE.MeshLambertMaterial({color:0xb9b4aa});
+const siteWhite=new THREE.MeshLambertMaterial({color:0xe9e4d9});
+const siteRed=new THREE.MeshLambertMaterial({color:0xd44735});
+const siteSteel=new THREE.MeshLambertMaterial({color:0x666e70});
+const siteCrane=new THREE.MeshLambertMaterial({color:0xe6a632});
+const siteBarrierGeo=new THREE.BoxGeometry(.5,.9,3.65);
+const siteStripeGeo=new THREE.BoxGeometry(.52,.3,1.12);
+function ramaWorkZone(side,z){
+ const g=new THREE.Group();
+ // 14 barriers along the shoulder, striped alternately red and white.
+ const barriers=new THREE.InstancedMesh(siteBarrierGeo,siteWhite,14);
+ const stripes=new THREE.InstancedMesh(siteStripeGeo,siteRed,14);
+ for(let i=0;i<14;i++){
+  const zz=-26+i*4;
+  barriers.setMatrixAt(i,new THREE.Matrix4().makeTranslation(side*6.05,.48,zz));
+  stripes.setMatrixAt(i,new THREE.Matrix4().makeTranslation(side*5.76,.57,zz));
+ }
+ barriers.instanceMatrix.needsUpdate=true;stripes.instanceMatrix.needsUpdate=true;
+ g.add(barriers,stripes);
+ // A separate unfinished pier, behind the barriers and clear of the roadway.
+ g.add(cube(2.4,.7,2.4,siteConcrete,side*10,.35,-6));
+ g.add(cube(1.7,10,1.7,siteConcrete,side*10,5.35,-6));
+ g.add(cube(3.3,.65,3.1,siteConcrete,side*10,10.65,-6));
+ for(const dx of [-.58,.58])for(const dz of [-.58,.58])
+  g.add(cube(.09,2.8,.09,siteSteel,side*10+dx,12.35,-6+dz));
+ // Crane tower and diagonal jib: visible above the viaduct, not across the road.
+ g.add(cube(.55,17,.55,siteCrane,side*14,8.5,-15));
+ const jib=cube(.35,.35,13,siteCrane,side*14,16.5,-20);
+ jib.rotation.x=-.08;g.add(jib);
+ g.add(cube(.06,5,.06,siteSteel,side*14,13.7,-25));
+ g.position.z=z;g.visible=false;scene.add(g);
+ ramaStructures.push(g);
+}
+ramaWorkZone(-1,-44);
+ramaWorkZone(1,-142);
 // Lightweight roadside shops: shared canvas materials, no external assets.
 const roadsideShops=[];
 function shopBillboard(text,bg,fg){const c=document.createElement('canvas');c.width=512;c.height=160;const p=c.getContext('2d');p.fillStyle=bg;p.fillRect(0,0,512,160);p.fillStyle=fg;p.font='bold 70px sans-serif';p.textAlign='center';p.textBaseline='middle';p.fillText(text,256,84,488);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return new THREE.MeshBasicMaterial({map:t,side:THREE.DoubleSide})}
