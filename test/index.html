@@ -84,6 +84,27 @@ function building(x,z,i){
  g.add(cube(.9,.08,.12,shopTrim,j===0?-.85:.85,wy+.46,front));
  g.add(cube(.08,.9,.13,shopTrim,j===0?-.85:.85,wy,front));
  }
+ // Procedural 3D Yaowarat shophouse detail: recessed balconies, railings and AC units.
+ // Geometry stays attached to each existing scrolling building (no new spawn logic).
+ const roadDir=x<0?1:-1;
+ const balconyMetal=shopTrim,balconyShade=shopShadow,acBody=mat(0xc3c8c4),acVent=mat(0x515b60);
+ for(let floor=0;floor<2;floor++){
+  const by=4.15+floor*2.6;
+  if(by>h-.65)continue;
+  g.add(cube(3.35,.13,.64,balconyShade,0,by-.64,front+roadDir*.35));
+  g.add(cube(3.25,.075,.08,balconyMetal,0,by+.02,front+roadDir*.67));
+  for(let bar=-3;bar<=3;bar++)g.add(cube(.055,.68,.07,balconyMetal,bar*.49,by-.33,front+roadDir*.67));
+  if((i+floor)%3===0){
+   g.add(cube(.68,.48,.31,acBody,1.35,by+.45,front+roadDir*.22));
+   g.add(cube(.52,.32,.025,acVent,1.35,by+.45,front+roadDir*.4));
+  }
+ }
+ if(i%3===0){
+  // Side-mounted rain pipe and a projecting ground-floor shop light.
+  g.add(cube(.075,h-.6,.075,acVent,-1.78,h/2,front+roadDir*.11));
+  g.add(cube(.46,.11,.4,shopTrim,-1.18,2.52,front+roadDir*.45));
+  g.add(ball(.13,windowGlow,-1.18,2.38,front+roadDir*.47));
+ }
  const sign=cube(2.7,.62,.12,signMaterials[i%3],0,2.94,front+(x<0?.07:-.07));g.add(sign);g.add(cube(2.85,.08,.19,M.gold,0,3.30,front+(x<0?.10:-.10)));g.userData.sign=sign;g.userData.signIndex=i;
  // Decorative shop lettering blocks avoid relying on device fonts.
  for(let k=0;k<3;k++)g.add(cube(k===1?.14:.34,.17,.14,shopTrim,-.66+k*.66,2.94,front+(x<0?.15:-.15)));if(i%2===0){g.add(cube(.13,.6,.13,M.gold,1.56,2.92,front));g.add(ball(.18,M.red,1.56,2.51,front))}
