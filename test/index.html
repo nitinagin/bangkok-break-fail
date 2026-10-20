@@ -611,12 +611,27 @@ for(let n=0;n<16;n++)for(const side of [-1,1]){
  stall.position.z=-12-n*12;stall.userData.startZ=stall.position.z;stall.visible=false;scene.add(stall);marketStalls.push(stall);
 }
 // Two-lane daytime JJ Market: fabric canopy, rough pavement and pedestrian-only hazards.
-const tentColors=[mat(0xd3b17d),mat(0x8ca98a),mat(0xd99b8c)];
+// Shared canvas-striped tarpaulin: three market awning palettes, zero downloaded assets.
+const tentPalettes=[['#f2e5b8','#d59b68'],['#e8e5ce','#76a69a'],['#f3d9c9','#ca807e']];
+const tentColors=tentPalettes.map(([light,dark])=>{
+ const canvas=document.createElement('canvas');canvas.width=256;canvas.height=256;
+ const ctx=canvas.getContext('2d');ctx.fillStyle=light;ctx.fillRect(0,0,256,256);
+ for(let x=0;x<256;x+=64){ctx.fillStyle=dark;ctx.fillRect(x,0,32,256);}
+ ctx.strokeStyle='rgba(70,53,44,.22)';ctx.lineWidth=2;
+ for(let x=0;x<=256;x+=32){ctx.beginPath();ctx.moveTo(x+.5,0);ctx.lineTo(x+.5,256);ctx.stroke();}
+ for(const y of [7,249]){ctx.setLineDash([5,5]);ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(256,y);ctx.stroke();}
+ const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
+ texture.wrapS=texture.wrapT=THREE.RepeatWrapping;texture.anisotropy=2;
+ return new THREE.MeshLambertMaterial({map:texture,side:THREE.DoubleSide});
+});
+const tentRoofGeometry=new THREE.BoxGeometry(9.7,.12,10.5);
+const tentPoleGeometry=new THREE.BoxGeometry(.1,5,.1);
+const tentPoleMaterial=mat(0x9a8d79);
 for(let n=0;n<16;n++){
  const tent=new THREE.Group();
- // Canopy stretches over most of the narrow market passage, leaving daylight at the edges.
- tent.add(cube(9.7,.12,10.5,tentColors[n%3],0,5.15,0));
- for(const side of [-1,1])for(const dz of [-4.7,4.7])tent.add(cube(.1,5,.1,mat(0x9a8d79),side*4.7,2.55,dz));
+ // Striped awnings shade the passage without creating extra draw calls per roof.
+ const canopy=new THREE.Mesh(tentRoofGeometry,tentColors[n%3]);canopy.position.set(0,5.15,0);tent.add(canopy);
+ for(const side of [-1,1])for(const dz of [-4.7,4.7]){const pole=new THREE.Mesh(tentPoleGeometry,tentPoleMaterial);pole.position.set(side*4.7,2.55,dz);tent.add(pole);}
  tent.position.z=-12-n*12;tent.userData.startZ=tent.position.z;tent.visible=false;scene.add(tent);marketCanopies.push(tent);
  const bump=cube(2.1,.045,1.4,mat(n%2?0x827d72:0xaaa397),n%2?-1.5:1.4,.12,-15-n*11);
  bump.userData.startZ=bump.position.z;bump.visible=false;scene.add(bump);marketBumps.push(bump);
