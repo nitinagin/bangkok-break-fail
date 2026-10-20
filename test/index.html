@@ -213,7 +213,18 @@ function roadsideStore(kind,side,z,stage){
   board.position.set(side*8.3,5.2,0);
  }
  g.add(board);
- if(!isYaowarat){
+ if(!isYaowarat && kind==='lotus'){
+  // Rama II supermarket: place a real storefront behind the sign instead of a floating billboard.
+  const facadeX=side*9.45,wall=mat(0xe8eceb),glass=mat(0x387b84),roof=mat(0x168d78);
+  g.add(cube(3.6,4.5,11,wall,facadeX,2.3,0));
+  g.add(cube(.12,2.8,8.8,glass,side*7.58,1.7,0));
+  g.add(cube(4.1,.35,11.6,roof,facadeX,4.65,0));
+  g.add(cube(.7,.18,9.5,roof,side*7.35,3.22,0));
+  // Keep the sign anchored to the shop frontage, not on a freestanding pole.
+  board.rotation.y=side<0?Math.PI/2:-Math.PI/2;
+  board.position.set(side*7.48,4.02,0);
+ }
+ if(!isYaowarat && kind!=='lotus'){
   const pole=mat(0x737c7e);
   g.add(cube(.13,4.65,.13,pole,side*8.3,2.35,0));
  }
