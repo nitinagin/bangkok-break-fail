@@ -165,13 +165,18 @@ function roadsideStore(kind,side,z,stage){
  const sign=kind==='lotus'?lotusSign:kind==='dorm'?dormSign:convenienceSign;
  const width=isYaowarat?2.75:kind==='lotus'?4.5:kind==='dorm'?3.6:3.1;
  const board=new THREE.Mesh(new THREE.PlaneGeometry(width,isYaowarat?1.16:1.4),sign);
- // Face the approaching player, mounted just above the ground-floor awning.
- board.position.set(side*(isYaowarat?5.48:8.3),isYaowarat?3.12:5.2,0);
- g.add(board);
+ // Yaowarat facades run along the road (Z), not across it (X).
+ // Mount the board flush with the existing shophouse frontage at x=+/-5.84.
  if(isYaowarat){
-  // Thin dark fascia visually connects the sign to the existing shophouse.
-  g.add(cube(width+.14,1.28,.10,mat(0x24242b),side*5.52,3.12,-.065));
+  board.rotation.y=side<0?Math.PI/2:-Math.PI/2;
+  board.position.set(side*5.70,3.12,0);
+  // Thin backing parallel to the wall, rather than a box protruding into the street.
+  g.add(cube(.08,1.25,width+.08,mat(0x24242b),side*5.77,3.12,0));
  }else{
+  board.position.set(side*8.3,5.2,0);
+ }
+ g.add(board);
+ if(!isYaowarat){
   const pole=mat(0x737c7e);
   g.add(cube(.13,4.65,.13,pole,side*8.3,2.35,0));
  }
