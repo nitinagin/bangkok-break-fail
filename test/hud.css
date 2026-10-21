@@ -1,0 +1,9 @@
+/* Mobile HUD clarity: glass instruments and safe-area spacing. */
+#hud{padding:10px 12px;align-items:flex-start;gap:10px}
+#hud>div{padding:9px 12px;border:1px solid #ffffff40;border-radius:14px;background:#14213bd6;box-shadow:0 5px 20px #0005;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+#score{font-variant-numeric:tabular-nums;color:#fff1a3}
+#status{line-height:1.35;font-variant-numeric:tabular-nums}
+#challenge{top:calc(env(safe-area-inset-top) + 72px);max-width:calc(100vw - 24px);overflow:hidden;text-overflow:ellipsis;background:#111931d9;border:1px solid #ffe17050}
+#district{top:calc(env(safe-area-inset-top) + 112px);background:#101d36cf;border:1px solid #ffffff38}
+#gameControls button{background:#14213bd9;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+@media(max-width:360px){#hud{padding:8px;gap:5px}#hud>div{padding:7px 9px}}
