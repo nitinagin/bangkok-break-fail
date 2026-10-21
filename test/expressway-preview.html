@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Bangkok Break Fail — Expressway Art Preview</title>
+<style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#111827;color:#fff;font:14px system-ui}canvas{display:block}#label{position:fixed;left:12px;top:calc(12px + env(safe-area-inset-top));padding:10px 13px;background:#071322bc;border:1px solid #ffffff38;border-radius:10px;pointer-events:none}#label b{font-size:16px}#label small{display:block;color:#b8c8d9;margin-top:3px}</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js"}}</script>
+</head><body><div id="label"><b>🛣️ BANGKOK EXPRESSWAY</b><small>3D art preview · not integrated into the playable game</small></div>
+<script type="module">
+import * as THREE from "three";
+import {createExpresswayArt} from "./expressway-art.js";
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x111b30);scene.fog=new THREE.Fog(0x111b30,85,190);
+const camera=new THREE.PerspectiveCamera(72,innerWidth/innerHeight,.1,240);camera.position.set(0,2.4,4);camera.lookAt(0,2,-50);
+const renderer=new THREE.WebGLRenderer({antialias:false,powerPreference:"high-performance"});
+renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.5));renderer.setSize(innerWidth,innerHeight);
+renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;
+document.body.appendChild(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xb9d7ff,0x253147,1.4));
+const moon=new THREE.DirectionalLight(0xc2d8ff,1.15);moon.position.set(-20,32,-60);scene.add(moon);
+const asphalt=new THREE.MeshStandardMaterial({color:0x252a35,roughness:.82,metalness:.03});
+const road=new THREE.Mesh(new THREE.PlaneGeometry(11,225),asphalt);road.rotation.x=-Math.PI/2;road.position.set(0,0,-96);scene.add(road);
+const edge=new THREE.MeshBasicMaterial({color:0xf1dcb3}),lane=new THREE.MeshBasicMaterial({color:0xe3e5e7});
+for(const side of [-1,1]){const stripe=new THREE.Mesh(new THREE.PlaneGeometry(.12,220),edge);stripe.rotation.x=-Math.PI/2;stripe.position.set(side*4.7,.013,-96);scene.add(stripe);}
+const markings=[];const dashGeo=new THREE.PlaneGeometry(.11,3.2);
+for(let i=0;i<34;i++)for(const x of [-1.65,1.65]){const dash=new THREE.Mesh(dashGeo,lane);dash.rotation.x=-Math.PI/2;dash.position.set(x,.018,11-i*6.3);scene.add(dash);markings.push(dash);}
+const art=createExpresswayArt(THREE);scene.add(art.group);art.group.visible=true;
+let previous=performance.now();
+function frame(now){requestAnimationFrame(frame);const dt=Math.min(.05,(now-previous)/1000);previous=now;
+art.update(dt,180);for(const mark of markings){mark.position.z+=dt*22;if(mark.position.z>14)mark.position.z-=214;}
+renderer.render(scene,camera);}
+requestAnimationFrame(frame);
+addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+</script></body></html>
