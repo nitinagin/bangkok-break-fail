@@ -1,0 +1,15 @@
+<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Bangkok Break Fail — Expressway Vehicle Preview</title><style>html,body{margin:0;height:100%;overflow:hidden;background:#0b1220;color:white;font:14px system-ui}#hud{position:fixed;top:12px;left:12px;padding:12px 16px;background:#081426d9;border:1px solid #8a9bad66;border-radius:12px;pointer-events:none}small{display:block;color:#b2c7db;margin-top:4px}</style><script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js"}}</script></head><body><div id="hud"><b>🛣️ Bangkok Expressway — Vehicle Preview</b><small>PBR sports car + Bangkok bus · visual prototype, not the playable game</small></div><script type="module">
+import * as THREE from 'three';
+import {makeExpresswayVehicle} from './expressway-vehicle-models.js';
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x162235);
+const camera=new THREE.PerspectiveCamera(55,innerWidth/innerHeight,.1,150);camera.position.set(8,6,12);camera.lookAt(0,1,0);
+const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.5));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;document.body.appendChild(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xbad5ff,0x343d4d,2));
+const key=new THREE.DirectionalLight(0xffe2bb,2.5);key.position.set(-4,9,5);scene.add(key);
+const road=new THREE.Mesh(new THREE.PlaneGeometry(25,28),new THREE.MeshStandardMaterial({color:0x333943,roughness:.95}));road.rotation.x=-Math.PI/2;road.position.y=-.06;scene.add(road);
+for(const x of [-4,0,4]){const mark=new THREE.Mesh(new THREE.PlaneGeometry(.12,18),new THREE.MeshBasicMaterial({color:0xddd6b2}));mark.rotation.x=-Math.PI/2;mark.position.set(x,.005,0);scene.add(mark);}
+const sports=makeExpresswayVehicle(THREE,'sportsCar');sports.position.set(-2,0,0);scene.add(sports);
+const bus=makeExpresswayVehicle(THREE,'bus');bus.position.set(2.5,0,-.7);scene.add(bus);
+let previous=performance.now();function frame(now){const dt=Math.min(.05,(now-previous)/1000);previous=now;camera.position.x=9*Math.cos(now*.00018);camera.position.z=13*Math.sin(now*.00018);camera.lookAt(0,1,0);renderer.render(scene,camera);requestAnimationFrame(frame)}requestAnimationFrame(frame);
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+</script></body></html>
