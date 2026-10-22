@@ -47,14 +47,39 @@ export function createExpresswayArt(THREE){
  gantry.add(box(9.5,.18,.2,steel,0,7,0));
  const sign=new THREE.Mesh(new THREE.PlaneGeometry(6.8,2.13),new THREE.MeshBasicMaterial({map:signTexture,side:THREE.DoubleSide}));
  sign.position.set(0,5.7,.12);gantry.add(sign);gantry.position.z=-75;group.add(gantry);
+ // Concrete Jersey shoulder barriers: 44 instances, two batched draw calls.
+ const barrierCount=44,barrierLength=4.4;
+ const concrete=new THREE.MeshStandardMaterial({color:0x9ca2a7,roughness:.94,metalness:0});
+ const reflective=new THREE.MeshBasicMaterial({color:0xf4cb60});
+ const profile=new THREE.Shape();
+ profile.moveTo(-.42,0);profile.lineTo(.42,0);profile.lineTo(.42,.22);
+ profile.lineTo(.24,1.04);profile.lineTo(-.24,1.04);profile.lineTo(-.42,.22);profile.closePath();
+ const barrierGeometry=new THREE.ExtrudeGeometry(profile,{depth:barrierLength,bevelEnabled:false});
+ const barriers=new THREE.InstancedMesh(barrierGeometry,concrete,barrierCount);
+ const reflectorGeometry=new THREE.BoxGeometry(.48,.13,.2);
+ const reflectors=new THREE.InstancedMesh(reflectorGeometry,reflective,barrierCount);
+ const barrierDummy=new THREE.Object3D(),barrierZ=[];
+ for(let i=0;i<barrierCount;i++)barrierZ.push(-5-Math.floor(i/2)*barrierLength*1.15);
+ function placeBarriers(){
+  for(let i=0;i<barrierCount;i++){
+   const side=i%2===0?-1:1,z=barrierZ[i];
+   barrierDummy.position.set(side*4.85,0,z);barrierDummy.rotation.set(0,0,0);barrierDummy.scale.set(1,1,1);
+   barrierDummy.updateMatrix();barriers.setMatrixAt(i,barrierDummy.matrix);
+   barrierDummy.position.set(side*4.55,.78,z+barrierLength*.5);
+   barrierDummy.updateMatrix();reflectors.setMatrixAt(i,barrierDummy.matrix);
+  }
+  barriers.instanceMatrix.needsUpdate=true;reflectors.instanceMatrix.needsUpdate=true;
+ }
+ placeBarriers();group.add(barriers,reflectors);
  group.visible=false;
  return {group,update(dt,speed){
   const advance=dt*Math.min(95,30+speed*.12);
   for(const lamp of lamps){lamp.position.z+=advance;if(lamp.position.z>18)lamp.position.z-=168;}
   gantry.position.z+=advance;if(gantry.position.z>24)gantry.position.z-=195;
+  for(let i=0;i<barrierCount;i++){barrierZ[i]+=advance;if(barrierZ[i]>20)barrierZ[i]-=22*barrierLength*1.15;}placeBarriers();
  },dispose(){
   group.traverse(obj=>{if(obj.geometry)obj.geometry.dispose();});
-  for(const material of [towerMat,steel,warm,sign.material])material.dispose();
+  for(const material of [towerMat,steel,warm,sign.material,concrete,reflective])material.dispose();
   windowTexture.dispose();signTexture.dispose();
  }};
 }
