@@ -2,6 +2,7 @@
 import * as THREE from "three";
 import {GLTFLoader} from "three/addons/loaders/GLTFLoader.js";
 import {createExpresswayArt} from "./expressway-art.js";
+import {makeExpresswayVehicle} from "./expressway-vehicle-models.js";
 const $=id=>document.getElementById(id),hud=$('score'),status=$('status'),hint=$('hint'),challenge=$('challenge'),districtLabel=$('district'),overlay=$('overlay'),panel=$('panel');
 let renderer;try{renderer=new THREE.WebGLRenderer({antialias:false,powerPreference:'high-performance'});}catch(e){$('error').style.display='block';throw e}
 const mobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);let mobilePixelRatio=Math.min(devicePixelRatio||1,mobile?1.05:1.25);renderer.setPixelRatio(mobilePixelRatio);renderer.setSize(innerWidth,innerHeight);renderer.setClearColor(0x20104e);document.body.insertBefore(renderer.domElement,document.body.firstChild);
@@ -803,12 +804,23 @@ const expresswayArt=createExpresswayArt(THREE);scene.add(expresswayArt.group);
 const expresswayConcrete=mat(0x9296a4),expresswaySteel=mat(0x3b5366),laserMat=new THREE.MeshBasicMaterial({color:0xff304f,transparent:true,opacity:.8});
 for(const side of [-1,1]){const rail=cube(.3,.85,210,expresswayConcrete,side*4.35,.6,-90);expresswaySet.add(rail);for(let n=0;n<10;n++)expresswaySet.add(cube(.15,.45,1.5,expresswaySteel,side*4.35,1.2,-n*21));}
 const ufo=new THREE.Group();ufo.add(new THREE.Mesh(new THREE.SphereGeometry(2.2,16,8),mat(0x9ab5c3)));ufo.add(new THREE.Mesh(new THREE.SphereGeometry(1.15,12,8),mat(0x39d9ed)));ufo.scale.y=.35;ufo.position.set(0,13,-42);expresswaySet.add(ufo);
+// Lazy templates share geometry and PBR materials across hazard waves (no per-spawn GPU uploads).
+let expresswayVehicleTemplates=null;
+function expresswayVehicle(type){
+ if(!expresswayVehicleTemplates){
+  expresswayVehicleTemplates={
+   sportsCar:makeExpresswayVehicle(THREE,'sportsCar'),
+   bus:makeExpresswayVehicle(THREE,'bus')
+  };
+ }
+ return expresswayVehicleTemplates[type].clone(true);
+}
 function spawnExpresswayHazard(){
  const wave=++expresswayWave,kind=['sportsCar','bike','bus','protest','laser','sportsCar','bike'][wave%7],lane=(wave%2?1:-1)*1.55;
  const g=new THREE.Group();
- if(kind==='sportsCar'){g.add(cube(1.8,.48,3.4,mat(0xf23b69),0,.6,0));g.add(cube(1.4,.45,1.4,M.glass,0,1.05,-.2));for(const xx of [-.82,.82])for(const zz of [-1.05,1.05])g.add(ball(.35,M.wheel,xx,.34,zz));}
+ if(kind==='sportsCar'){try{g.add(expresswayVehicle('sportsCar'));}catch(error){console.warn('Sports car PBR fallback',error);g.add(cube(1.8,.48,3.4,mat(0xf23b69),0,.6,0));g.add(cube(1.4,.45,1.4,M.glass,0,1.05,-.2));for(const xx of [-.82,.82])for(const zz of [-1.05,1.05])g.add(ball(.35,M.wheel,xx,.34,zz));}}
  else if(kind==='bike'){g.add(cube(.55,.55,1.65,M.blue,0,.85,0));for(const zz of [-.68,.68])g.add(ball(.4,M.wheel,0,.4,zz));g.add(ball(.3,M.skin,0,1.85,0));}
- else if(kind==='bus'){g.add(cube(2.05,2.5,4.4,mat(0xf5a33b),0,1.55,0));g.add(cube(1.85,.9,.09,M.glass,0,2.1,2.23));}
+ else if(kind==='bus'){try{g.add(expresswayVehicle('bus'));}catch(error){console.warn('Bus PBR fallback',error);g.add(cube(2.05,2.5,4.4,mat(0xf5a33b),0,1.55,0));g.add(cube(1.85,.9,.09,M.glass,0,2.1,2.23));}}
  else if(kind==='protest'){g.add(cube(.85,1.2,.5,M.pink,0,1.1,0));g.add(ball(.34,M.skin,0,1.92,0));g.add(cube(1.3,.65,.12,M.white,0,2.8,0));}
  else {g.add(cube(1.2,.08,7,laserMat,0,.23,0));g.add(cube(.16,9,.16,laserMat,0,4.5,0));}
  g.position.set(lane,0,-65);scene.add(g);
