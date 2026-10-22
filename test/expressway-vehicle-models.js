@@ -21,7 +21,24 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   box(0,2.7,2.25,1.48,.23,.06,glass);
   for(const side of [-1,1])for(let n=0;n<4;n++)box(side*1.05,2.17,-1.44+n*.96,.05,.65,.76,glass);
  }else{
-  box(0,1.04,.11,1.4,.035,.63,glass);box(0,1.04,-.65,1.4,.035,.43,glass);
+  // Dark transparent glazing reveals a seated driver instead of an empty car.
+  const windshield=new THREE.MeshStandardMaterial({color:0x244451,metalness:.05,roughness:.16,transparent:true,opacity:.34,depthWrite:false,side:THREE.DoubleSide});
+  const seatMat=new THREE.MeshStandardMaterial({color:0x171b23,roughness:.88});
+  const jacket=new THREE.MeshStandardMaterial({color:0x293746,roughness:.9});
+  const skin=new THREE.MeshStandardMaterial({color:0xc38a65,roughness:.92});
+  const hair=new THREE.MeshStandardMaterial({color:0x171414,roughness:1});
+  // Right-hand-drive position for Bangkok traffic; all parts stay inside the cabin.
+  box(.38,.83,-.1,.47,.28,.46,seatMat);
+  const torso=new THREE.Mesh(new THREE.CapsuleGeometry(.18,.34,4,8),jacket);
+  torso.position.set(.38,1.02,-.1);group.add(torso);
+  const head=new THREE.Mesh(new THREE.SphereGeometry(.16,10,8),skin);
+  head.position.set(.38,1.36,-.06);group.add(head);
+  const cap=new THREE.Mesh(new THREE.SphereGeometry(.165,10,6,0,Math.PI*2,0,Math.PI*.43),hair);
+  cap.position.set(.38,1.40,-.06);group.add(cap);
+  const steering=new THREE.Mesh(new THREE.TorusGeometry(.19,.035,6,12),rubber);
+  steering.position.set(.38,1.04,.38);steering.rotation.x=.3;group.add(steering);
+  box(0,1.28,.43,1.4,.035,.63,windshield);
+  box(0,1.28,-.65,1.4,.035,.43,windshield);
  }
  const tireGeo=new THREE.CylinderGeometry(isBus?.43:.37,isBus?.43:.37,.18,12);tireGeo.rotateZ(Math.PI/2);
  for(const side of [-1,1])for(const axle of [-1,1]){
