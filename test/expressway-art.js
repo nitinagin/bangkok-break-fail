@@ -26,21 +26,39 @@ export function createExpresswayArt(THREE){
  const steel=new THREE.MeshStandardMaterial({color:0x69717a,roughness:.55,metalness:.65});
  const warm=new THREE.MeshBasicMaterial({color:0xffe6ac});
  const box=(w,h,d,mat,x,y,z)=>{const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);mesh.position.set(x,y,z);return mesh;};
- const lamps=[];
- for(let i=0;i<16;i++){
-  const side=i%2===0?-1:1,lamp=new THREE.Group();
-  lamp.add(box(.14,6.1,.14,steel,0,3.05,0));
-  lamp.add(box(1.35,.11,.16,steel,-side*.61,6.05,0));
-  lamp.add(box(.8,.08,.22,warm,-side*1.03,5.97,0));
-  lamp.position.set(side*5.9,0,-7-Math.floor(i/2)*21);
-  group.add(lamp);lamps.push(lamp);
+ // Three instanced parts replace 48 individual lamp meshes on mobile.
+ const lampCount=16,lampPositions=[];
+ const lampPoles=new THREE.InstancedMesh(new THREE.BoxGeometry(.14,6.1,.14),steel,lampCount);
+ const lampArms=new THREE.InstancedMesh(new THREE.BoxGeometry(1.35,.11,.16),steel,lampCount);
+ const lampHeads=new THREE.InstancedMesh(new THREE.BoxGeometry(.8,.08,.22),warm,lampCount);
+ const lampDummy=new THREE.Object3D();
+ for(let i=0;i<lampCount;i++){
+  const side=i%2===0?-1:1;
+  lampPositions.push({side,x:side*5.9,z:-7-Math.floor(i/2)*21});
  }
+ function placeLamps(){
+  for(let i=0;i<lampCount;i++){
+   const p=lampPositions[i];
+   lampDummy.position.set(p.x,3.05,p.z);lampDummy.updateMatrix();lampPoles.setMatrixAt(i,lampDummy.matrix);
+   lampDummy.position.set(p.x-p.side*.61,6.05,p.z);lampDummy.updateMatrix();lampArms.setMatrixAt(i,lampDummy.matrix);
+   lampDummy.position.set(p.x-p.side*1.03,5.97,p.z);lampDummy.updateMatrix();lampHeads.setMatrixAt(i,lampDummy.matrix);
+  }
+  lampPoles.instanceMatrix.needsUpdate=true;
+  lampArms.instanceMatrix.needsUpdate=true;
+  lampHeads.instanceMatrix.needsUpdate=true;
+ }
+ placeLamps();group.add(lampPoles,lampArms,lampHeads);
+ // Two reflective bilingual destination panels, one per lane.
  const signCanvas=document.createElement('canvas');signCanvas.width=512;signCanvas.height=160;
- const sc=signCanvas.getContext('2d');sc.fillStyle='#175646';sc.fillRect(0,0,512,160);
- sc.strokeStyle='#d4e5d7';sc.lineWidth=7;sc.strokeRect(7,7,498,146);
- sc.fillStyle='#fff';sc.textAlign='center';sc.font='bold 34px sans-serif';
- sc.fillText('ทางด่วน  /  EXPRESSWAY',256,65);
- sc.font='bold 25px sans-serif';sc.fillText('บางนา  /  BANG NA   ↑',256,112);
+ const sc=signCanvas.getContext('2d');sc.fillStyle='#15513e';sc.fillRect(0,0,512,160);
+ sc.strokeStyle='#e3eee5';sc.lineWidth=6;sc.strokeRect(7,7,498,146);
+ sc.lineWidth=3;sc.beginPath();sc.moveTo(256,12);sc.lineTo(256,148);sc.stroke();
+ sc.fillStyle='#f7faf7';sc.textAlign='center';
+ for(const [x,thai,english] of [[132,'บางนา','BANG NA'],[380,'ดินแดง','DIN DAENG']]){
+  sc.font='bold 30px sans-serif';sc.fillText(thai,x,48);
+  sc.font='bold 22px sans-serif';sc.fillText(english,x,80);
+  sc.font='bold 42px sans-serif';sc.fillText('↑',x,135);
+ }
  const signTexture=new THREE.CanvasTexture(signCanvas);signTexture.colorSpace=THREE.SRGBColorSpace;
  const gantry=new THREE.Group();
  for(const side of [-1,1])gantry.add(box(.19,7,.19,steel,side*4.7,3.5,0));
@@ -74,7 +92,7 @@ export function createExpresswayArt(THREE){
  group.visible=false;
  return {group,update(dt,speed){
   const advance=dt*Math.min(95,30+speed*.12);
-  for(const lamp of lamps){lamp.position.z+=advance;if(lamp.position.z>18)lamp.position.z-=168;}
+  for(const lamp of lampPositions){lamp.z+=advance;if(lamp.z>18)lamp.z-=168;}placeLamps();
   gantry.position.z+=advance;if(gantry.position.z>24)gantry.position.z-=195;
   for(let i=0;i<barrierCount;i++){barrierZ[i]+=advance;if(barrierZ[i]>20)barrierZ[i]-=22*barrierLength*1.15;}placeBarriers();
  },dispose(){
