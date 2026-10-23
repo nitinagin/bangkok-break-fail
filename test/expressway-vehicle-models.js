@@ -1,6 +1,42 @@
 // Bangkok Break Fail: reusable PBR expressway vehicle templates.
 // Usage: import {makeExpresswayVehicle} from './expressway-vehicle-models.js';
 // Add makeExpresswayVehicle(THREE,'sportsCar') or (THREE,'bus') to a scene.
+
+// Bake weathered bus glazing once per shared vehicle template, not per hazard.
+function makeBusGlazing(THREE){
+ const canvas=document.createElement('canvas');canvas.width=256;canvas.height=256;
+ const ctx=canvas.getContext('2d'),g=ctx.createLinearGradient(0,0,256,256);
+ g.addColorStop(0,'#4a6b7a');g.addColorStop(.24,'#243e4c');g.addColorStop(.7,'#132632');g.addColorStop(1,'#0c1a25');
+ ctx.fillStyle=g;ctx.fillRect(0,0,256,256);
+ // Warm interior silhouettes, tempered-glass reflections, and rain streaks.
+ ctx.fillStyle='rgba(12,17,23,.8)';
+ for(let i=0;i<3;i++){
+  const x=43+i*82;ctx.beginPath();ctx.ellipse(x,151,18,24,0,0,Math.PI*2);ctx.fill();
+  ctx.fillRect(x-21,170,42,80);
+ }
+ ctx.fillStyle='rgba(224,235,229,.17)';
+ ctx.beginPath();ctx.moveTo(22,0);ctx.lineTo(57,0);ctx.lineTo(130,256);ctx.lineTo(111,256);ctx.fill();
+ ctx.fillStyle='rgba(255,248,222,.07)';ctx.fillRect(0,21,256,8);
+ for(let i=0;i<19;i++){
+  const x=(i*53+11)%256,y=(i*37+19)%184;
+  ctx.fillStyle=i%3===0?'rgba(211,224,232,.16)':'rgba(159,175,182,.09)';
+  ctx.fillRect(x,y,1,18+(i%5)*9);
+ }
+ const map=new THREE.CanvasTexture(canvas);map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=2;
+ return new THREE.MeshStandardMaterial({map,metalness:.18,roughness:.29});
+}
+// A real bilingual route panel replaces an existing blank window: zero extra meshes.
+function makeBusDestination(THREE){
+ const canvas=document.createElement('canvas');canvas.width=512;canvas.height=128;
+ const ctx=canvas.getContext('2d');
+ ctx.fillStyle='#08161c';ctx.fillRect(0,0,512,128);
+ ctx.fillStyle='#e0a74e';ctx.fillRect(0,0,512,5);ctx.fillRect(0,123,512,5);
+ ctx.fillStyle='#f9d582';ctx.font='bold 106px sans-serif';ctx.textBaseline='middle';ctx.fillText('8',20,65);
+ ctx.fillStyle='#ffe8a4';ctx.font='bold 54px sans-serif';ctx.fillText('กรุงเทพฯ',142,56);
+ ctx.fillStyle='#cbd8c7';ctx.font='bold 25px sans-serif';ctx.fillText('BANGKOK',153,100);
+ const map=new THREE.CanvasTexture(canvas);map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=2;
+ return new THREE.MeshBasicMaterial({map,toneMapped:false});
+}
 export function makeExpresswayVehicle(THREE,type='sportsCar'){
  const isBus=type==='bus',group=new THREE.Group(),w=isBus?2.05:1.8,length=isBus?4.45:3.55;
  const paint=new THREE.MeshStandardMaterial({color:isBus?0xf0e6d4:0xb12438,metalness:isBus?.15:.65,roughness:isBus?.65:.3});
@@ -17,9 +53,11 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
  group.add(new THREE.Mesh(geometry,paint));
  function box(x,y,z,a,b,c,material){const m=new THREE.Mesh(new THREE.BoxGeometry(a,b,c),material);m.position.set(x,y,z);group.add(m);}
  if(isBus){
-  box(0,1.07,0,2.07,.25,4.4,stripe);box(0,2.16,2.25,1.8,.83,.05,glass);
-  box(0,2.7,2.25,1.48,.23,.06,glass);
-  for(const side of [-1,1])for(let n=0;n<4;n++)box(side*1.05,2.17,-1.44+n*.96,.05,.65,.76,glass);
+  const busGlazing=makeBusGlazing(THREE),destination=makeBusDestination(THREE);
+  box(0,1.07,0,2.07,.25,4.4,stripe);
+  box(0,2.16,2.25,1.8,.83,.05,busGlazing);
+  box(0,2.7,2.29,1.48,.23,.025,destination);
+  for(const side of [-1,1])for(let n=0;n<4;n++)box(side*1.05,2.17,-1.44+n*.96,.05,.65,.76,busGlazing);
  }else{
   // Dark transparent glazing reveals a seated driver instead of an empty car.
   const windshield=new THREE.MeshStandardMaterial({color:0x244451,metalness:.05,roughness:.16,transparent:true,opacity:.34,depthWrite:false,side:THREE.DoubleSide});
