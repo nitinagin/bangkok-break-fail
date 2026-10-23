@@ -60,8 +60,35 @@ function makeRoadsideStory(kind,side,z){const g=new THREE.Group();if(kind==='shr
 function makeGrandma(){const g=new THREE.Group();g.add(cube(.72,1.25,.48,storyMat.ghost,0,1.18,0));g.add(ball(.44,M.skin,0,2.06,0));g.add(ball(.49,storyMat.ghost,0,2.37,.06));g.add(ball(.10,M.black,-.13,2.08,-.30));g.add(ball(.10,M.black,.13,2.08,-.30));g.add(cube(.23,.045,.05,M.red,0,1.88,-.34));const arms=[],legs=[];for(const side of [-1,1]){const leg=cube(.16,.86,.18,storyMat.ghost,side*.25,.52,0);g.add(leg);legs.push(leg);const arm=cube(.13,.82,.16,M.skin,side*.49,1.35,0);g.add(arm);arms.push(arm)}g.userData.runArms=arms;g.userData.runLegs=legs;return g}
 function facadeMaterial(seed){const c=document.createElement('canvas');c.width=256;c.height=512;const a=c.getContext('2d');const colors=['#b18a69','#94745c','#9b8370','#b8a58b','#827365'];a.fillStyle=colors[seed%colors.length];a.fillRect(0,0,256,512);for(let y=0;y<512;y+=11){a.fillStyle='rgba(25,19,17,.075)';a.fillRect(0,y,256,1)}a.fillStyle='#3a3430';for(let floor=0;floor<4;floor++){const y=26+floor*112;for(let col=0;col<2;col++){const x=28+col*115;a.fillStyle='#c8b39b';a.fillRect(x-5,y-5,91,88);a.fillStyle='#242a32';a.fillRect(x,y,81,77);a.fillStyle=floor%2?'#735e42':'#3b4144';a.fillRect(x+5,y+5,71,66);a.fillStyle='rgba(255,205,107,.45)';a.fillRect(x+8,y+8,28,61);a.fillStyle='#c8aa78';a.fillRect(x+38,y,5,77);a.fillRect(x,y+37,81,4)}}a.fillStyle='rgba(39,25,22,.25)';for(let k=0;k<130;k++){const x=(k*71+seed*19)%256,y=(k*137+seed*31)%512;a.fillRect(x,y,2,3)}const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return new THREE.MeshLambertMaterial({map:t})}
 const facadeMaterials=Array.from({length:8},(_,i)=>facadeMaterial(i));
-function streetSignMaterial(text,bg='#6d080c'){const c=document.createElement('canvas');c.width=512;c.height=256;const a=c.getContext('2d');a.fillStyle=bg;a.fillRect(0,0,512,256);a.strokeStyle='#f6bb43';a.lineWidth=12;a.strokeRect(9,9,494,238);a.fillStyle='#ffd76d';a.textAlign='center';a.textBaseline='middle';a.font='bold 80px sans-serif';a.fillText(text,256,128,470);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return new THREE.MeshBasicMaterial({map:t,side:THREE.DoubleSide})}
-const shopSignMaterials=['金龍','海鮮','中華','藥房','金行'].map(x=>streetSignMaterial(x,'#790509'));
+// Shared bilingual Yaowarat enamel shop signs: baked lettering and grime, zero per-frame work.
+function streetSignMaterial(cn,th,bg='#6d080c'){
+ const c=document.createElement('canvas');c.width=512;c.height=256;
+ const a=c.getContext('2d');
+ const enamel=a.createLinearGradient(0,0,0,256);
+ enamel.addColorStop(0,'#421016');enamel.addColorStop(.48,bg);enamel.addColorStop(1,'#24090c');
+ a.fillStyle=enamel;a.fillRect(0,0,512,256);
+ // Fine weathered enamel scratches and brass trim, all baked into the existing texture.
+ for(let k=0;k<30;k++){a.fillStyle='rgba(240,204,151,.035)';a.fillRect(15,(k*47)%240,482,1)}
+ a.strokeStyle='#ad8341';a.lineWidth=7;a.strokeRect(8,8,496,240);
+ a.strokeStyle='rgba(255,222,150,.4)';a.lineWidth=2;a.strokeRect(17,17,478,222);
+ for(const x of [25,487])for(const y of [26,230]){a.beginPath();a.arc(x,y,4,0,Math.PI*2);a.fillStyle='#c2a16b';a.fill()}
+ a.textAlign='center';a.textBaseline='middle';
+ a.shadowColor='rgba(255,177,76,.6)';a.shadowBlur=6;
+ a.fillStyle='#f2c16d';a.font='700 84px "PingFang SC","Noto Sans CJK SC",sans-serif';
+ a.fillText(cn,256,96,452);
+ a.shadowBlur=0;a.fillStyle='rgba(237,201,144,.7)';a.fillRect(90,150,332,2);
+ a.fillStyle='#f2e2c3';a.font='600 37px "Thonburi","Noto Sans Thai",sans-serif';
+ a.fillText(th,256,193,450);
+ const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;
+ return new THREE.MeshBasicMaterial({map:t,side:THREE.DoubleSide});
+}
+const shopSignMaterials=[
+ ['金龍海鮮','ภัตตาคารมังกรทอง'],
+ ['海鮮酒樓','อาหารทะเลสด'],
+ ['中華飯店','ภัตตาคารจีน'],
+ ['永安藥房','ร้านขายยา'],
+ ['大金行','ห้างทองเยาวราช']
+].map(([cn,th])=>streetSignMaterial(cn,th));
 const oldGold=new THREE.MeshStandardMaterial({color:0xb68a40,metalness:.68,roughness:.38}),warmNeon=new THREE.MeshBasicMaterial({color:0xffb84e}),redNeon=new THREE.MeshBasicMaterial({color:0xf02032}),glassDark=new THREE.MeshStandardMaterial({color:0x273c44,metalness:.3,roughness:.2}),brickTrim=new THREE.MeshLambertMaterial({color:0x4c3934});
 // The shared PBR road surface stays exposed: no opaque Lambert overlay or extra asphalt canvas.
 function neonBlade(text){const c=document.createElement('canvas');c.width=192;c.height=512;const a=c.getContext('2d');a.fillStyle='#3b080e';a.fillRect(0,0,192,512);a.strokeStyle='#f7ae32';a.lineWidth=10;a.strokeRect(8,8,176,496);a.shadowColor='#ff3e15';a.shadowBlur=15;a.fillStyle='#ffd263';a.textAlign='center';a.textBaseline='middle';a.font='bold 66px sans-serif';[...text].slice(0,4).forEach((v,i)=>a.fillText(v,96,76+i*113));const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return new THREE.MeshBasicMaterial({map:t,side:THREE.DoubleSide})}
