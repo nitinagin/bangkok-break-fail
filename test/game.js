@@ -75,7 +75,47 @@ const roadStuds=[];for(let i=0;i<12;i++){const stud=cube(.22,.025,.38,M.gold,0,.
 // Bangkok street set: shophouses, awnings, shutters, windows, signs and cables.
 const props=[];const storyProps=[];let nightCount=0,grandmaTriggeredNight=0,grandmaChase=null;const nightLength=2400;const storyMat={wood:mat(0x7d4134),roof:mat(0xb52c35),gold:mat(0xf6c847),leaf:mat(0x5b9b39),cloth:mat(0xe85c4c),ghost:mat(0xd8d1ed)};
 const shopPaint=[mat(0xb6534d),mat(0x9b7760),mat(0xd2aa77),mat(0x796f76),mat(0xb17865)];
-const shopTrim=mat(0xfff5d1),shutter=mat(0x655781),shopShadow=mat(0x39365b),windowGlow=mat(0xffe7a1),awningColors=[mat(0xff366e),mat(0x00cba9),mat(0xff9f20)];
+// Baked, shared ground-floor PBR storefronts: realistic shutter corrugation and warm glass displays.
+function makeShopfrontMaterial(glazed){
+ const c=document.createElement('canvas');c.width=c.height=256;
+ const p=c.getContext('2d');
+ if(glazed){
+  const gradient=p.createLinearGradient(0,0,256,256);
+  gradient.addColorStop(0,'#71817e');gradient.addColorStop(.42,'#253e48');gradient.addColorStop(1,'#101d29');
+  p.fillStyle=gradient;p.fillRect(0,0,256,256);
+  // Dim, warm merchandise silhouettes behind reflective shop windows.
+  p.fillStyle='rgba(213,151,77,.28)';p.fillRect(14,98,228,88);
+  for(let row=0;row<2;row++)for(let col=0;col<5;col++){
+   p.fillStyle=(row+col)%3===0?'#b88b4d':'#465756';
+   p.fillRect(23+col*44,111+row*30,25,18);
+  }
+  const glare=p.createLinearGradient(0,0,256,0);
+  glare.addColorStop(0,'rgba(225,235,230,.36)');glare.addColorStop(.28,'rgba(225,235,230,.02)');
+  glare.addColorStop(.64,'rgba(225,235,230,.17)');glare.addColorStop(1,'rgba(225,235,230,.02)');
+  p.fillStyle=glare;p.fillRect(0,0,256,256);
+  p.fillStyle='#6e6554';p.fillRect(0,0,10,256);p.fillRect(246,0,10,256);
+  p.fillRect(125,0,7,256);p.fillRect(0,0,256,11);p.fillRect(0,245,256,11);
+  p.fillStyle='#bba989';p.fillRect(116,130,3,32);p.fillRect(139,130,3,32);
+ }else{
+  const steel=p.createLinearGradient(0,0,256,0);
+  steel.addColorStop(0,'#4d4c4a');steel.addColorStop(.48,'#89857e');steel.addColorStop(1,'#494845');
+  p.fillStyle=steel;p.fillRect(0,0,256,256);
+  for(let y=0;y<256;y+=16){
+   p.fillStyle='rgba(14,22,27,.45)';p.fillRect(0,y,256,3);
+   p.fillStyle='rgba(237,226,200,.24)';p.fillRect(0,y+4,256,2);
+   p.fillStyle='rgba(22,30,35,.17)';p.fillRect(0,y+12,256,2);
+  }
+  for(let k=0;k<80;k++){
+   p.fillStyle=k%3===0?'rgba(94,48,29,.23)':'rgba(25,28,29,.16)';
+   p.fillRect((k*79+19)%252,(k*47+7)%248,1+k%4,2+k%8);
+  }
+  p.fillStyle='rgba(28,25,24,.3)';p.fillRect(0,0,13,256);p.fillRect(243,0,13,256);
+ }
+ const texture=new THREE.CanvasTexture(c);texture.colorSpace=THREE.SRGBColorSpace;
+ return new THREE.MeshStandardMaterial({map:texture,metalness:glazed?.22:.57,roughness:glazed?.32:.72});
+}
+const shopfrontMaterials={shutter:makeShopfrontMaterial(false),glass:makeShopfrontMaterial(true)};
+const shopTrim=mat(0xfff5d1),shopShadow=mat(0x39365b),windowGlow=mat(0xffe7a1),awningColors=[mat(0xff366e),mat(0x00cba9),mat(0xff9f20)];
 const signMaterials=[mat(0xff267a),mat(0x086bd8),mat(0x1cbf7a)];const neonSigns=[new THREE.MeshBasicMaterial({color:0xff3d96}),new THREE.MeshBasicMaterial({color:0x22ffe0}),new THREE.MeshBasicMaterial({color:0xffd64d})];const daySigns=signMaterials.slice();function applyDistrict(i){if(i===districtIndex)return;districtIndex=i;districtLabel.textContent=['☀️ BANGKOK DAYTIME','🌃 YAOWARAT NIGHT · TEST 6.9','🚧 RAMA II CONSTRUCTION · TEST 6.9','🛍️ JJ MARKET · CHATUCHAK · 8000+','🛣️ BANGKOK EXPRESSWAY · 12000+'][i];for(let k=0;k<3;k++)signMaterials[k]=i===1?neonSigns[k]:daySigns[k];for(const b of props){if(b.userData.sign)b.userData.sign.material=signMaterials[b.userData.signIndex%3]}const rama=i===2;M.grass.color.setHex(rama?0x78746d:0x34333b);M.road.color.setHex(rama?0x777b81:0x56535c);M.stripe.color.setHex(rama?0xe5e1d3:0xe2c579);shoulderPaint.color.setHex(rama?0x77736e:0x444148);curbPaint.color.setHex(rama?0x9d968b:0x756866);hint.textContent=['🛺 WELCOME TO BANGKOK!','🏮 WELCOME TO YAOWARAT!','🌇 SUNSET DRIVE!','🌿 JJ MARKET! WATCH THE TRAFFIC!','🛸 EXPRESSWAY! UFO LASERS INCOMING!'][i]}
 function makeRoadsideStory(kind,side,z){const g=new THREE.Group();if(kind==='shrine'){g.add(cube(1.5,.25,1.3,storyMat.wood,0,.55,0));for(const sx of [-.53,.53])for(const sz of [-.42,.42])g.add(cube(.12,1.55,.12,storyMat.gold,sx,1.4,sz));g.add(cube(1.9,.3,1.65,storyMat.roof,0,2.25,0));g.add(cube(.55,.8,.52,storyMat.gold,0,1.4,0))}else{g.add(cube(2.4,.95,1.45,storyMat.wood,0,.7,0));g.add(cube(2.65,.15,1.8,storyMat.cloth,0,1.65,0));for(let i=0;i<5;i++){const d=new THREE.Mesh(new THREE.IcosahedronGeometry(.24,0),M.durian);d.position.set((i-2)*.38,1.3,(i%2)*.34-.2);g.add(d)}const vendor=new THREE.Group();vendor.add(cube(.45,.8,.34,storyMat.cloth,0,1.48,0));vendor.add(ball(.34,M.skin,0,2.07,0));vendor.add(ball(.37,M.black,0,2.36,.02));vendor.add(ball(.08,M.white,-.13,2.1,-.29));vendor.add(ball(.08,M.white,.13,2.1,-.29));const arm=cube(.13,.63,.14,M.skin,-.37,1.55,0);vendor.add(arm);vendor.position.x=-.85;g.add(vendor);g.userData.vendorArm=arm;g.userData.vendorFruit=ball(.29,M.durian,-.35,1.65,-.4);g.add(g.userData.vendorFruit)}g.position.set(side*7.35,0,z);scene.add(g);storyProps.push({g,kind,side,triggered:false,dropTime:0});return g}
 function makeGrandma(){const g=new THREE.Group();g.add(cube(.72,1.25,.48,storyMat.ghost,0,1.18,0));g.add(ball(.44,M.skin,0,2.06,0));g.add(ball(.49,storyMat.ghost,0,2.37,.06));g.add(ball(.10,M.black,-.13,2.08,-.30));g.add(ball(.10,M.black,.13,2.08,-.30));g.add(cube(.23,.045,.05,M.red,0,1.88,-.34));const arms=[],legs=[];for(const side of [-1,1]){const leg=cube(.16,.86,.18,storyMat.ghost,side*.25,.52,0);g.add(leg);legs.push(leg);const arm=cube(.13,.82,.16,M.skin,side*.49,1.35,0);g.add(arm);arms.push(arm)}g.userData.runArms=arms;g.userData.runLegs=legs;return g}
@@ -211,8 +251,16 @@ function building(x,z,i){
  g.add(cube(4.15,.22,5.2,shopTrim,0,h+.08,0));if(i%4===0)g.add(cube(3.6,.75,.32,paint,0,h+.47,0));else if(i%4===1)g.add(cube(1.6,1.15,2.4,paint,-.85,h+.65,-.8));else if(i%4===2)for(const edge of [-1.65,1.65])g.add(cube(.12,.8,4.5,oldGold,edge,h+.52,0));g.add(cube(4.05,.17,5.05,M.purple,0,.22,0));
  // Facade faces the road, with ground floor shutter and striped awning.
  const front=x<0?2.56:-2.56;
- g.add(cube(2.6,2.0,.09,shutter,0,1.18,front));
- for(let j=0;j<3;j++)g.add(cube(2.55,.035,.11,shopTrim,0,.55+j*.62,front+(x<0?.06:-.06)));
+ // Reuse the existing frontage mesh; 25% shuttered shops, 75% glazed displays.
+ const closedShop=i%4===0;
+ g.add(cube(2.6,2.0,.09,closedShop?shopfrontMaterials.shutter:shopfrontMaterials.glass,0,1.18,front));
+ if(closedShop){
+  for(let j=0;j<3;j++)g.add(cube(2.55,.035,.11,shopTrim,0,.55+j*.62,front+(x<0?.06:-.06)));
+ }else{
+  // Three frame pieces replace three shutter strips; no extra storefront draw calls.
+  g.add(cube(.055,2.03,.13,oldGold,0,1.18,front+(x<0?.06:-.06)));
+  for(const y of [.2,2.16])g.add(cube(2.58,.06,.13,oldGold,0,y,front+(x<0?.06:-.06)));
+ }
  const canopy=cube(3.8,.12,1.0,awningColors[i%3],0,2.45,front+(x<0?.48:-.48));g.add(canopy);for(let k=-2;k<=2;k++){g.add(cube(.18,.14,1.04,shopTrim,k*.68,2.47,front+(x<0?.49:-.49)))}
  for(let floor=0;floor<2;floor++)for(let j=0;j<2;j++){
  const wy=3.65+floor*1.4;if(wy>h-.6)continue;
