@@ -913,17 +913,54 @@ for(let n=0;n<16;n++)for(const side of [-1,1]){
 }
 // Two-lane daytime JJ Market: fabric canopy, rough pavement and pedestrian-only hazards.
 // Shared canvas-striped tarpaulin: three market awning palettes, zero downloaded assets.
-const tentPalettes=[['#f2e5b8','#d59b68'],['#e8e5ce','#76a69a'],['#f3d9c9','#ca807e']];
-const tentColors=tentPalettes.map(([light,dark])=>{
+// Weathered, stitched Chatuchak tarpaulin: three shared PBR canvases, baked once.
+// Fabric folds, sun-faded stripes, rain staining and weave grain replace flat toy-like tents.
+const tentPalettes=[['#e2d5ae','#ae825c'],['#d8d9c6','#6f9385'],['#e4c6b6','#b77770']];
+const tentColors=tentPalettes.map(([light,dark],variant)=>{
  const canvas=document.createElement('canvas');canvas.width=256;canvas.height=256;
  const ctx=canvas.getContext('2d');ctx.fillStyle=light;ctx.fillRect(0,0,256,256);
- for(let x=0;x<256;x+=64){ctx.fillStyle=dark;ctx.fillRect(x,0,32,256);}
- ctx.strokeStyle='rgba(70,53,44,.22)';ctx.lineWidth=2;
- for(let x=0;x<=256;x+=32){ctx.beginPath();ctx.moveTo(x+.5,0);ctx.lineTo(x+.5,256);ctx.stroke();}
- for(const y of [7,249]){ctx.setLineDash([5,5]);ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(256,y);ctx.stroke();}
+ for(let x=0;x<256;x+=64){
+  ctx.fillStyle=dark;ctx.fillRect(x,0,32,256);
+  // The narrow highlight and edge shadow suggest folds without extra geometry.
+  const fold=ctx.createLinearGradient(x,0,x+64,0);
+  fold.addColorStop(0,'rgba(30,26,22,.24)');
+  fold.addColorStop(.19,'rgba(255,249,225,.12)');
+  fold.addColorStop(.47,'rgba(0,0,0,.10)');
+  fold.addColorStop(.72,'rgba(255,252,228,.16)');
+  fold.addColorStop(1,'rgba(34,30,24,.23)');
+  ctx.fillStyle=fold;ctx.fillRect(x,0,64,256);
+ }
+ // Reproducible small-scale dirt and canvas fibers; never redrawn per frame.
+ let seed=(variant+1)*2317;
+ const rand=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
+ for(let i=0;i<1700;i++){
+  const px=rand()*256,py=rand()*256,grain=rand();
+  ctx.fillStyle=grain<.55?'rgba(64,53,43,.095)':'rgba(255,251,224,.13)';
+  ctx.fillRect(px,py,1+rand()*1.5,.5+rand()*1.2);
+ }
+ for(let i=0;i<85;i++){
+  const px=rand()*256,py=rand()*256;
+  ctx.fillStyle='rgba(79,66,49,.07)';
+  ctx.fillRect(px,py,2+rand()*8,1+rand()*3);
+ }
+ const edgeWear=ctx.createLinearGradient(0,0,0,256);
+ edgeWear.addColorStop(0,'rgba(54,46,37,.21)');
+ edgeWear.addColorStop(.13,'rgba(54,46,37,0)');
+ edgeWear.addColorStop(.83,'rgba(54,46,37,0)');
+ edgeWear.addColorStop(1,'rgba(54,46,37,.27)');
+ ctx.fillStyle=edgeWear;ctx.fillRect(0,0,256,256);
+ ctx.strokeStyle='rgba(59,52,45,.31)';ctx.lineWidth=1.5;
+ for(let x=0;x<=256;x+=32){
+  ctx.setLineDash([3,5]);ctx.beginPath();ctx.moveTo(x+.5,0);ctx.lineTo(x+.5,256);ctx.stroke();
+ }
+ ctx.setLineDash([]);
+ for(const y of [7,249]){
+  ctx.strokeStyle='rgba(240,229,200,.43)';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(256,y);ctx.stroke();
+ }
  const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
  texture.wrapS=texture.wrapT=THREE.RepeatWrapping;texture.anisotropy=2;
- return new THREE.MeshLambertMaterial({map:texture,side:THREE.DoubleSide});
+ return new THREE.MeshStandardMaterial({map:texture,roughness:.94,metalness:0,side:THREE.DoubleSide});
 });
 const tentRoofGeometry=new THREE.BoxGeometry(9.7,.12,10.5);
 const tentPoleGeometry=new THREE.BoxGeometry(.1,5,.1);
