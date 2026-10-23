@@ -58,7 +58,54 @@ const shopTrim=mat(0xfff5d1),shutter=mat(0x655781),shopShadow=mat(0x39365b),wind
 const signMaterials=[mat(0xff267a),mat(0x086bd8),mat(0x1cbf7a)];const neonSigns=[new THREE.MeshBasicMaterial({color:0xff3d96}),new THREE.MeshBasicMaterial({color:0x22ffe0}),new THREE.MeshBasicMaterial({color:0xffd64d})];const daySigns=signMaterials.slice();function applyDistrict(i){if(i===districtIndex)return;districtIndex=i;districtLabel.textContent=['☀️ BANGKOK DAYTIME','🌃 YAOWARAT NIGHT · TEST 6.9','🚧 RAMA II CONSTRUCTION · TEST 6.9','🛍️ JJ MARKET · CHATUCHAK · 8000+','🛣️ BANGKOK EXPRESSWAY · 12000+'][i];for(let k=0;k<3;k++)signMaterials[k]=i===1?neonSigns[k]:daySigns[k];for(const b of props){if(b.userData.sign)b.userData.sign.material=signMaterials[b.userData.signIndex%3]}const rama=i===2;M.grass.color.setHex(rama?0x78746d:0x34333b);M.road.color.setHex(rama?0x777b81:0x56535c);M.stripe.color.setHex(rama?0xe5e1d3:0xe2c579);shoulderPaint.color.setHex(rama?0x77736e:0x444148);curbPaint.color.setHex(rama?0x9d968b:0x756866);hint.textContent=['🛺 WELCOME TO BANGKOK!','🏮 WELCOME TO YAOWARAT!','🌇 SUNSET DRIVE!','🌿 JJ MARKET! WATCH THE TRAFFIC!','🛸 EXPRESSWAY! UFO LASERS INCOMING!'][i]}
 function makeRoadsideStory(kind,side,z){const g=new THREE.Group();if(kind==='shrine'){g.add(cube(1.5,.25,1.3,storyMat.wood,0,.55,0));for(const sx of [-.53,.53])for(const sz of [-.42,.42])g.add(cube(.12,1.55,.12,storyMat.gold,sx,1.4,sz));g.add(cube(1.9,.3,1.65,storyMat.roof,0,2.25,0));g.add(cube(.55,.8,.52,storyMat.gold,0,1.4,0))}else{g.add(cube(2.4,.95,1.45,storyMat.wood,0,.7,0));g.add(cube(2.65,.15,1.8,storyMat.cloth,0,1.65,0));for(let i=0;i<5;i++){const d=new THREE.Mesh(new THREE.IcosahedronGeometry(.24,0),M.durian);d.position.set((i-2)*.38,1.3,(i%2)*.34-.2);g.add(d)}const vendor=new THREE.Group();vendor.add(cube(.45,.8,.34,storyMat.cloth,0,1.48,0));vendor.add(ball(.34,M.skin,0,2.07,0));vendor.add(ball(.37,M.black,0,2.36,.02));vendor.add(ball(.08,M.white,-.13,2.1,-.29));vendor.add(ball(.08,M.white,.13,2.1,-.29));const arm=cube(.13,.63,.14,M.skin,-.37,1.55,0);vendor.add(arm);vendor.position.x=-.85;g.add(vendor);g.userData.vendorArm=arm;g.userData.vendorFruit=ball(.29,M.durian,-.35,1.65,-.4);g.add(g.userData.vendorFruit)}g.position.set(side*7.35,0,z);scene.add(g);storyProps.push({g,kind,side,triggered:false,dropTime:0});return g}
 function makeGrandma(){const g=new THREE.Group();g.add(cube(.72,1.25,.48,storyMat.ghost,0,1.18,0));g.add(ball(.44,M.skin,0,2.06,0));g.add(ball(.49,storyMat.ghost,0,2.37,.06));g.add(ball(.10,M.black,-.13,2.08,-.30));g.add(ball(.10,M.black,.13,2.08,-.30));g.add(cube(.23,.045,.05,M.red,0,1.88,-.34));const arms=[],legs=[];for(const side of [-1,1]){const leg=cube(.16,.86,.18,storyMat.ghost,side*.25,.52,0);g.add(leg);legs.push(leg);const arm=cube(.13,.82,.16,M.skin,side*.49,1.35,0);g.add(arm);arms.push(arm)}g.userData.runArms=arms;g.userData.runLegs=legs;return g}
-function facadeMaterial(seed){const c=document.createElement('canvas');c.width=256;c.height=512;const a=c.getContext('2d');const colors=['#b18a69','#94745c','#9b8370','#b8a58b','#827365'];a.fillStyle=colors[seed%colors.length];a.fillRect(0,0,256,512);for(let y=0;y<512;y+=11){a.fillStyle='rgba(25,19,17,.075)';a.fillRect(0,y,256,1)}a.fillStyle='#3a3430';for(let floor=0;floor<4;floor++){const y=26+floor*112;for(let col=0;col<2;col++){const x=28+col*115;a.fillStyle='#c8b39b';a.fillRect(x-5,y-5,91,88);a.fillStyle='#242a32';a.fillRect(x,y,81,77);a.fillStyle=floor%2?'#735e42':'#3b4144';a.fillRect(x+5,y+5,71,66);a.fillStyle='rgba(255,205,107,.45)';a.fillRect(x+8,y+8,28,61);a.fillStyle='#c8aa78';a.fillRect(x+38,y,5,77);a.fillRect(x,y+37,81,4)}}a.fillStyle='rgba(39,25,22,.25)';for(let k=0;k<130;k++){const x=(k*71+seed*19)%256,y=(k*137+seed*31)%512;a.fillRect(x,y,2,3)}const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return new THREE.MeshLambertMaterial({map:t})}
+// Eight shared, weathered Yaowarat plaster facades: PBR response without extra meshes or textures.
+function facadeMaterial(seed){
+ const c=document.createElement('canvas');c.width=256;c.height=512;
+ const a=c.getContext('2d');
+ const colors=['#b18a69','#94745c','#9b8370','#b8a58b','#827365'];
+ const plaster=a.createLinearGradient(0,0,256,512);
+ plaster.addColorStop(0,colors[seed%colors.length]);
+ plaster.addColorStop(1,['#735b4d','#625246','#6b5c50','#807469','#594d48'][seed%5]);
+ a.fillStyle=plaster;a.fillRect(0,0,256,512);
+ // Fine mineral grain and chipped paint are baked once, not generated during animation.
+ for(let k=0;k<1550;k++){
+  const px=(k*73+seed*19)%256,py=(k*137+seed*31)%512;
+  a.fillStyle=k%3===0?'rgba(38,29,24,.11)':'rgba(255,235,197,.075)';
+  a.fillRect(px,py,1+(k%3),1+(k%2));
+ }
+ // Rain streaks and soot under ledges break up the flat toy-like wall finish.
+ for(let k=0;k<65;k++){
+  const x=(k*53+seed*37)%256,y=(k*89+seed*13)%440;
+  a.fillStyle='rgba(29,27,26,.065)';
+  a.fillRect(x,y,1+(k%2),16+(k%7)*7);
+ }
+ for(let floor=0;floor<4;floor++){
+  const y=26+floor*112;
+  a.fillStyle='rgba(32,25,22,.15)';a.fillRect(0,y+89,256,7);
+  a.fillStyle='rgba(242,213,176,.26)';a.fillRect(0,y+97,256,2);
+  for(let col=0;col<2;col++){
+   const x=28+col*115;
+   a.fillStyle='rgba(24,22,24,.3)';a.fillRect(x-8,y-8,98,93);
+   a.fillStyle='#c8b39b';a.fillRect(x-5,y-5,91,88);
+   a.fillStyle='#242a32';a.fillRect(x,y,81,77);
+   const lit=(floor+col+seed)%3===0;
+   a.fillStyle=lit?'#765d42':'#29353c';a.fillRect(x+5,y+5,71,66);
+   if(lit){
+    const glow=a.createLinearGradient(x+6,y,x+70,y);
+    glow.addColorStop(0,'rgba(255,205,107,.6)');
+    glow.addColorStop(1,'rgba(239,158,79,.08)');
+    a.fillStyle=glow;a.fillRect(x+8,y+8,60,61);
+   }else{
+    a.fillStyle='rgba(151,186,190,.14)';a.fillRect(x+10,y+8,9,56);
+   }
+   a.fillStyle='rgba(214,198,169,.78)';a.fillRect(x+38,y,5,77);a.fillRect(x,y+37,81,4);
+   a.fillStyle='rgba(28,25,25,.28)';a.fillRect(x-9,y+83,100,5);
+   a.fillStyle='rgba(238,222,194,.6)';a.fillRect(x-10,y+82,101,2);
+  }
+ }
+ const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=2;
+ return new THREE.MeshStandardMaterial({map:t,roughness:.91,metalness:0});
+}
 const facadeMaterials=Array.from({length:8},(_,i)=>facadeMaterial(i));
 // Shared bilingual Yaowarat enamel shop signs: baked lettering and grime, zero per-frame work.
 function streetSignMaterial(cn,th,bg='#6d080c'){
