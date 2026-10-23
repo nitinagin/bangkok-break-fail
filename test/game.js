@@ -128,6 +128,50 @@ function facadeMaterial(seed){
  return new THREE.MeshStandardMaterial({map:t,roughness:.91,metalness:0});
 }
 const facadeMaterials=Array.from({length:8},(_,i)=>facadeMaterial(i));
+
+// Four shared PBR glass variants, baked once for all scrolling Yaowarat shophouses.
+// Lit rooms, reflected sky and rain streaks replace flat opaque blue/yellow windows.
+function makeShopWindowMaterial(variant){
+ const c=document.createElement('canvas');c.width=128;c.height=128;
+ const p=c.getContext('2d'),lit=variant<2;
+ const glass=p.createLinearGradient(0,0,128,128);
+ glass.addColorStop(0,lit?'#8c745d':'#3b5b68');
+ glass.addColorStop(.48,lit?'#453c39':'#182f3b');
+ glass.addColorStop(1,lit?'#1b2830':'#101d2a');
+ p.fillStyle=glass;p.fillRect(0,0,128,128);
+ if(lit){
+  const room=p.createRadialGradient(61,55,4,61,60,82);
+  room.addColorStop(0,'rgba(255,197,116,.75)');
+  room.addColorStop(.65,'rgba(206,115,55,.24)');
+  room.addColorStop(1,'rgba(35,31,31,0)');
+  p.fillStyle=room;p.fillRect(0,0,128,128);
+  p.fillStyle='rgba(39,29,31,.74)';p.fillRect(variant===0?8:100,4,20,124);
+  p.fillStyle='rgba(18,22,28,.54)';p.fillRect(48,70,35,58);
+  p.fillStyle='rgba(240,197,133,.18)';p.fillRect(28,12,4,106);
+ }else{
+  p.fillStyle='rgba(115,171,187,.12)';p.fillRect(variant===2?13:88,6,18,115);
+  p.fillStyle='rgba(8,17,27,.44)';p.fillRect(6,91,116,31);
+ }
+ p.save();p.transform(1,0,-.32,1,22,0);
+ const sheen=p.createLinearGradient(18,0,53,0);
+ sheen.addColorStop(0,'rgba(181,222,226,0)');
+ sheen.addColorStop(.48,'rgba(189,224,225,.26)');
+ sheen.addColorStop(1,'rgba(189,224,225,0)');
+ p.fillStyle=sheen;p.fillRect(18,0,35,128);p.restore();
+ for(let k=0;k<18;k++){
+  const x=(k*43+variant*17)%128,y=(k*29+variant*11)%110;
+  p.fillStyle=k%3===0?'rgba(209,224,224,.09)':'rgba(15,23,28,.12)';
+  p.fillRect(x,y,1,8+(k%5)*5);
+ }
+ p.fillStyle='rgba(16,19,23,.33)';p.fillRect(0,115,128,13);
+ const texture=new THREE.CanvasTexture(c);
+ texture.colorSpace=THREE.SRGBColorSpace;texture.anisotropy=2;
+ return new THREE.MeshStandardMaterial({
+  map:texture,metalness:.12,roughness:lit?.33:.2,
+  emissive:lit?0x5c2c12:0x0b1722,emissiveIntensity:lit?.3:.08
+ });
+}
+const shopWindowMaterials=Array.from({length:4},(_,i)=>makeShopWindowMaterial(i));
 // Shared bilingual Yaowarat enamel shop signs: baked lettering and grime, zero per-frame work.
 function streetSignMaterial(cn,th,bg='#6d080c'){
  const c=document.createElement('canvas');c.width=512;c.height=256;
@@ -172,7 +216,7 @@ function building(x,z,i){
  const canopy=cube(3.8,.12,1.0,awningColors[i%3],0,2.45,front+(x<0?.48:-.48));g.add(canopy);for(let k=-2;k<=2;k++){g.add(cube(.18,.14,1.04,shopTrim,k*.68,2.47,front+(x<0?.49:-.49)))}
  for(let floor=0;floor<2;floor++)for(let j=0;j<2;j++){
  const wy=3.65+floor*1.4;if(wy>h-.6)continue;
- g.add(cube(.95,.96,.075,shopShadow,j===0?-.85:.85,wy,front));g.add(cube(.83,.85,.09,(i+floor+j)%3===0?windowGlow:M.glass,j===0?-.85:.85,wy,front+(x<0?.05:-.05)));
+ g.add(cube(.95,.96,.075,shopShadow,j===0?-.85:.85,wy,front));g.add(cube(.83,.85,.09,shopWindowMaterials[(i+floor*2+j)%4],j===0?-.85:.85,wy,front+(x<0?.05:-.05)));
  g.add(cube(.9,.08,.12,shopTrim,j===0?-.85:.85,wy+.46,front));
  g.add(cube(.08,.9,.13,shopTrim,j===0?-.85:.85,wy,front));
  }
