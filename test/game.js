@@ -691,22 +691,83 @@ function makeTaxi(){
  part(g,cube(1.56,.12,.09,taxiRubber,0,.55,-1.79));
  return g;
 }
-function makeTukTuk(){const g=new THREE.Group();
-part(g,cube(1.62,.75,2.55,tukBlue,0,.82,-.12));part(g,cube(1.68,.16,2.3,tukRed,0,1.15,-.16));part(g,cube(1.72,.16,2.43,tukRoof,0,2.43,-.19));
-for(const side of [-1,1]){part(g,cube(.075,1.17,.08,taxiChrome,side*.79,1.83,.71));part(g,cube(.075,1.17,.08,taxiChrome,side*.79,1.83,-1.08));const wh=new THREE.Mesh(new THREE.CylinderGeometry(.35,.35,.19,10),M.wheel);wh.rotation.z=Math.PI/2;wh.position.set(side*.82,.42,-1.02);part(g,wh);part(g,ball(.15,taxiLight,side*.57,1.03,1.24))}
-part(g,cube(1.38,.53,.07,taxiGlass,0,1.83,.79));part(g,cube(1.52,.08,.12,taxiChrome,0,2.28,.78));for(const side of [-1,1]){part(g,cube(.075,.55,.09,taxiChrome,side*.72,1.84,.78));part(g,cube(.11,.12,1.48,taxiChrome,side*.8,1.25,-.16));}part(g,cube(.72,.6,.8,tukBlue,0,.94,.91));part(g,cube(.72,.12,.12,taxiChrome,0,.66,1.32));part(g,cube(1.25,.32,.16,tukRed,0,.58,1.23));const front=new THREE.Mesh(new THREE.CylinderGeometry(.38,.38,.22,10),M.wheel);front.rotation.z=Math.PI/2;front.position.set(0,.39,1.32);part(g,front);part(g,cube(.63,.18,.3,taxiLight,0,2.53,.22));part(g,cube(1.46,.12,.09,taxiChrome,0,.55,1.27));part(g,cube(.85,.13,.55,tukRed,0,1.3,-.63));
-// Distinctive Thai tuk-tuk silhouette: passenger bench, rear rail and twin mirrors.
-part(g,cube(1.30,.16,.64,tukRed,0,1.32,-.62));
-part(g,cube(1.30,.54,.14,tukBlue,0,1.66,-1.03));
-part(g,cube(1.55,.09,.08,taxiChrome,0,1.35,-1.34));
-for(const side of [-1,1]){
- part(g,cube(.07,.94,.07,taxiChrome,side*.79,1.93,-1.20));
- part(g,cube(.07,.44,.07,taxiChrome,side*.94,1.83,.69));
- part(g,cube(.31,.22,.07,taxiGlass,side*.96,2.08,.70));
- part(g,ball(.13,taxiLight,side*.57,.75,-1.42));
+// Bangkok three-wheel taxi traffic: curved metal cowl, open passenger cabin,
+// arched canvas roof, correct three-wheel layout and PBR paint. Created once by
+// cachedObstacle('tuktuk'), so every traffic clone shares geometries/materials.
+const tukPaint=new THREE.MeshStandardMaterial({color:0x125a9c,metalness:.38,roughness:.4});
+const tukAccent=new THREE.MeshStandardMaterial({color:0xc92e3c,metalness:.25,roughness:.47});
+const tukCanvas=new THREE.MeshStandardMaterial({color:0x252a32,metalness:0,roughness:.94,side:THREE.DoubleSide});
+const tukTrim=new THREE.MeshStandardMaterial({color:0xb6b9ad,metalness:.74,roughness:.29});
+const tukWindow=new THREE.MeshStandardMaterial({color:0x426c80,metalness:.18,roughness:.21,transparent:true,opacity:.7,side:THREE.DoubleSide});
+const tukSeat=new THREE.MeshStandardMaterial({color:0x673c35,metalness:0,roughness:.89});
+const tukTyre=new THREE.MeshStandardMaterial({color:0x20232a,roughness:.96});
+const tukLamp=new THREE.MeshStandardMaterial({color:0xffe4b0,emissive:0x9a6c2b,emissiveIntensity:.4,roughness:.3});
+const tukTail=new THREE.MeshStandardMaterial({color:0xc92935,roughness:.38});
+function makeTukTuk(){
+ const g=new THREE.Group();
+ // The tapered pressed-metal nose and rear wheel arch have rounded bevels.
+ function sideShell(points,width,material){
+  const outline=new THREE.Shape();
+  points.forEach(([z,y],i)=>i?outline.lineTo(-z,y):outline.moveTo(-z,y));
+  outline.closePath();
+  const geo=new THREE.ExtrudeGeometry(outline,{depth:width-.07,steps:1,bevelEnabled:true,bevelThickness:.035,bevelSize:.035,bevelSegments:2,curveSegments:3});
+  const mesh=new THREE.Mesh(geo,material);
+  mesh.rotation.y=Math.PI/2;mesh.position.x=-(width-.07)/2;g.add(mesh);
+ }
+ sideShell([[-1.32,.55],[1.32,.55],[1.47,.81],[1.27,1.24],[.94,1.47],[.44,1.34],[-.65,1.08],[-1.29,1.04]],1.5,tukPaint);
+ sideShell([[.62,1.12],[1.26,1.14],[1.32,1.22],[.84,1.31]],1.54,tukAccent);
+ // Open-sided passenger compartment: no solid toy-box walls above the beltline.
+ for(const side of [-1,1]){
+  g.add(cube(.065,.45,1.12,tukPaint,side*.73,1.03,-.63));
+  g.add(cube(.045,.09,1.23,tukAccent,side*.765,1.28,-.61));
+  // Rear tyres and inset metallic hubs.
+  const wheel=new THREE.Mesh(new THREE.CylinderGeometry(.37,.37,.19,14),tukTyre);
+  wheel.rotation.z=Math.PI/2;wheel.position.set(side*.81,.42,-.96);g.add(wheel);
+  const hub=new THREE.Mesh(new THREE.CylinderGeometry(.2,.2,.205,12),tukTrim);
+  hub.rotation.z=Math.PI/2;hub.position.copy(wheel.position);g.add(hub);
+  rod(g,[side*.73,1.27,-1.23],[side*.76,2.35,-1.21],.032,tukTrim);
+  rod(g,[side*.74,1.32,.58],[side*.77,2.36,.7],.032,tukTrim);
+  // Handlebar mirrors project beyond the narrow front cab.
+  rod(g,[side*.61,1.45,.89],[side*.9,1.93,1.03],.027,tukTrim);
+  const mirror=cube(.29,.19,.07,tukWindow,side*.91,1.98,1.04);mirror.rotation.y=side*.12;g.add(mirror);
+  g.add(ball(.12,tukTail,side*.57,.84,-1.36));
+ }
+ // Single steerable-looking front wheel, front mudguard and round headlamp.
+ const frontWheel=new THREE.Mesh(new THREE.CylinderGeometry(.37,.37,.21,14),tukTyre);
+ frontWheel.rotation.z=Math.PI/2;frontWheel.position.set(0,.4,1.41);g.add(frontWheel);
+ const frontHub=new THREE.Mesh(new THREE.CylinderGeometry(.19,.19,.22,12),tukTrim);
+ frontHub.rotation.z=Math.PI/2;frontHub.position.copy(frontWheel.position);g.add(frontHub);
+ const fender=ball(.41,tukPaint,0,.74,1.39);fender.scale.set(1,.28,1.12);g.add(fender);
+ g.add(ball(.23,tukTrim,0,1.15,1.44));
+ g.add(ball(.18,tukLamp,0,1.15,1.57));
+ g.add(cube(.95,.075,.09,tukTrim,0,.61,1.44));
+ // Open cabin with upholstered bench and rear backrest.
+ g.add(cube(1.31,.19,.7,tukSeat,0,1.34,-.75));
+ g.add(cube(1.31,.56,.14,tukSeat,0,1.68,-1.11));
+ g.add(cube(1.43,.08,.09,tukTrim,0,1.38,-1.32));
+ // Windscreen uses thin tinted PBR glazing rather than an opaque blue block.
+ const glass=new THREE.Mesh(new THREE.PlaneGeometry(1.37,.67),tukWindow);
+ glass.position.set(0,1.88,.79);glass.rotation.x=-.15;g.add(glass);
+ rod(g,[-.7,1.53,.85],[-.7,2.23,.72],.027,tukTrim);
+ rod(g,[.7,1.53,.85],[.7,2.23,.72],.027,tukTrim);
+ g.add(cube(1.46,.055,.055,tukTrim,0,2.24,.72));
+ // Curved cloth canopy: a single low-poly strip instead of a flat slab.
+ const vertices=[],indices=[],nx=8,nz=3;
+ for(let iz=0;iz<=nz;iz++)for(let ix=0;ix<=nx;ix++){
+  const x=-.86+ix*1.72/nx,z=-1.38+iz*2.16/nz;
+  vertices.push(x,2.34+.16*(1-(x/.86)*(x/.86)),z);
+ }
+ for(let iz=0;iz<nz;iz++)for(let ix=0;ix<nx;ix++){
+  const a=iz*(nx+1)+ix,b=a+nx+1;indices.push(a,b,a+1,b,b+1,a+1);
+ }
+ const roofGeometry=new THREE.BufferGeometry();
+ roofGeometry.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));
+ roofGeometry.setIndex(indices);roofGeometry.computeVertexNormals();
+ g.add(new THREE.Mesh(roofGeometry,tukCanvas));
+ rod(g,[-.87,2.35,-1.39],[.87,2.35,-1.39],.033,tukTrim);
+ rod(g,[-.87,2.35,.78],[.87,2.35,.78],.033,tukTrim);
+ return g;
 }
-part(g,cube(1.42,.12,.16,taxiChrome,0,.68,-1.45));
-return g}
 function makeBike(){
  const g=new THREE.Group();
  const orange=new THREE.MeshStandardMaterial({color:0xf4511e,roughness:.48});
