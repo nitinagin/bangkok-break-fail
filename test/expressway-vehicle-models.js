@@ -41,15 +41,34 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   box(0,1.28,-.65,1.4,.035,.43,windshield);
  }
  const tailLamps=new THREE.MeshStandardMaterial({color:0xff3028,emissive:0xee1308,emissiveIntensity:.9,roughness:.28});
+ // Instanced tires and machined hubs add exterior detail without extra wheel draw calls.
  const tireGeo=new THREE.CylinderGeometry(isBus?.43:.37,isBus?.43:.37,.18,12);tireGeo.rotateZ(Math.PI/2);
+ const hubGeo=new THREE.CylinderGeometry(isBus?.26:.22,isBus?.26:.22,.025,12);hubGeo.rotateZ(Math.PI/2);
+ const hubMetal=new THREE.MeshStandardMaterial({color:0x9da9b1,metalness:.8,roughness:.3});
+ const mirrorShell=new THREE.MeshStandardMaterial({color:0x20272d,metalness:.2,roughness:.48});
+ const mirrorGlass=new THREE.MeshStandardMaterial({color:0x8aabb8,metalness:.65,roughness:.16});
+ const tires=new THREE.InstancedMesh(tireGeo,rubber,4);
+ const hubs=new THREE.InstancedMesh(hubGeo,hubMetal,4);
+ const mirrorBodies=new THREE.InstancedMesh(new THREE.BoxGeometry(isBus?.36:.28,isBus?.25:.18,.15),mirrorShell,2);
+ const mirrorFaces=new THREE.InstancedMesh(new THREE.BoxGeometry(isBus?.29:.22,isBus?.19:.12,.012),mirrorGlass,2);
+ const matrix=new THREE.Matrix4();
+ let wheelIndex=0,mirrorIndex=0;
  for(const side of [-1,1]){
   for(const axle of [-1,1]){
-   const wheel=new THREE.Mesh(tireGeo,rubber);wheel.position.set(side*w*.48,.4,axle*(isBus?1.42:1.1));group.add(wheel);
+   const wheelZ=axle*(isBus?1.42:1.1);
+   matrix.makeTranslation(side*w*.48,.4,wheelZ);tires.setMatrixAt(wheelIndex,matrix);
+   matrix.makeTranslation(side*(w*.48+.108),.4,wheelZ);hubs.setMatrixAt(wheelIndex,matrix);
+   wheelIndex++;
   }
-  // Keep two white front lamps and two red rear lamps, not duplicate front lamps per axle.
+  const mirrorX=side*(w/2+.12),mirrorY=isBus?2.12:1.18,mirrorZ=isBus?1.96:.63;
+  matrix.makeTranslation(mirrorX,mirrorY,mirrorZ);mirrorBodies.setMatrixAt(mirrorIndex,matrix);
+  matrix.makeTranslation(mirrorX,mirrorY,mirrorZ-.081);mirrorFaces.setMatrixAt(mirrorIndex,matrix);
+  mirrorIndex++;
+  // Keep distinct front and rear lamps.
   box(side*w*.37,.8,length/2+.04,.27,.14,.06,lamps);
   box(side*w*.37,.8,-length/2-.04,.27,.14,.06,tailLamps);
  }
+ group.add(tires,hubs,mirrorBodies,mirrorFaces);
  group.userData.type=type;
  return group;
 }
