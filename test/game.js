@@ -815,7 +815,7 @@ const g=!mobile&&type==='yaksha'&&yakshaTemplate&&!hazards.some(h=>h.type==='yak
 }
 hazards.push({g,type,madness,boss,durianSide,passed:false,hit:false,phase:Math.random()*6.28,baseX:lane,announced:false,nearAwarded:false,swerve:jamFormation?0:madness==='cuttingBus'?(lane===3.35?-1:lane===-3.35?1:(Math.random()<.5?-1:1)):Math.random()<.6?(Math.random()<.5?-1:1):0,swerveStart:madness==='cuttingBus'?-40:-23-Math.random()*15})}
 let paused=false,challengeStage=0,challengeDisplay='',comboTime=0,active=false,meters=0,bonus=0,speed=120,x=0,tilt=0,neutral=null,lastGamma=null,hasMotion=false,smoothed=0,spawnClock=0,inv=0,flips=0,combo=0,misses=0,crashes=0,best=0,last=performance.now(),shake=0,missionDone=false,soundOn=true,audio=null;try{best=Number(localStorage.getItem('bbf-best3d')||0)}catch(e){}
-function reset(){nightCount=0;expresswayArt.group.visible=false;pattayaStreet.visible=false;pattayaWave=0;grandmaTriggeredNight=0;if(grandmaChase){scene.remove(grandmaChase.g);grandmaChase=null}storyProps.forEach(p=>scene.remove(p.g));storyProps.length=0;visualRush=0;camera.fov=76;camera.updateProjectionMatrix();cockpit.position.y=-.22;paused=false;$('pauseBtn').textContent='⏸';bossSpawned=false;bossBeaten=false;for(const p of props)p.visible=true;for(const p of neonReflections){p.position.z=p.userData.startZ;p.visible=true;}for(const p of ramaStructures){p.visible=false;p.position.z=p.userData.startZ;}for(const shop of roadsideShops){shop.g.visible=shop.stage===1;shop.g.position.z=shop.startZ;}for(const stall of marketStalls){stall.visible=false;stall.position.z=stall.userData.startZ;}for(const tent of marketCanopies){tent.visible=false;tent.position.z=tent.userData.startZ;}for(const bump of marketBumps){bump.visible=false;bump.position.z=bump.userData.startZ;}for(const mesh of marketCrowdMeshes)mesh.visible=false;canalGroup.visible=false;districtIndex=-1;applyDistrict(1);scene.background.copy(districtSkies[1]);scene.fog.color.copy(districtSkies[1]);spawnIndex=0;eventCount=0;lastEventMeters=-250;active=true;meters=0;bonus=0;missionDone=false;shake=0;speed=120;x=0;tilt=0;neutral=lastGamma;smoothed=0;spawnClock=.45;inv=0;flips=0;combo=0;comboTime=0;challengeStage=0;challengeDisplay='';challenge.textContent='🎯 SURVIVE 500m · +250';misses=0;crashes=0;hazards.forEach(h=>scene.remove(h.g));hazards.length=0;overlay.style.display='none';hint.textContent='📱 SMALL TILTS TO STEER · 🎯 RECENTER'}
+function reset(){nightCount=0;expresswayArt.group.visible=false;pattayaStreet.visible=false;pattayaWave=0;for(let i=0;i<pattayaShops.length;i++)pattayaShops[i].position.z=-8-i*9.6;grandmaTriggeredNight=0;if(grandmaChase){scene.remove(grandmaChase.g);grandmaChase=null}storyProps.forEach(p=>scene.remove(p.g));storyProps.length=0;visualRush=0;camera.fov=76;camera.updateProjectionMatrix();cockpit.position.y=-.22;paused=false;$('pauseBtn').textContent='⏸';bossSpawned=false;bossBeaten=false;for(const p of props)p.visible=true;for(const p of neonReflections){p.position.z=p.userData.startZ;p.visible=true;}for(const p of ramaStructures){p.visible=false;p.position.z=p.userData.startZ;}for(const shop of roadsideShops){shop.g.visible=shop.stage===1;shop.g.position.z=shop.startZ;}for(const stall of marketStalls){stall.visible=false;stall.position.z=stall.userData.startZ;}for(const tent of marketCanopies){tent.visible=false;tent.position.z=tent.userData.startZ;}for(const bump of marketBumps){bump.visible=false;bump.position.z=bump.userData.startZ;}for(const mesh of marketCrowdMeshes)mesh.visible=false;canalGroup.visible=false;districtIndex=-1;applyDistrict(1);scene.background.copy(districtSkies[1]);scene.fog.color.copy(districtSkies[1]);spawnIndex=0;eventCount=0;lastEventMeters=-250;active=true;meters=0;bonus=0;missionDone=false;shake=0;speed=120;x=0;tilt=0;neutral=lastGamma;smoothed=0;spawnClock=.45;inv=0;flips=0;combo=0;comboTime=0;challengeStage=0;challengeDisplay='';challenge.textContent='🎯 SURVIVE 500m · +250';misses=0;crashes=0;hazards.forEach(h=>scene.remove(h.g));hazards.length=0;overlay.style.display='none';hint.textContent='📱 SMALL TILTS TO STEER · 🎯 RECENTER'}
 function finish(){active=false;const points=Math.floor(meters+bonus);if(points>best){best=points;try{localStorage.setItem('bbf-best3d',String(best))}catch(e){}}panel.innerHTML='<h1>💥 GAME OVER!</h1><p>SCORE '+points+' · BEST '+best+'</p><p>Near misses '+misses+' · Crashes '+crashes+'</p><p>'+(missionDone?'🏆 1000m mission complete!':'🎯 Reach 1000m for +500 points')+'</p><button id="again">TRY AGAIN</button><small>No brakes. No rules. Just Bangkok.</small>';overlay.style.display='grid';$('again').onclick=reset}
 function sound(freq=240,duration=.12,type='square'){if(!soundOn)return;try{audio=audio||new (window.AudioContext||window.webkitAudioContext)();if(audio.state==='suspended')audio.resume();const o=audio.createOscillator(),gain=audio.createGain();o.type=type;o.frequency.setValueAtTime(freq,audio.currentTime);o.frequency.exponentialRampToValueAtTime(Math.max(55,freq*.55),audio.currentTime+duration);gain.gain.setValueAtTime(.075,audio.currentTime);gain.gain.exponentialRampToValueAtTime(.001,audio.currentTime+duration);o.connect(gain);gain.connect(audio.destination);o.start();o.stop(audio.currentTime+duration)}catch(e){}}
 // 8000-point stage: Chatuchak (JJ Market) craft, vintage and plant stalls.
@@ -1060,9 +1060,44 @@ function expresswayVehicle(type){
  const pattayaStreet=new THREE.Group();scene.add(pattayaStreet);pattayaStreet.visible=false;
  const pattayaWall=new THREE.MeshStandardMaterial({color:0x343642,roughness:.88});
  const pattayaGlass=new THREE.MeshStandardMaterial({color:0x142738,metalness:.4,roughness:.24});
- const pattayaNeon=[0xff3caa,0x18dfff,0xffd05a,0xa873ff].map(c=>new THREE.MeshStandardMaterial({color:c,emissive:c,emissiveIntensity:1.6}));
- const pattayaShops=[];
- for(let i=0;i<20;i++){const g=new THREE.Group(),side=i%2?1:-1;g.add(cube(4.5,5.4,7,pattayaWall,0,2.7,0));g.add(cube(3.2,2.7,.12,pattayaGlass,0,1.7,-3.55));g.add(cube(3.5,.42,.15,pattayaNeon[i%4],0,4.25,-3.62));g.position.set(side*8.7,0,-8-i*9.6);pattayaStreet.add(g);pattayaShops.push(g);}
+
+ // Correct street-facing facades: storefronts face inward along X, not toward Z.
+ // Four bilingual signs share four baked textures across twenty storefronts.
+ const pattayaNeon=[0xff3caa,0x18dfff,0xffd05a,0xa873ff].map(c=>new THREE.MeshStandardMaterial({color:c,emissive:c,emissiveIntensity:1.4,roughness:.38}));
+ const pattayaSignCopy=[
+  ['WALKING STREET','ถนนคนเดิน','#ff65b9'],
+  ['LIVE MUSIC','ดนตรีสด','#48e7ff'],
+  ['SEAFOOD','อาหารทะเล','#ffd676'],
+  ['PATTAYA NIGHT','พัทยา','#b68bff']
+ ];
+ const pattayaSigns=pattayaSignCopy.map(([english,thai,color])=>{
+  const canvas=document.createElement('canvas');canvas.width=512;canvas.height=192;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#111525';ctx.fillRect(0,0,512,192);
+  const panel=ctx.createLinearGradient(0,0,512,0);
+  panel.addColorStop(0,'#18202e');panel.addColorStop(.5,'#10131e');panel.addColorStop(1,'#242032');
+  ctx.fillStyle=panel;ctx.fillRect(12,12,488,168);
+  ctx.strokeStyle=color;ctx.lineWidth=7;ctx.strokeRect(9,9,494,174);
+  ctx.textAlign='center';ctx.textBaseline='middle';ctx.shadowColor=color;
+  ctx.shadowBlur=12;ctx.fillStyle=color;
+  ctx.font='bold 54px Arial, sans-serif';ctx.fillText(english,256,78,468);
+  ctx.shadowBlur=8;ctx.font='bold 36px "Noto Sans Thai", sans-serif';
+  ctx.fillText(thai,256,143,464);ctx.shadowBlur=0;
+  const texture=new THREE.CanvasTexture(canvas);
+  texture.colorSpace=THREE.SRGBColorSpace;texture.anisotropy=4;
+  return new THREE.MeshBasicMaterial({map:texture,side:THREE.DoubleSide});
+ });
+ const pattayaShops=[],pattayaSignPlane=new THREE.PlaneGeometry(4.15,1.55);
+ for(let i=0;i<20;i++){
+  const g=new THREE.Group(),side=i%2?1:-1;
+  g.add(cube(4.5,5.4,7,pattayaWall,0,2.7,0));
+  g.add(cube(.12,2.7,5.7,pattayaGlass,-side*2.32,1.7,0));
+  g.add(cube(.58,.15,6.1,pattayaNeon[i%4],-side*2.48,3.23,0));
+  const sign=new THREE.Mesh(pattayaSignPlane,pattayaSigns[i%4]);
+  sign.position.set(-side*2.39,4.25,0);sign.rotation.y=-side*Math.PI/2;
+  g.add(sign);g.position.set(side*8.7,0,-8-i*9.6);
+  pattayaStreet.add(g);pattayaShops.push(g);
+ }
  let pattayaWave=0;
  const pattayaSkin=new THREE.MeshStandardMaterial({color:0xc99570,roughness:.85});
  const pattayaCloth=new THREE.MeshStandardMaterial({color:0x30344c,roughness:.9});
