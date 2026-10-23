@@ -619,11 +619,78 @@ function makeBus(variant='red'){const g=new THREE.Group(),blue=variant==='blue',
 // Performance-friendly traffic silhouettes with far fewer draw calls.
 const taxiPink=mat(0xed3887),taxiGlass=mat(0x35596d),taxiTrim=mat(0xf5e8b6),bikeMetal=mat(0x27282e),bikeYellow=mat(0xeab029),bikeBlue=mat(0x28528a);
 const taxiGreen=mat(0x008c71),taxiYellow=mat(0xffcb27),taxiLight=mat(0xfff5d8),taxiChrome=mat(0x9eb6c2),tukBlue=mat(0x0847bd),tukRed=mat(0xcf283c),tukRoof=mat(0x252632);
-function makeTaxi(){const g=new THREE.Group();
-part(g,cube(2.03,.63,3.48,taxiGreen,0,.82,0));part(g,cube(1.92,.18,3.38,taxiYellow,0,1.18,0));part(g,cube(1.63,.68,1.92,taxiYellow,0,1.48,-.13));
-part(g,cube(1.48,.47,.07,taxiGlass,0,1.52,.88));part(g,cube(1.48,.42,.07,taxiGlass,0,1.52,-1.13));
-for(const side of [-1,1]){part(g,cube(.055,.44,1.35,taxiGlass,side*.83,1.51,-.16));part(g,cube(.10,.12,.25,taxiYellow,side*1.06,1.4,.67));for(const z of [-1.1,1.12]){const w=new THREE.Mesh(new THREE.CylinderGeometry(.36,.36,.18,10),M.wheel);w.rotation.z=Math.PI/2;w.position.set(side*1.02,.44,z);part(g,w);const hub=new THREE.Mesh(new THREE.CylinderGeometry(.17,.17,.19,9),taxiChrome);hub.rotation.z=Math.PI/2;hub.position.copy(w.position);part(g,hub)}part(g,ball(.18,taxiLight,side*.72,1.05,1.78))}
-part(g,cube(.72,.18,.42,taxiLight,0,1.91,-.19));part(g,cube(1.05,.22,.07,taxiChrome,0,.82,1.78));part(g,cube(1.82,.10,.08,taxiChrome,0,.49,1.77));part(g,cube(1.56,.10,.09,taxiChrome,0,.55,-1.76));for(const side of [-1,1]){part(g,cube(.22,.12,.07,taxiLight,side*.73,1.06,-1.77));part(g,cube(.09,.09,.7,taxiChrome,side*.91,1.16,.03));}part(g,cube(.75,.14,.09,taxiGreen,0,.56,1.8));return g}
+// A rounded, two-tone Thai metered taxi instead of stacked cuboids.
+// Built once in cachedObstacle('taxi'): cloned traffic shares all PBR materials and geometry.
+const taxiPaintGreen=new THREE.MeshStandardMaterial({color:0x087d5a,metalness:.18,roughness:.39});
+const taxiPaintYellow=new THREE.MeshStandardMaterial({color:0xf3c62d,metalness:.14,roughness:.43});
+const taxiTintedGlass=new THREE.MeshStandardMaterial({color:0x263f4b,metalness:.23,roughness:.2,transparent:true,opacity:.89,side:THREE.DoubleSide});
+const taxiRubber=new THREE.MeshStandardMaterial({color:0x1d252b,roughness:.92});
+const taxiBrakeLens=new THREE.MeshStandardMaterial({color:0xb52431,metalness:.08,roughness:.34});
+function makeTaxi(){
+ const g=new THREE.Group();
+ // Extrude a sedan side profile along X; rounded bevels replace toy-like box edges.
+ function profile(points,width,material){
+  const outline=new THREE.Shape();
+  points.forEach(([z,y],i)=>i?outline.lineTo(-z,y):outline.moveTo(-z,y));
+  outline.closePath();
+  const geometry=new THREE.ExtrudeGeometry(outline,{depth:width-.08,steps:1,bevelEnabled:true,bevelThickness:.04,bevelSize:.04,bevelSegments:1,curveSegments:2});
+  const mesh=new THREE.Mesh(geometry,material);
+  mesh.rotation.y=Math.PI/2;mesh.position.x=-(width-.08)/2;
+  g.add(mesh);return mesh;
+ }
+ profile([[-1.72,.58],[1.72,.58],[1.75,.93],[1.52,1.17],[.93,1.23],[-1.36,1.23],[-1.7,1.13]],1.98,taxiPaintGreen);
+ profile([[-1.12,1.2],[-.8,1.78],[-.52,1.92],[.43,1.92],[.87,1.2]],1.59,taxiPaintYellow);
+ // Four side panes follow the actual sloped roofline, not rectangular stickers.
+ function sideWindow(points,side){
+  const shape=new THREE.Shape();
+  points.forEach(([z,y],i)=>i?shape.lineTo(-z,y):shape.moveTo(-z,y));
+  shape.closePath();
+  const glass=new THREE.Mesh(new THREE.ShapeGeometry(shape),taxiTintedGlass);
+  glass.rotation.y=Math.PI/2;glass.position.x=side*.835;
+  g.add(glass);
+ }
+ for(const side of [-1,1]){
+  sideWindow([[-.77,1.39],[-.59,1.73],[-.13,1.75],[-.13,1.39]],side);
+  sideWindow([[-.06,1.39],[-.06,1.75],[.4,1.75],[.68,1.39]],side);
+  part(g,cube(.045,.51,.06,taxiRubber,side*.855,1.59,-.09));
+  // Lower door beltline and door handles.
+  part(g,cube(.045,.045,1.48,taxiChrome,side*1.005,1.21,-.08));
+  for(const z of [-.54,.47])part(g,cube(.045,.055,.2,taxiChrome,side*1.015,1.13,z));
+  for(const z of [-1.08,1.1]){
+   const tyre=new THREE.Mesh(new THREE.CylinderGeometry(.37,.37,.2,12),M.wheel);
+   tyre.rotation.z=Math.PI/2;tyre.position.set(side*1.02,.43,z);g.add(tyre);
+   const hub=new THREE.Mesh(new THREE.CylinderGeometry(.19,.19,.208,12),taxiChrome);
+   hub.rotation.z=Math.PI/2;hub.position.copy(tyre.position);g.add(hub);
+  }
+  part(g,cube(.2,.12,.29,taxiPaintYellow,side*1.04,1.42,.68));
+  part(g,cube(.13,.065,.14,taxiTintedGlass,side*1.15,1.44,.71));
+  part(g,cube(.34,.16,.075,taxiLight,side*.71,.99,1.76));
+  part(g,cube(.3,.16,.075,taxiBrakeLens,side*.73,.97,-1.75));
+ }
+ const frontGlass=new THREE.Mesh(new THREE.PlaneGeometry(1.42,.49),taxiTintedGlass);
+ frontGlass.position.set(0,1.51,.83);frontGlass.rotation.x=-.48;g.add(frontGlass);
+ const rearGlass=new THREE.Mesh(new THREE.PlaneGeometry(1.39,.44),taxiTintedGlass);
+ rearGlass.position.set(0,1.51,-.91);rearGlass.rotation.x=.45;g.add(rearGlass);
+ // Distinct Bangkok TAXI-METER roof sign, painted once for all traffic clones.
+ const signCanvas=document.createElement('canvas');signCanvas.width=256;signCanvas.height=128;
+ const ctx=signCanvas.getContext('2d');
+ ctx.fillStyle='#f8f2d7';ctx.fillRect(0,0,256,128);
+ ctx.fillStyle='#11654b';ctx.fillRect(6,6,244,116);
+ ctx.fillStyle='#fff8dd';ctx.font='bold 41px sans-serif';ctx.textAlign='center';ctx.fillText('TAXI',128,55);
+ ctx.font='bold 25px sans-serif';ctx.fillText('แท็กซี่',128,95);
+ const signTexture=new THREE.CanvasTexture(signCanvas);
+ signTexture.colorSpace=THREE.SRGBColorSpace;signTexture.anisotropy=1;
+ const signMaterial=new THREE.MeshBasicMaterial({map:signTexture,side:THREE.DoubleSide});
+ part(g,cube(.8,.29,.25,taxiLight,0,2.08,-.07));
+ for(const z of [-.201,.061]){
+  const sign=new THREE.Mesh(new THREE.PlaneGeometry(.74,.23),signMaterial);
+  sign.position.set(0,2.08,z);if(z<0)sign.rotation.y=Math.PI;
+  g.add(sign);
+ }
+ part(g,cube(1.58,.14,.09,taxiRubber,0,.55,1.79));
+ part(g,cube(1.56,.12,.09,taxiRubber,0,.55,-1.79));
+ return g;
+}
 function makeTukTuk(){const g=new THREE.Group();
 part(g,cube(1.62,.75,2.55,tukBlue,0,.82,-.12));part(g,cube(1.68,.16,2.3,tukRed,0,1.15,-.16));part(g,cube(1.72,.16,2.43,tukRoof,0,2.43,-.19));
 for(const side of [-1,1]){part(g,cube(.075,1.17,.08,taxiChrome,side*.79,1.83,.71));part(g,cube(.075,1.17,.08,taxiChrome,side*.79,1.83,-1.08));const wh=new THREE.Mesh(new THREE.CylinderGeometry(.35,.35,.19,10),M.wheel);wh.rotation.z=Math.PI/2;wh.position.set(side*.82,.42,-1.02);part(g,wh);part(g,ball(.15,taxiLight,side*.57,1.03,1.24))}
