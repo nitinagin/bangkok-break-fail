@@ -40,10 +40,15 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   box(0,1.28,.43,1.4,.035,.63,windshield);
   box(0,1.28,-.65,1.4,.035,.43,windshield);
  }
+ const tailLamps=new THREE.MeshStandardMaterial({color:0xff3028,emissive:0xee1308,emissiveIntensity:.9,roughness:.28});
  const tireGeo=new THREE.CylinderGeometry(isBus?.43:.37,isBus?.43:.37,.18,12);tireGeo.rotateZ(Math.PI/2);
- for(const side of [-1,1])for(const axle of [-1,1]){
-  const wheel=new THREE.Mesh(tireGeo,rubber);wheel.position.set(side*w*.48,.4,axle*(isBus?1.42:1.1));group.add(wheel);
+ for(const side of [-1,1]){
+  for(const axle of [-1,1]){
+   const wheel=new THREE.Mesh(tireGeo,rubber);wheel.position.set(side*w*.48,.4,axle*(isBus?1.42:1.1));group.add(wheel);
+  }
+  // Keep two white front lamps and two red rear lamps, not duplicate front lamps per axle.
   box(side*w*.37,.8,length/2+.04,.27,.14,.06,lamps);
+  box(side*w*.37,.8,-length/2-.04,.27,.14,.06,tailLamps);
  }
  group.userData.type=type;
  return group;
