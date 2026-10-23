@@ -1058,8 +1058,78 @@ function expresswayVehicle(type){
 
  // Pattaya Walking Street: lightweight night facades with shared PBR neon materials.
  const pattayaStreet=new THREE.Group();scene.add(pattayaStreet);pattayaStreet.visible=false;
- const pattayaWall=new THREE.MeshStandardMaterial({color:0x343642,roughness:.88});
- const pattayaGlass=new THREE.MeshStandardMaterial({color:0x142738,metalness:.4,roughness:.24});
+
+ // Two weathered plaster and two layered glass textures shared by twenty shops.
+ // All detail is baked at startup: no additional meshes, lights or frame-time painting.
+ function pattayaWallMaterial(seed){
+  const canvas=document.createElement('canvas');canvas.width=256;canvas.height=512;
+  const ctx=canvas.getContext('2d'),gradient=ctx.createLinearGradient(0,0,256,512);
+  const colors=seed?['#716257','#4d4543','#30323a']:['#59575a','#353841','#222b32'];
+  gradient.addColorStop(0,colors[0]);gradient.addColorStop(.55,colors[1]);gradient.addColorStop(1,colors[2]);
+  ctx.fillStyle=gradient;ctx.fillRect(0,0,256,512);
+  // Stucco grain, rain streaks, soot, patch repairs and concrete floor seams.
+  for(let k=0;k<1300;k++){
+   const x=(k*73+seed*41)%256,y=(k*137+seed*59)%512;
+   ctx.fillStyle=k%4===0?'rgba(12,15,19,.17)':'rgba(211,203,182,.075)';
+   ctx.fillRect(x,y,1+k%3,1+k%2);
+  }
+  for(let k=0;k<65;k++){
+   const x=(k*47+seed*17)%256,y=(k*83+seed*29)%470;
+   ctx.fillStyle='rgba(12,16,23,.1)';ctx.fillRect(x,y,1+k%2,15+(k*7)%70);
+  }
+  for(let row=1;row<5;row++){
+   const y=row*103+seed*7;
+   ctx.fillStyle='rgba(12,16,23,.27)';ctx.fillRect(0,y,256,5);
+   ctx.fillStyle='rgba(192,184,164,.15)';ctx.fillRect(0,y+5,256,2);
+  }
+  for(let k=0;k<14;k++){
+   const x=(k*67+seed*23)%236,y=(k*97+seed*11)%480;
+   ctx.fillStyle='rgba(177,160,144,.11)';ctx.fillRect(x,y,7+k%13,4+k%19);
+  }
+  const map=new THREE.CanvasTexture(canvas);map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=2;
+  return new THREE.MeshStandardMaterial({map,roughness:.91,metalness:.02});
+ }
+ function pattayaGlassMaterial(seed){
+  const canvas=document.createElement('canvas');canvas.width=512;canvas.height=256;
+  const ctx=canvas.getContext('2d'),interior=ctx.createLinearGradient(0,0,0,256);
+  interior.addColorStop(0,seed?'#172734':'#332b31');
+  interior.addColorStop(.58,seed?'#1c3542':'#51413a');
+  interior.addColorStop(1,'#101c28');
+  ctx.fillStyle=interior;ctx.fillRect(0,0,512,256);
+  // Shelves and shop silhouettes behind the glazing.
+  for(let k=0;k<9;k++){
+   const x=17+k*59;
+   ctx.fillStyle='rgba(8,12,19,.58)';ctx.fillRect(x,117+(k%3)*11,33,122);
+   ctx.fillStyle='rgba(190,145,98,.23)';ctx.fillRect(x+4,153,25,4);
+   ctx.fillStyle='rgba(190,145,98,.16)';ctx.fillRect(x+4,192,25,4);
+  }
+  const lightX=seed?365:145,glow=ctx.createRadialGradient(lightX,45,4,lightX,80,185);
+  glow.addColorStop(0,seed?'rgba(78,197,218,.32)':'rgba(255,195,121,.39)');
+  glow.addColorStop(1,'rgba(18,36,49,0)');
+  ctx.fillStyle=glow;ctx.fillRect(0,0,512,256);
+  // Aluminium mullions, lower threshold, glass scratches and faint reflections.
+  for(let k=0;k<=4;k++){
+   const x=k*128;
+   ctx.fillStyle='#161d27';ctx.fillRect(x,0,9,256);
+   ctx.fillStyle='rgba(182,194,201,.24)';ctx.fillRect(x+9,0,2,256);
+  }
+  ctx.fillStyle='rgba(17,23,29,.9)';ctx.fillRect(0,242,512,14);
+  for(let k=0;k<35;k++){
+   const x=(k*79+seed*41)%506,y=(k*53+seed*17)%240;
+   ctx.fillStyle='rgba(172,204,218,.07)';ctx.fillRect(x,y,2,11+k%21);
+  }
+  for(let k=0;k<4;k++){
+   const x=39+k*129,reflection=ctx.createLinearGradient(x,0,x+22,0);
+   reflection.addColorStop(0,'rgba(133,184,203,0)');
+   reflection.addColorStop(.55,'rgba(159,203,222,.16)');
+   reflection.addColorStop(1,'rgba(133,184,203,0)');
+   ctx.fillStyle=reflection;ctx.fillRect(x,15,22,218);
+  }
+  const map=new THREE.CanvasTexture(canvas);map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=2;
+  return new THREE.MeshStandardMaterial({map,roughness:.27,metalness:.19});
+ }
+ const pattayaWalls=[pattayaWallMaterial(0),pattayaWallMaterial(1)];
+ const pattayaGlazing=[pattayaGlassMaterial(0),pattayaGlassMaterial(1)];
 
  // Correct street-facing facades: storefronts face inward along X, not toward Z.
  // Four bilingual signs share four baked textures across twenty storefronts.
@@ -1090,8 +1160,8 @@ function expresswayVehicle(type){
  const pattayaShops=[],pattayaSignPlane=new THREE.PlaneGeometry(4.15,1.55);
  for(let i=0;i<20;i++){
   const g=new THREE.Group(),side=i%2?1:-1;
-  g.add(cube(4.5,5.4,7,pattayaWall,0,2.7,0));
-  g.add(cube(.12,2.7,5.7,pattayaGlass,-side*2.32,1.7,0));
+  g.add(cube(4.5,5.4,7,pattayaWalls[i%2],0,2.7,0));
+  g.add(cube(.12,2.7,5.7,pattayaGlazing[(i>>1)%2],-side*2.32,1.7,0));
   g.add(cube(.58,.15,6.1,pattayaNeon[i%4],-side*2.48,3.23,0));
   const sign=new THREE.Mesh(pattayaSignPlane,pattayaSigns[i%4]);
   sign.position.set(-side*2.39,4.25,0);sign.rotation.y=-side*Math.PI/2;
