@@ -18,14 +18,35 @@ const asphaltCanvas=document.createElement('canvas');asphaltCanvas.width=256;asp
 // V6.7: inexpensive wet-road neon reflections for Yaowarat night.
 // One shared gradient texture and two materials; no dynamic lights or downloads.
 const neonReflectionCanvas=document.createElement('canvas');
-neonReflectionCanvas.width=128;neonReflectionCanvas.height=128;
+neonReflectionCanvas.width=128;neonReflectionCanvas.height=256;
 const neonReflectionCtx=neonReflectionCanvas.getContext('2d');
-const neonReflectionGradient=neonReflectionCtx.createRadialGradient(64,64,5,64,64,62);
-neonReflectionGradient.addColorStop(0,'rgba(255,255,255,.65)');
-neonReflectionGradient.addColorStop(.36,'rgba(255,255,255,.28)');
-neonReflectionGradient.addColorStop(1,'rgba(255,255,255,0)');
-neonReflectionCtx.fillStyle=neonReflectionGradient;
-neonReflectionCtx.fillRect(0,0,128,128);
+// Elongated, broken reflections read as rain-slick asphalt rather than circular neon blobs.
+// Baked once into the existing shared texture: no extra meshes, lights or per-frame drawing.
+const reflectionHaze=neonReflectionCtx.createLinearGradient(0,0,128,0);
+reflectionHaze.addColorStop(0,'rgba(255,255,255,0)');
+reflectionHaze.addColorStop(.26,'rgba(255,255,255,.055)');
+reflectionHaze.addColorStop(.48,'rgba(255,255,255,.24)');
+reflectionHaze.addColorStop(.56,'rgba(255,255,255,.19)');
+reflectionHaze.addColorStop(.79,'rgba(255,255,255,.04)');
+reflectionHaze.addColorStop(1,'rgba(255,255,255,0)');
+neonReflectionCtx.fillStyle=reflectionHaze;neonReflectionCtx.fillRect(0,0,128,256);
+// Uneven streak fragments simulate neon reflected by shallow puddles and worn asphalt.
+for(let k=0;k<44;k++){
+ const px=45+((k*37)%39),py=13+((k*59)%225);
+ const width=1+(k%4),length=7+(k*7)%27;
+ neonReflectionCtx.fillStyle=k%5===0?'rgba(255,255,255,.43)':'rgba(255,255,255,.16)';
+ neonReflectionCtx.fillRect(px,py,width,length);
+}
+// Fade both ends so the shared plane never has a visible rectangular boundary.
+const reflectionFade=neonReflectionCtx.createLinearGradient(0,0,0,256);
+reflectionFade.addColorStop(0,'rgba(255,255,255,0)');
+reflectionFade.addColorStop(.18,'rgba(255,255,255,.4)');
+reflectionFade.addColorStop(.43,'rgba(255,255,255,.95)');
+reflectionFade.addColorStop(.67,'rgba(255,255,255,.6)');
+reflectionFade.addColorStop(1,'rgba(255,255,255,0)');
+neonReflectionCtx.globalCompositeOperation='destination-in';
+neonReflectionCtx.fillStyle=reflectionFade;neonReflectionCtx.fillRect(0,0,128,256);
+neonReflectionCtx.globalCompositeOperation='source-over';
 const neonReflectionTexture=new THREE.CanvasTexture(neonReflectionCanvas);
 const neonReflectionMaterials=[0xff4b59,0xf5bd64,0x2bd8ce].map(color=>new THREE.MeshBasicMaterial({
  map:neonReflectionTexture,color,transparent:true,opacity:.42,depthWrite:false,
