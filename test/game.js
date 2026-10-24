@@ -982,6 +982,46 @@ busDoorCtx.fillStyle='#c2c8c4';busDoorCtx.fillRect(0,0,128,7);busDoorCtx.fillRec
 const busDoorTexture=new THREE.CanvasTexture(busDoorCanvas);busDoorTexture.colorSpace=THREE.SRGBColorSpace;
 const busDoorMaterial=new THREE.MeshStandardMaterial({map:busDoorTexture,metalness:.12,roughness:.45,side:THREE.DoubleSide});
 const busDoorPane=new THREE.PlaneGeometry(.79,1.7);
+// Shared weathered rear atlases: one textured plane per bus instead of
+// individual vent, access hatch, bolt and license plate meshes.
+function makeBusRearPanelMaterial(blue){
+ const canvas=document.createElement('canvas');canvas.width=512;canvas.height=256;
+ const ctx=canvas.getContext('2d');
+ const paint=ctx.createLinearGradient(0,0,0,256);
+ paint.addColorStop(0,blue?'#e6e2d7':'#b63a34');
+ paint.addColorStop(.7,blue?'#d6d1c5':'#a92e2d');
+ paint.addColorStop(1,blue?'#8b9aa0':'#6f3433');
+ ctx.fillStyle=paint;ctx.fillRect(0,0,512,256);
+ // Pressed metal service hatch, recessed louvers and trim are all baked.
+ ctx.lineWidth=3;ctx.strokeStyle=blue?'#6b7373':'#672d2b';ctx.strokeRect(22,15,468,222);
+ ctx.lineWidth=1;ctx.strokeStyle='rgba(240,236,220,.48)';ctx.strokeRect(27,19,458,214);
+ ctx.fillStyle=blue?'#2b668a':'#e7d9c2';ctx.fillRect(0,126,512,11);
+ ctx.fillStyle=blue?'#d4b950':'#477456';ctx.fillRect(0,137,512,5);
+ for(let row=0;row<7;row++){
+  const y=35+row*12;
+  ctx.fillStyle='rgba(16,28,32,.55)';ctx.fillRect(74,y,364,5);
+  ctx.fillStyle='rgba(239,233,217,.34)';ctx.fillRect(74,y+5,364,2);
+ }
+ for(const x of [35,477])for(const y of [29,115,157,222]){
+  ctx.fillStyle='#3b4549';ctx.beginPath();ctx.arc(x,y,3,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='rgba(241,237,222,.55)';ctx.fillRect(x-1,y-2,2,1);
+ }
+ // Deterministic grime; no animation or random per-frame texture work.
+ ctx.fillStyle='rgba(23,30,31,.16)';
+ for(let i=0;i<125;i++)ctx.fillRect(17+(i*173)%480,148+(i*67)%100,1+i%3,1+i%2);
+ ctx.fillStyle='#f1e8cf';ctx.fillRect(175,172,162,56);
+ ctx.strokeStyle='#49525a';ctx.lineWidth=3;ctx.strokeRect(175,172,162,56);
+ ctx.textAlign='center';ctx.fillStyle='#202a2d';
+ ctx.font='bold 28px sans-serif';ctx.fillText(blue?'กท 008':'กท 203',256,203);
+ ctx.font='14px sans-serif';ctx.fillText('กรุงเทพมหานคร',256,221);
+ ctx.textAlign='left';ctx.font='bold 17px sans-serif';
+ ctx.fillStyle=blue?'#173e57':'#f1dfb7';ctx.fillText('รถโดยสาร',37,178);
+ const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
+ texture.anisotropy=Math.min(2,renderer.capabilities.getMaxAnisotropy());
+ return new THREE.MeshStandardMaterial({map:texture,metalness:.12,roughness:.65,side:THREE.DoubleSide});
+}
+const busRearPanels={red:makeBusRearPanelMaterial(false),blue:makeBusRearPanelMaterial(true)};
+const busRearPanelGeometry=new THREE.PlaneGeometry(2.25,1.10);
 function makeBus(variant='red'){
  const g=new THREE.Group(),blue=variant==='blue',main=blue?busCream:busRed,trim=blue?busBlue:busCream,accent=blue?busYellow:busGreen;
  part(g,cube(2.86,2.52,5.3,main,0,1.67,0));
@@ -1023,6 +1063,9 @@ function makeBus(variant='red'){
  part(g,cube(2.56,.19,.13,busDark,0,.58,-2.77));
  if(blue){part(g,cube(2.6,.17,.13,busYellow,0,1.42,2.79));part(g,cube(2.5,.39,.13,busBlue,0,.82,2.78))}
  else{part(g,cube(2.65,.18,.14,busGreen,0,1.62,2.79));part(g,cube(2.45,.43,.12,busCream,0,.91,2.78))}
+ // The rear panel is below the window, inside the tail lamps and above the bumper.
+ const rearPanel=new THREE.Mesh(busRearPanelGeometry,blue?busRearPanels.blue:busRearPanels.red);
+ rearPanel.rotation.y=Math.PI;rearPanel.position.set(0,1.31,-2.785);part(g,rearPanel);
  return g;
 }
 // Lightweight moving traffic: built from simple shared geometry, no new downloads.
