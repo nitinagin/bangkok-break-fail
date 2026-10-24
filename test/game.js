@@ -1230,9 +1230,32 @@ let expresswayWave=0;
 const expresswaySet=new THREE.Group();scene.add(expresswaySet);
 // Shared PBR skyline, Thai gantries and moving lamp posts; only visible beyond 12,000 points.
 const expresswayArt=createExpresswayArt(THREE);scene.add(expresswayArt.group);
-const expresswayConcrete=mat(0x9296a4),expresswaySteel=mat(0x3b5366),laserMat=new THREE.MeshBasicMaterial({color:0xff304f,transparent:true,opacity:.8});
+const expresswayConcrete=mat(0x9296a4),expresswaySteel=mat(0x3b5366);
 for(const side of [-1,1]){const rail=cube(.3,.85,210,expresswayConcrete,side*4.35,.6,-90);expresswaySet.add(rail);for(let n=0;n<10;n++)expresswaySet.add(cube(.15,.45,1.5,expresswaySteel,side*4.35,1.2,-n*21));}
-const ufo=new THREE.Group();ufo.add(new THREE.Mesh(new THREE.SphereGeometry(2.2,16,8),mat(0x9ab5c3)));ufo.add(new THREE.Mesh(new THREE.SphereGeometry(1.15,12,8),mat(0x39d9ed)));ufo.scale.y=.35;ufo.position.set(0,13,-42);expresswaySet.add(ufo);
+// Shared PBR saucer and instanced navigation lamps: no dynamic lights or per-frame textures.
+const ufo=new THREE.Group();
+const hullMetal=new THREE.MeshStandardMaterial({color:0x8499a8,metalness:.82,roughness:.3});
+const hullDark=new THREE.MeshStandardMaterial({color:0x263443,metalness:.75,roughness:.45});
+const domeGlass=new THREE.MeshStandardMaterial({color:0x146b83,metalness:.4,roughness:.17,emissive:0x0a738b,emissiveIntensity:.85});
+const rimGlow=new THREE.MeshBasicMaterial({color:0x2ae9f1,toneMapped:false});
+const hull=new THREE.Mesh(new THREE.SphereGeometry(2.25,28,12),hullMetal);hull.scale.y=.23;ufo.add(hull);
+const belly=new THREE.Mesh(new THREE.SphereGeometry(1.73,24,10),hullDark);belly.scale.y=.22;belly.position.y=-.25;ufo.add(belly);
+const dome=new THREE.Mesh(new THREE.SphereGeometry(1.08,24,12),domeGlass);dome.scale.y=.68;dome.position.y=.37;ufo.add(dome);
+const rim=new THREE.Mesh(new THREE.TorusGeometry(2.17,.075,6,36),rimGlow);rim.rotation.x=Math.PI/2;ufo.add(rim);
+const lamps=new THREE.InstancedMesh(new THREE.SphereGeometry(.105,7,5),rimGlow,12);
+const lampTransform=new THREE.Object3D();
+for(let i=0;i<12;i++){const a=i*Math.PI/6;lampTransform.position.set(Math.cos(a)*2.04,-.08,Math.sin(a)*2.04);lampTransform.updateMatrix();lamps.setMatrixAt(i,lampTransform.matrix);}
+lamps.instanceMatrix.needsUpdate=true;lamps.frustumCulled=false;ufo.add(lamps);
+ufo.position.set(0,13,-42);expresswaySet.add(ufo);
+// Shared laser template: bright core, translucent halo, and 1.2m ground warning.
+// All geometry/materials are reused between waves; the opposite lane stays open.
+const laserGround=new THREE.MeshBasicMaterial({color:0xff294b,transparent:true,opacity:.6,depthWrite:false,side:THREE.DoubleSide});
+const laserCore=new THREE.MeshBasicMaterial({color:0xffc1c5,toneMapped:false});
+const laserHalo=new THREE.MeshBasicMaterial({color:0xff234e,transparent:true,opacity:.23,depthWrite:false,side:THREE.DoubleSide});
+const expresswayLaserTemplate=new THREE.Group();
+expresswayLaserTemplate.add(cube(1.2,.035,7,laserGround,0,.065,0));
+const beamCore=new THREE.Mesh(new THREE.CylinderGeometry(.085,.085,9,8),laserCore);beamCore.position.y=4.5;expresswayLaserTemplate.add(beamCore);
+const beamHalo=new THREE.Mesh(new THREE.CylinderGeometry(.42,.42,9,10,1,true),laserHalo);beamHalo.position.y=4.5;expresswayLaserTemplate.add(beamHalo);
 // Lazy templates share geometry and PBR materials across hazard waves (no per-spawn GPU uploads).
 let expresswayVehicleTemplates=null;
 function expresswayVehicle(type){
@@ -1601,7 +1624,7 @@ function spawnExpresswayHazard(){
  else if(kind==='bike'){try{g.add(makeExpresswayMotorcycle());}catch(error){console.warn('Expressway motorcycle PBR fallback',error);g.add(cachedObstacle('bike'));}}
  else if(kind==='bus'){try{g.add(expresswayVehicle('bus'));}catch(error){console.warn('Bus PBR fallback',error);g.add(cube(2.05,2.5,4.4,mat(0xf5a33b),0,1.55,0));g.add(cube(1.85,.9,.09,M.glass,0,2.1,2.23));}}
  else if(kind==='protest'){try{g.add(makeExpresswayProtest());}catch(error){console.warn('Expressway crowd fallback',error);g.add(cube(.85,1.2,.5,M.pink,0,1.1,0));g.add(ball(.34,M.skin,0,1.92,0));g.add(cube(1.3,.65,.12,M.white,0,2.8,0));}}
- else {g.add(cube(1.2,.08,7,laserMat,0,.23,0));g.add(cube(.16,9,.16,laserMat,0,4.5,0));}
+ else {g.add(expresswayLaserTemplate.clone(true));}
  g.position.set(lane,0,-65);scene.add(g);
  hazards.push({g,type:kind,madness:null,boss:false,durianSide:0,passed:false,hit:false,phase:wave,baseX:lane,announced:false,nearAwarded:false,swerve:0,swerveStart:100});
 }
