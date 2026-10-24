@@ -604,9 +604,44 @@ function part(g,o){g.add(o);return o}
 function rod(g,a,b,r,m){const p=new THREE.Vector3(...a),q=new THREE.Vector3(...b),d=q.clone().sub(p),o=new THREE.Mesh(new THREE.CylinderGeometry(r,r,d.length(),8),m);o.position.copy(p).add(q).multiplyScalar(.5);o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize());g.add(o);return o}
 // Bangkok bus classics: blue-white route 8 and red-cream route 203.
 const busBlue=mat(0x287fbd),busCream=mat(0xf2efe0),busYellow=mat(0xf6d455),busGreen=mat(0x23884e),busDark=mat(0x203b4c),busLamp=mat(0xffe8a1);
+// A single shared PBR side-glazing atlas per bus livery replaces twenty
+// individual window/frame meshes per vehicle. Painted frames, passenger
+// silhouettes, grime and reflections are baked once at startup.
+function makeBusSideGlazing(blue){
+ const canvas=document.createElement('canvas');canvas.width=512;canvas.height=128;
+ const ctx=canvas.getContext('2d'),w=canvas.width,h=canvas.height;
+ ctx.fillStyle=blue?'#e5e1d5':'#e7e1cc';ctx.fillRect(0,0,w,h);
+ for(let i=0;i<5;i++){
+  const x=11+i*99,grad=ctx.createLinearGradient(x,9,x+90,113);
+  grad.addColorStop(0,'#536d7c');grad.addColorStop(.35,'#233b4b');grad.addColorStop(1,'#101e2a');
+  ctx.fillStyle='#292e36';ctx.fillRect(x-4,4,94,119);
+  ctx.fillStyle=grad;ctx.fillRect(x,9,86,105);
+  // Interior shadows and seated passenger silhouettes stay subtle at speed.
+  ctx.fillStyle='rgba(10,19,26,.44)';
+  ctx.beginPath();ctx.ellipse(x+30+(i%2)*24,78,14,20,0,0,Math.PI*2);ctx.fill();
+  ctx.fillRect(x+17+(i%2)*24,90,28,25);
+  ctx.fillStyle='rgba(203,224,229,.18)';
+  ctx.beginPath();ctx.moveTo(x+7,17);ctx.lineTo(x+31,17);ctx.lineTo(x+13,110);ctx.lineTo(x+2,110);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='rgba(192,215,223,.20)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(x+65,13);ctx.lineTo(x+39,108);ctx.stroke();
+  ctx.fillStyle='rgba(202,196,172,.19)';
+  for(let k=0;k<9;k++){const xx=x+((k*31+i*17)%85),yy=12+((k*29+i*13)%99);ctx.fillRect(xx,yy,2,1);}
+ }
+ // Fine gasket trim and weathered lower sill.
+ ctx.fillStyle=blue?'#2a6790':'#7d3a36';ctx.fillRect(0,121,w,5);
+ const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
+ texture.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());
+ return new THREE.MeshStandardMaterial({map:texture,metalness:.14,roughness:.36,side:THREE.DoubleSide});
+}
+const busSideGlazing={red:makeBusSideGlazing(false),blue:makeBusSideGlazing(true)};
+const busSidePane=new THREE.PlaneGeometry(4.88,.84);
 function makeBus(variant='red'){const g=new THREE.Group(),blue=variant==='blue',main=blue?busCream:M.red,trim=blue?busBlue:busCream,accent=blue?busYellow:busGreen;
  part(g,cube(2.86,2.52,5.3,main,0,1.67,0));part(g,cube(2.96,.31,5.38,blue?busBlue:M.red,0,3.03,0));part(g,cube(2.89,.23,5.34,accent,0,1.31,0));part(g,cube(2.9,.27,5.35,trim,0,.71,0));
- for(const side of [-1,1]){for(let i=0;i<5;i++){part(g,cube(.06,.78,.72,busDark,side*1.47,2.35,-1.92+i*.91));part(g,cube(.075,.79,.045,trim,side*1.51,2.35,-1.52+i*.91))}for(const z of [-1.72,1.62]){const wh=new THREE.Mesh(new THREE.CylinderGeometry(.48,.48,.21,9),M.wheel);wh.rotation.z=Math.PI/2;wh.position.set(side*1.46,.49,z);part(g,wh)}part(g,cube(.22,.31,.17,busDark,side*1.56,2.42,2.37))}
+ for(const side of [-1,1]){
+  const glazing=new THREE.Mesh(busSidePane,blue?busSideGlazing.blue:busSideGlazing.red);
+  glazing.rotation.y=side*Math.PI/2;glazing.position.set(side*1.495,2.35,0);
+  part(g,glazing);
+  for(const z of [-1.72,1.62]){const wh=new THREE.Mesh(new THREE.CylinderGeometry(.48,.48,.21,9),M.wheel);wh.rotation.z=Math.PI/2;wh.position.set(side*1.46,.49,z);part(g,wh)}part(g,cube(.22,.31,.17,busDark,side*1.56,2.42,2.37))}
  part(g,cube(2.35,.88,.085,busDark,0,2.28,2.7));part(g,cube(.075,.87,.09,trim,0,2.28,2.76));part(g,cube(2.43,.51,.13,trim,0,3.02,2.73));part(g,cube(.86,.39,.15,busCream,0,3.06,2.82));
  for(const dx of (blue?[0]:[-.21,0,.21]))part(g,cube(.105,.25,.05,blue?busDark:busBlue,dx,3.06,2.92));
  part(g,cube(1.62,.36,.10,busDark,0,1.12,2.74));for(let j=0;j<3;j++)part(g,cube(1.45,.035,.12,trim,0,1.02+j*.10,2.82));part(g,cube(2.64,.22,.18,busDark,0,.55,2.79));
