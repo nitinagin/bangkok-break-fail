@@ -404,6 +404,11 @@ const yaowaratACBody=new THREE.MeshStandardMaterial({color:0xb8c2c1,metalness:.3
 const yaowaratACGrille=new THREE.MeshStandardMaterial({map:yaowaratACTexture,metalness:.26,roughness:.78});
 const yaowaratRainPipe=new THREE.MeshStandardMaterial({color:0x566368,metalness:.5,roughness:.72});
 
+// Weathered powder-coated steel replaces bright cream balcony bars.
+// Seven identical rail uprights are batched into one InstancedMesh per balcony.
+const yaowaratBalconySteel=new THREE.MeshStandardMaterial({color:0x687277,metalness:.58,roughness:.67});
+const yaowaratBalconyBarGeometry=new THREE.BoxGeometry(.055,.68,.07);
+const yaowaratBalconyBarMatrix=new THREE.Matrix4();
 function building(x,z,i){
  const g=new THREE.Group(),h=7.9+(i%7)*1.1,paint=facadeMaterials[i%facadeMaterials.length];
  g.add(cube(3.9,h,5,paint,0,h/2,0));for(const edge of [-1,1])g.add(cube(.16,h,5.15,brickTrim,edge*1.94,h/2,0));for(let fy=3.1;fy<h;fy+=2.6)g.add(cube(4.05,.14,5.15,oldGold,0,fy,0));
@@ -430,13 +435,21 @@ function building(x,z,i){
  // Procedural 3D Yaowarat shophouse detail: recessed balconies, railings and AC units.
  // Geometry stays attached to each existing scrolling building (no new spawn logic).
  const roadDir=x<0?1:-1;
- const balconyMetal=shopTrim,balconyShade=shopShadow,acBody=yaowaratACBody,acVent=yaowaratACGrille;
+ const balconyMetal=yaowaratBalconySteel,balconyShade=shopShadow,acBody=yaowaratACBody,acVent=yaowaratACGrille;
  for(let floor=0;floor<2;floor++){
   const by=4.15+floor*2.6;
   if(by>h-.65)continue;
   g.add(cube(3.35,.13,.64,balconyShade,0,by-.64,front+roadDir*.35));
   g.add(cube(3.25,.075,.08,balconyMetal,0,by+.02,front+roadDir*.67));
-  for(let bar=-3;bar<=3;bar++)g.add(cube(.055,.68,.07,balconyMetal,bar*.49,by-.33,front+roadDir*.67));
+  // Seven vertical bars share one geometry and one GPU draw call per balcony.
+  const railBars=new THREE.InstancedMesh(yaowaratBalconyBarGeometry,balconyMetal,7);
+  for(let bar=0;bar<7;bar++){
+   yaowaratBalconyBarMatrix.makeTranslation((bar-3)*.49,by-.33,front+roadDir*.67);
+   railBars.setMatrixAt(bar,yaowaratBalconyBarMatrix);
+  }
+  railBars.instanceMatrix.needsUpdate=true;
+  railBars.computeBoundingSphere();
+  g.add(railBars);
   if((i+floor)%3===0){
    g.add(cube(.68,.48,.31,acBody,1.35,by+.45,front+roadDir*.22));
    g.add(cube(.52,.32,.025,acVent,1.35,by+.45,front+roadDir*.4));
@@ -449,8 +462,8 @@ function building(x,z,i){
   g.add(ball(.13,windowGlow,-1.18,2.38,front+roadDir*.47));
  }
  const sign=cube(2.7,.62,.12,signMaterials[i%3],0,2.94,front+(x<0?.07:-.07));g.add(sign);g.add(cube(2.85,.08,.19,M.gold,0,3.30,front+(x<0?.10:-.10)));g.userData.sign=sign;g.userData.signIndex=i;
- // Decorative shop lettering blocks avoid relying on device fonts.
- for(let k=0;k<3;k++)g.add(cube(k===1?.14:.34,.17,.14,shopTrim,-.66+k*.66,2.94,front+(x<0?.15:-.15)));if(i%2===0){g.add(cube(.13,.6,.13,M.gold,1.56,2.92,front));g.add(ball(.18,M.red,1.56,2.51,front))}
+ // The existing bilingual enamel plaque carries readable lettering; omit toy-like block glyphs.
+ if(i%2===0){g.add(cube(.13,.6,.13,M.gold,1.56,2.92,front));g.add(ball(.18,M.red,1.56,2.51,front))}
  if(i%3===0){g.add(cube(.14,1.7,.14,shopTrim,1.6,3.7,front));g.add(cube(.95,.12,.18,awningColors[i%3],1.1,4.45,front))}
  const plaque=new THREE.Mesh(new THREE.PlaneGeometry(2.65,1.05),shopSignMaterials[i%shopSignMaterials.length]);plaque.position.set(0,3.12,front+(x<0?.21:-.21));plaque.rotation.y=x<0?0:Math.PI;g.add(plaque);
 if(i%2===0){const hanging=new THREE.Mesh(new THREE.PlaneGeometry(1.1,3.5),neonBladeMaterials[i%neonBladeMaterials.length]);hanging.position.set(x<0?1.75:-1.75,5.8,front+(x<0?-.8:.8));hanging.rotation.y=x<0?-.75:.75;g.add(hanging);g.add(cube(.09,.09,1.25,oldGold,x<0?1.75:-1.75,7.5,front));}
