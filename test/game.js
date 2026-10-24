@@ -14,7 +14,38 @@ function cube(w,h,d,m,x=0,y=0,z=0){const o=new THREE.Mesh(new THREE.BoxGeometry(
 function ball(r,m,x=0,y=0,z=0){const o=new THREE.Mesh(new THREE.SphereGeometry(r,9,7),m);o.position.set(x,y,z);return o}
 function wheel(x,z){const o=new THREE.Mesh(new THREE.CylinderGeometry(.38,.38,.22,12),M.wheel);o.rotation.z=Math.PI/2;o.position.set(x,.38,z);return o}
 // A single reusable procedural asphalt texture gives the long road fine grain without extra draw calls.
-const asphaltCanvas=document.createElement('canvas');asphaltCanvas.width=256;asphaltCanvas.height=256;const asphaltCtx=asphaltCanvas.getContext('2d');asphaltCtx.fillStyle='#b5b5b5';asphaltCtx.fillRect(0,0,256,256);for(let i=0;i<1900;i++){const px=Math.random()*256,py=Math.random()*256;asphaltCtx.fillStyle=i%3===0?'rgba(40,40,40,.23)':'rgba(255,255,255,.18)';asphaltCtx.fillRect(px,py,1+(i%3),1+(i%2));}const asphaltTexture=new THREE.CanvasTexture(asphaltCanvas);asphaltTexture.wrapS=asphaltTexture.wrapT=THREE.RepeatWrapping;asphaltTexture.repeat.set(2,26);M.road.map=asphaltTexture;M.road.needsUpdate=true;
+const asphaltCanvas=document.createElement('canvas');asphaltCanvas.width=256;asphaltCanvas.height=256;const asphaltCtx=asphaltCanvas.getContext('2d');asphaltCtx.fillStyle='#b5b5b5';asphaltCtx.fillRect(0,0,256,256);for(let i=0;i<1900;i++){const px=Math.random()*256,py=Math.random()*256;asphaltCtx.fillStyle=i%3===0?'rgba(40,40,40,.23)':'rgba(255,255,255,.18)';asphaltCtx.fillRect(px,py,1+(i%3),1+(i%2));}
+// Shared 256px puddle albedo and PBR roughness mask for rain-slick Yaowarat.
+// Matte aggregate and glossy standing water use the same UVs and no extra draw calls.
+const wetRoadRoughnessCanvas=document.createElement('canvas');
+wetRoadRoughnessCanvas.width=wetRoadRoughnessCanvas.height=256;
+const wetRoadRoughnessCtx=wetRoadRoughnessCanvas.getContext('2d');
+wetRoadRoughnessCtx.fillStyle='#d5d5d5';
+wetRoadRoughnessCtx.fillRect(0,0,256,256);
+for(let i=0;i<6;i++){
+ const px=37+(i*67)%181,py=39+(i*43)%175;
+ const radiusX=12+(i*7)%13,radiusY=24+(i*11)%19;
+ // Both baked gradients use identical footprints, so darker asphalt is glossier.
+ for(const [ctx,inner,outer] of [
+  [asphaltCtx,'rgba(13,21,29,.22)','rgba(13,21,29,0)'],
+  [wetRoadRoughnessCtx,'#575757','#d5d5d5']
+ ]){
+  ctx.save();ctx.translate(px,py);ctx.scale(radiusX,radiusY);
+  const pool=ctx.createRadialGradient(0,0,.05,0,0,1);
+  pool.addColorStop(0,inner);pool.addColorStop(.58,inner);
+  pool.addColorStop(1,outer);
+  ctx.fillStyle=pool;ctx.fillRect(-1,-1,2,2);ctx.restore();
+ }
+}
+wetRoadRoughnessCtx.fillStyle='rgba(242,242,242,.32)';
+for(let i=0;i<180;i++){
+ const px=(i*73+17)%256,py=(i*47+29)%256;
+ wetRoadRoughnessCtx.fillRect(px,py,1+(i%3),1+(i%2));
+}
+const wetRoadRoughnessTexture=new THREE.CanvasTexture(wetRoadRoughnessCanvas);
+wetRoadRoughnessTexture.wrapS=wetRoadRoughnessTexture.wrapT=THREE.RepeatWrapping;
+wetRoadRoughnessTexture.repeat.set(2,26);
+const asphaltTexture=new THREE.CanvasTexture(asphaltCanvas);asphaltTexture.wrapS=asphaltTexture.wrapT=THREE.RepeatWrapping;asphaltTexture.repeat.set(2,26);M.road.map=asphaltTexture;M.road.needsUpdate=true;
 // V6.7: inexpensive wet-road neon reflections for Yaowarat night.
 // One shared gradient texture and two materials; no dynamic lights or downloads.
 const neonReflectionCanvas=document.createElement('canvas');
@@ -67,7 +98,7 @@ for(let i=0;i<10;i++){
 }
 const ground=cube(180,.1,230,M.grass,0,-.12,-60);scene.add(ground);// Milestone 1: physically based wet Yaowarat asphalt; dry concrete-tone Rama II.
 // Reuse the existing asphalt texture and neon overlays to avoid new draw calls.
-const wetAsphalt=new THREE.MeshStandardMaterial({color:0x777f8d,map:asphaltTexture,roughness:.38,metalness:.12});
+const wetAsphalt=new THREE.MeshStandardMaterial({color:0x777f8d,map:asphaltTexture,roughnessMap:wetRoadRoughnessTexture,roughness:.52,metalness:.12});
 const dryAsphalt=new THREE.MeshStandardMaterial({color:0x777f8d,map:asphaltTexture,roughness:.94,metalness:0});
 const road=cube(11,.12,230,wetAsphalt,0,0,-60);scene.add(road);
 const shoulderPaint=mat(0x4b4b4d),curbPaint=mat(0x8b776b);for(const side of [-1,1]){scene.add(cube(1.25,.11,230,shoulderPaint,side*6.2,-.015,-60));scene.add(cube(.22,.09,230,curbPaint,side*5.58,.08,-60));scene.add(cube(.1,.045,230,M.gold,side*5.37,.10,-60))}
