@@ -1022,6 +1022,52 @@ function makeBusRearPanelMaterial(blue){
 }
 const busRearPanels={red:makeBusRearPanelMaterial(false),blue:makeBusRearPanelMaterial(true)};
 const busRearPanelGeometry=new THREE.PlaneGeometry(2.25,1.10);
+// Shared Bangkok bus wheel atlas: sidewall, steel rim, lug nuts and tyre tread
+// on a single PBR mesh per wheel (no extra draw calls or per-bus geometry).
+const busWheelCanvas=document.createElement('canvas');
+busWheelCanvas.width=busWheelCanvas.height=256;
+const busWheelCtx=busWheelCanvas.getContext('2d');
+busWheelCtx.fillStyle='#1c2024';busWheelCtx.fillRect(0,0,256,256);
+// Narrow atlas strip for the cylindrical tread; the lower region is the hub face.
+busWheelCtx.fillStyle='#282b2e';busWheelCtx.fillRect(0,0,256,55);
+for(let x=0;x<256;x+=16){
+ busWheelCtx.fillStyle='#121517';busWheelCtx.fillRect(x,0,3,55);
+ busWheelCtx.strokeStyle='#44474a';busWheelCtx.lineWidth=2;
+ busWheelCtx.beginPath();busWheelCtx.moveTo(x+4,4);busWheelCtx.lineTo(x+12,25);
+ busWheelCtx.lineTo(x+4,51);busWheelCtx.stroke();
+}
+const wheelCx=128,wheelCy=156;
+function busWheelRing(radius,color,width=0){
+ busWheelCtx.beginPath();busWheelCtx.arc(wheelCx,wheelCy,radius,0,Math.PI*2);
+ if(width){busWheelCtx.strokeStyle=color;busWheelCtx.lineWidth=width;busWheelCtx.stroke();}
+ else{busWheelCtx.fillStyle=color;busWheelCtx.fill();}
+}
+busWheelRing(96,'#111519');busWheelRing(86,'#363a3e',3);
+busWheelRing(75,'#22282d',2);busWheelRing(63,'#0d1115',7);
+busWheelRing(54,'#9a9e9e');busWheelRing(46,'#6d7477',4);
+busWheelRing(36,'#b0b5b2');busWheelRing(24,'#777e82',4);
+busWheelRing(17,'#454b4e');
+for(let n=0;n<6;n++){
+ const a=n*Math.PI/3;
+ busWheelCtx.beginPath();busWheelCtx.arc(wheelCx+33*Math.cos(a),wheelCy+33*Math.sin(a),5,0,Math.PI*2);
+ busWheelCtx.fillStyle='#34383b';busWheelCtx.fill();
+ busWheelCtx.strokeStyle='#d0d0c7';busWheelCtx.lineWidth=1.5;busWheelCtx.stroke();
+}
+const busWheelTexture=new THREE.CanvasTexture(busWheelCanvas);
+busWheelTexture.colorSpace=THREE.SRGBColorSpace;
+busWheelTexture.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());
+const busWheelMaterial=new THREE.MeshStandardMaterial({map:busWheelTexture,metalness:.22,roughness:.76});
+const busWheelGeometry=new THREE.CylinderGeometry(.48,.48,.21,18);
+// CylinderGeometry has separate vertices for tread and both caps; pack UVs
+// into their respective atlas regions while keeping one material/draw call.
+const busWheelUV=busWheelGeometry.attributes.uv,busWheelIndex=busWheelGeometry.index;
+for(const group of busWheelGeometry.groups){
+ for(let i=group.start;i<group.start+group.count;i++){
+  const vertex=busWheelIndex.getX(i),v=busWheelUV.getY(vertex);
+  busWheelUV.setY(vertex,group.materialIndex===0?.78+v*.22:v*.78);
+ }
+}
+busWheelUV.needsUpdate=true;
 function makeBus(variant='red'){
  const g=new THREE.Group(),blue=variant==='blue',main=blue?busCream:busRed,trim=blue?busBlue:busCream,accent=blue?busYellow:busGreen;
  part(g,cube(2.86,2.52,5.3,main,0,1.67,0));
@@ -1033,7 +1079,7 @@ function makeBus(variant='red'){
   glazing.rotation.y=side*Math.PI/2;glazing.position.set(side*1.495,2.35,0);
   part(g,glazing);
   for(const z of [-1.72,1.62]){
-   const wh=new THREE.Mesh(new THREE.CylinderGeometry(.48,.48,.21,9),M.wheel);
+   const wh=new THREE.Mesh(busWheelGeometry,busWheelMaterial);
    wh.rotation.z=Math.PI/2;wh.position.set(side*1.46,.49,z);part(g,wh);
   }
   part(g,cube(.22,.31,.17,busDark,side*1.56,2.42,2.37));
