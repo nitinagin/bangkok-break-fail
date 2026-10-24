@@ -882,7 +882,40 @@ const busGreen=new THREE.MeshStandardMaterial({color:0x23884e,metalness:.12,roug
 const busDark=new THREE.MeshStandardMaterial({color:0x203b4c,metalness:.12,roughness:.38});
 const busLamp=new THREE.MeshStandardMaterial({color:0xffe8a1,emissive:0x493817,emissiveIntensity:.22,roughness:.24});
 const busTailLamp=new THREE.MeshStandardMaterial({color:0xaf2028,emissive:0x50070a,emissiveIntensity:.3,roughness:.28});
-const busWindshield=new THREE.MeshPhysicalMaterial({color:0x2d4654,metalness:.12,roughness:.23,clearcoat:.7,clearcoatRoughness:.15,side:THREE.DoubleSide});
+// Shared baked windscreen: rubber gasket, rain haze, reflections and twin
+// wiper sweeps add depth without per-bus meshes, lights or frame-time canvas work.
+const busGlassCanvas=document.createElement('canvas');busGlassCanvas.width=512;busGlassCanvas.height=192;
+const busGlassCtx=busGlassCanvas.getContext('2d');
+const busGlassGradient=busGlassCtx.createLinearGradient(0,0,512,192);
+busGlassGradient.addColorStop(0,'#617d8b');busGlassGradient.addColorStop(.38,'#2c4759');
+busGlassGradient.addColorStop(1,'#142936');
+busGlassCtx.fillStyle='#18232c';busGlassCtx.fillRect(0,0,512,192);
+busGlassCtx.fillStyle=busGlassGradient;busGlassCtx.fillRect(13,12,486,168);
+busGlassCtx.fillStyle='rgba(208,226,229,.15)';
+busGlassCtx.beginPath();busGlassCtx.moveTo(60,13);busGlassCtx.lineTo(180,13);
+busGlassCtx.lineTo(100,179);busGlassCtx.lineTo(27,179);busGlassCtx.closePath();busGlassCtx.fill();
+busGlassCtx.fillStyle='rgba(201,224,232,.075)';
+busGlassCtx.beginPath();busGlassCtx.moveTo(352,13);busGlassCtx.lineTo(408,13);
+busGlassCtx.lineTo(334,179);busGlassCtx.lineTo(291,179);busGlassCtx.closePath();busGlassCtx.fill();
+// Fine rain streaks are baked, never simulated per frame.
+busGlassCtx.strokeStyle='rgba(197,216,221,.13)';busGlassCtx.lineWidth=1;
+for(let i=0;i<35;i++){
+ const x=21+(i*137)%470,y=17+(i*53)%133;
+ busGlassCtx.beginPath();busGlassCtx.moveTo(x,y);busGlassCtx.lineTo(x-2,y+9+(i%13));busGlassCtx.stroke();
+}
+busGlassCtx.strokeStyle='#111b21';busGlassCtx.lineWidth=5;busGlassCtx.lineCap='round';
+for(const [x0,y0,x1,y1] of [[88,168,241,105],[426,168,271,105]]){
+ busGlassCtx.beginPath();busGlassCtx.moveTo(x0,y0);busGlassCtx.lineTo(x1,y1);busGlassCtx.stroke();
+}
+busGlassCtx.strokeStyle='rgba(186,201,205,.5)';busGlassCtx.lineWidth=1.5;
+for(const [x0,y0,x1,y1] of [[88,168,241,105],[426,168,271,105]]){
+ busGlassCtx.beginPath();busGlassCtx.moveTo(x0,y0-3);busGlassCtx.lineTo(x1,y1-3);busGlassCtx.stroke();
+}
+const busGlassTexture=new THREE.CanvasTexture(busGlassCanvas);busGlassTexture.colorSpace=THREE.SRGBColorSpace;
+busGlassTexture.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());
+const busWindshield=new THREE.MeshPhysicalMaterial({map:busGlassTexture,metalness:0,roughness:.28,clearcoat:.55,clearcoatRoughness:.19,side:THREE.DoubleSide});
+const busFrontGlassPane=new THREE.PlaneGeometry(2.35,.88);
+const busRearGlassPane=new THREE.PlaneGeometry(2.32,.78);
 // A single shared PBR side-glazing atlas per bus livery replaces twenty
 // individual window/frame meshes per vehicle. Painted frames, passenger
 // silhouettes, grime and reflections are baked once at startup.
@@ -968,7 +1001,7 @@ function makeBus(variant='red'){
  // Bangkok buses board from the left; the opposite side stays uninterrupted.
  const door=new THREE.Mesh(busDoorPane,busDoorMaterial);
  door.rotation.y=-Math.PI/2;door.position.set(-1.516,1.81,1.67);part(g,door);
- part(g,cube(2.35,.88,.085,busWindshield,0,2.28,2.7));
+ const frontGlass=new THREE.Mesh(busFrontGlassPane,busWindshield);frontGlass.position.set(0,2.28,2.748);part(g,frontGlass);
  part(g,cube(.075,.87,.09,trim,0,2.28,2.76));
  part(g,cube(2.43,.51,.13,trim,0,3.02,2.73));
  part(g,cube(.86,.39,.15,busCream,0,3.06,2.82));
@@ -983,7 +1016,7 @@ function makeBus(variant='red'){
   part(g,cube(.25,.36,.095,busTailLamp,side*1.18,1.17,-2.74));
  }
  // The rear is visible while approaching from behind in the POV game.
- part(g,cube(2.32,.78,.07,busWindshield,0,2.28,-2.7));
+ const rearGlass=new THREE.Mesh(busRearGlassPane,busWindshield);rearGlass.rotation.y=Math.PI;rearGlass.position.set(0,2.28,-2.748);part(g,rearGlass);
  part(g,cube(2.43,.48,.12,trim,0,3.01,-2.73));
  const rearRoute=new THREE.Mesh(busRoutePane,blue?busRouteSigns.blue:busRouteSigns.red);
  rearRoute.rotation.y=Math.PI;rearRoute.position.set(0,3.05,-2.805);part(g,rearRoute);
