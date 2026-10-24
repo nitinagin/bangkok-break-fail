@@ -146,7 +146,45 @@ function makeShopfrontMaterial(glazed){
  return new THREE.MeshStandardMaterial({map:texture,metalness:glazed?.22:.57,roughness:glazed?.32:.72});
 }
 const shopfrontMaterials={shutter:makeShopfrontMaterial(false),glass:makeShopfrontMaterial(true)};
-const shopTrim=mat(0xfff5d1),shopShadow=mat(0x39365b),windowGlow=mat(0xffe7a1),awningColors=[mat(0xff366e),mat(0x00cba9),mat(0xff9f20)];
+const shopTrim=mat(0xfff5d1),shopShadow=mat(0x39365b),windowGlow=mat(0xffe7a1);
+// Three shared PBR canvas awnings: woven stripes, folds, stitched hems and rain grime.
+// Reuse the existing shophouse meshes: zero additional draw calls or per-frame work.
+function makeYaowaratAwning(variant){
+ const canvas=document.createElement('canvas');canvas.width=256;canvas.height=128;
+ const ctx=canvas.getContext('2d');
+ const palettes=[
+  ['#77333c','#e2c6a9','#4c202a'],
+  ['#276e68','#d8d3ba','#174b49'],
+  ['#a06b32','#e9d6a9','#674323']
+ ];
+ const [stripe,cream,shadow]=palettes[variant];
+ ctx.fillStyle=cream;ctx.fillRect(0,0,256,128);
+ for(let panel=0;panel<8;panel++){
+  const x=panel*32;
+  ctx.fillStyle=panel%2===0?stripe:cream;ctx.fillRect(x,0,32,128);
+  const fold=ctx.createLinearGradient(x,0,x+32,0);
+  fold.addColorStop(0,'rgba(14,15,16,.21)');
+  fold.addColorStop(.3,'rgba(255,255,240,.09)');
+  fold.addColorStop(.72,'rgba(255,255,240,.015)');
+  fold.addColorStop(1,'rgba(11,13,15,.18)');
+  ctx.fillStyle=fold;ctx.fillRect(x,0,32,128);
+  ctx.strokeStyle='rgba(240,225,192,.4)';ctx.lineWidth=1;
+  ctx.setLineDash([3,4]);ctx.beginPath();ctx.moveTo(x+1,3);ctx.lineTo(x+1,125);ctx.stroke();ctx.setLineDash([]);
+ }
+ ctx.fillStyle=shadow;ctx.fillRect(0,117,256,11);
+ ctx.fillStyle='rgba(238,221,184,.55)';ctx.fillRect(0,117,256,1);
+ ctx.strokeStyle='rgba(244,231,201,.55)';ctx.setLineDash([4,5]);
+ ctx.beginPath();ctx.moveTo(3,122);ctx.lineTo(253,122);ctx.stroke();ctx.setLineDash([]);
+ for(let k=0;k<140;k++){
+  const x=(k*73+variant*29)%256,y=(k*41+variant*17)%118;
+  ctx.fillStyle=k%3===0?'rgba(41,35,28,.13)':'rgba(236,221,194,.075)';
+  ctx.fillRect(x,y,1+k%3,2+k%9);
+ }
+ const texture=new THREE.CanvasTexture(canvas);
+ texture.colorSpace=THREE.SRGBColorSpace;texture.anisotropy=mobile?2:4;
+ return new THREE.MeshStandardMaterial({map:texture,roughness:.89,metalness:0});
+}
+const awningColors=Array.from({length:3},(_,i)=>makeYaowaratAwning(i));
 const signMaterials=[mat(0xff267a),mat(0x086bd8),mat(0x1cbf7a)];const neonSigns=[new THREE.MeshBasicMaterial({color:0xff3d96}),new THREE.MeshBasicMaterial({color:0x22ffe0}),new THREE.MeshBasicMaterial({color:0xffd64d})];const daySigns=signMaterials.slice();function applyDistrict(i){if(i===districtIndex)return;districtIndex=i;districtLabel.textContent=['☀️ BANGKOK DAYTIME','🌃 YAOWARAT NIGHT · TEST 6.9','🚧 RAMA II CONSTRUCTION · TEST 6.9','🛍️ JJ MARKET · CHATUCHAK · 8000+','🛣️ BANGKOK EXPRESSWAY · 12000+','🌈 PATTAYA WALKING STREET · 16000+'][i];for(let k=0;k<3;k++)signMaterials[k]=i===1?neonSigns[k]:daySigns[k];for(const b of props){if(b.userData.sign)b.userData.sign.material=signMaterials[b.userData.signIndex%3]}const rama=i===2;M.grass.color.setHex(rama?0x78746d:0x34333b);M.road.color.setHex(rama?0x777b81:0x56535c);M.stripe.color.setHex(rama?0xe5e1d3:0xe2c579);shoulderPaint.color.setHex(rama?0x77736e:0x444148);curbPaint.color.setHex(rama?0x9d968b:0x756866);hint.textContent=['🛺 WELCOME TO BANGKOK!','🏮 WELCOME TO YAOWARAT!','🌇 SUNSET DRIVE!','🌿 JJ MARKET! WATCH THE TRAFFIC!','🛸 EXPRESSWAY! UFO LASERS INCOMING!','🌈 PATTAYA WALKING STREET!'][i]}
 function makeRoadsideStory(kind,side,z){const g=new THREE.Group();if(kind==='shrine'){g.add(cube(1.5,.25,1.3,storyMat.wood,0,.55,0));for(const sx of [-.53,.53])for(const sz of [-.42,.42])g.add(cube(.12,1.55,.12,storyMat.gold,sx,1.4,sz));g.add(cube(1.9,.3,1.65,storyMat.roof,0,2.25,0));g.add(cube(.55,.8,.52,storyMat.gold,0,1.4,0))}else{g.add(cube(2.4,.95,1.45,storyMat.wood,0,.7,0));g.add(cube(2.65,.15,1.8,storyMat.cloth,0,1.65,0));for(let i=0;i<5;i++){const d=new THREE.Mesh(new THREE.IcosahedronGeometry(.24,0),M.durian);d.position.set((i-2)*.38,1.3,(i%2)*.34-.2);g.add(d)}const vendor=new THREE.Group();vendor.add(cube(.45,.8,.34,storyMat.cloth,0,1.48,0));vendor.add(ball(.34,M.skin,0,2.07,0));vendor.add(ball(.37,M.black,0,2.36,.02));vendor.add(ball(.08,M.white,-.13,2.1,-.29));vendor.add(ball(.08,M.white,.13,2.1,-.29));const arm=cube(.13,.63,.14,M.skin,-.37,1.55,0);vendor.add(arm);vendor.position.x=-.85;g.add(vendor);g.userData.vendorArm=arm;g.userData.vendorFruit=ball(.29,M.durian,-.35,1.65,-.4);g.add(g.userData.vendorFruit)}g.position.set(side*7.35,0,z);scene.add(g);storyProps.push({g,kind,side,triggered:false,dropTime:0});return g}
 function makeGrandma(){const g=new THREE.Group();g.add(cube(.72,1.25,.48,storyMat.ghost,0,1.18,0));g.add(ball(.44,M.skin,0,2.06,0));g.add(ball(.49,storyMat.ghost,0,2.37,.06));g.add(ball(.10,M.black,-.13,2.08,-.30));g.add(ball(.10,M.black,.13,2.08,-.30));g.add(cube(.23,.045,.05,M.red,0,1.88,-.34));const arms=[],legs=[];for(const side of [-1,1]){const leg=cube(.16,.86,.18,storyMat.ghost,side*.25,.52,0);g.add(leg);legs.push(leg);const arm=cube(.13,.82,.16,M.skin,side*.49,1.35,0);g.add(arm);arms.push(arm)}g.userData.runArms=arms;g.userData.runLegs=legs;return g}
