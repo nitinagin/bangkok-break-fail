@@ -873,7 +873,16 @@ const cream=mat(0xf3e6c9),gold2=mat(0xf7bc38),maroon=mat(0x9a294d),jade=mat(0x16
 function part(g,o){g.add(o);return o}
 function rod(g,a,b,r,m){const p=new THREE.Vector3(...a),q=new THREE.Vector3(...b),d=q.clone().sub(p),o=new THREE.Mesh(new THREE.CylinderGeometry(r,r,d.length(),8),m);o.position.copy(p).add(q).multiplyScalar(.5);o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize());g.add(o);return o}
 // Bangkok bus classics: blue-white route 8 and red-cream route 203.
-const busBlue=mat(0x287fbd),busCream=mat(0xf2efe0),busYellow=mat(0xf6d455),busGreen=mat(0x23884e),busDark=mat(0x203b4c),busLamp=mat(0xffe8a1);
+// Shared PBR bus finishes: baked details rather than per-vehicle lights or shaders.
+const busBlue=new THREE.MeshPhysicalMaterial({color:0x287fbd,metalness:.22,roughness:.4,clearcoat:.42,clearcoatRoughness:.28});
+const busCream=new THREE.MeshStandardMaterial({color:0xf2efe0,metalness:.06,roughness:.68});
+const busRed=new THREE.MeshPhysicalMaterial({color:0xbd342f,metalness:.18,roughness:.43,clearcoat:.34});
+const busYellow=new THREE.MeshStandardMaterial({color:0xf6d455,metalness:.08,roughness:.58});
+const busGreen=new THREE.MeshStandardMaterial({color:0x23884e,metalness:.12,roughness:.5});
+const busDark=new THREE.MeshStandardMaterial({color:0x203b4c,metalness:.12,roughness:.38});
+const busLamp=new THREE.MeshStandardMaterial({color:0xffe8a1,emissive:0x493817,emissiveIntensity:.22,roughness:.24});
+const busTailLamp=new THREE.MeshStandardMaterial({color:0xaf2028,emissive:0x50070a,emissiveIntensity:.3,roughness:.28});
+const busWindshield=new THREE.MeshPhysicalMaterial({color:0x2d4654,metalness:.12,roughness:.23,clearcoat:.7,clearcoatRoughness:.15,side:THREE.DoubleSide});
 // A single shared PBR side-glazing atlas per bus livery replaces twenty
 // individual window/frame meshes per vehicle. Painted frames, passenger
 // silhouettes, grime and reflections are baked once at startup.
@@ -905,19 +914,83 @@ function makeBusSideGlazing(blue){
 }
 const busSideGlazing={red:makeBusSideGlazing(false),blue:makeBusSideGlazing(true)};
 const busSidePane=new THREE.PlaneGeometry(4.88,.84);
-function makeBus(variant='red'){const g=new THREE.Group(),blue=variant==='blue',main=blue?busCream:M.red,trim=blue?busBlue:busCream,accent=blue?busYellow:busGreen;
- part(g,cube(2.86,2.52,5.3,main,0,1.67,0));part(g,cube(2.96,.31,5.38,blue?busBlue:M.red,0,3.03,0));part(g,cube(2.89,.23,5.34,accent,0,1.31,0));part(g,cube(2.9,.27,5.35,trim,0,.71,0));
+
+// Route and left-side entry door are baked into three small shared textures,
+// so traffic clones reuse the same geometry and avoid per-frame canvas work.
+function makeBusRouteMaterial(route){
+ const canvas=document.createElement('canvas');canvas.width=256;canvas.height=96;
+ const ctx=canvas.getContext('2d');
+ ctx.fillStyle='#101a24';ctx.fillRect(0,0,256,96);
+ ctx.strokeStyle='#d5c7a2';ctx.lineWidth=4;ctx.strokeRect(3,3,250,90);
+ ctx.fillStyle='#fff0b9';ctx.textAlign='center';
+ ctx.font=route==='203'?'bold 57px sans-serif':'bold 68px sans-serif';
+ ctx.fillText(route,128,65);
+ ctx.font='17px sans-serif';ctx.fillText('กรุงเทพฯ',128,88);
+ const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
+ return new THREE.MeshBasicMaterial({map:texture,side:THREE.DoubleSide});
+}
+const busRouteSigns={red:makeBusRouteMaterial('203'),blue:makeBusRouteMaterial('8')};
+const busRoutePane=new THREE.PlaneGeometry(.81,.32);
+const busDoorCanvas=document.createElement('canvas');busDoorCanvas.width=128;busDoorCanvas.height=256;
+const busDoorCtx=busDoorCanvas.getContext('2d');
+busDoorCtx.fillStyle='#222b33';busDoorCtx.fillRect(0,0,128,256);
+for(const dx of [8,66]){
+ const grad=busDoorCtx.createLinearGradient(dx,10,dx+50,163);
+ grad.addColorStop(0,'#577587');grad.addColorStop(.45,'#263f4e');grad.addColorStop(1,'#15252f');
+ busDoorCtx.fillStyle=grad;busDoorCtx.fillRect(dx,12,52,145);
+ busDoorCtx.fillStyle='rgba(210,225,227,.18)';
+ busDoorCtx.beginPath();busDoorCtx.moveTo(dx+8,17);busDoorCtx.lineTo(dx+19,17);
+ busDoorCtx.lineTo(dx+7,150);busDoorCtx.lineTo(dx+3,150);busDoorCtx.closePath();busDoorCtx.fill();
+}
+busDoorCtx.fillStyle='#8c9497';busDoorCtx.fillRect(0,163,128,6);
+busDoorCtx.fillStyle='#505e65';busDoorCtx.fillRect(6,174,116,73);
+busDoorCtx.fillStyle='#c6c8bb';busDoorCtx.fillRect(62,5,4,246);
+busDoorCtx.fillStyle='#c2c8c4';busDoorCtx.fillRect(0,0,128,7);busDoorCtx.fillRect(0,249,128,7);
+const busDoorTexture=new THREE.CanvasTexture(busDoorCanvas);busDoorTexture.colorSpace=THREE.SRGBColorSpace;
+const busDoorMaterial=new THREE.MeshStandardMaterial({map:busDoorTexture,metalness:.12,roughness:.45,side:THREE.DoubleSide});
+const busDoorPane=new THREE.PlaneGeometry(.79,1.7);
+function makeBus(variant='red'){
+ const g=new THREE.Group(),blue=variant==='blue',main=blue?busCream:busRed,trim=blue?busBlue:busCream,accent=blue?busYellow:busGreen;
+ part(g,cube(2.86,2.52,5.3,main,0,1.67,0));
+ part(g,cube(2.96,.31,5.38,blue?busBlue:busRed,0,3.03,0));
+ part(g,cube(2.89,.23,5.34,accent,0,1.31,0));
+ part(g,cube(2.9,.27,5.35,trim,0,.71,0));
  for(const side of [-1,1]){
   const glazing=new THREE.Mesh(busSidePane,blue?busSideGlazing.blue:busSideGlazing.red);
   glazing.rotation.y=side*Math.PI/2;glazing.position.set(side*1.495,2.35,0);
   part(g,glazing);
-  for(const z of [-1.72,1.62]){const wh=new THREE.Mesh(new THREE.CylinderGeometry(.48,.48,.21,9),M.wheel);wh.rotation.z=Math.PI/2;wh.position.set(side*1.46,.49,z);part(g,wh)}part(g,cube(.22,.31,.17,busDark,side*1.56,2.42,2.37))}
- part(g,cube(2.35,.88,.085,busDark,0,2.28,2.7));part(g,cube(.075,.87,.09,trim,0,2.28,2.76));part(g,cube(2.43,.51,.13,trim,0,3.02,2.73));part(g,cube(.86,.39,.15,busCream,0,3.06,2.82));
- for(const dx of (blue?[0]:[-.21,0,.21]))part(g,cube(.105,.25,.05,blue?busDark:busBlue,dx,3.06,2.92));
- part(g,cube(1.62,.36,.10,busDark,0,1.12,2.74));for(let j=0;j<3;j++)part(g,cube(1.45,.035,.12,trim,0,1.02+j*.10,2.82));part(g,cube(2.64,.22,.18,busDark,0,.55,2.79));
- for(const side of [-1,1]){part(g,ball(.18,busLamp,side*.97,.98,2.81));part(g,cube(.24,.15,.11,M.gold,side*1.14,1.49,2.79))}
- if(blue){part(g,cube(2.6,.17,.13,busYellow,0,1.42,2.79));part(g,cube(2.5,.39,.13,busBlue,0,.82,2.78))}else{part(g,cube(2.65,.18,.14,busGreen,0,1.62,2.79));part(g,cube(2.45,.43,.12,busCream,0,.91,2.78))}
- return g
+  for(const z of [-1.72,1.62]){
+   const wh=new THREE.Mesh(new THREE.CylinderGeometry(.48,.48,.21,9),M.wheel);
+   wh.rotation.z=Math.PI/2;wh.position.set(side*1.46,.49,z);part(g,wh);
+  }
+  part(g,cube(.22,.31,.17,busDark,side*1.56,2.42,2.37));
+ }
+ // Bangkok buses board from the left; the opposite side stays uninterrupted.
+ const door=new THREE.Mesh(busDoorPane,busDoorMaterial);
+ door.rotation.y=-Math.PI/2;door.position.set(-1.516,1.81,1.67);part(g,door);
+ part(g,cube(2.35,.88,.085,busWindshield,0,2.28,2.7));
+ part(g,cube(.075,.87,.09,trim,0,2.28,2.76));
+ part(g,cube(2.43,.51,.13,trim,0,3.02,2.73));
+ part(g,cube(.86,.39,.15,busCream,0,3.06,2.82));
+ const frontRoute=new THREE.Mesh(busRoutePane,blue?busRouteSigns.blue:busRouteSigns.red);
+ frontRoute.position.set(0,3.06,2.916);part(g,frontRoute);
+ part(g,cube(1.62,.36,.10,busDark,0,1.12,2.74));
+ for(let j=0;j<3;j++)part(g,cube(1.45,.035,.12,trim,0,1.02+j*.10,2.82));
+ part(g,cube(2.64,.22,.18,busDark,0,.55,2.79));
+ for(const side of [-1,1]){
+  part(g,ball(.18,busLamp,side*.97,.98,2.81));
+  part(g,cube(.24,.15,.11,M.gold,side*1.14,1.49,2.79));
+  part(g,cube(.25,.36,.095,busTailLamp,side*1.18,1.17,-2.74));
+ }
+ // The rear is visible while approaching from behind in the POV game.
+ part(g,cube(2.32,.78,.07,busWindshield,0,2.28,-2.7));
+ part(g,cube(2.43,.48,.12,trim,0,3.01,-2.73));
+ const rearRoute=new THREE.Mesh(busRoutePane,blue?busRouteSigns.blue:busRouteSigns.red);
+ rearRoute.rotation.y=Math.PI;rearRoute.position.set(0,3.05,-2.805);part(g,rearRoute);
+ part(g,cube(2.56,.19,.13,busDark,0,.58,-2.77));
+ if(blue){part(g,cube(2.6,.17,.13,busYellow,0,1.42,2.79));part(g,cube(2.5,.39,.13,busBlue,0,.82,2.78))}
+ else{part(g,cube(2.65,.18,.14,busGreen,0,1.62,2.79));part(g,cube(2.45,.43,.12,busCream,0,.91,2.78))}
+ return g;
 }
 // Lightweight moving traffic: built from simple shared geometry, no new downloads.
 // Mobile-friendly vehicle silhouettes: readable from behind, no additional GLB downloads.
