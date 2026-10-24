@@ -957,7 +957,41 @@ function makeTaxi(){
 // cachedObstacle('tuktuk'), so every traffic clone shares geometries/materials.
 const tukPaint=new THREE.MeshStandardMaterial({color:0x125a9c,metalness:.38,roughness:.4});
 const tukAccent=new THREE.MeshStandardMaterial({color:0xc92e3c,metalness:.25,roughness:.47});
-const tukCanvas=new THREE.MeshStandardMaterial({color:0x252a32,metalness:0,roughness:.94,side:THREE.DoubleSide});
+// Weathered woven canopy for traffic tuk-tuks: one shared 256px sRGB texture.
+// UV-mapped to the curved roof, so stitched seams and rain-worn cloth are visible
+// without extra meshes, dynamic lights or per-frame canvas work.
+const tukCanvas=new THREE.MeshStandardMaterial({color:0x9ba5aa,metalness:0,roughness:.91,side:THREE.DoubleSide});
+const tukRoofPattern=document.createElement('canvas');
+tukRoofPattern.width=tukRoofPattern.height=256;
+const tukRoofCtx=tukRoofPattern.getContext('2d');
+tukRoofCtx.fillStyle='#50545b';tukRoofCtx.fillRect(0,0,256,256);
+// Fine cross-weave and irregular grime are baked once, not rendered each frame.
+for(let i=0;i<256;i+=4){
+ tukRoofCtx.fillStyle='rgba(225,227,221,.075)';tukRoofCtx.fillRect(i,0,1,256);
+ tukRoofCtx.fillStyle='rgba(14,17,20,.10)';tukRoofCtx.fillRect(0,i,256,1);
+}
+for(let i=0;i<1100;i++){
+ const px=(i*137+Math.floor(i/11)*29)%256,py=(i*73+Math.floor(i/17)*41)%256;
+ tukRoofCtx.fillStyle=i%5===0?'rgba(188,174,145,.18)':'rgba(9,12,14,.13)';
+ tukRoofCtx.fillRect(px,py,1+i%3,1+i%2);
+}
+// Reinforced hems and double-stitched transverse canopy panels.
+tukRoofCtx.strokeStyle='rgba(12,16,19,.62)';tukRoofCtx.lineWidth=5;
+tukRoofCtx.strokeRect(5,5,246,246);
+tukRoofCtx.strokeStyle='rgba(172,174,166,.6)';tukRoofCtx.lineWidth=1.5;
+tukRoofCtx.strokeRect(9,9,238,238);
+for(const y of [63,128,193]){
+ tukRoofCtx.fillStyle='rgba(17,20,24,.4)';tukRoofCtx.fillRect(10,y-3,236,7);
+ tukRoofCtx.strokeStyle='rgba(188,187,171,.62)';tukRoofCtx.lineWidth=1;
+ tukRoofCtx.setLineDash([3,5]);
+ tukRoofCtx.beginPath();tukRoofCtx.moveTo(12,y-4);tukRoofCtx.lineTo(244,y-4);
+ tukRoofCtx.moveTo(12,y+4);tukRoofCtx.lineTo(244,y+4);tukRoofCtx.stroke();
+ tukRoofCtx.setLineDash([]);
+}
+const tukRoofTexture=new THREE.CanvasTexture(tukRoofPattern);
+tukRoofTexture.colorSpace=THREE.SRGBColorSpace;
+tukRoofTexture.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());
+tukCanvas.map=tukRoofTexture;tukCanvas.needsUpdate=true;
 const tukTrim=new THREE.MeshStandardMaterial({color:0xb6b9ad,metalness:.74,roughness:.29});
 const tukWindow=new THREE.MeshStandardMaterial({color:0x426c80,metalness:.18,roughness:.21,transparent:true,opacity:.7,side:THREE.DoubleSide});
 const tukSeat=new THREE.MeshStandardMaterial({color:0x673c35,metalness:0,roughness:.89});
@@ -1013,16 +1047,17 @@ function makeTukTuk(){
  rod(g,[.7,1.53,.85],[.7,2.23,.72],.027,tukTrim);
  g.add(cube(1.46,.055,.055,tukTrim,0,2.24,.72));
  // Curved cloth canopy: a single low-poly strip instead of a flat slab.
- const vertices=[],indices=[],nx=8,nz=3;
+ const vertices=[],indices=[],uvs=[],nx=8,nz=3;
  for(let iz=0;iz<=nz;iz++)for(let ix=0;ix<=nx;ix++){
   const x=-.86+ix*1.72/nx,z=-1.38+iz*2.16/nz;
-  vertices.push(x,2.34+.16*(1-(x/.86)*(x/.86)),z);
+  vertices.push(x,2.34+.16*(1-(x/.86)*(x/.86)),z);uvs.push(ix/nx,iz/nz);
  }
  for(let iz=0;iz<nz;iz++)for(let ix=0;ix<nx;ix++){
   const a=iz*(nx+1)+ix,b=a+nx+1;indices.push(a,b,a+1,b,b+1,a+1);
  }
  const roofGeometry=new THREE.BufferGeometry();
  roofGeometry.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));
+ roofGeometry.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));
  roofGeometry.setIndex(indices);roofGeometry.computeVertexNormals();
  g.add(new THREE.Mesh(roofGeometry,tukCanvas));
  rod(g,[-.87,2.35,-1.39],[.87,2.35,-1.39],.033,tukTrim);
