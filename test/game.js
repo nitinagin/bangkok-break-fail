@@ -926,11 +926,22 @@ const taxiPink=mat(0xed3887),taxiGlass=mat(0x35596d),taxiTrim=mat(0xf5e8b6),bike
 const taxiGreen=mat(0x008c71),taxiYellow=mat(0xffcb27),taxiLight=mat(0xfff5d8),taxiChrome=mat(0x9eb6c2),tukBlue=mat(0x0847bd),tukRed=mat(0xcf283c),tukRoof=mat(0x252632);
 // A rounded, two-tone Thai metered taxi instead of stacked cuboids.
 // Built once in cachedObstacle('taxi'): cloned traffic shares all PBR materials and geometry.
-const taxiPaintGreen=new THREE.MeshStandardMaterial({color:0x087d5a,metalness:.18,roughness:.39});
-const taxiPaintYellow=new THREE.MeshStandardMaterial({color:0xf3c62d,metalness:.14,roughness:.43});
-const taxiTintedGlass=new THREE.MeshStandardMaterial({color:0x263f4b,metalness:.23,roughness:.2,transparent:true,opacity:.89,side:THREE.DoubleSide});
+const taxiPaintGreen=new THREE.MeshPhysicalMaterial({color:0x087d5a,metalness:.27,roughness:.32,clearcoat:.55,clearcoatRoughness:.23});
+const taxiPaintYellow=new THREE.MeshPhysicalMaterial({color:0xf3c62d,metalness:.22,roughness:.34,clearcoat:.55,clearcoatRoughness:.25});
+const taxiTintedGlass=new THREE.MeshPhysicalMaterial({color:0x263f4b,metalness:.12,roughness:.16,clearcoat:.75,clearcoatRoughness:.14,transparent:true,opacity:.89,side:THREE.DoubleSide,depthWrite:false});
 const taxiRubber=new THREE.MeshStandardMaterial({color:0x1d252b,roughness:.92});
-const taxiBrakeLens=new THREE.MeshStandardMaterial({color:0xb52431,metalness:.08,roughness:.34});
+const taxiBrakeLens=new THREE.MeshStandardMaterial({color:0xb52431,emissive:0x4b0710,emissiveIntensity:.28,metalness:.08,roughness:.34});
+// Shared Bangkok plate texture and grille materials: built once for all taxi clones.
+const taxiPlateCanvas=document.createElement('canvas');taxiPlateCanvas.width=256;taxiPlateCanvas.height=128;
+const taxiPlateCtx=taxiPlateCanvas.getContext('2d');
+taxiPlateCtx.fillStyle='#f3f0df';taxiPlateCtx.fillRect(0,0,256,128);
+taxiPlateCtx.strokeStyle='#2b3436';taxiPlateCtx.lineWidth=5;taxiPlateCtx.strokeRect(4,4,248,120);
+taxiPlateCtx.fillStyle='#151d21';taxiPlateCtx.textAlign='center';
+taxiPlateCtx.font='bold 58px sans-serif';taxiPlateCtx.fillText('กท 4821',128,73);
+taxiPlateCtx.font='23px sans-serif';taxiPlateCtx.fillText('กรุงเทพมหานคร',128,108);
+const taxiPlateTexture=new THREE.CanvasTexture(taxiPlateCanvas);taxiPlateTexture.colorSpace=THREE.SRGBColorSpace;
+const taxiPlateMaterial=new THREE.MeshBasicMaterial({map:taxiPlateTexture,side:THREE.DoubleSide});
+const taxiGrilleMaterial=new THREE.MeshStandardMaterial({color:0x17232b,metalness:.3,roughness:.65});
 function makeTaxi(){
  const g=new THREE.Group();
  // Extrude a sedan side profile along X; rounded bevels replace toy-like box edges.
@@ -991,6 +1002,14 @@ function makeTaxi(){
   const sign=new THREE.Mesh(new THREE.PlaneGeometry(.74,.23),signMaterial);
   sign.position.set(0,2.08,z);if(z<0)sign.rotation.y=Math.PI;
   g.add(sign);
+ }
+ // Narrow radiator grille and Bangkok registration plates replace blank bumpers.
+ part(g,cube(.86,.16,.055,taxiGrilleMaterial,0,.99,1.81));
+ part(g,cube(.9,.025,.067,taxiChrome,0,1.08,1.815));
+ for(const z of [1.865,-1.865]){
+  const plate=new THREE.Mesh(new THREE.PlaneGeometry(.49,.245),taxiPlateMaterial);
+  plate.position.set(0,.7,z);if(z<0)plate.rotation.y=Math.PI;
+  g.add(plate);
  }
  part(g,cube(1.58,.14,.09,taxiRubber,0,.55,1.79));
  part(g,cube(1.56,.12,.09,taxiRubber,0,.55,-1.79));
