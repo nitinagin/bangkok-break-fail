@@ -245,6 +245,41 @@ const oldGold=new THREE.MeshStandardMaterial({color:0xb68a40,metalness:.68,rough
 // The shared PBR road surface stays exposed: no opaque Lambert overlay or extra asphalt canvas.
 function neonBlade(text){const c=document.createElement('canvas');c.width=192;c.height=512;const a=c.getContext('2d');a.fillStyle='#3b080e';a.fillRect(0,0,192,512);a.strokeStyle='#f7ae32';a.lineWidth=10;a.strokeRect(8,8,176,496);a.shadowColor='#ff3e15';a.shadowBlur=15;a.fillStyle='#ffd263';a.textAlign='center';a.textBaseline='middle';a.font='bold 66px sans-serif';[...text].slice(0,4).forEach((v,i)=>a.fillText(v,96,76+i*113));const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return new THREE.MeshBasicMaterial({map:t,side:THREE.DoubleSide})}
 const neonBladeMaterials=['金龍海鮮','中國城','百年老店','永安藥房','大金行','潮州飯店','大華金行','廣東燒味'].map(neonBlade);
+// Yaowarat facade detail: one shared baked AC grille for all scrolling buildings.
+// Fan, stamped louvers, grime and rust live in a 128px PBR texture, not extra meshes.
+const yaowaratACCanvas=document.createElement('canvas');
+yaowaratACCanvas.width=yaowaratACCanvas.height=128;
+const yaowaratACPaint=yaowaratACCanvas.getContext('2d');
+const acMetal=yaowaratACPaint.createLinearGradient(0,0,128,128);
+acMetal.addColorStop(0,'#9ca9ac');acMetal.addColorStop(.55,'#5d6a70');acMetal.addColorStop(1,'#29373d');
+yaowaratACPaint.fillStyle=acMetal;yaowaratACPaint.fillRect(0,0,128,128);
+yaowaratACPaint.fillStyle='#222e33';yaowaratACPaint.fillRect(7,8,114,112);
+for(let y=13;y<119;y+=8){
+ yaowaratACPaint.fillStyle='#839094';yaowaratACPaint.fillRect(11,y,106,2);
+ yaowaratACPaint.fillStyle='#121e23';yaowaratACPaint.fillRect(11,y+2,106,4);
+}
+yaowaratACPaint.fillStyle='#17272d';yaowaratACPaint.beginPath();yaowaratACPaint.arc(64,65,35,0,Math.PI*2);yaowaratACPaint.fill();
+yaowaratACPaint.strokeStyle='#b0bab9';yaowaratACPaint.lineWidth=3;
+for(let ring=13;ring<=34;ring+=10){yaowaratACPaint.beginPath();yaowaratACPaint.arc(64,65,ring,0,Math.PI*2);yaowaratACPaint.stroke();}
+for(let spoke=0;spoke<8;spoke++){
+ const a=spoke*Math.PI/4;
+ yaowaratACPaint.beginPath();yaowaratACPaint.moveTo(64,65);
+ yaowaratACPaint.lineTo(64+34*Math.cos(a),65+34*Math.sin(a));yaowaratACPaint.stroke();
+}
+yaowaratACPaint.fillStyle='#d1d4cd';yaowaratACPaint.fillRect(61,62,6,6);
+for(let k=0;k<12;k++){
+ const x=10+(k*37)%109,y=8+(k*23)%113;
+ yaowaratACPaint.fillStyle=k%3===0?'rgba(139,70,35,.4)':'rgba(16,28,29,.25)';
+ yaowaratACPaint.fillRect(x,y,2+(k%3),6+(k%9));
+}
+yaowaratACPaint.strokeStyle='#c2c9c4';yaowaratACPaint.lineWidth=4;
+yaowaratACPaint.strokeRect(3,3,122,122);
+const yaowaratACTexture=new THREE.CanvasTexture(yaowaratACCanvas);
+yaowaratACTexture.colorSpace=THREE.SRGBColorSpace;yaowaratACTexture.anisotropy=2;
+const yaowaratACBody=new THREE.MeshStandardMaterial({color:0xb8c2c1,metalness:.32,roughness:.74});
+const yaowaratACGrille=new THREE.MeshStandardMaterial({map:yaowaratACTexture,metalness:.26,roughness:.78});
+const yaowaratRainPipe=new THREE.MeshStandardMaterial({color:0x566368,metalness:.5,roughness:.72});
+
 function building(x,z,i){
  const g=new THREE.Group(),h=7.9+(i%7)*1.1,paint=facadeMaterials[i%facadeMaterials.length];
  g.add(cube(3.9,h,5,paint,0,h/2,0));for(const edge of [-1,1])g.add(cube(.16,h,5.15,brickTrim,edge*1.94,h/2,0));for(let fy=3.1;fy<h;fy+=2.6)g.add(cube(4.05,.14,5.15,oldGold,0,fy,0));
@@ -271,7 +306,7 @@ function building(x,z,i){
  // Procedural 3D Yaowarat shophouse detail: recessed balconies, railings and AC units.
  // Geometry stays attached to each existing scrolling building (no new spawn logic).
  const roadDir=x<0?1:-1;
- const balconyMetal=shopTrim,balconyShade=shopShadow,acBody=mat(0xc3c8c4),acVent=mat(0x515b60);
+ const balconyMetal=shopTrim,balconyShade=shopShadow,acBody=yaowaratACBody,acVent=yaowaratACGrille;
  for(let floor=0;floor<2;floor++){
   const by=4.15+floor*2.6;
   if(by>h-.65)continue;
@@ -285,7 +320,7 @@ function building(x,z,i){
  }
  if(i%3===0){
   // Side-mounted rain pipe and a projecting ground-floor shop light.
-  g.add(cube(.075,h-.6,.075,acVent,-1.78,h/2,front+roadDir*.11));
+  g.add(cube(.075,h-.6,.075,yaowaratRainPipe,-1.78,h/2,front+roadDir*.11));
   g.add(cube(.46,.11,.4,shopTrim,-1.18,2.52,front+roadDir*.45));
   g.add(ball(.13,windowGlow,-1.18,2.38,front+roadDir*.47));
  }
