@@ -243,7 +243,62 @@ const shopSignMaterials=[
 ].map(([cn,th])=>streetSignMaterial(cn,th));
 const oldGold=new THREE.MeshStandardMaterial({color:0xb68a40,metalness:.68,roughness:.38}),warmNeon=new THREE.MeshBasicMaterial({color:0xffb84e}),redNeon=new THREE.MeshBasicMaterial({color:0xf02032}),glassDark=new THREE.MeshStandardMaterial({color:0x273c44,metalness:.3,roughness:.2}),brickTrim=new THREE.MeshLambertMaterial({color:0x4c3934});
 // The shared PBR road surface stays exposed: no opaque Lambert overlay or extra asphalt canvas.
-function neonBlade(text){const c=document.createElement('canvas');c.width=192;c.height=512;const a=c.getContext('2d');a.fillStyle='#3b080e';a.fillRect(0,0,192,512);a.strokeStyle='#f7ae32';a.lineWidth=10;a.strokeRect(8,8,176,496);a.shadowColor='#ff3e15';a.shadowBlur=15;a.fillStyle='#ffd263';a.textAlign='center';a.textBaseline='middle';a.font='bold 66px sans-serif';[...text].slice(0,4).forEach((v,i)=>a.fillText(v,96,76+i*113));const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return new THREE.MeshBasicMaterial({map:t,side:THREE.DoubleSide})}
+// Baked neon-tube signage: one 192x512 canvas per existing sign, no new meshes or runtime lights.
+function neonBlade(text){
+ const c=document.createElement('canvas');c.width=192;c.height=512;
+ const a=c.getContext('2d');
+ const panel=a.createLinearGradient(0,0,192,0);
+ panel.addColorStop(0,'#180c13');panel.addColorStop(.12,'#40121a');
+ panel.addColorStop(.52,'#29090e');panel.addColorStop(.88,'#40111b');
+ panel.addColorStop(1,'#120c13');
+ a.fillStyle=panel;a.fillRect(0,0,192,512);
+ // A metal lightbox, inset neon channel and slightly uneven old enamel.
+ a.fillStyle='#0a1119';a.fillRect(3,3,186,506);
+ a.fillStyle='#42141b';a.fillRect(12,12,168,488);
+ const inset=a.createLinearGradient(12,0,180,0);
+ inset.addColorStop(0,'rgba(255,102,56,.22)');
+ inset.addColorStop(.35,'rgba(25,5,12,0)');
+ inset.addColorStop(1,'rgba(255,96,37,.12)');
+ a.fillStyle=inset;a.fillRect(12,12,168,488);
+ for(let k=0;k<24;k++){
+  const x=15+(k*53)%159,y=17+(k*79)%475;
+  a.fillStyle=k%3===0?'rgba(236,153,91,.1)':'rgba(9,8,11,.3)';
+  a.fillRect(x,y,1+(k%3),3+(k%13));
+ }
+ a.lineJoin='round';
+ a.strokeStyle='#77523d';a.lineWidth=5;a.strokeRect(9,9,174,494);
+ a.strokeStyle='rgba(255,183,92,.46)';a.lineWidth=2;a.strokeRect(16,16,160,480);
+ for(const y of [21,491])for(const x of [21,171]){
+  a.beginPath();a.arc(x,y,4,0,Math.PI*2);a.fillStyle='#9b7861';a.fill();
+  a.fillStyle='#302b2b';a.fillRect(x-2,y,4,1);
+ }
+ a.textAlign='center';a.textBaseline='middle';
+ a.font='bold 65px "PingFang TC","Noto Sans CJK TC",sans-serif';
+ const glyphs=[...text].slice(0,4);
+ for(let i=0;i<glyphs.length;i++){
+  const x=96,y=78+i*112;
+  // Baked outer bloom and tube core: glow without a costly dynamic light.
+  a.save();a.shadowColor='#ff3821';a.shadowBlur=22;
+  a.strokeStyle='rgba(255,52,32,.5)';a.lineWidth=11;
+  a.strokeText(glyphs[i],x,y,152);
+  a.shadowColor='#ff8c34';a.shadowBlur=13;
+  a.strokeStyle='#ff863b';a.lineWidth=5;
+  a.strokeText(glyphs[i],x,y,152);
+  a.shadowBlur=4;a.strokeStyle='#ffe9a1';a.lineWidth=2.2;
+  a.strokeText(glyphs[i],x,y,152);
+  a.fillStyle='#ffe7a4';a.fillText(glyphs[i],x,y,152);
+  a.restore();
+ }
+ // Exposed tube supports and old electrical conduit are painted, not extra geometry.
+ a.strokeStyle='rgba(105,90,78,.8)';a.lineWidth=2;
+ a.beginPath();a.moveTo(169,30);a.lineTo(169,477);a.stroke();
+ for(const y of [125,237,349,461]){
+  a.fillStyle='#8b7771';a.fillRect(164,y,9,3);
+ }
+ const t=new THREE.CanvasTexture(c);
+ t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=2;
+ return new THREE.MeshBasicMaterial({map:t,side:THREE.DoubleSide});
+}
 const neonBladeMaterials=['金龍海鮮','中國城','百年老店','永安藥房','大金行','潮州飯店','大華金行','廣東燒味'].map(neonBlade);
 // Yaowarat facade detail: one shared baked AC grille for all scrolling buildings.
 // Fan, stamped louvers, grime and rust live in a 128px PBR texture, not extra meshes.
