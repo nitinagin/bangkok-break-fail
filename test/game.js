@@ -799,14 +799,58 @@ new GLTFLoader().load(TUKTUK_GLB,glb=>{
   const raw=glb.scene;
   // Reject oversized preview geometry before uploading it to the GPU.
   // Keep the lightweight procedural tuk-tuk when this optional GLB is too heavy.
-  const seenGeometries=new Set();let triangles=0,meshCount=0;
-  raw.traverse(o=>{if(!o.isMesh||!o.geometry)return;meshCount++;const geo=o.geometry;if(seenGeometries.has(geo))return;seenGeometries.add(geo);const index=geo.getIndex();const positions=geo.getAttribute('position');triangles+=(index?index.count:(positions?positions.count:0))/3;});
-  if(!meshCount||!Number.isFinite(triangles)||triangles>(mobile?120000:300000))throw Error('vehicle GLB exceeds geometry budget');
+  // Account for each mesh draw call even when multiple meshes share geometry.
+  // Optional GLBs that exceed mobile budgets must never replace the playable fallback.
+  let triangles=0,meshCount=0;
+  const textures=new Set();
+  const textureKeys=['map','normalMap','roughnessMap','metalnessMap','aoMap','emissiveMap','alphaMap','bumpMap','clearcoatMap','clearcoatNormalMap','clearcoatRoughnessMap'];
+  raw.traverse(o=>{
+   if(!o.isMesh)return;
+   meshCount++;
+   const geo=o.geometry;
+   if(!geo)throw Error('vehicle GLB mesh has no geometry');
+   const index=geo.getIndex(),positions=geo.getAttribute('position');
+   const vertexCount=index?index.count:(positions?positions.count:0);
+   if(!Number.isFinite(vertexCount)||vertexCount<3)throw Error('vehicle GLB invalid mesh');
+   triangles+=vertexCount/3;
+   const materials=Array.isArray(o.material)?o.material:[o.material];
+   for(const material of materials)if(material)for(const key of textureKeys)if(material[key])textures.add(material[key]);
+  });
+  if(!meshCount||meshCount>(mobile?80:160)||!Number.isFinite(triangles)||triangles>(mobile?120000:300000))throw Error('vehicle GLB exceeds mesh/triangle budget');
+  // The former width-only resize missed portrait textures. Preserve each PBR
+  // map's color space and aspect ratio, with sharper 1024px desktop previews.
+  const maxEdge=mobile?768:1024;
+  if(textures.size>(mobile?18:30))throw Error('vehicle GLB exceeds texture count budget');
+  let estimatedTexels=0;
+  const textureSizes=new Map();
+  for(const tex of textures){
+   const image=tex.image;
+   if(!image)continue;
+   const w=image.width,h=image.height;
+   if(!Number.isFinite(w)||!Number.isFinite(h)||w<1||h<1)throw Error('vehicle GLB invalid texture size');
+   const scale=Math.min(1,maxEdge/Math.max(w,h));
+   const targetW=Math.max(1,Math.round(w*scale)),targetH=Math.max(1,Math.round(h*scale));
+   estimatedTexels+=targetW*targetH;
+   textureSizes.set(tex,{image,w,h,targetW,targetH});
+  }
+  if(estimatedTexels>(mobile?9000000:24000000))throw Error('vehicle GLB exceeds texture memory budget');
+  const resizedImages=new Map();
+  for(const [tex,{image,w,h,targetW,targetH}] of textureSizes){
+   if(w<=maxEdge&&h<=maxEdge)continue;
+   let canvas=resizedImages.get(image);
+   if(!canvas){
+    canvas=document.createElement('canvas');canvas.width=targetW;canvas.height=targetH;
+    const context=canvas.getContext('2d');
+    if(!context)throw Error('vehicle GLB texture resize unavailable');
+    context.drawImage(image,0,0,targetW,targetH);
+    resizedImages.set(image,canvas);
+   }
+   tex.image=canvas;tex.needsUpdate=true;
+  }
+  raw.traverse(o=>{if(o.isMesh)o.frustumCulled=true});
   raw.updateMatrixWorld(true);
   const box=new THREE.Box3().setFromObject(raw),sz=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
   if(!Number.isFinite(sz.x)||!Number.isFinite(sz.y)||!Number.isFinite(sz.z)||Math.min(sz.x,sz.y,sz.z)<=.001)throw Error('invalid vehicle bounds');
-  const mats=new Set();
-  raw.traverse(o=>{if(!o.isMesh)return;o.frustumCulled=true;const mm=Array.isArray(o.material)?o.material:[o.material];for(const m of mm){if(!m)continue;for(const key of ['map','normalMap','roughnessMap','metalnessMap','aoMap']){const tex=m[key];if(!tex||mats.has(tex))continue;mats.add(tex);const im=tex.image;if(im&&im.width>768&&im.height>0){const f=Math.min(1,768/Math.max(im.width,im.height));if(f<1){const cv=document.createElement('canvas');cv.width=Math.round(im.width*f);cv.height=Math.round(im.height*f);try{cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);tex.image=cv;tex.needsUpdate=true}catch(e){}}}}}});
   raw.position.sub(center);raw.position.y+=sz.y/2;
   // Normalize the longest horizontal dimension to the road's Z axis.
   // Tripo's local axes are not guaranteed to match Three.js vehicle axes.
