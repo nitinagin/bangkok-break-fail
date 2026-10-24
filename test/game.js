@@ -727,54 +727,66 @@ const speedDial=new THREE.Group();speedDial.position.set(0,-.67,-1.37);cockpit.a
 const dialFace=new THREE.Mesh(new THREE.CylinderGeometry(.18,.18,.045,20),cockpitMat);dialFace.rotation.x=Math.PI/2;speedDial.add(dialFace);
 const dialRim=new THREE.Mesh(new THREE.TorusGeometry(.18,.025,6,22),cockpitGold);speedDial.add(dialRim);
 const dialNeedle=cube(.018,.13,.016,cockpitRed,0,.05,.05);speedDial.add(dialNeedle);
-const trim=mat(0xf6f0db),chrome=mat(0xb9d5d9),seat=mat(0x773a61),dark=mat(0x18283c);
+// Shared physically based finishes for the always-available player tuk-tuk.
+// No extra geometry, lights or per-frame allocations: mobile-friendly GLB fallback.
+const playerPaint=new THREE.MeshPhysicalMaterial({color:0x078a9b,metalness:.42,roughness:.32,clearcoat:.65,clearcoatRoughness:.24});
+const playerBrass=new THREE.MeshStandardMaterial({color:0xc6a04b,metalness:.66,roughness:.34});
+const playerChrome=new THREE.MeshStandardMaterial({color:0xbcc8ce,metalness:.85,roughness:.22});
+const playerRubber=new THREE.MeshStandardMaterial({color:0x171a1e,metalness:0,roughness:.94});
+const playerFabric=new THREE.MeshStandardMaterial({color:0x8e3042,metalness:0,roughness:.91,side:THREE.DoubleSide});
+const playerGlass=new THREE.MeshPhysicalMaterial({color:0x93b9c3,metalness:0,roughness:.16,transparent:true,opacity:.58,depthWrite:false,side:THREE.DoubleSide});
+const playerSeat=new THREE.MeshStandardMaterial({color:0x513c43,metalness:0,roughness:.82});
+const playerDark=new THREE.MeshStandardMaterial({color:0x18242b,metalness:.18,roughness:.68});
+const playerHeadlight=new THREE.MeshStandardMaterial({color:0xf5efdc,emissive:0xd8bd85,emissiveIntensity:.18,roughness:.34});
+const playerTaillight=new THREE.MeshStandardMaterial({color:0x9b2427,emissive:0x9b1010,emissiveIntensity:.28,roughness:.36});
+const chrome=playerChrome,seat=playerSeat,dark=playerDark;
 function tube(points,r,m){const path=new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(...p)));const mesh=new THREE.Mesh(new THREE.TubeGeometry(path,Math.max(8,points.length*5),r,7,false),m);car.add(mesh);return mesh}
 function ellipsoid(x,y,z,sx,sy,sz,m){const o=ball(1,m,x,y,z);o.scale.set(sx,sy,sz);car.add(o);return o}
 function cyl(r1,r2,h,m,x,y,z,rot=0){const o=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,h,14),m);o.position.set(x,y,z);o.rotation.z=rot;car.add(o);return o}
 // Three-wheel chassis, rounded bonnet, passenger compartment and front mudguard
 car.add(cube(1.65,.24,2.75,dark,0,.64,0));
-ellipsoid(0,.91,-.78,.87,.42,.86,M.blue);
-ellipsoid(0,.79,-1.25,.83,.25,.34,M.blue);
-car.add(cube(1.78,.42,1.3,M.blue,0,.92,.73));
+ellipsoid(0,.91,-.78,.87,.42,.86,playerPaint);
+ellipsoid(0,.79,-1.25,.83,.25,.34,playerPaint);
+car.add(cube(1.78,.42,1.3,playerPaint,0,.92,.73));
 car.add(cube(1.55,.18,.76,seat,0,1.22,.78));
-car.add(cube(1.7,.13,.3,M.gold,0,1.42,1.24));
+car.add(cube(1.7,.13,.3,playerBrass,0,1.42,1.24));
 for(const side of [-1,1]){
   // rear passenger wheels, side panels and arches
-  cyl(.46,.46,.22,M.wheel,side*.91,.47,.84,Math.PI/2);
+  cyl(.46,.46,.22,playerRubber,side*.91,.47,.84,Math.PI/2);
   cyl(.27,.27,.235,chrome,side*.91,.47,.84,Math.PI/2);
-  ellipsoid(side*.88,.88,.83,.14,.35,.62,M.gold);
+  ellipsoid(side*.88,.88,.83,.14,.35,.62,playerBrass);
   tube([[side*.88,.85,-.72],[side*.95,1.35,-.75],[side*.99,2.14,-.55],[side*.96,2.36,-.1]],.047,chrome);
   tube([[side*.94,1.05,1.15],[side*.98,1.86,1.15],[side*.95,2.31,.87]],.047,chrome);
   // side step, handles, decorative stripe
   car.add(cube(.25,.1,1.3,chrome,side*1.04,.62,.55));
-  car.add(cube(.09,.12,.24,M.gold,side*.96,1.38,-.34));
+  car.add(cube(.09,.12,.24,playerBrass,side*.96,1.38,-.34));
   // mirrors
   tube([[side*.81,1.39,-1.12],[side*1.17,1.55,-1.15]],.035,chrome);
   ellipsoid(side*1.22,1.59,-1.16,.16,.21,.08,dark);
 }
 // curved canopy with fabric overhang and arching ribs
-const canopy=new THREE.Mesh(new THREE.SphereGeometry(1,18,10,0,Math.PI*2,0,Math.PI/2),M.pink);
+const canopy=new THREE.Mesh(new THREE.SphereGeometry(1,18,10,0,Math.PI*2,0,Math.PI/2),playerFabric);
 canopy.scale.set(1.15,.37,1.67);canopy.position.set(0,2.23,.17);car.add(canopy);
-car.add(cube(2.25,.12,3.03,M.pink,0,2.25,.15));
-for(const z of [-1.3,1.6])tube([[-1.1,2.28,z],[-.75,2.49,z],[0,2.57,z],[.75,2.49,z],[1.1,2.28,z]],.055,M.gold);
+car.add(cube(2.25,.12,3.03,playerFabric,0,2.25,.15));
+for(const z of [-1.3,1.6])tube([[-1.1,2.28,z],[-.75,2.49,z],[0,2.57,z],[.75,2.49,z],[1.1,2.28,z]],.055,playerBrass);
 // windshield and framing
-const windshield=cube(1.57,.68,.065,M.glass,0,1.76,-.91);windshield.rotation.x=-.18;car.add(windshield);
+const windshield=cube(1.57,.68,.065,playerGlass,0,1.76,-.91);windshield.rotation.x=-.18;car.add(windshield);
 tube([[-.84,1.38,-.95],[-.85,2.1,-.88],[.85,2.1,-.88],[.84,1.38,-.95]],.042,chrome);
 car.add(cube(1.05,.08,.08,chrome,0,1.43,-1.04));
 car.add(cube(.5,.12,.07,dark,0,1.51,-.99));
 // front single wheel and rounded fender
-cyl(.4,.4,.22,M.wheel,0,.42,-1.42,Math.PI/2);
+cyl(.4,.4,.22,playerRubber,0,.42,-1.42,Math.PI/2);
 cyl(.22,.22,.24,chrome,0,.42,-1.42,Math.PI/2);
-ellipsoid(0,.69,-1.43,.45,.13,.5,M.gold);
+ellipsoid(0,.69,-1.43,.45,.13,.5,playerBrass);
 // lamps, bumper, tail plate
 for(const side of [-1,1]){
   ellipsoid(side*.58,1.02,-1.5,.22,.22,.12,chrome);
-  ellipsoid(side*.58,1.02,-1.61,.15,.15,.045,M.white);
-  ellipsoid(side*.73,1.05,1.4,.14,.14,.08,M.red);
+  ellipsoid(side*.58,1.02,-1.61,.15,.15,.045,playerHeadlight);
+  ellipsoid(side*.73,1.05,1.4,.14,.14,.08,playerTaillight);
 }
 tube([[-.82,.57,-1.48],[-.66,.5,-1.7],[.66,.5,-1.7],[.82,.57,-1.48]],.065,chrome);
-car.add(cube(.62,.22,.08,M.gold,0,.93,1.49));
-car.add(cube(.4,.12,.09,M.black,0,.93,1.55));
+car.add(cube(.62,.22,.08,playerBrass,0,.93,1.49));
+car.add(cube(.4,.12,.09,playerDark,0,.93,1.55));
 scene.add(car);
 // V0.9 AI generated vehicle, using the procedural car until the GLB is ready.
 // Fixed orientation verified from iPhone screenshot: rear of vehicle faces the camera.
