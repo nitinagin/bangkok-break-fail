@@ -1061,9 +1061,13 @@ const busWheelGeometry=new THREE.CylinderGeometry(.48,.48,.21,18);
 // CylinderGeometry has separate vertices for tread and both caps; pack UVs
 // into their respective atlas regions while keeping one material/draw call.
 const busWheelUV=busWheelGeometry.attributes.uv,busWheelIndex=busWheelGeometry.index;
+const busWheelMappedVertices=new Set();
 for(const group of busWheelGeometry.groups){
  for(let i=group.start;i<group.start+group.count;i++){
-  const vertex=busWheelIndex.getX(i),v=busWheelUV.getY(vertex);
+  const vertex=busWheelIndex.getX(i);
+  if(busWheelMappedVertices.has(vertex))continue;
+  busWheelMappedVertices.add(vertex);
+  const v=busWheelUV.getY(vertex);
   busWheelUV.setY(vertex,group.materialIndex===0?.78+v*.22:v*.78);
  }
 }
