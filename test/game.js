@@ -438,10 +438,69 @@ for(let i=0;i<neonReflections.length;i++){
 }
 
 const roadGlow=new THREE.MeshBasicMaterial({color:0xa52842,transparent:true,opacity:.23,depthWrite:false});for(const side of [-1,1]){const glow=new THREE.Mesh(new THREE.PlaneGeometry(.48,205),roadGlow);glow.rotation.x=-Math.PI/2;glow.position.set(side*5.9,.072,-91);scene.add(glow);}for(let i=0;i<12;i++){const z=9-i*18;for(const side of [-1,1]){const lamp=new THREE.Group();lamp.add(cube(.065,5.4,.065,brickTrim,0,2.7,0));lamp.add(cube(1.15,.065,.065,brickTrim,-side*.55,5.4,0));lamp.add(ball(.16,warmNeon,-side*1.1,5.33,0));lamp.position.set(side*6.7,0,z);scene.add(lamp);props.push(lamp)}}
+// Rama II: deterministic shared weathered-concrete PBR textures, baked only once.
+// Fine aggregate, rain streaks, board-form seams, tie holes and hairline cracks replace flat blocks.
+const ramaConcreteCanvas=document.createElement('canvas');
+ramaConcreteCanvas.width=ramaConcreteCanvas.height=256;
+const ramaConcreteCtx=ramaConcreteCanvas.getContext('2d');
+const ramaRoughnessCanvas=document.createElement('canvas');
+ramaRoughnessCanvas.width=ramaRoughnessCanvas.height=256;
+const ramaRoughnessCtx=ramaRoughnessCanvas.getContext('2d');
+ramaConcreteCtx.fillStyle='#c5c4bf';ramaConcreteCtx.fillRect(0,0,256,256);
+ramaRoughnessCtx.fillStyle='#ededed';ramaRoughnessCtx.fillRect(0,0,256,256);
+let ramaTextureSeed=92831;
+function ramaTextureRandom(){
+ ramaTextureSeed=(Math.imul(ramaTextureSeed,1664525)+1013904223)>>>0;
+ return ramaTextureSeed/4294967296;
+}
+for(let i=0;i<2400;i++){
+ const px=ramaTextureRandom()*256,py=ramaTextureRandom()*256;
+ const dark=ramaTextureRandom()<.58;
+ ramaConcreteCtx.fillStyle=dark?'rgba(47,53,55,.12)':'rgba(255,255,248,.18)';
+ ramaConcreteCtx.fillRect(px,py,.6+ramaTextureRandom()*1.7,.6+ramaTextureRandom()*1.7);
+}
+for(let i=0;i<20;i++){
+ const x=ramaTextureRandom()*256,y=ramaTextureRandom()*230,w=2+ramaTextureRandom()*13;
+ const stain=ramaConcreteCtx.createLinearGradient(x,y,x,y+18+ramaTextureRandom()*45);
+ stain.addColorStop(0,'rgba(57,64,65,.13)');
+ stain.addColorStop(1,'rgba(57,64,65,0)');
+ ramaConcreteCtx.fillStyle=stain;ramaConcreteCtx.fillRect(x,y,w,55);
+ ramaRoughnessCtx.fillStyle='rgba(112,112,112,.12)';
+ ramaRoughnessCtx.fillRect(x,y,w,18);
+}
+for(const y of [12,132,248]){
+ ramaConcreteCtx.fillStyle='rgba(62,69,69,.16)';
+ ramaConcreteCtx.fillRect(0,y,256,1);
+ ramaConcreteCtx.fillStyle='rgba(255,255,255,.12)';
+ ramaConcreteCtx.fillRect(0,y+1,256,1);
+}
+for(const x of [45,209])for(const y of [51,186]){
+ ramaConcreteCtx.beginPath();ramaConcreteCtx.arc(x,y,2.6,0,Math.PI*2);
+ ramaConcreteCtx.fillStyle='rgba(53,58,59,.34)';ramaConcreteCtx.fill();
+ ramaConcreteCtx.beginPath();ramaConcreteCtx.arc(x-.5,y-.5,1,0,Math.PI*2);
+ ramaConcreteCtx.fillStyle='rgba(30,33,34,.25)';ramaConcreteCtx.fill();
+}
+for(let i=0;i<5;i++){
+ let x=ramaTextureRandom()*256,y=ramaTextureRandom()*220;
+ ramaConcreteCtx.beginPath();ramaConcreteCtx.moveTo(x,y);
+ for(let j=0;j<5;j++){x+=ramaTextureRandom()*8-4;y+=4+ramaTextureRandom()*8;ramaConcreteCtx.lineTo(x,y)}
+ ramaConcreteCtx.strokeStyle='rgba(49,56,57,.19)';
+ ramaConcreteCtx.lineWidth=.65;ramaConcreteCtx.stroke();
+}
+const ramaConcreteMap=new THREE.CanvasTexture(ramaConcreteCanvas);
+ramaConcreteMap.colorSpace=THREE.SRGBColorSpace;
+ramaConcreteMap.wrapS=ramaConcreteMap.wrapT=THREE.RepeatWrapping;
+const ramaConcreteRoughness=new THREE.CanvasTexture(ramaRoughnessCanvas);
+ramaConcreteRoughness.wrapS=ramaConcreteRoughness.wrapT=THREE.RepeatWrapping;
+// Dedicated UV tiling prevents a single concrete stain stretching across the 28m deck.
+const ramaDeckMap=ramaConcreteMap.clone();ramaDeckMap.repeat.set(3,8);ramaDeckMap.needsUpdate=true;
+const ramaDeckRoughness=ramaConcreteRoughness.clone();
+ramaDeckRoughness.repeat.set(3,8);ramaDeckRoughness.needsUpdate=true;
 // Rama II segmented elevated highway: unfinished deck joint, precast girders and safety equipment.
 const ramaStructures=[];
-const bridgeConcrete=new THREE.MeshLambertMaterial({color:0x9da3a5,flatShading:false});
-const bridgeUnderside=new THREE.MeshLambertMaterial({color:0x737b80,flatShading:false});
+const bridgeConcrete=new THREE.MeshStandardMaterial({color:0xd6d9d8,map:ramaConcreteMap,roughnessMap:ramaConcreteRoughness,roughness:.96,metalness:0});
+const bridgeUnderside=new THREE.MeshStandardMaterial({color:0xabb1b2,map:ramaConcreteMap,roughnessMap:ramaConcreteRoughness,roughness:.99,metalness:0});
+const bridgeDeckConcrete=new THREE.MeshStandardMaterial({color:0xd4d7d6,map:ramaDeckMap,roughnessMap:ramaDeckRoughness,roughness:.96,metalness:0});
 const bridgeRail=mat(0x888b88),workOrange=mat(0xd86b36);
 const bridgeJoint=mat(0x454a4b),bridgeSteel=mat(0x775d4c);
 const bridgeReflector=new THREE.MeshBasicMaterial({color:0xffe6b0});
@@ -461,7 +520,7 @@ for(let k=0;k<2;k++){
  }
  // The two precast spans leave an unfinished expansion gap.
  for(const z of [-15,15]){
-  viaduct.add(cube(13.2,.8,28,bridgeConcrete,0,9.1,z));
+  viaduct.add(cube(13.2,.8,28,bridgeDeckConcrete,0,9.1,z));
   for(const x of [-4.1,0,4.1])viaduct.add(cube(.58,.62,27.2,bridgeUnderside,x,8.4,z));
   for(const side of [-1,1])viaduct.add(cube(.22,.35,28,bridgeConcrete,side*6.5,9.75,z));
   viaduct.add(cube(12.9,.035,.18,bridgeJoint,0,9.52,z<0?-1.25:1.25));
@@ -488,7 +547,7 @@ for(let k=0;k<2;k++){
 }
 // Rama II construction corridor: road-edge Jersey barriers, work platforms,
 // unfinished rebar cages and crane silhouettes. All outside the playable lanes.
-const siteConcrete=new THREE.MeshLambertMaterial({color:0xb9b4aa});
+const siteConcrete=new THREE.MeshStandardMaterial({color:0xe3d9cb,map:ramaConcreteMap,roughnessMap:ramaConcreteRoughness,roughness:.98,metalness:0});
 const siteWhite=new THREE.MeshLambertMaterial({color:0xe9e4d9});
 const siteRed=new THREE.MeshLambertMaterial({color:0xd44735});
 const siteSteel=new THREE.MeshLambertMaterial({color:0x666e70});
