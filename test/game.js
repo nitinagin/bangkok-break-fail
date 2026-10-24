@@ -1531,13 +1531,76 @@ function makeExpresswayMotorcycle(){
  expresswayMotorcycleTemplate=g;
  return g.clone(true);
 }
+// Expressway protest: four road-proportioned PBR pedestrians and two bilingual
+// placards. Six instanced draw calls per wave; one cached template/texture.
+// Keep the group entirely on the hazard-side lane so the opposite lane stays open.
+let expresswayProtestTemplate=null;
+function makeExpresswayProtest(){
+ if(expresswayProtestTemplate)return expresswayProtestTemplate.clone(true);
+ const g=new THREE.Group(),count=4,dummy=new THREE.Object3D();
+ const skin=new THREE.MeshStandardMaterial({color:0xffffff,roughness:.92});
+ const fabric=new THREE.MeshStandardMaterial({color:0xffffff,roughness:.97});
+ const denim=new THREE.MeshStandardMaterial({color:0x263b51,roughness:.96});
+ const poleMetal=new THREE.MeshStandardMaterial({color:0x66727a,metalness:.72,roughness:.43});
+ const heads=new THREE.InstancedMesh(new THREE.SphereGeometry(.23,10,8),skin,count);
+ const torsos=new THREE.InstancedMesh(new THREE.CapsuleGeometry(.24,.62,4,8),fabric,count);
+ const arms=new THREE.InstancedMesh(new THREE.CapsuleGeometry(.085,.54,3,6),fabric,count*2);
+ const legs=new THREE.InstancedMesh(new THREE.CapsuleGeometry(.11,.66,3,6),denim,count*2);
+ const posterCanvas=document.createElement('canvas');
+ posterCanvas.width=512;posterCanvas.height=256;
+ const ctx=posterCanvas.getContext('2d');
+ ctx.fillStyle='#e8e3d3';ctx.fillRect(0,0,512,256);
+ ctx.strokeStyle='#a33d37';ctx.lineWidth=16;ctx.strokeRect(9,9,494,238);
+ ctx.textAlign='center';ctx.textBaseline='middle';
+ ctx.fillStyle='#253b48';ctx.font='bold 57px system-ui, sans-serif';
+ ctx.fillText('ถนนปลอดภัย',256,100,460);
+ ctx.font='bold 39px system-ui, sans-serif';
+ ctx.fillText('SAFE STREETS',256,180,460);
+ const posterTexture=new THREE.CanvasTexture(posterCanvas);
+ posterTexture.colorSpace=THREE.SRGBColorSpace;
+ const posterMaterial=new THREE.MeshStandardMaterial({map:posterTexture,side:THREE.DoubleSide,roughness:.89,metalness:0});
+ const posters=new THREE.InstancedMesh(new THREE.PlaneGeometry(1.12,.56),posterMaterial,2);
+ const poles=new THREE.InstancedMesh(new THREE.CylinderGeometry(.025,.025,1.35,6),poleMetal,2);
+ const set=(mesh,index,x,y,z,rotation=0,scale=1)=>{
+  dummy.position.set(x,y,z);dummy.rotation.set(0,0,rotation);
+  dummy.scale.setScalar(scale);dummy.updateMatrix();mesh.setMatrixAt(index,dummy.matrix);
+ };
+ const side=1; // Mirror the group at spawn, without widening the blocked lane.
+ const shirtColors=[0x697b83,0xb1a395,0x6d7971,0x8b6e66];
+ const skinColors=[0xb88763,0xe1b18c,0x986a50,0xc89573];
+ for(let i=0;i<count;i++){
+  const x=side*(i*.34),z=[-.15,-.63,.32,-.83][i],size=[1,.94,1.05,.97][i];
+  set(heads,i,x,2.02*size,z,0,size);
+  set(torsos,i,x,1.34*size,z,(i%2?-.045:.045),size);
+  heads.setColorAt(i,new THREE.Color(skinColors[i]));
+  torsos.setColorAt(i,new THREE.Color(shirtColors[i]));
+  for(const armSide of [-1,1]){
+   const j=i*2+(armSide+1)/2;
+   set(arms,j,x+armSide*.32*size,1.38*size,z,armSide*(i%2?.18:-.12),size);
+   arms.setColorAt(j,new THREE.Color(shirtColors[i]));
+   set(legs,j,x+armSide*.14*size,.51*size,z+armSide*.06,armSide*(i%2?.11:-.08),size);
+  }
+ }
+ for(let i=0;i<2;i++){
+  const person=i*2,x=person*.34+.22,z=[-.15,.32][i];
+  set(posters,i,x,2.79,z+.08,i===0?-.06:.07);
+  set(poles,i,x,2.15,z+.06);
+ }
+ for(const mesh of [heads,torsos,arms,legs,posters,poles]){
+  mesh.instanceMatrix.needsUpdate=true;mesh.frustumCulled=false;g.add(mesh);
+ }
+ for(const mesh of [heads,torsos,arms])if(mesh.instanceColor)mesh.instanceColor.needsUpdate=true;
+ // Visual footprint: x=0..1.3 relative to hazard centre, safely away from opposite lane.
+ expresswayProtestTemplate=g;
+ return g.clone(true);
+}
 function spawnExpresswayHazard(){
  const wave=++expresswayWave,kind=['sportsCar','bike','bus','protest','laser','sportsCar','bike'][wave%7],lane=(wave%2?1:-1)*1.55;
  const g=new THREE.Group();
  if(kind==='sportsCar'){try{g.add(expresswayVehicle('sportsCar'));}catch(error){console.warn('Sports car PBR fallback',error);g.add(cube(1.8,.48,3.4,mat(0xf23b69),0,.6,0));g.add(cube(1.4,.45,1.4,M.glass,0,1.05,-.2));for(const xx of [-.82,.82])for(const zz of [-1.05,1.05])g.add(ball(.35,M.wheel,xx,.34,zz));}}
  else if(kind==='bike'){try{g.add(makeExpresswayMotorcycle());}catch(error){console.warn('Expressway motorcycle PBR fallback',error);g.add(cachedObstacle('bike'));}}
  else if(kind==='bus'){try{g.add(expresswayVehicle('bus'));}catch(error){console.warn('Bus PBR fallback',error);g.add(cube(2.05,2.5,4.4,mat(0xf5a33b),0,1.55,0));g.add(cube(1.85,.9,.09,M.glass,0,2.1,2.23));}}
- else if(kind==='protest'){g.add(cube(.85,1.2,.5,M.pink,0,1.1,0));g.add(ball(.34,M.skin,0,1.92,0));g.add(cube(1.3,.65,.12,M.white,0,2.8,0));}
+ else if(kind==='protest'){try{g.add(makeExpresswayProtest());}catch(error){console.warn('Expressway crowd fallback',error);g.add(cube(.85,1.2,.5,M.pink,0,1.1,0));g.add(ball(.34,M.skin,0,1.92,0));g.add(cube(1.3,.65,.12,M.white,0,2.8,0));}}
  else {g.add(cube(1.2,.08,7,laserMat,0,.23,0));g.add(cube(.16,9,.16,laserMat,0,4.5,0));}
  g.position.set(lane,0,-65);scene.add(g);
  hazards.push({g,type:kind,madness:null,boss:false,durianSide:0,passed:false,hit:false,phase:wave,baseX:lane,announced:false,nearAwarded:false,swerve:0,swerveStart:100});
