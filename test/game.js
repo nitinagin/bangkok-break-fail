@@ -574,6 +574,7 @@ scene.add(car);
 // Vehicle heading now determined from model geometry, not a user-set angle.
 const TUKTUK_GLB='https://v3b.fal.media/files/b/0aaedcfd/U0gjvaaq8RuKQVt3a8zrE_model.glb';
 let realTukTuk=null;
+function loadTukTukAsset(){
 new GLTFLoader().load(TUKTUK_GLB,glb=>{
  try{
   const raw=glb.scene;
@@ -597,6 +598,7 @@ new GLTFLoader().load(TUKTUK_GLB,glb=>{
   console.info('V0.9 real tuk-tuk loaded');
  }catch(e){console.warn('Vehicle GLB invalid; fallback retained',e)}
 },undefined,e=>console.warn('Vehicle GLB unavailable; fallback retained',e));
+}
 const hazards=[];function makeDurian(){const group=new THREE.Group();group.add(ball(.75,M.durian,0,.8,0));for(let i=0;i<15;i++){const a=i*Math.PI*2/15;const spike=new THREE.Mesh(new THREE.ConeGeometry(.23,.54,4),M.spike);spike.position.set(Math.cos(a)*.77,.85+Math.sin(a)*.4,Math.sin(a)*.77);spike.rotation.z=Math.PI/2-a;group.add(spike)}return group}
 // V0.6 detailed lightweight procedural characters; no external asset downloads
 const cream=mat(0xf3e6c9),gold2=mat(0xf7bc38),maroon=mat(0x9a294d),jade=mat(0x168b77),ink=mat(0x222139);
@@ -895,8 +897,11 @@ const arms=[];for(const side of [-1,1]){
 g.userData.danceArms=arms;g.userData.dance=true;return g}
 // AI-generated GLB: remote preview asset. Replace with a permanent repo-hosted asset for release.
 const DANCER_GLB='https://v3b.fal.media/files/b/0aaedcc4/8RK96n7S6Aiz1KkcI1Z6Q_model.glb';
-let dancerTemplate=null,dancerLoading=true;
+let dancerTemplate=null,dancerLoading=false;
+function loadDancerAsset(){
+dancerLoading=true;
 new GLTFLoader().load(DANCER_GLB,glb=>{
+ try{
  const root=glb.scene;
  // Clamp oversized PBR textures to 1024px to reduce GPU memory on phones.
  const processed=new Set();root.traverse(obj=>{if(!obj.isMesh)return;obj.frustumCulled=true;const mats=Array.isArray(obj.material)?obj.material:[obj.material];for(const m of mats){if(!m)continue;for(const key of ['map','normalMap','roughnessMap','metalnessMap','emissiveMap','aoMap']){const tex=m[key];if(!tex||processed.has(tex))continue;processed.add(tex);const img=tex.image;if(img&&img.width>768&&img.height>0&&typeof document!=='undefined'){const ratio=Math.min(1,768/Math.max(img.width,img.height));const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(img.width*ratio));canvas.height=Math.max(1,Math.round(img.height*ratio));try{canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);tex.image=canvas;tex.needsUpdate=true}catch(e){}}}}});
@@ -907,10 +912,13 @@ new GLTFLoader().load(DANCER_GLB,glb=>{
  root.position.sub(center);root.position.y+=size.y/2;
  const normalized=new THREE.Group();normalized.add(root);normalized.scale.setScalar(4.25/size.y);
  dancerTemplate=normalized;dancerLoading=false;
+ }catch(error){dancerLoading=false;console.warn('Dancer GLB invalid; procedural fallback retained',error)}
 },undefined,err=>{console.warn('GLB unavailable, using procedural fallback',err);dancerLoading=false});
+}
 // Premium AI-generated Thai Yaksha; fallback stays available on slow connections.
 const YAKSHA_GLB='https://v3b.fal.media/files/b/0aaedd6a/14yrGJ3Iq8XcawwVvTolz_model.glb';
 let yakshaTemplate=null;
+function loadYakshaAsset(){
 new GLTFLoader().load(YAKSHA_GLB,glb=>{
  try{
  const root=glb.scene;root.updateMatrixWorld(true);
@@ -922,6 +930,24 @@ new GLTFLoader().load(YAKSHA_GLB,glb=>{
  yakshaTemplate=group;
  }catch(e){console.warn('Yaksha fallback',e)}
 },undefined,e=>console.warn('Yaksha GLB load failed; using fallback',e));
+}
+// Optional preview GLBs must not compete with the first playable frame.
+// Load the vehicle after play starts; desktop-only character GLBs are staggered.
+// Mobile uses the existing procedural dancer/yaksha, so never download unused models.
+let optionalModelsQueued=false;
+function queueOptionalModels(){
+ if(optionalModelsQueued)return;
+ optionalModelsQueued=true;
+ if(navigator.connection?.saveData){
+  console.info('Data saver enabled; keeping lightweight procedural GLB fallbacks');
+  return;
+ }
+ setTimeout(loadTukTukAsset,1800);
+ if(!mobile){
+  setTimeout(loadDancerAsset,5200);
+  setTimeout(loadYakshaAsset,8600);
+ }
+}
 const obstacleTemplates={};function makeConstructionDebris(){const g=new THREE.Group(),concrete=mat(0x9c9b94),steel=mat(0x9a5c32);part(g,cube(2.6,.85,1.45,concrete,0,.44,0));for(const side of [-1,1]){part(g,cube(.12,.9,.12,steel,side*.7,.85,0));part(g,cube(.13,.15,1.2,steel,side*.58,.75,0));}return g}
 // Rama II police checkpoint: cones, wheeled red barricades and traffic officers.
 function makeCheckpoint(){
@@ -978,7 +1004,7 @@ const g=!mobile&&type==='yaksha'&&yakshaTemplate&&!hazards.some(h=>h.type==='yak
 }
 hazards.push({g,type,madness,boss,durianSide,passed:false,hit:false,phase:Math.random()*6.28,baseX:lane,announced:false,nearAwarded:false,swerve:jamFormation?0:madness==='cuttingBus'?(lane===3.35?-1:lane===-3.35?1:(Math.random()<.5?-1:1)):Math.random()<.6?(Math.random()<.5?-1:1):0,swerveStart:madness==='cuttingBus'?-40:-23-Math.random()*15})}
 let paused=false,challengeStage=0,challengeDisplay='',comboTime=0,active=false,meters=0,bonus=0,speed=120,x=0,tilt=0,neutral=null,lastGamma=null,hasMotion=false,smoothed=0,spawnClock=0,inv=0,flips=0,combo=0,misses=0,crashes=0,best=0,last=performance.now(),shake=0,missionDone=false,soundOn=true,audio=null;try{best=Number(localStorage.getItem('bbf-best3d')||0)}catch(e){}
-function reset(){nightCount=0;expresswayArt.group.visible=false;pattayaStreet.visible=false;pattayaWave=0;for(let i=0;i<pattayaShops.length;i++)pattayaShops[i].position.z=-8-i*9.6;updatePattayaReflections();grandmaTriggeredNight=0;if(grandmaChase){scene.remove(grandmaChase.g);grandmaChase=null}storyProps.forEach(p=>scene.remove(p.g));storyProps.length=0;visualRush=0;camera.fov=76;camera.updateProjectionMatrix();cockpit.position.y=-.22;paused=false;$('pauseBtn').textContent='⏸';bossSpawned=false;bossBeaten=false;for(const p of props)p.visible=true;for(const p of neonReflections){p.position.z=p.userData.startZ;p.visible=true;}for(const p of ramaStructures){p.visible=false;p.position.z=p.userData.startZ;}for(const shop of roadsideShops){shop.g.visible=shop.stage===1;shop.g.position.z=shop.startZ;}for(const stall of marketStalls){stall.visible=false;stall.position.z=stall.userData.startZ;}for(const tent of marketCanopies){tent.visible=false;tent.position.z=tent.userData.startZ;}for(const bump of marketBumps){bump.visible=false;bump.position.z=bump.userData.startZ;}for(const mesh of marketCrowdMeshes)mesh.visible=false;canalGroup.visible=false;districtIndex=-1;applyDistrict(1);scene.background.copy(districtSkies[1]);scene.fog.color.copy(districtSkies[1]);spawnIndex=0;eventCount=0;lastEventMeters=-250;active=true;meters=0;bonus=0;missionDone=false;shake=0;speed=120;x=0;tilt=0;neutral=lastGamma;smoothed=0;spawnClock=.45;inv=0;flips=0;combo=0;comboTime=0;challengeStage=0;challengeDisplay='';challenge.textContent='🎯 SURVIVE 500m · +250';misses=0;crashes=0;hazards.forEach(h=>scene.remove(h.g));hazards.length=0;overlay.style.display='none';hint.textContent='📱 SMALL TILTS TO STEER · 🎯 RECENTER'}
+function reset(){nightCount=0;expresswayArt.group.visible=false;pattayaStreet.visible=false;pattayaWave=0;for(let i=0;i<pattayaShops.length;i++)pattayaShops[i].position.z=-8-i*9.6;updatePattayaReflections();grandmaTriggeredNight=0;if(grandmaChase){scene.remove(grandmaChase.g);grandmaChase=null}storyProps.forEach(p=>scene.remove(p.g));storyProps.length=0;visualRush=0;camera.fov=76;camera.updateProjectionMatrix();cockpit.position.y=-.22;paused=false;$('pauseBtn').textContent='⏸';bossSpawned=false;bossBeaten=false;for(const p of props)p.visible=true;for(const p of neonReflections){p.position.z=p.userData.startZ;p.visible=true;}for(const p of ramaStructures){p.visible=false;p.position.z=p.userData.startZ;}for(const shop of roadsideShops){shop.g.visible=shop.stage===1;shop.g.position.z=shop.startZ;}for(const stall of marketStalls){stall.visible=false;stall.position.z=stall.userData.startZ;}for(const tent of marketCanopies){tent.visible=false;tent.position.z=tent.userData.startZ;}for(const bump of marketBumps){bump.visible=false;bump.position.z=bump.userData.startZ;}for(const mesh of marketCrowdMeshes)mesh.visible=false;canalGroup.visible=false;districtIndex=-1;applyDistrict(1);scene.background.copy(districtSkies[1]);scene.fog.color.copy(districtSkies[1]);spawnIndex=0;eventCount=0;lastEventMeters=-250;active=true;queueOptionalModels();meters=0;bonus=0;missionDone=false;shake=0;speed=120;x=0;tilt=0;neutral=lastGamma;smoothed=0;spawnClock=.45;inv=0;flips=0;combo=0;comboTime=0;challengeStage=0;challengeDisplay='';challenge.textContent='🎯 SURVIVE 500m · +250';misses=0;crashes=0;hazards.forEach(h=>scene.remove(h.g));hazards.length=0;overlay.style.display='none';hint.textContent='📱 SMALL TILTS TO STEER · 🎯 RECENTER'}
 function finish(){active=false;const points=Math.floor(meters+bonus);if(points>best){best=points;try{localStorage.setItem('bbf-best3d',String(best))}catch(e){}}panel.innerHTML='<h1>💥 GAME OVER!</h1><p>SCORE '+points+' · BEST '+best+'</p><p>Near misses '+misses+' · Crashes '+crashes+'</p><p>'+(missionDone?'🏆 1000m mission complete!':'🎯 Reach 1000m for +500 points')+'</p><button id="again">TRY AGAIN</button><small>No brakes. No rules. Just Bangkok.</small>';overlay.style.display='grid';$('again').onclick=reset}
 function sound(freq=240,duration=.12,type='square'){if(!soundOn)return;try{audio=audio||new (window.AudioContext||window.webkitAudioContext)();if(audio.state==='suspended')audio.resume();const o=audio.createOscillator(),gain=audio.createGain();o.type=type;o.frequency.setValueAtTime(freq,audio.currentTime);o.frequency.exponentialRampToValueAtTime(Math.max(55,freq*.55),audio.currentTime+duration);gain.gain.setValueAtTime(.075,audio.currentTime);gain.gain.exponentialRampToValueAtTime(.001,audio.currentTime+duration);o.connect(gain);gain.connect(audio.destination);o.start();o.stop(audio.currentTime+duration)}catch(e){}}
 // 8000-point stage: Chatuchak (JJ Market) craft, vintage and plant stalls.
