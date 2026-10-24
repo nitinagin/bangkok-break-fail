@@ -1460,11 +1460,82 @@ function expresswayVehicle(type){
   hazards.push({g,type,madness:null,boss:false,durianSide:0,passed:false,hit:false,
    phase:wave,baseX:lane,announced:false,nearAwarded:false,swerve:0,swerveStart:100});
  }
+// Expressway motorcycle: a reusable, road-proportioned PBR sport bike with a
+// rider, real axle-aligned tyres, fork, engine, exhaust and fitted fairings.
+// Constructed once on the first bike wave; every subsequent wave clones shared
+// geometries/materials instead of uploading new GPU resources.
+let expresswayMotorcycleTemplate=null;
+function makeExpresswayMotorcycle(){
+ if(expresswayMotorcycleTemplate)return expresswayMotorcycleTemplate.clone(true);
+ const g=new THREE.Group();
+ const paint=new THREE.MeshStandardMaterial({color:0x293f59,metalness:.58,roughness:.34});
+ const trim=new THREE.MeshStandardMaterial({color:0x111b25,metalness:.24,roughness:.55});
+ const tyre=new THREE.MeshStandardMaterial({color:0x17191d,roughness:.96});
+ const alloy=new THREE.MeshStandardMaterial({color:0x8c9aa2,metalness:.84,roughness:.31});
+ const jacket=new THREE.MeshStandardMaterial({color:0x343c48,roughness:.89});
+ const trousers=new THREE.MeshStandardMaterial({color:0x20252d,roughness:.93});
+ const helmet=new THREE.MeshStandardMaterial({color:0x6b252a,metalness:.32,roughness:.31});
+ const visor=new THREE.MeshStandardMaterial({color:0x172d3b,metalness:.38,roughness:.19});
+ const headlamp=new THREE.MeshStandardMaterial({color:0xffebc7,emissive:0xffcc75,emissiveIntensity:.55,roughness:.24});
+ const tailLamp=new THREE.MeshStandardMaterial({color:0xd3272b,emissive:0xb50a0c,emissiveIntensity:.7});
+ const tyreGeometry=new THREE.CylinderGeometry(.43,.43,.17,16);
+ tyreGeometry.rotateZ(Math.PI/2);
+ const hubGeometry=new THREE.CylinderGeometry(.26,.26,.025,12);
+ hubGeometry.rotateZ(Math.PI/2);
+ const tyres=new THREE.InstancedMesh(tyreGeometry,tyre,2);
+ const hubs=new THREE.InstancedMesh(hubGeometry,alloy,4);
+ const matrix=new THREE.Matrix4();
+ for(let i=0;i<2;i++){
+  const z=i===0?-1.02:1.02;
+  matrix.makeTranslation(0,.46,z);tyres.setMatrixAt(i,matrix);
+  for(let side=0;side<2;side++){
+   matrix.makeTranslation(side===0?-.105:.105,.46,z);
+   hubs.setMatrixAt(i*2+side,matrix);
+  }
+ }
+ g.add(tyres,hubs);
+ function mesh(geometry,material,x,y,z,sx=1,sy=1,sz=1){
+  const m=new THREE.Mesh(geometry,material);
+  m.position.set(x,y,z);m.scale.set(sx,sy,sz);g.add(m);return m;
+ }
+ function strut(a,b,r,material){
+  const p=new THREE.Vector3(...a),q=new THREE.Vector3(...b),delta=q.clone().sub(p);
+  const m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,delta.length(),7),material);
+  m.position.copy(p).add(q).multiplyScalar(.5);
+  m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),delta.normalize());
+  g.add(m);
+ }
+ // Triangulated exposed frame and paired telescopic front forks.
+ strut([0,.7,-.95],[0,1.2,.36],.065,alloy);
+ strut([0,1.2,.36],[0,.75,.82],.055,trim);
+ for(const side of [-1,1]){
+  strut([side*.24,.47,1.02],[side*.27,1.48,.64],.045,alloy);
+  strut([side*.19,1.12,-.35],[side*.35,.8,-.77],.07,trousers);
+  strut([side*.2,1.85,-.04],[side*.42,1.51,.65],.075,jacket);
+ }
+ mesh(new THREE.BoxGeometry(.61,.46,.57),alloy,0,.91,-.04);
+ mesh(new THREE.SphereGeometry(1,14,10),paint,0,1.28,.31,.54,.29,.55);
+ mesh(new THREE.SphereGeometry(1,12,8),paint,0,1.29,.85,.43,.38,.23);
+ mesh(new THREE.BoxGeometry(.56,.13,.77),trim,0,1.3,-.48);
+ mesh(new THREE.BoxGeometry(.36,.19,.44),paint,0,.94,-.91);
+ strut([.39,.79,-.23],[.46,.76,-1.1],.095,alloy);
+ strut([-.48,1.53,.64],[.48,1.53,.64],.035,alloy);
+ // Forward-leaning rider, full-face helmet and dark visor.
+ const torso=mesh(new THREE.CapsuleGeometry(.23,.5,4,8),jacket,0,1.73,-.14);
+ torso.rotation.x=.28;
+ mesh(new THREE.SphereGeometry(.32,14,10),helmet,0,2.22,.1);
+ mesh(new THREE.SphereGeometry(1,12,8),visor,0,2.23,.39,.25,.15,.065);
+ mesh(new THREE.SphereGeometry(.15,10,8),headlamp,0,1.29,1.07);
+ mesh(new THREE.BoxGeometry(.35,.11,.07),tailLamp,0,1.09,-1.18);
+ g.userData.expresswayMotorcycle=true;
+ expresswayMotorcycleTemplate=g;
+ return g.clone(true);
+}
 function spawnExpresswayHazard(){
  const wave=++expresswayWave,kind=['sportsCar','bike','bus','protest','laser','sportsCar','bike'][wave%7],lane=(wave%2?1:-1)*1.55;
  const g=new THREE.Group();
  if(kind==='sportsCar'){try{g.add(expresswayVehicle('sportsCar'));}catch(error){console.warn('Sports car PBR fallback',error);g.add(cube(1.8,.48,3.4,mat(0xf23b69),0,.6,0));g.add(cube(1.4,.45,1.4,M.glass,0,1.05,-.2));for(const xx of [-.82,.82])for(const zz of [-1.05,1.05])g.add(ball(.35,M.wheel,xx,.34,zz));}}
- else if(kind==='bike'){g.add(cube(.55,.55,1.65,M.blue,0,.85,0));for(const zz of [-.68,.68])g.add(ball(.4,M.wheel,0,.4,zz));g.add(ball(.3,M.skin,0,1.85,0));}
+ else if(kind==='bike'){try{g.add(makeExpresswayMotorcycle());}catch(error){console.warn('Expressway motorcycle PBR fallback',error);g.add(cachedObstacle('bike'));}}
  else if(kind==='bus'){try{g.add(expresswayVehicle('bus'));}catch(error){console.warn('Bus PBR fallback',error);g.add(cube(2.05,2.5,4.4,mat(0xf5a33b),0,1.55,0));g.add(cube(1.85,.9,.09,M.glass,0,2.1,2.23));}}
  else if(kind==='protest'){g.add(cube(.85,1.2,.5,M.pink,0,1.1,0));g.add(ball(.34,M.skin,0,1.92,0));g.add(cube(1.3,.65,.12,M.white,0,2.8,0));}
  else {g.add(cube(1.2,.08,7,laserMat,0,.23,0));g.add(cube(.16,9,.16,laserMat,0,4.5,0));}
