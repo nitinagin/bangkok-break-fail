@@ -111,12 +111,39 @@ function makeShopfrontMaterial(glazed){
   const gradient=p.createLinearGradient(0,0,256,256);
   gradient.addColorStop(0,'#71817e');gradient.addColorStop(.42,'#253e48');gradient.addColorStop(1,'#101d29');
   p.fillStyle=gradient;p.fillRect(0,0,256,256);
-  // Dim, warm merchandise silhouettes behind reflective shop windows.
-  p.fillStyle='rgba(213,151,77,.28)';p.fillRect(14,98,228,88);
-  for(let row=0;row<2;row++)for(let col=0;col<5;col++){
-   p.fillStyle=(row+col)%3===0?'#b88b4d':'#465756';
-   p.fillRect(23+col*44,111+row*30,25,18);
+  // Baked warm shop interior: deep shelving, product silhouettes and pools of light.
+  // All detail lives in the existing 256px albedo; no new geometry, lights or textures.
+  const interior=p.createLinearGradient(0,38,0,222);
+  interior.addColorStop(0,'#15242a');interior.addColorStop(.55,'#3d332d');interior.addColorStop(1,'#11191c');
+  p.fillStyle=interior;p.fillRect(12,40,232,181);
+  for(let lamp=0;lamp<3;lamp++){
+   const lx=48+lamp*79;
+   const glow=p.createRadialGradient(lx,59,2,lx,99,64);
+   glow.addColorStop(0,'rgba(255,201,119,.44)');
+   glow.addColorStop(.5,'rgba(235,159,83,.13)');
+   glow.addColorStop(1,'rgba(235,159,83,0)');
+   p.fillStyle=glow;p.fillRect(lx-65,38,130,126);
+   p.fillStyle='#d6a36c';p.fillRect(lx-8,49,16,3);
   }
+  for(let row=0;row<3;row++){
+   const shelfY=100+row*37;
+   p.fillStyle='#171b1c';p.fillRect(20,shelfY+22,216,6);
+   p.fillStyle='rgba(190,144,88,.45)';p.fillRect(20,shelfY+22,216,2);
+   for(let col=0;col<8;col++){
+    const px=25+col*27,ph=11+(row*5+col*7)%13;
+    if((row+col)%3===0){
+     // Narrow jars and bottles, not oversized toy-like cubes.
+     p.fillStyle=(col%2?'#61726a':'#986a48');p.fillRect(px+5,shelfY+20-ph,10,ph);
+     p.fillStyle='#c1a17a';p.fillRect(px+8,shelfY+17-ph,4,3);
+     p.fillStyle='rgba(231,201,153,.4)';p.fillRect(px+6,shelfY+22-ph,2,ph-4);
+    }else{
+     p.fillStyle=(col%2?'#86674a':'#4e6260');p.fillRect(px,shelfY+21-ph,19,ph);
+     p.fillStyle='rgba(232,194,136,.28)';p.fillRect(px+2,shelfY+23-ph,15,2);
+    }
+   }
+  }
+  // Dark counter edge and glass door remain legible behind exterior reflections.
+  p.fillStyle='rgba(17,20,21,.72)';p.fillRect(12,216,232,18);
   const glare=p.createLinearGradient(0,0,256,0);
   glare.addColorStop(0,'rgba(225,235,230,.36)');glare.addColorStop(.28,'rgba(225,235,230,.02)');
   glare.addColorStop(.64,'rgba(225,235,230,.17)');glare.addColorStop(1,'rgba(225,235,230,.02)');
