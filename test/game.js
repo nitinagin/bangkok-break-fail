@@ -1386,6 +1386,48 @@ const taxiGreen=mat(0x008c71),taxiYellow=mat(0xffcb27),taxiLight=mat(0xfff5d8),t
 // Built once in cachedObstacle('taxi'): cloned traffic shares all PBR materials and geometry.
 const taxiPaintGreen=new THREE.MeshPhysicalMaterial({color:0x087d5a,metalness:.27,roughness:.32,clearcoat:.55,clearcoatRoughness:.23});
 const taxiPaintYellow=new THREE.MeshPhysicalMaterial({color:0xf3c62d,metalness:.22,roughness:.34,clearcoat:.55,clearcoatRoughness:.25});
+
+ // Shared 128px PBR bodywork detail for both Thai taxi liveries.
+ // Fine orange-peel grain, vertical rain streaks and lower-panel road dust
+ // are baked once, with no per-frame updates or additional geometry.
+ const taxiPaintSize=128;
+ const taxiPaintColorCanvas=document.createElement('canvas');
+ const taxiPaintRoughCanvas=document.createElement('canvas');
+ taxiPaintColorCanvas.width=taxiPaintColorCanvas.height=taxiPaintSize;
+ taxiPaintRoughCanvas.width=taxiPaintRoughCanvas.height=taxiPaintSize;
+ const taxiPaintColorCtx=taxiPaintColorCanvas.getContext('2d');
+ const taxiPaintRoughCtx=taxiPaintRoughCanvas.getContext('2d');
+ const taxiPaintColorPixels=taxiPaintColorCtx.createImageData(taxiPaintSize,taxiPaintSize);
+ const taxiPaintRoughPixels=taxiPaintRoughCtx.createImageData(taxiPaintSize,taxiPaintSize);
+ for(let y=0;y<taxiPaintSize;y++)for(let x=0;x<taxiPaintSize;x++){
+  const offset=(y*taxiPaintSize+x)*4;
+  const grain=((x*73+y*151+(x*y)%97)%23)-11;
+  const roadDust=Math.max(0,(y-82)/46);
+  const rainStreak=(x%29===0&&y>22)?8:0;
+  const albedo=Math.max(193,Math.min(255,Math.round(248+grain*.65-roadDust*29-rainStreak)));
+  const roughness=Math.max(0,Math.min(255,Math.round(185+Math.abs(grain)*2+roadDust*40+rainStreak*2)));
+  for(let channel=0;channel<3;channel++){
+   taxiPaintColorPixels.data[offset+channel]=albedo;
+   taxiPaintRoughPixels.data[offset+channel]=roughness;
+  }
+  taxiPaintColorPixels.data[offset+3]=255;
+  taxiPaintRoughPixels.data[offset+3]=255;
+ }
+ taxiPaintColorCtx.putImageData(taxiPaintColorPixels,0,0);
+ taxiPaintRoughCtx.putImageData(taxiPaintRoughPixels,0,0);
+ const taxiPaintColorMap=new THREE.CanvasTexture(taxiPaintColorCanvas);
+ taxiPaintColorMap.colorSpace=THREE.SRGBColorSpace;
+ const taxiPaintRoughnessMap=new THREE.CanvasTexture(taxiPaintRoughCanvas);
+ for(const texture of [taxiPaintColorMap,taxiPaintRoughnessMap]){
+  texture.wrapS=texture.wrapT=THREE.RepeatWrapping;
+  texture.repeat.set(1.5,1.5);
+  texture.anisotropy=1;
+ }
+ for(const material of [taxiPaintGreen,taxiPaintYellow]){
+  material.map=taxiPaintColorMap;
+  material.roughnessMap=taxiPaintRoughnessMap;
+ }
+
 const taxiTintedGlass=new THREE.MeshPhysicalMaterial({color:0x263f4b,metalness:.12,roughness:.16,clearcoat:.75,clearcoatRoughness:.14,transparent:true,opacity:.89,side:THREE.DoubleSide,depthWrite:false});
 // Shared 256x128 reflective taxi glass: baked sky, Bangkok shopfronts and rain grime.
 // One atlas for six windows; no environment probes, new meshes or per-frame work.
