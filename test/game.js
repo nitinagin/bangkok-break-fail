@@ -1387,6 +1387,40 @@ const taxiGreen=mat(0x008c71),taxiYellow=mat(0xffcb27),taxiLight=mat(0xfff5d8),t
 const taxiPaintGreen=new THREE.MeshPhysicalMaterial({color:0x087d5a,metalness:.27,roughness:.32,clearcoat:.55,clearcoatRoughness:.23});
 const taxiPaintYellow=new THREE.MeshPhysicalMaterial({color:0xf3c62d,metalness:.22,roughness:.34,clearcoat:.55,clearcoatRoughness:.25});
 const taxiTintedGlass=new THREE.MeshPhysicalMaterial({color:0x263f4b,metalness:.12,roughness:.16,clearcoat:.75,clearcoatRoughness:.14,transparent:true,opacity:.89,side:THREE.DoubleSide,depthWrite:false});
+// Shared 256x128 reflective taxi glass: baked sky, Bangkok shopfronts and rain grime.
+// One atlas for six windows; no environment probes, new meshes or per-frame work.
+const taxiGlassCanvas=document.createElement('canvas');
+taxiGlassCanvas.width=256;taxiGlassCanvas.height=128;
+const taxiGlassCtx=taxiGlassCanvas.getContext('2d');
+const taxiGlassSky=taxiGlassCtx.createLinearGradient(0,0,0,128);
+taxiGlassSky.addColorStop(0,'#678696');
+taxiGlassSky.addColorStop(.38,'#344f60');
+taxiGlassSky.addColorStop(1,'#101c29');
+taxiGlassCtx.fillStyle=taxiGlassSky;taxiGlassCtx.fillRect(0,0,256,128);
+for(let i=0;i<6;i++){
+ const x=19+i*43,reflection=taxiGlassCtx.createLinearGradient(x,0,x+25,0);
+ reflection.addColorStop(0,'rgba(164,208,223,0)');
+ reflection.addColorStop(.42,i%3===0?'rgba(232,154,115,.23)':'rgba(173,218,225,.26)');
+ reflection.addColorStop(1,'rgba(164,208,223,0)');
+ taxiGlassCtx.fillStyle=reflection;taxiGlassCtx.fillRect(x,7,25,109);
+}
+for(let i=0;i<42;i++){
+ const x=8+(i*59)%241,y=10+(i*31)%68;
+ taxiGlassCtx.fillStyle=i%3===0?'rgba(220,234,231,.17)':'rgba(8,17,24,.15)';
+ taxiGlassCtx.fillRect(x,y,1,12+(i*7)%37);
+}
+taxiGlassCtx.strokeStyle='rgba(8,14,19,.93)';
+taxiGlassCtx.lineWidth=7;taxiGlassCtx.strokeRect(3.5,3.5,249,121);
+taxiGlassCtx.strokeStyle='rgba(144,161,164,.4)';
+taxiGlassCtx.lineWidth=1.5;taxiGlassCtx.strokeRect(8,8,240,112);
+const taxiGlassTexture=new THREE.CanvasTexture(taxiGlassCanvas);
+taxiGlassTexture.colorSpace=THREE.SRGBColorSpace;
+taxiGlassTexture.anisotropy=Math.min(2,renderer.capabilities.getMaxAnisotropy());
+const taxiReflectiveGlass=new THREE.MeshPhysicalMaterial({
+ map:taxiGlassTexture,color:0xffffff,metalness:.04,roughness:.2,
+ clearcoat:.78,clearcoatRoughness:.13,transparent:true,opacity:.94,
+ side:THREE.DoubleSide,depthWrite:false
+});
 const taxiRubber=new THREE.MeshStandardMaterial({color:0x1d252b,roughness:.92});
 const taxiBrakeLens=new THREE.MeshStandardMaterial({color:0xb52431,emissive:0x4b0710,emissiveIntensity:.28,metalness:.08,roughness:.34});
 // Shared Bangkok plate texture and grille materials: built once for all taxi clones.
@@ -1419,7 +1453,14 @@ function makeTaxi(){
   const shape=new THREE.Shape();
   points.forEach(([z,y],i)=>i?shape.lineTo(-z,y):shape.moveTo(-z,y));
   shape.closePath();
-  const glass=new THREE.Mesh(new THREE.ShapeGeometry(shape),taxiTintedGlass);
+  const geometry=new THREE.ShapeGeometry(shape);
+  // ShapeGeometry UVs use world coordinates; fit the shared atlas to each pane.
+  geometry.computeBoundingBox();
+  const bounds=geometry.boundingBox,position=geometry.getAttribute('position'),uv=geometry.getAttribute('uv');
+  const width=Math.max(.001,bounds.max.x-bounds.min.x),height=Math.max(.001,bounds.max.y-bounds.min.y);
+  for(let i=0;i<uv.count;i++)uv.setXY(i,(position.getX(i)-bounds.min.x)/width,(position.getY(i)-bounds.min.y)/height);
+  uv.needsUpdate=true;
+  const glass=new THREE.Mesh(geometry,taxiReflectiveGlass);
   glass.rotation.y=Math.PI/2;glass.position.x=side*.835;
   g.add(glass);
  }
@@ -1444,9 +1485,9 @@ function makeTaxi(){
   part(g,cube(.34,.16,.075,taxiLight,side*.71,.99,1.76));
   part(g,cube(.3,.16,.075,taxiBrakeLens,side*.73,.97,-1.75));
  }
- const frontGlass=new THREE.Mesh(new THREE.PlaneGeometry(1.42,.49),taxiTintedGlass);
+ const frontGlass=new THREE.Mesh(new THREE.PlaneGeometry(1.42,.49),taxiReflectiveGlass);
  frontGlass.position.set(0,1.51,.83);frontGlass.rotation.x=-.48;g.add(frontGlass);
- const rearGlass=new THREE.Mesh(new THREE.PlaneGeometry(1.39,.44),taxiTintedGlass);
+ const rearGlass=new THREE.Mesh(new THREE.PlaneGeometry(1.39,.44),taxiReflectiveGlass);
  rearGlass.position.set(0,1.51,-.91);rearGlass.rotation.x=.45;g.add(rearGlass);
  // Distinct Bangkok TAXI-METER roof sign, painted once for all traffic clones.
  const signCanvas=document.createElement('canvas');signCanvas.width=256;signCanvas.height=128;
