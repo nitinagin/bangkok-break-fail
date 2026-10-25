@@ -968,8 +968,71 @@ function updateYaowaratWires(advance=0,resetPositions=false){
  wireRuns.instanceMatrix.needsUpdate=true;
 }
 updateYaowaratWires();
-const car=new THREE.Group();const cockpit=new THREE.Group();camera.add(cockpit);scene.add(camera);cockpit.scale.setScalar(.76);cockpit.position.y=-.22;const cockpitMat=new THREE.MeshLambertMaterial({color:0x1b2030});const cockpitChrome=new THREE.MeshLambertMaterial({color:0xc9d4db});cockpit.add(cube(2.2,.16,.5,cockpitMat,0,-.94,-1.2));cockpit.add(cube(1.35,.09,.12,cockpitChrome,0,-.57,-1.35));cockpit.add(cube(.10,.48,.1,cockpitChrome,0,-.8,-1.32));for(const side of [-1,1]){cockpit.add(cube(.075,1.25,.075,cockpitChrome,side*1.08,-.18,-1.4));cockpit.add(cube(.34,.43,.055,cockpitMat,side*1.12,-.22,-1.68))}
-const cockpitBlue=new THREE.MeshLambertMaterial({color:0x0ab8c9}),cockpitGold=new THREE.MeshLambertMaterial({color:0xfbd44c}),cockpitRed=new THREE.MeshLambertMaterial({color:0xc73556});
+const car=new THREE.Group();const cockpit=new THREE.Group();camera.add(cockpit);scene.add(camera);cockpit.scale.setScalar(.76);cockpit.position.y=-.22;// PBR driver cockpit: reuse existing meshes, with no extra draw calls.
+const cockpitMat=new THREE.MeshStandardMaterial({color:0x1b2030,metalness:.08,roughness:.83});
+const cockpitChrome=new THREE.MeshStandardMaterial({color:0xbac7ce,metalness:.76,roughness:.29});cockpit.add(cube(2.2,.16,.5,cockpitMat,0,-.94,-1.2));cockpit.add(cube(1.35,.09,.12,cockpitChrome,0,-.57,-1.35));cockpit.add(cube(.10,.48,.1,cockpitChrome,0,-.8,-1.32));for(const side of [-1,1]){cockpit.add(cube(.075,1.25,.075,cockpitChrome,side*1.08,-.18,-1.4));cockpit.add(cube(.34,.43,.055,cockpitMat,side*1.12,-.22,-1.68))}
+// Shared 256x128 weathered metal finish on the always-visible dashboard.
+const cockpitFinishCanvas=document.createElement('canvas');
+cockpitFinishCanvas.width=256;cockpitFinishCanvas.height=128;
+const cockpitFinishCtx=cockpitFinishCanvas.getContext('2d');
+const cockpitFinishGradient=cockpitFinishCtx.createLinearGradient(0,0,0,128);
+cockpitFinishGradient.addColorStop(0,'#f0f0ed');
+cockpitFinishGradient.addColorStop(.48,'#d4d4d0');
+cockpitFinishGradient.addColorStop(1,'#a6a6a1');
+cockpitFinishCtx.fillStyle=cockpitFinishGradient;
+cockpitFinishCtx.fillRect(0,0,256,128);
+for(let i=0;i<310;i++){
+ const px=(i*73+11)%256,py=(i*47+19)%128;
+ cockpitFinishCtx.fillStyle=i%5===0?'rgba(55,48,41,.16)':'rgba(255,255,255,.13)';
+ cockpitFinishCtx.fillRect(px,py,2+(i%6),1);
+}
+for(const px of [13,243]){
+ for(const py of [15,113]){
+  cockpitFinishCtx.fillStyle='#737573';cockpitFinishCtx.beginPath();
+  cockpitFinishCtx.arc(px,py,4,0,Math.PI*2);cockpitFinishCtx.fill();
+  cockpitFinishCtx.strokeStyle='#dedfd9';cockpitFinishCtx.lineWidth=1;
+  cockpitFinishCtx.beginPath();cockpitFinishCtx.moveTo(px-2,py);cockpitFinishCtx.lineTo(px+2,py);cockpitFinishCtx.stroke();
+ }
+}
+const cockpitFinishTexture=new THREE.CanvasTexture(cockpitFinishCanvas);
+cockpitFinishTexture.colorSpace=THREE.SRGBColorSpace;
+cockpitFinishTexture.anisotropy=mobile?2:4;
+const cockpitBlue=new THREE.MeshPhysicalMaterial({color:0x1693a3,map:cockpitFinishTexture,metalness:.4,roughness:.48,clearcoat:.35,clearcoatRoughness:.36});
+const cockpitGold=new THREE.MeshStandardMaterial({color:0xe6b958,map:cockpitFinishTexture,metalness:.6,roughness:.39});
+const cockpitRed=new THREE.MeshStandardMaterial({color:0xc73556,metalness:.18,roughness:.58});
+// Baked, intentionally soft night-street reflections in the existing side-mirror faces.
+// No secondary camera, render target, additional geometry or per-frame allocations.
+const cockpitMirrorCanvas=document.createElement('canvas');
+cockpitMirrorCanvas.width=192;cockpitMirrorCanvas.height=128;
+const mirrorCtx=cockpitMirrorCanvas.getContext('2d');
+const mirrorSky=mirrorCtx.createLinearGradient(0,0,0,128);
+mirrorSky.addColorStop(0,'#293c4b');mirrorSky.addColorStop(.58,'#1a2936');mirrorSky.addColorStop(1,'#30383b');
+mirrorCtx.fillStyle=mirrorSky;mirrorCtx.fillRect(0,0,192,128);
+mirrorCtx.fillStyle='#17232b';
+for(let i=0;i<13;i++){
+ const bx=i*17-8,bh=26+(i*29)%52;
+ mirrorCtx.fillRect(bx,88-bh,15,bh);
+ mirrorCtx.fillStyle=i%3===0?'#f26e4b':'#c5a15d';
+ mirrorCtx.fillRect(bx+3,91-bh,2,Math.min(20,bh-4));
+ mirrorCtx.fillStyle='#17232b';
+}
+const mirrorRoad=mirrorCtx.createLinearGradient(0,85,0,128);
+mirrorRoad.addColorStop(0,'#4a5050');mirrorRoad.addColorStop(1,'#151e26');
+mirrorCtx.fillStyle=mirrorRoad;mirrorCtx.fillRect(0,85,192,43);
+for(let i=0;i<19;i++){
+ const x=(i*43+13)%192,y=89+(i*17)%35;
+ mirrorCtx.fillStyle=i%3===0?'rgba(244,69,82,.48)':'rgba(244,177,93,.28)';
+ mirrorCtx.fillRect(x,y,2+(i%3),4+(i%9));
+}
+const mirrorHaze=mirrorCtx.createLinearGradient(0,0,192,0);
+mirrorHaze.addColorStop(0,'rgba(205,223,224,.29)');
+mirrorHaze.addColorStop(.4,'rgba(205,223,224,0)');
+mirrorHaze.addColorStop(1,'rgba(205,223,224,.16)');
+mirrorCtx.fillStyle=mirrorHaze;mirrorCtx.fillRect(0,0,192,128);
+const cockpitMirrorTexture=new THREE.CanvasTexture(cockpitMirrorCanvas);
+cockpitMirrorTexture.colorSpace=THREE.SRGBColorSpace;
+cockpitMirrorTexture.anisotropy=mobile?2:4;
+const cockpitMirrorMaterial=new THREE.MeshPhysicalMaterial({map:cockpitMirrorTexture,metalness:.12,roughness:.19,clearcoat:.55,clearcoatRoughness:.18});
 function cockpitTube(pts,r,m){const path=new THREE.CatmullRomCurve3(pts.map(p=>new THREE.Vector3(...p)));const o=new THREE.Mesh(new THREE.TubeGeometry(path,Math.max(8,pts.length*5),r,6,false),m);cockpit.add(o);return o}
 cockpit.add(cube(2.45,.28,.5,cockpitBlue,0,-.99,-1.35));
 cockpit.add(cube(1.6,.13,.36,cockpitGold,0,-.78,-1.48));
@@ -978,7 +1041,7 @@ for(const side of [-1,1]){
  cockpit.add(cube(.33,.13,.19,cockpitMat,side*.76,-.70,-1.36));
  cockpitTube([[side*.9,-.92,-1.42],[side*1.03,.1,-1.55],[side*1.09,.71,-1.52]],.046,cockpitChrome);
  cockpit.add(cube(.38,.30,.075,cockpitChrome,side*1.12,.05,-1.55));
- cockpit.add(cube(.29,.22,.078,cockpitMat,side*1.12,.05,-1.60));
+ cockpit.add(cube(.29,.22,.078,cockpitMirrorMaterial,side*1.12,.05,-1.60));
 }
 // Remove the overhead trim from the camera view; keep the lower dashboard and side frame.
 // Upper windshield crossbar removed to expose the street.
