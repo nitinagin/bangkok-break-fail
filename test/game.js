@@ -425,7 +425,7 @@ const neonBladePalettes=[
  {halo:'#00d5c5',outer:'rgba(23,212,199,.52)',tube:'#53f0dd',core:'#d8fff3',trim:'rgba(95,229,213,.46)',wash:'rgba(19,161,161,.2)',rim:'rgba(16,178,168,.13)'},
  {halo:'#fa3f9e',outer:'rgba(242,56,145,.5)',tube:'#ff80bd',core:'#ffe0ef',trim:'rgba(242,121,179,.46)',wash:'rgba(189,52,117,.19)',rim:'rgba(173,40,100,.13)'}
 ];
-function neonBlade(text,paletteIndex=0){
+function neonBlade(text,paletteIndex=0,thaiLabel='เยาวราช'){
  const palette=neonBladePalettes[paletteIndex%neonBladePalettes.length];
  const c=document.createElement('canvas');c.width=192;c.height=512;
  const a=c.getContext('2d');
@@ -477,11 +477,25 @@ function neonBlade(text,paletteIndex=0){
  for(const y of [125,237,349,461]){
   a.fillStyle='#8b7771';a.fillRect(164,y,9,3);
  }
+ // Bilingual Thai shop-name inset, baked into the existing vertical neon atlas.
+ // The fourth Chinese glyph ends above this panel; no added meshes, lights or textures.
+ a.fillStyle='rgba(8,11,17,.95)';a.fillRect(21,449,150,40);
+ a.strokeStyle=palette.trim;a.lineWidth=1.5;a.strokeRect(22,449,148,39);
+ a.font='600 25px "Thonburi","Noto Sans Thai",sans-serif';
+ a.textAlign='center';a.textBaseline='middle';
+ a.shadowColor=palette.halo;a.shadowBlur=5;
+ a.fillStyle=palette.core;a.fillText(thaiLabel,96,469,140);
+ a.shadowBlur=0;
  const t=new THREE.CanvasTexture(c);
  t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=2;
  return new THREE.MeshBasicMaterial({map:t,side:THREE.DoubleSide});
 }
-const neonBladeMaterials=['金龍海鮮','中國城','百年老店','永安藥房','大金行','潮州飯店','大華金行','廣東燒味'].map((label,i)=>neonBlade(label,i%neonBladePalettes.length));
+const neonBladeMaterials=[
+ ['金龍海鮮','ซีฟู้ดมังกรทอง'],['中國城','ไชน่าทาวน์'],
+ ['百年老店','ร้านเก่าแก่'],['永安藥房','ร้านขายยา'],
+ ['大金行','ห้างทอง'],['潮州飯店','อาหารแต้จิ๋ว'],
+ ['大華金行','ร้านทอง'],['廣東燒味','เป็ดย่าง']
+].map(([label,thai],i)=>neonBlade(label,i%neonBladePalettes.length,thai));
 // Yaowarat facade detail: one shared baked AC grille for all scrolling buildings.
 // Fan, stamped louvers, grime and rust live in a 128px PBR texture, not extra meshes.
 const yaowaratACCanvas=document.createElement('canvas');
