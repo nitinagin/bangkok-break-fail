@@ -1645,7 +1645,50 @@ const tukWindscreen=new THREE.MeshPhysicalMaterial({
  depthWrite:false,side:THREE.DoubleSide
 });
 const tukWindow=new THREE.MeshStandardMaterial({color:0x426c80,metalness:.18,roughness:.21,transparent:true,opacity:.7,side:THREE.DoubleSide});
-const tukSeat=new THREE.MeshStandardMaterial({color:0x673c35,metalness:0,roughness:.89});
+// Shared 256px weathered vinyl for traffic tuk-tuk seats: stitched channels,
+// sun-faded highlights and darker seams baked once; no new lights or draw calls.
+const tukSeatCanvas=document.createElement('canvas');
+tukSeatCanvas.width=tukSeatCanvas.height=256;
+const tukSeatCtx=tukSeatCanvas.getContext('2d');
+const tukSeatGradient=tukSeatCtx.createLinearGradient(0,0,256,256);
+tukSeatGradient.addColorStop(0,'#ab7869');
+tukSeatGradient.addColorStop(.5,'#895849');
+tukSeatGradient.addColorStop(1,'#613e35');
+tukSeatCtx.fillStyle=tukSeatGradient;tukSeatCtx.fillRect(0,0,256,256);
+// Deterministic worn grain avoids per-frame noise and visible tiling patterns.
+for(let i=0;i<900;i++){
+ const px=(i*71+Math.floor(i/19)*13)%256,py=(i*139+Math.floor(i/17)*23)%256;
+ tukSeatCtx.fillStyle=i%4===0?'rgba(240,204,174,.10)':'rgba(28,19,19,.09)';
+ tukSeatCtx.fillRect(px,py,1+i%3,1);
+}
+for(const x of [65,128,191]){
+ tukSeatCtx.fillStyle='rgba(25,16,16,.45)';tukSeatCtx.fillRect(x-3,0,6,256);
+ tukSeatCtx.fillStyle='rgba(215,159,131,.28)';tukSeatCtx.fillRect(x+4,0,2,256);
+ for(let y=8;y<256;y+=11){
+  tukSeatCtx.fillStyle='rgba(229,189,151,.6)';
+  tukSeatCtx.fillRect(x-1,y,2,5);
+ }
+}
+const tukSeatTexture=new THREE.CanvasTexture(tukSeatCanvas);
+tukSeatTexture.colorSpace=THREE.SRGBColorSpace;
+tukSeatTexture.anisotropy=2;
+const tukSeat=new THREE.MeshStandardMaterial({map:tukSeatTexture,color:0xffffff,metalness:0,roughness:.84});
+// Rounded cushions use the same two draw calls as the previous square bench.
+// Shape UVs are normalized so stitching follows the upholstered faces.
+function makeTukCushion(width,height,depth){
+ const x=width/2,y=height/2,r=.065;
+ const shape=new THREE.Shape();
+ shape.moveTo(-x+r,-y);shape.lineTo(x-r,-y);
+ shape.quadraticCurveTo(x,-y,x,-y+r);shape.lineTo(x,y-r);
+ shape.quadraticCurveTo(x,y,x-r,y);shape.lineTo(-x+r,y);
+ shape.quadraticCurveTo(-x,y,-x,y-r);shape.lineTo(-x,-y+r);
+ shape.quadraticCurveTo(-x,-y,-x+r,-y);
+ const uv={
+  generateTopUV:(geo,verts,a,b,c)=>[a,b,c].map(i=>new THREE.Vector2(verts[i*3]/width+.5,verts[i*3+1]/height+.5)),
+  generateSideWallUV:(geo,verts,a,b,c,d)=>[a,b,c,d].map(i=>new THREE.Vector2(verts[i*3]/width+.5,verts[i*3+2]/(depth+.05)))
+ };
+ return new THREE.ExtrudeGeometry(shape,{depth,bevelEnabled:true,bevelSize:.025,bevelThickness:.02,bevelSegments:1,curveSegments:3,UVGenerator:uv});
+}
 // One-time 128px optical lens textures for the existing traffic tuk-tuk lamps.
 // Baked concentric fluting, lens-edge gasket and reflected highlights: no extra
 // geometry, draw calls, dynamic lights or per-frame canvas updates.
@@ -1736,9 +1779,12 @@ function makeTukTuk(){
  g.add(ball(.23,tukTrim,0,1.15,1.44));
  g.add(ball(.18,tukLamp,0,1.15,1.57));
  g.add(cube(.95,.075,.09,tukTrim,0,.61,1.44));
- // Open cabin with upholstered bench and rear backrest.
- g.add(cube(1.31,.19,.7,tukSeat,0,1.34,-.75));
- g.add(cube(1.31,.56,.14,tukSeat,0,1.68,-1.11));
+ // Open cabin with stitched, rounded vinyl cushions (two shared-material meshes).
+ // The front-facing backrest and horizontal bench retain the original clearances.
+ const bench=new THREE.Mesh(makeTukCushion(1.31,.7,.14),tukSeat);
+ bench.rotation.x=-Math.PI/2;bench.position.set(0,1.27,-.75);g.add(bench);
+ const backrest=new THREE.Mesh(makeTukCushion(1.31,.56,.10),tukSeat);
+ backrest.position.set(0,1.68,-1.17);g.add(backrest);
  g.add(cube(1.43,.08,.09,tukTrim,0,1.38,-1.32));
  // Exposed rear-mounted engine, cooling fins and soot-darkened exhaust.
  // All eleven steel parts share one InstancedMesh draw call per traffic tuk-tuk.
