@@ -1602,7 +1602,6 @@ tukCanvas.map=tukRoofTexture;tukCanvas.needsUpdate=true;
 const tukTrim=new THREE.MeshStandardMaterial({color:0xb6b9ad,metalness:.74,roughness:.29});
 const tukWindow=new THREE.MeshStandardMaterial({color:0x426c80,metalness:.18,roughness:.21,transparent:true,opacity:.7,side:THREE.DoubleSide});
 const tukSeat=new THREE.MeshStandardMaterial({color:0x673c35,metalness:0,roughness:.89});
-const tukTyre=new THREE.MeshStandardMaterial({color:0x20232a,roughness:.96});
 const tukLamp=new THREE.MeshStandardMaterial({color:0xffe4b0,emissive:0x9a6c2b,emissiveIntensity:.4,roughness:.3});
 const tukTail=new THREE.MeshStandardMaterial({color:0xc92935,roughness:.38});
 function makeTukTuk(){
@@ -1622,11 +1621,12 @@ function makeTukTuk(){
  for(const side of [-1,1]){
   g.add(cube(.065,.45,1.12,tukPaint,side*.73,1.03,-.63));
   g.add(cube(.045,.09,1.23,tukAccent,side*.765,1.28,-.61));
-  // Rear tyres and inset metallic hubs.
-  const wheel=new THREE.Mesh(new THREE.CylinderGeometry(.37,.37,.19,14),tukTyre);
-  wheel.rotation.z=Math.PI/2;wheel.position.set(side*.81,.42,-.96);g.add(wheel);
-  const hub=new THREE.Mesh(new THREE.CylinderGeometry(.2,.2,.205,12),tukTrim);
-  hub.rotation.z=Math.PI/2;hub.position.copy(wheel.position);g.add(hub);
+  // One shared atlas-mapped PBR wheel per side: tread, sidewall, steel rim and lug nuts.
+  // Reuses the taxi/bus wheel geometry and material without extra textures or draw calls.
+  const wheel=new THREE.Mesh(busWheelGeometry,busWheelMaterial);
+  wheel.rotation.z=Math.PI/2;
+  wheel.scale.set(.37/.48,.19/.21,.37/.48);
+  wheel.position.set(side*.81,.42,-.96);g.add(wheel);
   rod(g,[side*.73,1.27,-1.23],[side*.76,2.35,-1.21],.032,tukTrim);
   rod(g,[side*.74,1.32,.58],[side*.77,2.36,.7],.032,tukTrim);
   // Handlebar mirrors project beyond the narrow front cab.
@@ -1634,11 +1634,11 @@ function makeTukTuk(){
   const mirror=cube(.29,.19,.07,tukWindow,side*.91,1.98,1.04);mirror.rotation.y=side*.12;g.add(mirror);
   g.add(ball(.12,tukTail,side*.57,.84,-1.36));
  }
- // Single steerable-looking front wheel, front mudguard and round headlamp.
- const frontWheel=new THREE.Mesh(new THREE.CylinderGeometry(.37,.37,.21,14),tukTyre);
- frontWheel.rotation.z=Math.PI/2;frontWheel.position.set(0,.4,1.41);g.add(frontWheel);
- const frontHub=new THREE.Mesh(new THREE.CylinderGeometry(.19,.19,.22,12),tukTrim);
- frontHub.rotation.z=Math.PI/2;frontHub.position.copy(frontWheel.position);g.add(frontHub);
+ // Single front wheel shares the same PBR tyre/rim atlas as both rear wheels.
+ const frontWheel=new THREE.Mesh(busWheelGeometry,busWheelMaterial);
+ frontWheel.rotation.z=Math.PI/2;
+ frontWheel.scale.set(.37/.48,1,.37/.48);
+ frontWheel.position.set(0,.4,1.41);g.add(frontWheel);
  const fender=ball(.41,tukPaint,0,.74,1.39);fender.scale.set(1,.28,1.12);g.add(fender);
  g.add(ball(.23,tukTrim,0,1.15,1.44));
  g.add(ball(.18,tukLamp,0,1.15,1.57));
