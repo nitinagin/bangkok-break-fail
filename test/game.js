@@ -1604,6 +1604,8 @@ const tukWindow=new THREE.MeshStandardMaterial({color:0x426c80,metalness:.18,rou
 const tukSeat=new THREE.MeshStandardMaterial({color:0x673c35,metalness:0,roughness:.89});
 const tukLamp=new THREE.MeshStandardMaterial({color:0xffe4b0,emissive:0x9a6c2b,emissiveIntensity:.4,roughness:.3});
 const tukTail=new THREE.MeshStandardMaterial({color:0xc92935,roughness:.38});
+const tukEngineSteel=new THREE.MeshStandardMaterial({color:0x51565a,metalness:.66,roughness:.72});
+const tukEngineUnitBox=new THREE.BoxGeometry(1,1,1);
 function makeTukTuk(){
  const g=new THREE.Group();
  // The tapered pressed-metal nose and rear wheel arch have rounded bevels.
@@ -1647,6 +1649,27 @@ function makeTukTuk(){
  g.add(cube(1.31,.19,.7,tukSeat,0,1.34,-.75));
  g.add(cube(1.31,.56,.14,tukSeat,0,1.68,-1.11));
  g.add(cube(1.43,.08,.09,tukTrim,0,1.38,-1.32));
+ // Exposed rear-mounted engine, cooling fins and soot-darkened exhaust.
+ // All eleven steel parts share one InstancedMesh draw call per traffic tuk-tuk.
+ // The geometry/material are shared by cached obstacle clones; no runtime textures.
+ const engineParts=[
+  [.57,.73,-1.31,.55,.37,.46], // engine crankcase behind passenger bench
+  [.81,.73,-1.31,.11,.3,.43],  // removable side cover
+  [.18,.6,-1.43,.35,.23,.3],   // gearbox
+  [.57,.49,-1.58,.2,.16,.49],  // rear silencer
+  [.57,.49,-1.84,.13,.09,.17]  // exhaust outlet
+ ];
+ for(let i=0;i<6;i++)engineParts.push([.89,.59+i*.054,-1.31,.055,.032,.49]);
+ const engineMesh=new THREE.InstancedMesh(tukEngineUnitBox,tukEngineSteel,engineParts.length);
+ const enginePart=new THREE.Object3D();
+ engineParts.forEach(([px,py,pz,w,h,d],i)=>{
+  enginePart.position.set(px,py,pz);
+  enginePart.scale.set(w,h,d);
+  enginePart.updateMatrix();
+  engineMesh.setMatrixAt(i,enginePart.matrix);
+ });
+ engineMesh.instanceMatrix.needsUpdate=true;
+ g.add(engineMesh);
  // Windscreen uses thin tinted PBR glazing rather than an opaque blue block.
  const glass=new THREE.Mesh(new THREE.PlaneGeometry(1.37,.67),tukWindow);
  glass.position.set(0,1.88,.79);glass.rotation.x=-.15;g.add(glass);
