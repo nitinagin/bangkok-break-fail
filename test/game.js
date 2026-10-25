@@ -821,21 +821,60 @@ for(let k=0;k<2;k++){
 // Rama II construction corridor: road-edge Jersey barriers, work platforms,
 // unfinished rebar cages and crane silhouettes. All outside the playable lanes.
 const siteConcrete=new THREE.MeshStandardMaterial({color:0xe3d9cb,map:ramaConcreteMap,roughnessMap:ramaConcreteRoughness,roughness:.98,metalness:0});
-const siteWhite=new THREE.MeshLambertMaterial({color:0xe9e4d9});
-const siteRed=new THREE.MeshLambertMaterial({color:0xd44735});
 const siteSteel=new THREE.MeshLambertMaterial({color:0x666e70});
 const siteCrane=new THREE.MeshLambertMaterial({color:0xe6a632});
-const siteBarrierGeo=new THREE.BoxGeometry(.5,.9,3.65);
-const siteStripeGeo=new THREE.BoxGeometry(.52,.3,1.12);
+// A real Jersey barrier has a wide toe, a sloping impact face and a narrow crown.
+// Share one extruded profile across all 28 barriers per work zone (no extra draw calls).
+const barrierProfile=new THREE.Shape();
+barrierProfile.moveTo(-.39,-.47);
+barrierProfile.lineTo(.39,-.47);
+barrierProfile.lineTo(.39,-.27);
+barrierProfile.lineTo(.22,.22);
+barrierProfile.lineTo(.22,.47);
+barrierProfile.lineTo(-.22,.47);
+barrierProfile.lineTo(-.22,.22);
+barrierProfile.lineTo(-.39,-.27);
+barrierProfile.closePath();
+const siteBarrierGeo=new THREE.ExtrudeGeometry(barrierProfile,{depth:3.65,steps:1,bevelEnabled:false});
+siteBarrierGeo.translate(0,0,-1.825);
+// Diagonal reflective red/white chevrons are baked into one tiny shared atlas.
+// A flat plane replaces the old thick red cuboid; there are still only two
+// instanced draw calls per work zone and nothing enters the dodge lanes.
+const barrierStripeCanvas=document.createElement('canvas');
+barrierStripeCanvas.width=128;barrierStripeCanvas.height=64;
+const barrierStripeCtx=barrierStripeCanvas.getContext('2d');
+barrierStripeCtx.fillStyle='#ece9df';barrierStripeCtx.fillRect(0,0,128,64);
+for(let sx=-80;sx<192;sx+=42){
+ barrierStripeCtx.fillStyle='#bb3d2d';
+ barrierStripeCtx.beginPath();
+ barrierStripeCtx.moveTo(sx,0);barrierStripeCtx.lineTo(sx+22,0);
+ barrierStripeCtx.lineTo(sx+80,64);barrierStripeCtx.lineTo(sx+58,64);
+ barrierStripeCtx.closePath();barrierStripeCtx.fill();
+}
+for(let i=0;i<64;i++){
+ const px=(i*53+17)%128,py=(i*29+7)%64;
+ barrierStripeCtx.fillStyle=i%3?'rgba(39,35,30,.13)':'rgba(255,255,255,.22)';
+ barrierStripeCtx.fillRect(px,py,1+(i%3),1);
+}
+const barrierStripeTexture=new THREE.CanvasTexture(barrierStripeCanvas);
+barrierStripeTexture.colorSpace=THREE.SRGBColorSpace;
+barrierStripeTexture.anisotropy=mobile?2:4;
+const siteStripeMaterial=new THREE.MeshStandardMaterial({
+ map:barrierStripeTexture,metalness:.04,roughness:.48,
+ emissive:0x35130b,emissiveIntensity:.14,side:THREE.DoubleSide
+});
+const siteStripeGeo=new THREE.PlaneGeometry(2.75,.36);
 function ramaWorkZone(side,z){
  const g=new THREE.Group();
- // 14 barriers along the shoulder, striped alternately red and white.
- const barriers=new THREE.InstancedMesh(siteBarrierGeo,siteWhite,14);
- const stripes=new THREE.InstancedMesh(siteStripeGeo,siteRed,14);
+ // Fourteen weathered precast barriers and inward-facing hazard chevrons.
+ const barriers=new THREE.InstancedMesh(siteBarrierGeo,siteConcrete,14);
+ const stripes=new THREE.InstancedMesh(siteStripeGeo,siteStripeMaterial,14);
+ const stripeMatrix=new THREE.Matrix4().makeRotationY(-side*Math.PI/2);
  for(let i=0;i<14;i++){
   const zz=-26+i*4;
   barriers.setMatrixAt(i,new THREE.Matrix4().makeTranslation(side*6.05,.48,zz));
-  stripes.setMatrixAt(i,new THREE.Matrix4().makeTranslation(side*5.76,.57,zz));
+  stripeMatrix.setPosition(side*5.72,.62,zz);
+  stripes.setMatrixAt(i,stripeMatrix);
  }
  barriers.instanceMatrix.needsUpdate=true;stripes.instanceMatrix.needsUpdate=true;
  g.add(barriers,stripes);
