@@ -2296,7 +2296,7 @@ function sound(freq=240,duration=.12,type='square'){if(!soundOn)return;try{audio
 // Lightweight geometry keeps the center road playable for tilt steering.
 const marketStalls=[],marketCanopies=[],marketBumps=[];
 // At 10,000 points the market's right edge becomes an open canal.
-const canalGroup=new THREE.Group(),canalWater=mat(0x167c91),canalEdge=mat(0xb7ad92),canalBoat=mat(0x865337);
+const canalGroup=new THREE.Group(),canalWater=mat(0x167c91),canalEdge=mat(0xb7ad92);
 canalGroup.add(cube(9,.07,220,canalWater,8.2,-.16,-86));
 canalGroup.add(cube(.28,.38,220,canalEdge,3.65,.12,-86));
  // One scrolling translucent texture creates moving canal ripples at a fixed GPU cost.
@@ -2329,15 +2329,55 @@ canalGroup.add(cube(.28,.38,220,canalEdge,3.65,.12,-86));
  canalRippleSurface.position.set(8.2,-.118,-86);
  canalRippleSurface.renderOrder=1;
  canalGroup.add(canalRippleSurface);
-// Low-poly fruit boats and striped parasols make the canal readable on mobile.
+// Shared 128x256 weathered wood atlas and tapered open Thai market hulls.
+const boatWoodCanvas=document.createElement('canvas');boatWoodCanvas.width=128;boatWoodCanvas.height=256;
+const boatWoodCtx=boatWoodCanvas.getContext('2d');
+const boatWoodGradient=boatWoodCtx.createLinearGradient(0,0,128,256);
+boatWoodGradient.addColorStop(0,'#a0774e');boatWoodGradient.addColorStop(.55,'#755238');boatWoodGradient.addColorStop(1,'#48382d');
+boatWoodCtx.fillStyle=boatWoodGradient;boatWoodCtx.fillRect(0,0,128,256);
+for(let i=0;i<230;i++){
+ const x=(i*43+Math.floor(i/7)*19)%128,y=(i*79+Math.floor(i/11)*13)%256;
+ boatWoodCtx.fillStyle=i%4===0?'rgba(217,178,117,.15)':'rgba(30,23,19,.14)';
+ boatWoodCtx.fillRect(x,y,1+i%3,4+i%29);
+}
+for(const x of [14,43,72,101]){
+ boatWoodCtx.fillStyle='rgba(29,22,18,.48)';boatWoodCtx.fillRect(x,0,2,256);
+ boatWoodCtx.fillStyle='rgba(201,165,112,.22)';boatWoodCtx.fillRect(x+3,0,1,256);
+}
+const boatWoodTexture=new THREE.CanvasTexture(boatWoodCanvas);
+boatWoodTexture.colorSpace=THREE.SRGBColorSpace;
+boatWoodTexture.anisotropy=Math.min(2,renderer.capabilities.getMaxAnisotropy());
+const boatWoodMaterial=new THREE.MeshStandardMaterial({map:boatWoodTexture,roughness:.83,metalness:0,side:THREE.DoubleSide});
+// One shared hull geometry includes sloped exterior, gunwales, recessed walls and floor.
+function makeMarketBoatHull(){
+ const zs=[-1.65,-1.35,-.8,0,.8,1.35,1.65],ws=[.10,.45,.63,.68,.63,.45,.10];
+ const positions=[],uvs=[];
+ function tri(a,b,c){for(const p of [a,b,c]){positions.push(...p);uvs.push((p[0]+.85)/1.7,(p[2]+1.7)/3.4)}}
+ function quad(a,b,c,d){tri(a,b,c);tri(a,c,d)}
+ for(let j=0;j<zs.length-1;j++)for(const side of [-1,1]){
+  const v=(k,m,y)=>[side*ws[k]*m,y,zs[k]];
+  const a=v(j,1,.31),b=v(j+1,1,.31);
+  quad(a,b,v(j+1,.72,-.13),v(j,.72,-.13));
+  const e=v(j,.84,.23),f=v(j+1,.84,.23);
+  quad(a,e,f,b);
+  const g=v(j,.61,.07),h=v(j+1,.61,.07);
+  quad(e,g,h,f);
+  if(side===1)quad(g,h,[-ws[j+1]*.61,.07,zs[j+1]],[-ws[j]*.61,.07,zs[j]]);
+ }
+ const geometry=new THREE.BufferGeometry();
+ geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+ geometry.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));
+ geometry.computeVertexNormals();return geometry;
+}
+const boatHullGeometry=makeMarketBoatHull();
+// Real tapered fruit boats replace box silhouettes without per-frame allocations.
 const canalBoats=[];
 // Shared translucent wake material adds moving V-trails without heavy particle effects.
 const boatWakeMat=new THREE.MeshBasicMaterial({color:0xc8fff0,transparent:true,opacity:.63,depthWrite:false});
 const fruitColors=[mat(0xe8b82f),mat(0xe65b37),mat(0x78b34c)],umbrellaColors=[mat(0xffd45c),mat(0xf26e83),mat(0x5bc6bb)];
 for(let i=0;i<10;i++){
  const boat=new THREE.Group();
- boat.add(cube(1.2,.32,2.6,canalBoat,0,0,0));
- boat.add(cube(1.05,.12,2.25,mat(0xd2b078),0,.24,0));
+ boat.add(new THREE.Mesh(boatHullGeometry,boatWoodMaterial));
  for(let j=0;j<6;j++)boat.add(ball(.18,fruitColors[(i+j)%3],(j%2?1:-1)*.27,.45,(Math.floor(j/2)-1)*.57));
  boat.add(cube(.055,1.65,.055,canalEdge,0,1.17,0));
  const parasol=new THREE.Group();
