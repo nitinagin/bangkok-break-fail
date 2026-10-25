@@ -1740,6 +1740,41 @@ const tukEngineUnitBox=new THREE.BoxGeometry(1,1,1);
 // One shared six-sided steel tube for every traffic tuk-tuk canopy support.
 // The frame is assembled once per cached model, not in the render loop.
 const tukCanopyFrameGeometry=new THREE.CylinderGeometry(.026,.026,1,6);
+// A single baked instrument face and two rubber grips for the traffic tuk-tuk.
+// All cockpit assets are allocated once and shared by obstacle clones.
+const tukHandleGripMaterial=new THREE.MeshStandardMaterial({color:0x202426,metalness:.04,roughness:.88});
+const tukGaugeCanvas=document.createElement('canvas');
+tukGaugeCanvas.width=tukGaugeCanvas.height=128;
+const tukGaugeCtx=tukGaugeCanvas.getContext('2d');
+tukGaugeCtx.fillStyle='#242a2c';tukGaugeCtx.fillRect(0,0,128,128);
+const tukDialGradient=tukGaugeCtx.createRadialGradient(54,49,5,64,64,66);
+tukDialGradient.addColorStop(0,'#242b2d');
+tukDialGradient.addColorStop(.77,'#121719');
+tukDialGradient.addColorStop(1,'#50595a');
+tukGaugeCtx.fillStyle=tukDialGradient;tukGaugeCtx.fillRect(3,3,122,122);
+tukGaugeCtx.beginPath();tukGaugeCtx.arc(64,64,52,0,Math.PI*2);
+tukGaugeCtx.fillStyle='#151b1d';tukGaugeCtx.fill();
+tukGaugeCtx.lineWidth=5;tukGaugeCtx.strokeStyle='#8d9692';tukGaugeCtx.stroke();
+tukGaugeCtx.lineWidth=1;tukGaugeCtx.strokeStyle='#d6d8cb';
+tukGaugeCtx.beginPath();tukGaugeCtx.arc(64,64,45,0,Math.PI*2);tukGaugeCtx.stroke();
+for(let i=0;i<=12;i++){
+ const angle=Math.PI*.75+i*Math.PI*1.5/12;
+ const radius=i%3===0?32:37;
+ tukGaugeCtx.beginPath();
+ tukGaugeCtx.moveTo(64+radius*Math.cos(angle),64+radius*Math.sin(angle));
+ tukGaugeCtx.lineTo(64+43*Math.cos(angle),64+43*Math.sin(angle));
+ tukGaugeCtx.lineWidth=i%3===0?2:1;
+ tukGaugeCtx.strokeStyle='#e6e6dc';tukGaugeCtx.stroke();
+}
+tukGaugeCtx.beginPath();tukGaugeCtx.moveTo(64,64);tukGaugeCtx.lineTo(88,40);
+tukGaugeCtx.lineWidth=2.8;tukGaugeCtx.strokeStyle='#ce4a36';tukGaugeCtx.stroke();
+tukGaugeCtx.beginPath();tukGaugeCtx.arc(64,64,4,0,Math.PI*2);
+tukGaugeCtx.fillStyle='#b9c0b8';tukGaugeCtx.fill();
+tukGaugeCtx.font='11px sans-serif';tukGaugeCtx.textAlign='center';
+tukGaugeCtx.fillStyle='#b4bcb5';tukGaugeCtx.fillText('km/h',64,92);
+const tukGaugeTexture=new THREE.CanvasTexture(tukGaugeCanvas);
+tukGaugeTexture.colorSpace=THREE.SRGBColorSpace;tukGaugeTexture.anisotropy=2;
+const tukGaugeMaterial=new THREE.MeshStandardMaterial({map:tukGaugeTexture,metalness:.08,roughness:.53,side:THREE.DoubleSide});
 function makeTukTuk(){
  const g=new THREE.Group();
  // The tapered pressed-metal nose and rear wheel arch have rounded bevels.
@@ -1839,8 +1874,8 @@ function makeTukTuk(){
  g.add(new THREE.Mesh(roofGeometry,tukCanvas));
  // Three curved transverse bows and two full-length edge rails make the
  // weathered canvas canopy read as tensioned fabric on a real steel frame.
- // 14 tube segments share a single instanced draw call (previously 2 rods).
- const frame=new THREE.InstancedMesh(tukCanopyFrameGeometry,tukTrim,14);
+ // The roof and handlebar share 21 chrome tube instances in one draw call.
+ const frame=new THREE.InstancedMesh(tukCanopyFrameGeometry,tukTrim,21);
  const framePart=new THREE.Object3D();
  const frameStart=new THREE.Vector3(),frameEnd=new THREE.Vector3();
  const frameDirection=new THREE.Vector3(),frameUp=new THREE.Vector3(0,1,0);
@@ -1863,9 +1898,36 @@ function makeTukTuk(){
   }
  }
  for(const x of [-.85,.85])addCanopyTube(x,canopyY(x),-1.38,x,canopyY(x),.78);
+ // The same instanced chrome tubes form the motorcycle-style handlebar,
+ // steering stem and brake levers (7 parts, no additional steel draw call).
+ const handlebarSegments=[
+  [0,1.02,1.03,0,1.42,.85],
+  [0,1.42,.85,-.34,1.49,.87],
+  [0,1.42,.85,.34,1.49,.87],
+  [-.34,1.49,.87,-.51,1.47,.87],
+  [.34,1.49,.87,.51,1.47,.87],
+  [-.33,1.48,.87,-.47,1.38,.98],
+  [.33,1.48,.87,.47,1.38,.98]
+ ];
+ for(const segment of handlebarSegments)addCanopyTube(...segment);
  frame.instanceMatrix.needsUpdate=true;
  frame.computeBoundingSphere();
  g.add(frame);
+ // Two rubber handgrips share a single draw call and the existing tube geometry.
+ const grips=new THREE.InstancedMesh(tukCanopyFrameGeometry,tukHandleGripMaterial,2);
+ for(const [i,side] of [-1,1].entries()){
+  frameStart.set(side*.38,1.485,.87);frameEnd.set(side*.52,1.47,.87);
+  frameDirection.subVectors(frameEnd,frameStart);
+  const length=frameDirection.length();
+  framePart.position.copy(frameStart).add(frameEnd).multiplyScalar(.5);
+  framePart.quaternion.setFromUnitVectors(frameUp,frameDirection.multiplyScalar(1/length));
+  framePart.scale.set(1.65,length,1.65);
+  framePart.updateMatrix();grips.setMatrixAt(i,framePart.matrix);
+ }
+ grips.instanceMatrix.needsUpdate=true;grips.computeBoundingSphere();g.add(grips);
+ // Baked analogue speedometer behind the windscreen: no animated textures.
+ const instrument=new THREE.Mesh(new THREE.PlaneGeometry(.33,.29),tukGaugeMaterial);
+ instrument.position.set(0,1.34,.97);instrument.rotation.x=-.22;g.add(instrument);
  return g;
 }
 function makeBike(){
