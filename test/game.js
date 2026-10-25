@@ -314,6 +314,22 @@ function makeShopWindowMaterial(variant){
   p.fillRect(x,y,1,8+(k%5)*5);
  }
  p.fillStyle='rgba(16,19,23,.33)';p.fillRect(0,115,128,13);
+ // Baked, slender steel mullions, rubber seals and sill grime make each window
+ // read as recessed old Bangkok glazing, with no extra geometry or draw calls.
+ p.fillStyle='rgba(4,12,17,.82)';p.fillRect(61,3,6,119);p.fillRect(3,66,122,6);
+ p.fillStyle='rgba(110,129,130,.68)';p.fillRect(63,4,2,116);p.fillRect(4,68,120,2);
+ p.strokeStyle='rgba(9,19,22,.85)';p.lineWidth=5;p.strokeRect(3,3,122,122);
+ p.strokeStyle='rgba(113,124,121,.62)';p.lineWidth=2;p.strokeRect(7,7,114,114);
+ // Dust collects below the crossbar and in the lower corners after rain.
+ const sillDirt=p.createLinearGradient(0,96,0,128);
+ sillDirt.addColorStop(0,'rgba(28,27,24,0)');
+ sillDirt.addColorStop(1,'rgba(29,25,21,.46)');
+ p.fillStyle=sillDirt;p.fillRect(8,96,112,32);
+ for(let k=0;k<10;k++){
+  const x=12+(k*31+variant*7)%104,y=74+(k*17)%44;
+  p.fillStyle=k%3===0?'rgba(173,170,143,.18)':'rgba(10,20,21,.19)';
+  p.fillRect(x,y,1+(k%2),4+(k%6)*3);
+ }
  const texture=new THREE.CanvasTexture(c);
  texture.colorSpace=THREE.SRGBColorSpace;texture.anisotropy=2;
  return new THREE.MeshStandardMaterial({
@@ -486,9 +502,10 @@ function building(x,z,i){
   g.add(awningRibs);
  for(let floor=0;floor<2;floor++)for(let j=0;j<2;j++){
  const wy=3.65+floor*1.4;if(wy>h-.6)continue;
- g.add(cube(.95,.96,.075,shopShadow,j===0?-.85:.85,wy,front));g.add(cube(.83,.85,.09,shopWindowMaterials[(i+floor*2+j)%4],j===0?-.85:.85,wy,front+(x<0?.05:-.05)));
- g.add(cube(.9,.08,.12,shopTrim,j===0?-.85:.85,wy+.46,front));
- g.add(cube(.08,.9,.13,shopTrim,j===0?-.85:.85,wy,front));
+ // Dark recessed reveal and narrow weathered steel frame, using existing meshes.
+ g.add(cube(.95,.96,.075,glassDark,j===0?-.85:.85,wy,front));g.add(cube(.83,.85,.09,shopWindowMaterials[(i+floor*2+j)%4],j===0?-.85:.85,wy,front+(x<0?.035:-.035)));
+ g.add(cube(.9,.08,.12,yaowaratBalconySteel,j===0?-.85:.85,wy+.46,front));
+ g.add(cube(.08,.9,.13,yaowaratBalconySteel,j===0?-.85:.85,wy,front));
  }
  // Procedural 3D Yaowarat shophouse detail: recessed balconies, railings and AC units.
  // Geometry stays attached to each existing scrolling building (no new spawn logic).
