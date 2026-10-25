@@ -1609,6 +1609,9 @@ const tukLamp=new THREE.MeshStandardMaterial({color:0xffe4b0,emissive:0x9a6c2b,e
 const tukTail=new THREE.MeshStandardMaterial({color:0xc92935,roughness:.38});
 const tukEngineSteel=new THREE.MeshStandardMaterial({color:0x51565a,metalness:.66,roughness:.72});
 const tukEngineUnitBox=new THREE.BoxGeometry(1,1,1);
+// One shared six-sided steel tube for every traffic tuk-tuk canopy support.
+// The frame is assembled once per cached model, not in the render loop.
+const tukCanopyFrameGeometry=new THREE.CylinderGeometry(.026,.026,1,6);
 function makeTukTuk(){
  const g=new THREE.Group();
  // The tapered pressed-metal nose and rear wheel arch have rounded bevels.
@@ -1693,8 +1696,35 @@ function makeTukTuk(){
  roofGeometry.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));
  roofGeometry.setIndex(indices);roofGeometry.computeVertexNormals();
  g.add(new THREE.Mesh(roofGeometry,tukCanvas));
- rod(g,[-.87,2.35,-1.39],[.87,2.35,-1.39],.033,tukTrim);
- rod(g,[-.87,2.35,.78],[.87,2.35,.78],.033,tukTrim);
+ // Three curved transverse bows and two full-length edge rails make the
+ // weathered canvas canopy read as tensioned fabric on a real steel frame.
+ // 14 tube segments share a single instanced draw call (previously 2 rods).
+ const frame=new THREE.InstancedMesh(tukCanopyFrameGeometry,tukTrim,14);
+ const framePart=new THREE.Object3D();
+ const frameStart=new THREE.Vector3(),frameEnd=new THREE.Vector3();
+ const frameDirection=new THREE.Vector3(),frameUp=new THREE.Vector3(0,1,0);
+ let frameIndex=0;
+ function addCanopyTube(ax,ay,az,bx,by,bz){
+  frameStart.set(ax,ay,az);frameEnd.set(bx,by,bz);
+  frameDirection.subVectors(frameEnd,frameStart);
+  const length=frameDirection.length();
+  framePart.position.copy(frameStart).add(frameEnd).multiplyScalar(.5);
+  framePart.quaternion.setFromUnitVectors(frameUp,frameDirection.multiplyScalar(1/length));
+  framePart.scale.set(1,length,1);
+  framePart.updateMatrix();
+  frame.setMatrixAt(frameIndex++,framePart.matrix);
+ }
+ const canopyY=x=>2.305+.16*(1-(x/.86)*(x/.86));
+ for(const z of [-1.33,-.30,.72]){
+  for(let ix=0;ix<4;ix++){
+   const x0=-.86+ix*.43,x1=x0+.43;
+   addCanopyTube(x0,canopyY(x0),z,x1,canopyY(x1),z);
+  }
+ }
+ for(const x of [-.85,.85])addCanopyTube(x,canopyY(x),-1.38,x,canopyY(x),.78);
+ frame.instanceMatrix.needsUpdate=true;
+ frame.computeBoundingSphere();
+ g.add(frame);
  return g;
 }
 function makeBike(){
