@@ -1176,8 +1176,8 @@ new GLTFLoader().load(TUKTUK_GLB,glb=>{
   // Keep the lightweight procedural tuk-tuk when this optional GLB is too heavy.
   // Account for each mesh draw call even when multiple meshes share geometry.
   // Optional GLBs that exceed mobile budgets must never replace the playable fallback.
-  let triangles=0,meshCount=0;
-  const textures=new Set();
+  let triangles=0,meshCount=0,drawCalls=0;
+  const textures=new Set(),colorMaps=new Set();
   const textureKeys=['map','normalMap','roughnessMap','metalnessMap','aoMap','emissiveMap','alphaMap','bumpMap','clearcoatMap','clearcoatNormalMap','clearcoatRoughnessMap'];
   raw.traverse(o=>{
    if(!o.isMesh)return;
@@ -1189,9 +1189,14 @@ new GLTFLoader().load(TUKTUK_GLB,glb=>{
    if(!Number.isFinite(vertexCount)||vertexCount<3)throw Error('vehicle GLB invalid mesh');
    triangles+=vertexCount/3;
    const materials=Array.isArray(o.material)?o.material:[o.material];
-   for(const material of materials)if(material)for(const key of textureKeys)if(material[key])textures.add(material[key]);
+   // A multi-material GLB mesh may require one draw call per geometry group.
+   drawCalls+=materials.length>1&&geo.groups.length?geo.groups.length:1;
+   for(const material of materials)if(material){
+    if(material.map)colorMaps.add(material.map);
+    for(const key of textureKeys)if(material[key])textures.add(material[key]);
+   }
   });
-  if(!meshCount||meshCount>(mobile?80:160)||!Number.isFinite(triangles)||triangles>(mobile?120000:300000))throw Error('vehicle GLB exceeds mesh/triangle budget');
+  if(!meshCount||meshCount>(mobile?80:160)||drawCalls>(mobile?80:160)||!Number.isFinite(triangles)||triangles>(mobile?120000:300000))throw Error('vehicle GLB exceeds draw-call/mesh/triangle budget');
   // The former width-only resize missed portrait textures. Preserve each PBR
   // map's color space and aspect ratio, with sharper 1024px desktop previews.
   const maxEdge=mobile?768:1024;
@@ -1222,6 +1227,9 @@ new GLTFLoader().load(TUKTUK_GLB,glb=>{
    }
    tex.image=canvas;tex.needsUpdate=true;
   }
+  // Keep paint and decals legible at oblique camera angles with bounded filtering.
+  const anisotropy=Math.min(mobile?2:4,renderer.capabilities.getMaxAnisotropy());
+  for(const map of colorMaps){if((map.anisotropy||1)<anisotropy){map.anisotropy=anisotropy;map.needsUpdate=true}}
   raw.traverse(o=>{if(o.isMesh)o.frustumCulled=true});
   raw.updateMatrixWorld(true);
   const box=new THREE.Box3().setFromObject(raw),sz=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
