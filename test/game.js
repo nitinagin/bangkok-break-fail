@@ -182,6 +182,10 @@ function makeYaowaratAwning(variant){
  return new THREE.MeshStandardMaterial({map:texture,roughness:.89,metalness:0});
 }
 const awningColors=Array.from({length:3},(_,i)=>makeYaowaratAwning(i));
+// Shared slender steel supports for all Yaowarat shop awnings: no per-building geometry allocations.
+const yaowaratAwningRibGeometry=new THREE.BoxGeometry(.042,.045,1.06);
+const yaowaratAwningRibMetal=new THREE.MeshStandardMaterial({color:0x66645e,metalness:.52,roughness:.77});
+const yaowaratAwningRibMatrix=new THREE.Matrix4();
 const signMaterials=[mat(0xff267a),mat(0x086bd8),mat(0x1cbf7a)];const neonSigns=[new THREE.MeshBasicMaterial({color:0xff3d96}),new THREE.MeshBasicMaterial({color:0x22ffe0}),new THREE.MeshBasicMaterial({color:0xffd64d})];const daySigns=signMaterials.slice();function applyDistrict(i){if(i===districtIndex)return;districtIndex=i;districtLabel.textContent=['☀️ BANGKOK DAYTIME','🌃 YAOWARAT NIGHT · TEST 6.9','🚧 RAMA II CONSTRUCTION · TEST 6.9','🛍️ JJ MARKET · CHATUCHAK · 8000+','🛣️ BANGKOK EXPRESSWAY · 12000+','🌈 PATTAYA WALKING STREET · 16000+'][i];for(let k=0;k<3;k++)signMaterials[k]=i===1?neonSigns[k]:daySigns[k];for(const b of props){if(b.userData.sign)b.userData.sign.material=signMaterials[b.userData.signIndex%3]}const rama=i===2;M.grass.color.setHex(rama?0x78746d:0x34333b);M.road.color.setHex(rama?0x777b81:0x56535c);M.stripe.color.setHex(rama?0xe5e1d3:0xe2c579);shoulderPaint.color.setHex(rama?0x77736e:0x444148);curbPaint.color.setHex(rama?0x9d968b:0x756866);hint.textContent=['🛺 WELCOME TO BANGKOK!','🏮 WELCOME TO YAOWARAT!','🌇 SUNSET DRIVE!','🌿 JJ MARKET! WATCH THE TRAFFIC!','🛸 EXPRESSWAY! UFO LASERS INCOMING!','🌈 PATTAYA WALKING STREET!'][i]}
 function makeRoadsideStory(kind,side,z){const g=new THREE.Group();if(kind==='shrine'){g.add(cube(1.5,.25,1.3,storyMat.wood,0,.55,0));for(const sx of [-.53,.53])for(const sz of [-.42,.42])g.add(cube(.12,1.55,.12,storyMat.gold,sx,1.4,sz));g.add(cube(1.9,.3,1.65,storyMat.roof,0,2.25,0));g.add(cube(.55,.8,.52,storyMat.gold,0,1.4,0))}else{g.add(cube(2.4,.95,1.45,storyMat.wood,0,.7,0));g.add(cube(2.65,.15,1.8,storyMat.cloth,0,1.65,0));for(let i=0;i<5;i++){const d=new THREE.Mesh(new THREE.IcosahedronGeometry(.24,0),M.durian);d.position.set((i-2)*.38,1.3,(i%2)*.34-.2);g.add(d)}const vendor=new THREE.Group();vendor.add(cube(.45,.8,.34,storyMat.cloth,0,1.48,0));vendor.add(ball(.34,M.skin,0,2.07,0));vendor.add(ball(.37,M.black,0,2.36,.02));vendor.add(ball(.08,M.white,-.13,2.1,-.29));vendor.add(ball(.08,M.white,.13,2.1,-.29));const arm=cube(.13,.63,.14,M.skin,-.37,1.55,0);vendor.add(arm);vendor.position.x=-.85;g.add(vendor);g.userData.vendorArm=arm;g.userData.vendorFruit=ball(.29,M.durian,-.35,1.65,-.4);g.add(g.userData.vendorFruit)}g.position.set(side*7.35,0,z);scene.add(g);storyProps.push({g,kind,side,triggered:false,dropTime:0});return g}
 function makeGrandma(){const g=new THREE.Group();g.add(cube(.72,1.25,.48,storyMat.ghost,0,1.18,0));g.add(ball(.44,M.skin,0,2.06,0));g.add(ball(.49,storyMat.ghost,0,2.37,.06));g.add(ball(.10,M.black,-.13,2.08,-.30));g.add(ball(.10,M.black,.13,2.08,-.30));g.add(cube(.23,.045,.05,M.red,0,1.88,-.34));const arms=[],legs=[];for(const side of [-1,1]){const leg=cube(.16,.86,.18,storyMat.ghost,side*.25,.52,0);g.add(leg);legs.push(leg);const arm=cube(.13,.82,.16,M.skin,side*.49,1.35,0);g.add(arm);arms.push(arm)}g.userData.runArms=arms;g.userData.runLegs=legs;return g}
@@ -429,7 +433,17 @@ function building(x,z,i){
   g.add(cube(.055,2.03,.13,oldGold,0,1.18,front+(x<0?.06:-.06)));
   for(const y of [.2,2.16])g.add(cube(2.58,.06,.13,oldGold,0,y,front+(x<0?.06:-.06)));
  }
- const canopy=cube(3.8,.12,1.0,awningColors[i%3],0,2.45,front+(x<0?.48:-.48));g.add(canopy);for(let k=-2;k<=2;k++){g.add(cube(.18,.14,1.04,shopTrim,k*.68,2.47,front+(x<0?.49:-.49)))}
+ const canopy=cube(3.8,.12,1.0,awningColors[i%3],0,2.45,front+(x<0?.48:-.48));g.add(canopy);
+  // Five slim, weathered metal awning ribs replace oversized toy-like cream blocks.
+  // Shared geometry and one instanced draw call per storefront (previously five).
+  const awningRibs=new THREE.InstancedMesh(yaowaratAwningRibGeometry,yaowaratAwningRibMetal,5);
+  for(let rib=0;rib<5;rib++){
+   yaowaratAwningRibMatrix.makeTranslation((rib-2)*.68,2.47,front+(x<0?.49:-.49));
+   awningRibs.setMatrixAt(rib,yaowaratAwningRibMatrix);
+  }
+  awningRibs.instanceMatrix.needsUpdate=true;
+  awningRibs.computeBoundingSphere();
+  g.add(awningRibs);
  for(let floor=0;floor<2;floor++)for(let j=0;j<2;j++){
  const wy=3.65+floor*1.4;if(wy>h-.6)continue;
  g.add(cube(.95,.96,.075,shopShadow,j===0?-.85:.85,wy,front));g.add(cube(.83,.85,.09,shopWindowMaterials[(i+floor*2+j)%4],j===0?-.85:.85,wy,front+(x<0?.05:-.05)));
