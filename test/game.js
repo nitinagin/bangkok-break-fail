@@ -1810,7 +1810,42 @@ function makeTukTuk(){
  frontWheel.rotation.z=Math.PI/2;
  frontWheel.scale.set(.37/.48,1,.37/.48);
  frontWheel.position.set(0,.4,1.41);g.add(frontWheel);
- const fender=ball(.41,tukPaint,0,.74,1.39);fender.scale.set(1,.28,1.12);g.add(fender);
+ // Pressed-steel wheel arches replace the flattened toy-like front fender.
+ // Rolled edges follow the tyres; 14 arc segments keep the fallback mobile-safe.
+ // Rear arches share one instanced draw call and the existing PBR paint.
+ const guardVertices=[],guardUV=[],guardIndices=[];
+ const guardSteps=14,guardWidths=[-.27,-.235,.235,.27];
+ for(let step=0;step<=guardSteps;step++){
+  const angle=-1.27+2.54*step/guardSteps;
+  const topY=.4+.45*Math.cos(angle),topZ=1.41+.45*Math.sin(angle);
+  for(let col=0;col<4;col++){
+   const rolledEdge=(col===0||col===3)?-.045:0;
+   guardVertices.push(guardWidths[col],topY+rolledEdge,topZ);
+   guardUV.push(col/3,step/guardSteps);
+  }
+ }
+ for(let step=0;step<guardSteps;step++)for(let col=0;col<3;col++){
+  const a=step*4+col,b=a+4;
+  // Winding points outward toward the upper visible surface.
+  guardIndices.push(a,b,a+1,a+1,b,b+1);
+ }
+ const guardGeometry=new THREE.BufferGeometry();
+ guardGeometry.setAttribute('position',new THREE.Float32BufferAttribute(guardVertices,3));
+ guardGeometry.setAttribute('uv',new THREE.Float32BufferAttribute(guardUV,2));
+ guardGeometry.setIndex(guardIndices);
+ guardGeometry.computeVertexNormals();
+ g.add(new THREE.Mesh(guardGeometry,tukPaint));
+ const rearGuards=new THREE.InstancedMesh(guardGeometry,tukPaint,2);
+ const guardDummy=new THREE.Object3D();
+ for(const [index,side] of [-1,1].entries()){
+  guardDummy.position.set(side*.81,.02,-2.37);
+  guardDummy.scale.set(.82,1,1);
+  guardDummy.updateMatrix();
+  rearGuards.setMatrixAt(index,guardDummy.matrix);
+ }
+ rearGuards.instanceMatrix.needsUpdate=true;
+ rearGuards.computeBoundingSphere();
+ g.add(rearGuards);
  g.add(ball(.23,tukTrim,0,1.15,1.44));
  g.add(ball(.18,tukLamp,0,1.15,1.57));
  g.add(cube(.95,.075,.09,tukTrim,0,.61,1.44));
