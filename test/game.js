@@ -140,7 +140,29 @@ function makeShopfrontMaterial(glazed){
   p.fillStyle='rgba(28,25,24,.3)';p.fillRect(0,0,13,256);p.fillRect(243,0,13,256);
  }
  const texture=new THREE.CanvasTexture(c);texture.colorSpace=THREE.SRGBColorSpace;
- return new THREE.MeshStandardMaterial({map:texture,metalness:glazed?.22:.57,roughness:glazed?.32:.72});
+ const material=new THREE.MeshStandardMaterial({map:texture,metalness:glazed?.22:.57,roughness:glazed?.32:.72});
+ if(!glazed){
+  // Shared 256px tangent-space normal map: corrugated shutter ribs catch
+  // passing neon without 3D slats or additional draw calls.
+  const normalCanvas=document.createElement('canvas');
+  normalCanvas.width=normalCanvas.height=256;
+  const normalCtx=normalCanvas.getContext('2d');
+  const normalPixels=normalCtx.createImageData(256,256);
+  for(let y=0;y<256;y++){
+   const ribSlope=Math.cos((y+2)*Math.PI/8)*36;
+   for(let x=0;x<256;x++){
+    const at=(y*256+x)*4;
+    normalPixels.data[at]=128;
+    normalPixels.data[at+1]=Math.round(128+ribSlope);
+    normalPixels.data[at+2]=250;
+    normalPixels.data[at+3]=255;
+   }
+  }
+  normalCtx.putImageData(normalPixels,0,0);
+  material.normalMap=new THREE.CanvasTexture(normalCanvas);
+  material.normalScale.set(.48,.48);
+ }
+ return material;
 }
 const shopfrontMaterials={shutter:makeShopfrontMaterial(false),glass:makeShopfrontMaterial(true)};
 const shopTrim=mat(0xfff5d1),shopShadow=mat(0x39365b),windowGlow=mat(0xffe7a1);
@@ -483,7 +505,11 @@ function building(x,z,i){
  const closedShop=i%4===0;
  g.add(cube(2.6,2.0,.09,closedShop?shopfrontMaterials.shutter:shopfrontMaterials.glass,0,1.18,front));
  if(closedShop){
-  for(let j=0;j<3;j++)g.add(cube(2.55,.035,.11,shopTrim,0,.55+j*.62,front+(x<0?.06:-.06)));
+  // Reuse the former three trim meshes for actual shutter hardware:
+  // two recessed steel guide channels and one bottom locking rail.
+  const shutterFace=front+(x<0?.065:-.065);
+  for(const edge of [-1,1])g.add(cube(.085,2.04,.16,yaowaratAwningRibMetal,edge*1.28,1.18,shutterFace));
+  g.add(cube(2.53,.095,.16,yaowaratAwningRibMetal,0,.22,shutterFace));
  }else{
   // Three frame pieces replace three shutter strips; no extra storefront draw calls.
   g.add(cube(.055,2.03,.13,oldGold,0,1.18,front+(x<0?.06:-.06)));
