@@ -1646,8 +1646,52 @@ const tukWindscreen=new THREE.MeshPhysicalMaterial({
 });
 const tukWindow=new THREE.MeshStandardMaterial({color:0x426c80,metalness:.18,roughness:.21,transparent:true,opacity:.7,side:THREE.DoubleSide});
 const tukSeat=new THREE.MeshStandardMaterial({color:0x673c35,metalness:0,roughness:.89});
-const tukLamp=new THREE.MeshStandardMaterial({color:0xffe4b0,emissive:0x9a6c2b,emissiveIntensity:.4,roughness:.3});
-const tukTail=new THREE.MeshStandardMaterial({color:0xc92935,roughness:.38});
+// One-time 128px optical lens textures for the existing traffic tuk-tuk lamps.
+// Baked concentric fluting, lens-edge gasket and reflected highlights: no extra
+// geometry, draw calls, dynamic lights or per-frame canvas updates.
+function makeTukLampLensTexture(rear){
+ const canvas=document.createElement('canvas');
+ canvas.width=canvas.height=128;
+ const ctx=canvas.getContext('2d');
+ const base=ctx.createRadialGradient(45,40,5,64,64,76);
+ if(rear){
+  base.addColorStop(0,'#f85a50');base.addColorStop(.58,'#b91b20');base.addColorStop(.86,'#681116');base.addColorStop(1,'#200c0d');
+ }else{
+  base.addColorStop(0,'#fff8d8');base.addColorStop(.55,'#c5d3cb');base.addColorStop(.86,'#6b7779');base.addColorStop(1,'#22282a');
+ }
+ ctx.fillStyle=base;ctx.fillRect(0,0,128,128);
+ ctx.save();ctx.beginPath();ctx.arc(64,64,55,0,Math.PI*2);ctx.clip();
+ for(let i=0;i<13;i++){
+  ctx.beginPath();ctx.arc(64,64,5+i*4,0,Math.PI*2);
+  ctx.lineWidth=i%3===0?2:1;
+  ctx.strokeStyle=rear?'rgba(255,155,115,.24)':'rgba(255,255,241,.27)';
+  ctx.stroke();
+ }
+ for(let x=14;x<115;x+=9){
+  ctx.beginPath();ctx.moveTo(x,12);ctx.lineTo(x,116);
+  ctx.lineWidth=1;ctx.strokeStyle=rear?'rgba(75,4,9,.24)':'rgba(40,54,58,.16)';ctx.stroke();
+ }
+ ctx.restore();
+ ctx.beginPath();ctx.arc(64,64,57,0,Math.PI*2);
+ ctx.lineWidth=6;ctx.strokeStyle=rear?'#4c1418':'#51575a';ctx.stroke();
+ ctx.beginPath();ctx.arc(64,64,53,0,Math.PI*2);
+ ctx.lineWidth=1.5;ctx.strokeStyle=rear?'rgba(255,184,139,.5)':'rgba(241,247,230,.58)';ctx.stroke();
+ const texture=new THREE.CanvasTexture(canvas);
+ texture.colorSpace=THREE.SRGBColorSpace;texture.anisotropy=2;
+ return texture;
+}
+const tukHeadLensTexture=makeTukLampLensTexture(false);
+const tukTailLensTexture=makeTukLampLensTexture(true);
+const tukLamp=new THREE.MeshPhysicalMaterial({
+ map:tukHeadLensTexture,color:0xfff8ed,emissive:0x99764b,
+ emissiveIntensity:.3,metalness:.06,roughness:.23,
+ clearcoat:.75,clearcoatRoughness:.16
+});
+const tukTail=new THREE.MeshPhysicalMaterial({
+ map:tukTailLensTexture,color:0xffd6d2,emissive:0x8c171b,
+ emissiveIntensity:.24,metalness:0,roughness:.29,
+ clearcoat:.65,clearcoatRoughness:.19
+});
 const tukEngineSteel=new THREE.MeshStandardMaterial({color:0x51565a,metalness:.66,roughness:.72});
 const tukEngineUnitBox=new THREE.BoxGeometry(1,1,1);
 // One shared six-sided steel tube for every traffic tuk-tuk canopy support.
