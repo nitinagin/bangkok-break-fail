@@ -1562,8 +1562,11 @@ function makeTaxi(){
 // Bangkok three-wheel taxi traffic: curved metal cowl, open passenger cabin,
 // arched canvas roof, correct three-wheel layout and PBR paint. Created once by
 // cachedObstacle('tuktuk'), so every traffic clone shares geometries/materials.
-const tukPaint=new THREE.MeshStandardMaterial({color:0x125a9c,metalness:.38,roughness:.4});
-const tukAccent=new THREE.MeshStandardMaterial({color:0xc92e3c,metalness:.25,roughness:.47});
+// Traffic tuk-tuk enamel now uses the existing taxi's 128px weathered PBR maps.
+// Shared color/roughness textures reveal paint grain, rain streaks and road dust
+// on the pressed-metal shell and trim without another GPU texture or draw call.
+const tukPaint=new THREE.MeshPhysicalMaterial({color:0x125a9c,metalness:.38,roughness:.35,clearcoat:.58,clearcoatRoughness:.26,map:taxiPaintColorMap,roughnessMap:taxiPaintRoughnessMap});
+const tukAccent=new THREE.MeshPhysicalMaterial({color:0xc92e3c,metalness:.29,roughness:.4,clearcoat:.47,clearcoatRoughness:.31,map:taxiPaintColorMap,roughnessMap:taxiPaintRoughnessMap});
 // Weathered woven canopy for traffic tuk-tuks: one shared 256px sRGB texture.
 // UV-mapped to the curved roof, so stitched seams and rain-worn cloth are visible
 // without extra meshes, dynamic lights or per-frame canvas work.
