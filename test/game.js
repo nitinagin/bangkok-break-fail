@@ -1603,6 +1603,47 @@ tukRoofTexture.colorSpace=THREE.SRGBColorSpace;
 tukRoofTexture.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());
 tukCanvas.map=tukRoofTexture;tukCanvas.needsUpdate=true;
 const tukTrim=new THREE.MeshStandardMaterial({color:0xb6b9ad,metalness:.74,roughness:.29});
+// Shared, baked windscreen for traffic tuk-tuks: subtle street-light reflections,
+// rubber gasket and a parked wiper. One 256x128 map, no per-frame work or meshes.
+const tukWindscreenCanvas=document.createElement('canvas');
+tukWindscreenCanvas.width=256;tukWindscreenCanvas.height=128;
+const tukWindscreenCtx=tukWindscreenCanvas.getContext('2d');
+const tukGlassGradient=tukWindscreenCtx.createLinearGradient(0,0,256,128);
+tukGlassGradient.addColorStop(0,'#476b78');
+tukGlassGradient.addColorStop(.46,'#284451');
+tukGlassGradient.addColorStop(1,'#152e3b');
+tukWindscreenCtx.fillStyle=tukGlassGradient;
+tukWindscreenCtx.fillRect(0,0,256,128);
+// Narrow reflected building edges and overhead signs; baked, not dynamic lights.
+tukWindscreenCtx.fillStyle='rgba(203,224,223,.17)';
+tukWindscreenCtx.beginPath();
+tukWindscreenCtx.moveTo(39,3);tukWindscreenCtx.lineTo(67,3);
+tukWindscreenCtx.lineTo(105,125);tukWindscreenCtx.lineTo(88,125);
+tukWindscreenCtx.closePath();tukWindscreenCtx.fill();
+tukWindscreenCtx.fillStyle='rgba(249,214,151,.10)';
+tukWindscreenCtx.fillRect(187,7,5,109);
+tukWindscreenCtx.fillRect(200,8,2,108);
+// Baked weathered rubber seal and bottom-mounted wiper, avoiding extra draw calls.
+tukWindscreenCtx.strokeStyle='rgba(12,17,21,.85)';
+tukWindscreenCtx.lineWidth=9;tukWindscreenCtx.strokeRect(4.5,4.5,247,119);
+tukWindscreenCtx.strokeStyle='rgba(140,156,155,.48)';
+tukWindscreenCtx.lineWidth=1.5;tukWindscreenCtx.strokeRect(10,10,236,108);
+tukWindscreenCtx.beginPath();
+tukWindscreenCtx.moveTo(122,117);tukWindscreenCtx.lineTo(45,79);
+tukWindscreenCtx.strokeStyle='rgba(12,19,22,.88)';
+tukWindscreenCtx.lineWidth=3;tukWindscreenCtx.stroke();
+tukWindscreenCtx.beginPath();
+tukWindscreenCtx.moveTo(45,79);tukWindscreenCtx.lineTo(121,116);
+tukWindscreenCtx.strokeStyle='rgba(192,198,190,.43)';
+tukWindscreenCtx.lineWidth=.8;tukWindscreenCtx.stroke();
+const tukWindscreenTexture=new THREE.CanvasTexture(tukWindscreenCanvas);
+tukWindscreenTexture.colorSpace=THREE.SRGBColorSpace;
+tukWindscreenTexture.anisotropy=2;
+const tukWindscreen=new THREE.MeshPhysicalMaterial({
+ map:tukWindscreenTexture,color:0xb0c3c9,metalness:0,roughness:.2,
+ clearcoat:.55,clearcoatRoughness:.16,transparent:true,opacity:.83,
+ depthWrite:false,side:THREE.DoubleSide
+});
 const tukWindow=new THREE.MeshStandardMaterial({color:0x426c80,metalness:.18,roughness:.21,transparent:true,opacity:.7,side:THREE.DoubleSide});
 const tukSeat=new THREE.MeshStandardMaterial({color:0x673c35,metalness:0,roughness:.89});
 const tukLamp=new THREE.MeshStandardMaterial({color:0xffe4b0,emissive:0x9a6c2b,emissiveIntensity:.4,roughness:.3});
@@ -1676,8 +1717,18 @@ function makeTukTuk(){
  });
  engineMesh.instanceMatrix.needsUpdate=true;
  g.add(engineMesh);
- // Windscreen uses thin tinted PBR glazing rather than an opaque blue block.
- const glass=new THREE.Mesh(new THREE.PlaneGeometry(1.37,.67),tukWindow);
+ // Tapered, lightly reflective windscreen with a baked seal and parked wiper.
+ // Custom four-vertex pane follows the cab uprights without additional draw calls.
+ const windscreenGeometry=new THREE.BufferGeometry();
+ windscreenGeometry.setAttribute('position',new THREE.Float32BufferAttribute([
+  -.71,-.335,0, .71,-.335,0, -.65,.335,0, .65,.335,0
+ ],3));
+ windscreenGeometry.setAttribute('uv',new THREE.Float32BufferAttribute([
+  0,0, 1,0, 0,1, 1,1
+ ],2));
+ windscreenGeometry.setIndex([0,1,2,1,3,2]);
+ windscreenGeometry.computeVertexNormals();
+ const glass=new THREE.Mesh(windscreenGeometry,tukWindscreen);
  glass.position.set(0,1.88,.79);glass.rotation.x=-.15;g.add(glass);
  rod(g,[-.7,1.53,.85],[-.7,2.23,.72],.027,tukTrim);
  rod(g,[.7,1.53,.85],[.7,2.23,.72],.027,tukTrim);
