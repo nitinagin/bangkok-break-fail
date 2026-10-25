@@ -210,6 +210,46 @@ function facadeMaterial(seed){
   a.fillStyle='rgba(29,27,26,.065)';
   a.fillRect(x,y,1+(k%2),16+(k%7)*7);
  }
+ // Layer irregular mineral deposits, chipped plaster and fine hairline cracks into the
+ // existing eight facade albedo canvases. Deterministic, baked at startup: no new
+ // materials, textures, meshes, draw calls, lights or per-frame work.
+ for(let patch=0;patch<12;patch++){
+  const cx=(seed*41+patch*79+23)%256,cy=(seed*29+patch*97+51)%512;
+  const rx=10+(patch*7)%22,ry=7+(patch*11)%26;
+  a.beginPath();
+  for(let edge=0;edge<11;edge++){
+   const angle=edge*Math.PI*2/11;
+   const wobble=.72+((patch*13+edge*17+seed*7)%13)/25;
+   const px=cx+Math.cos(angle)*rx*wobble;
+   const py=cy+Math.sin(angle)*ry*wobble;
+   if(edge===0)a.moveTo(px,py);else a.lineTo(px,py);
+  }
+  a.closePath();
+  a.fillStyle=patch%3===0?'rgba(39,38,35,.17)':patch%3===1?'rgba(228,211,179,.19)':'rgba(100,83,70,.19)';
+  a.fill();
+  a.strokeStyle=patch%3===1?'rgba(244,225,193,.24)':'rgba(45,40,36,.18)';
+  a.lineWidth=1.1;a.stroke();
+ }
+ // Thin branching cracks are irregular and low contrast, not geometric block outlines.
+ for(let crack=0;crack<11;crack++){
+  let x=(seed*53+crack*67+15)%256,y=(seed*17+crack*91+34)%490;
+  a.beginPath();a.moveTo(x,y);
+  for(let step=0;step<5;step++){
+   x+=((crack*5+step*7+seed)%9)-4;
+   y+=4+((crack*3+step*11)%8);
+   a.lineTo(x,y);
+  }
+  a.strokeStyle='rgba(37,34,32,.24)';a.lineWidth=.8;a.stroke();
+ }
+ // Dark capillary stains trail down beneath the old shophouse window sills.
+ for(let floor=0;floor<4;floor++)for(let col=0;col<2;col++){
+  const x=37+col*115+((floor*11+seed*7)%41),y=26+floor*112+86;
+  const stain=a.createLinearGradient(x,y,x,y+33);
+  stain.addColorStop(0,'rgba(35,39,36,.24)');
+  stain.addColorStop(1,'rgba(35,39,36,0)');
+  a.fillStyle=stain;
+  a.fillRect(x,y,2+(seed+floor+col)%3,33);
+ }
  for(let floor=0;floor<4;floor++){
   const y=26+floor*112;
   a.fillStyle='rgba(32,25,22,.15)';a.fillRect(0,y+89,256,7);
