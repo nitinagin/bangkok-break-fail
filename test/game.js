@@ -1431,10 +1431,13 @@ function makeTaxi(){
   part(g,cube(.045,.045,1.48,taxiChrome,side*1.005,1.21,-.08));
   for(const z of [-.54,.47])part(g,cube(.045,.055,.2,taxiChrome,side*1.015,1.13,z));
   for(const z of [-1.08,1.1]){
-   const tyre=new THREE.Mesh(new THREE.CylinderGeometry(.37,.37,.2,12),M.wheel);
-   tyre.rotation.z=Math.PI/2;tyre.position.set(side*1.02,.43,z);g.add(tyre);
-   const hub=new THREE.Mesh(new THREE.CylinderGeometry(.19,.19,.208,12),taxiChrome);
-   hub.rotation.z=Math.PI/2;hub.position.copy(tyre.position);g.add(hub);
+   // Shared Bangkok tyre atlas: tread, sidewall, steel rim and lug nuts.
+   // One PBR draw call per wheel replaces the separate toy-like tyre and hub.
+   const tyre=new THREE.Mesh(busWheelGeometry,busWheelMaterial);
+   tyre.rotation.z=Math.PI/2;
+   tyre.scale.set(.37/.48,.2/.21,.37/.48);
+   tyre.position.set(side*1.02,.43,z);
+   g.add(tyre);
   }
   part(g,cube(.2,.12,.29,taxiPaintYellow,side*1.04,1.42,.68));
   part(g,cube(.13,.065,.14,taxiTintedGlass,side*1.15,1.44,.71));
