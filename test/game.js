@@ -1616,6 +1616,64 @@ busGlassTexture.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());
 const busWindshield=new THREE.MeshPhysicalMaterial({map:busGlassTexture,metalness:0,roughness:.28,clearcoat:.55,clearcoatRoughness:.19,side:THREE.DoubleSide});
 const busFrontGlassPane=new THREE.PlaneGeometry(2.35,.88);
 const busRearGlassPane=new THREE.PlaneGeometry(2.32,.78);
+
+// Rear bus glazing faces the player most often; it should not reuse the
+// FRONT windscreen's painted wipers. A small shared baked rear-window atlas
+// adds heater wires, seat shadows, gasket and Bangkok night reflections.
+// One 256x128 texture is shared by both bus liveries, with zero new meshes,
+// draw calls, dynamic lights or per-frame canvas updates.
+const busRearGlassCanvas=document.createElement('canvas');
+busRearGlassCanvas.width=256;busRearGlassCanvas.height=128;
+const busRearGlassCtx=busRearGlassCanvas.getContext('2d');
+const rearTint=busRearGlassCtx.createLinearGradient(0,0,0,128);
+rearTint.addColorStop(0,'#536c79');rearTint.addColorStop(.45,'#273f4e');
+rearTint.addColorStop(1,'#101e2a');
+busRearGlassCtx.fillStyle='#11191f';busRearGlassCtx.fillRect(0,0,256,128);
+busRearGlassCtx.fillStyle=rearTint;busRearGlassCtx.fillRect(7,7,242,114);
+// Dim seat backs/headrests behind tinted glass, visible at driving distance.
+busRearGlassCtx.fillStyle='rgba(9,17,24,.40)';
+for(const cx of [70,185]){
+ busRearGlassCtx.beginPath();busRearGlassCtx.ellipse(cx,79,16,19,0,0,Math.PI*2);busRearGlassCtx.fill();
+ busRearGlassCtx.fillRect(cx-24,92,48,30);
+}
+// Slanted sky and street-neon reflections, baked rather than screen-space.
+busRearGlassCtx.fillStyle='rgba(209,231,232,.12)';
+busRearGlassCtx.beginPath();busRearGlassCtx.moveTo(29,9);
+busRearGlassCtx.lineTo(80,9);busRearGlassCtx.lineTo(45,119);
+busRearGlassCtx.lineTo(12,119);busRearGlassCtx.closePath();busRearGlassCtx.fill();
+busRearGlassCtx.fillStyle='rgba(246,118,82,.09)';
+busRearGlassCtx.beginPath();busRearGlassCtx.moveTo(199,8);
+busRearGlassCtx.lineTo(219,8);busRearGlassCtx.lineTo(181,120);
+busRearGlassCtx.lineTo(168,120);busRearGlassCtx.closePath();busRearGlassCtx.fill();
+// Thin rear defogger wires and two vertical feed strips, not front wipers.
+busRearGlassCtx.strokeStyle='rgba(180,145,106,.31)';
+busRearGlassCtx.lineWidth=.8;
+for(let y=27;y<=110;y+=12){
+ busRearGlassCtx.beginPath();busRearGlassCtx.moveTo(10,y);
+ busRearGlassCtx.lineTo(246,y);busRearGlassCtx.stroke();
+}
+busRearGlassCtx.strokeStyle='rgba(191,168,137,.33)';
+busRearGlassCtx.lineWidth=1.6;
+for(const x of [12,244]){
+ busRearGlassCtx.beginPath();busRearGlassCtx.moveTo(x,22);
+ busRearGlassCtx.lineTo(x,112);busRearGlassCtx.stroke();
+}
+// Rubber seal and subtle dirt along the lower edge.
+busRearGlassCtx.strokeStyle='#131b20';busRearGlassCtx.lineWidth=7;
+busRearGlassCtx.strokeRect(3.5,3.5,249,121);
+busRearGlassCtx.fillStyle='rgba(154,145,128,.12)';
+for(let i=0;i<48;i++){
+ const x=12+(i*71)%233,y=108+(i*13)%12;
+ busRearGlassCtx.fillRect(x,y,1+(i%2),1);
+}
+const busRearGlassTexture=new THREE.CanvasTexture(busRearGlassCanvas);
+busRearGlassTexture.colorSpace=THREE.SRGBColorSpace;
+busRearGlassTexture.anisotropy=Math.min(2,renderer.capabilities.getMaxAnisotropy());
+const busRearWindowMaterial=new THREE.MeshPhysicalMaterial({
+ map:busRearGlassTexture,metalness:0,roughness:.34,
+ clearcoat:.45,clearcoatRoughness:.25,side:THREE.DoubleSide
+});
+
 // A single shared PBR side-glazing atlas per bus livery replaces twenty
 // individual window/frame meshes per vehicle. Painted frames, passenger
 // silhouettes, grime and reflections are baked once at startup.
@@ -1833,7 +1891,7 @@ function makeBus(variant='red'){
   part(g,cube(.25,.36,.095,busTailLamp,side*1.18,1.17,-2.74));
  }
  // The rear is visible while approaching from behind in the POV game.
- const rearGlass=new THREE.Mesh(busRearGlassPane,busWindshield);rearGlass.rotation.y=Math.PI;rearGlass.position.set(0,2.28,-2.748);part(g,rearGlass);
+ const rearGlass=new THREE.Mesh(busRearGlassPane,busRearWindowMaterial);rearGlass.rotation.y=Math.PI;rearGlass.position.set(0,2.28,-2.748);part(g,rearGlass);
  part(g,cube(2.43,.48,.12,trim,0,3.01,-2.73));
  const rearRoute=new THREE.Mesh(busRoutePane,blue?busRouteSigns.blue:busRouteSigns.red);
  rearRoute.rotation.y=Math.PI;rearRoute.position.set(0,3.05,-2.805);part(g,rearRoute);
