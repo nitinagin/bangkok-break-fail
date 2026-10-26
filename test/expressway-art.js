@@ -197,18 +197,39 @@ export function createExpresswayArt(THREE){
   acousticPosts.instanceMatrix.needsUpdate=true;
  }
  placeAcousticScreens();group.add(acousticPanels,acousticPosts);
- // Two reflective bilingual destination panels, one per lane.
- const signCanvas=document.createElement('canvas');signCanvas.width=512;signCanvas.height=160;
- const sc=signCanvas.getContext('2d');sc.fillStyle='#15513e';sc.fillRect(0,0,512,160);
- sc.strokeStyle='#e3eee5';sc.lineWidth=6;sc.strokeRect(7,7,498,146);
- sc.lineWidth=3;sc.beginPath();sc.moveTo(256,12);sc.lineTo(256,148);sc.stroke();
- sc.fillStyle='#f7faf7';sc.textAlign='center';
- for(const [x,thai,english] of [[132,'บางนา','BANG NA'],[380,'ดินแดง','DIN DAENG']]){
-  sc.font='bold 30px sans-serif';sc.fillText(thai,x,48);
-  sc.font='bold 22px sans-serif';sc.fillText(english,x,80);
-  sc.font='bold 42px sans-serif';sc.fillText('↑',x,135);
+ // Realistic retroreflective Thai-English lane sign. Baked once; no extra draw calls.
+ // 1024x320 atlas matches the existing 6.8x2.13m overhead panel aspect ratio.
+ const signCanvas=document.createElement('canvas');signCanvas.width=1024;signCanvas.height=320;
+ const sc=signCanvas.getContext('2d');
+ const sheeting=sc.createLinearGradient(0,0,1024,320);
+ sheeting.addColorStop(0,'#155d46');sheeting.addColorStop(.5,'#0b4d39');sheeting.addColorStop(1,'#073c30');
+ sc.fillStyle=sheeting;sc.fillRect(0,0,1024,320);
+ // Fixed grain and rain streaks simulate weathered retroreflective film.
+ sc.fillStyle='rgba(239,248,231,.055)';
+ for(let i=0;i<220;i++)sc.fillRect(16+(i*137)%990,18+(i*71)%282,2,1);
+ sc.fillStyle='rgba(9,32,26,.15)';
+ for(let i=0;i<26;i++)sc.fillRect(24+(i*103)%970,29+(i*89)%260,1,16+(i%4)*9);
+ sc.strokeStyle='#e6f0e4';sc.lineWidth=8;sc.strokeRect(13,13,998,294);
+ sc.strokeStyle='rgba(237,247,233,.55)';sc.lineWidth=2;sc.strokeRect(25,25,974,270);
+ sc.beginPath();sc.moveTo(512,29);sc.lineTo(512,293);sc.stroke();
+ sc.textAlign='center';sc.textBaseline='middle';sc.fillStyle='#f7faf4';
+ for(const [x,thai,english] of [[256,'บางนา','BANG NA'],[768,'ดินแดง','DIN DAENG']]){
+  sc.font='bold 66px "Noto Sans Thai", Tahoma, sans-serif';
+  sc.fillText(thai,x,91,435);
+  sc.font='bold 45px Arial, sans-serif';
+  sc.fillText(english,x,163,450);
+  // Vector arrows do not depend on font glyph coverage in iPhone Safari.
+  sc.strokeStyle='#f7faf4';sc.lineWidth=14;sc.lineCap='square';sc.lineJoin='miter';
+  sc.beginPath();sc.moveTo(x,277);sc.lineTo(x,218);
+  sc.moveTo(x-28,247);sc.lineTo(x,215);sc.lineTo(x+28,247);sc.stroke();
  }
- const signTexture=new THREE.CanvasTexture(signCanvas);signTexture.colorSpace=THREE.SRGBColorSpace;
+ // Small baked metal rivets avoid separate geometry and overdraw.
+ sc.fillStyle='#a6b9ad';
+ for(const x of [39,497,527,985])for(const y of [40,280]){
+  sc.beginPath();sc.arc(x,y,3.2,0,Math.PI*2);sc.fill();
+ }
+ const signTexture=new THREE.CanvasTexture(signCanvas);
+ signTexture.colorSpace=THREE.SRGBColorSpace;signTexture.anisotropy=2;
  const gantry=new THREE.Group();
  for(const side of [-1,1])gantry.add(box(.19,7,.19,steel,side*4.7,3.5,0));
  gantry.add(box(9.5,.18,.2,steel,0,7,0));
