@@ -108,6 +108,45 @@ export function createExpresswayArt(THREE){
   lampHeads.instanceMatrix.needsUpdate=true;
  }
  placeLamps();group.add(lampPoles,lampArms,lampHeads);
+ // Three elevated Bangkok interchange crossovers create real overhead depth
+ // after 12,000 points. All concrete stays >=7.7m above the road and piers
+ // stand outside the 11m carriageway, preserving the full dodge corridor.
+ // Six piers, three decks and six safety parapets cost only 3 draw calls.
+ const flyoverCanvas=document.createElement('canvas');flyoverCanvas.width=flyoverCanvas.height=128;
+ const fc=flyoverCanvas.getContext('2d');fc.fillStyle='#a4a8a7';fc.fillRect(0,0,128,128);
+ for(let i=0;i<240;i++){
+  const x=(i*71+17)%128,y=(i*47+31)%128;
+  fc.fillStyle=i%5===0?'rgba(48,55,58,.20)':'rgba(230,229,218,.13)';
+  fc.fillRect(x,y,1+(i%4),3+(i%13));
+ }
+ // Long rain streaks and formwork seams read as weathered reinforced concrete.
+ fc.fillStyle='rgba(54,61,65,.18)';
+ for(let i=0;i<7;i++)fc.fillRect(0,17+i*19,128,1);
+ const flyoverTexture=new THREE.CanvasTexture(flyoverCanvas);
+ flyoverTexture.colorSpace=THREE.SRGBColorSpace;
+ const flyoverConcrete=new THREE.MeshStandardMaterial({color:0xd1d2cd,map:flyoverTexture,roughness:.93,metalness:0});
+ const flyoverZ=[-38,-98,-158];
+ const flyoverPiers=new THREE.InstancedMesh(new THREE.BoxGeometry(.88,7.8,1.08),flyoverConcrete,6);
+ const flyoverDecks=new THREE.InstancedMesh(new THREE.BoxGeometry(15.9,.75,2.6),flyoverConcrete,3);
+ const flyoverParapets=new THREE.InstancedMesh(new THREE.BoxGeometry(15.9,.62,.18),flyoverConcrete,6);
+ const flyoverMatrix=new THREE.Matrix4();
+ function placeFlyovers(){
+  for(let i=0;i<flyoverZ.length;i++){
+   const z=flyoverZ[i];
+   flyoverMatrix.makeTranslation(0,8.15,z);
+   flyoverDecks.setMatrixAt(i,flyoverMatrix);
+   for(let j=0;j<2;j++){
+    flyoverMatrix.makeTranslation(j?7.45:-7.45,3.9,z);
+    flyoverPiers.setMatrixAt(i*2+j,flyoverMatrix);
+    flyoverMatrix.makeTranslation(0,8.88,z+(j?1.19:-1.19));
+    flyoverParapets.setMatrixAt(i*2+j,flyoverMatrix);
+   }
+  }
+  flyoverPiers.instanceMatrix.needsUpdate=true;
+  flyoverDecks.instanceMatrix.needsUpdate=true;
+  flyoverParapets.instanceMatrix.needsUpdate=true;
+ }
+ placeFlyovers();group.add(flyoverPiers,flyoverDecks,flyoverParapets);
  // Two reflective bilingual destination panels, one per lane.
  const signCanvas=document.createElement('canvas');signCanvas.width=512;signCanvas.height=160;
  const sc=signCanvas.getContext('2d');sc.fillStyle='#15513e';sc.fillRect(0,0,512,160);
@@ -153,11 +192,12 @@ export function createExpresswayArt(THREE){
  return {group,update(dt,speed){
   const advance=dt*Math.min(95,30+speed*.12);
   for(const lamp of lampPositions){lamp.z+=advance;if(lamp.z>18)lamp.z-=168;}placeLamps();
+  for(let i=0;i<flyoverZ.length;i++){flyoverZ[i]+=advance;if(flyoverZ[i]>26)flyoverZ[i]-=180;}placeFlyovers();
   gantry.position.z+=advance;if(gantry.position.z>24)gantry.position.z-=195;
   for(let i=0;i<barrierCount;i++){barrierZ[i]+=advance;if(barrierZ[i]>20)barrierZ[i]-=22*barrierLength*1.15;}placeBarriers();
  },dispose(){
   group.traverse(obj=>{if(obj.geometry)obj.geometry.dispose();});
-  for(const material of [towerMat,mastMaterial,steel,warm,sign.material,concrete,reflective])material.dispose();
-  windowTexture.dispose();signTexture.dispose();
+  for(const material of [towerMat,mastMaterial,steel,warm,sign.material,concrete,reflective,flyoverConcrete])material.dispose();
+  windowTexture.dispose();signTexture.dispose();flyoverTexture.dispose();
  }};
 }
