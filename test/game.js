@@ -3033,22 +3033,36 @@ function makeExpresswayMotorcycle(){
  const visor=new THREE.MeshStandardMaterial({color:0x172d3b,metalness:.38,roughness:.19});
  const headlamp=new THREE.MeshStandardMaterial({color:0xffebc7,emissive:0xffcc75,emissiveIntensity:.55,roughness:.24});
  const tailLamp=new THREE.MeshStandardMaterial({color:0xd3272b,emissive:0xb50a0c,emissiveIntensity:.7});
- const tyreGeometry=new THREE.CylinderGeometry(.43,.43,.17,16);
- tyreGeometry.rotateZ(Math.PI/2);
- const hubGeometry=new THREE.CylinderGeometry(.26,.26,.025,12);
+ // Open-profile tyres expose the fork and brake assembly instead of solid toy discs.
+ // Two annular tyres, four small hubs and twenty cast spokes share three draw calls.
+ // All matrices are baked once into the cached motorcycle template, not per frame.
+ const tyreGeometry=new THREE.TorusGeometry(.325,.105,8,20);
+ tyreGeometry.rotateY(Math.PI/2);
+ const hubGeometry=new THREE.CylinderGeometry(.105,.105,.035,12);
  hubGeometry.rotateZ(Math.PI/2);
  const tyres=new THREE.InstancedMesh(tyreGeometry,tyre,2);
  const hubs=new THREE.InstancedMesh(hubGeometry,alloy,4);
+ const spokes=new THREE.InstancedMesh(new THREE.BoxGeometry(.043,.038,.31),alloy,20);
  const matrix=new THREE.Matrix4();
  for(let i=0;i<2;i++){
   const z=i===0?-1.02:1.02;
   matrix.makeTranslation(0,.46,z);tyres.setMatrixAt(i,matrix);
   for(let side=0;side<2;side++){
-   matrix.makeTranslation(side===0?-.105:.105,.46,z);
+   const faceX=side===0?-.107:.107;
+   matrix.makeTranslation(faceX,.46,z);
    hubs.setMatrixAt(i*2+side,matrix);
+   for(let spoke=0;spoke<5;spoke++){
+    const angle=spoke*Math.PI*2/5;
+    matrix.makeRotationX(angle-Math.PI/2);
+    matrix.setPosition(faceX,.46+Math.cos(angle)*.205,z+Math.sin(angle)*.205);
+    spokes.setMatrixAt(i*10+side*5+spoke,matrix);
+   }
   }
  }
- g.add(tyres,hubs);
+ tyres.instanceMatrix.needsUpdate=true;
+ hubs.instanceMatrix.needsUpdate=true;
+ spokes.instanceMatrix.needsUpdate=true;
+ g.add(tyres,hubs,spokes);
  function mesh(geometry,material,x,y,z,sx=1,sy=1,sz=1){
   const m=new THREE.Mesh(geometry,material);
   m.position.set(x,y,z);m.scale.set(sx,sy,sz);g.add(m);return m;
