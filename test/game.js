@@ -1818,6 +1818,53 @@ const busRearLampMaterial=new THREE.MeshStandardMaterial({
 });
 const busRearLampPane=new THREE.PlaneGeometry(2.85,.56);
 
+// Shared Bangkok bus front grille: stamped mesh, brushed-metal slats,
+// rubber surround and fasteners baked into one 256x128 PBR atlas at startup.
+// The grille fits between existing headlamps; no collision or light changes.
+const busFrontFasciaCanvas=document.createElement('canvas');
+busFrontFasciaCanvas.width=256;busFrontFasciaCanvas.height=128;
+const fasciaCtx=busFrontFasciaCanvas.getContext('2d');
+fasciaCtx.fillStyle='#141a20';fasciaCtx.fillRect(0,0,256,128);
+const fasciaBorder=fasciaCtx.createLinearGradient(0,0,0,128);
+fasciaBorder.addColorStop(0,'#a9b3b3');fasciaBorder.addColorStop(.45,'#3c4a50');
+fasciaBorder.addColorStop(1,'#758184');
+fasciaCtx.fillStyle=fasciaBorder;fasciaCtx.fillRect(3,4,250,120);
+fasciaCtx.fillStyle='#141d23';fasciaCtx.fillRect(11,12,234,104);
+fasciaCtx.fillStyle='#25323a';fasciaCtx.fillRect(17,19,222,91);
+// Fine diamond grille mesh; slats catch overhead highlights without extra geometry.
+fasciaCtx.strokeStyle='rgba(6,12,17,.7)';fasciaCtx.lineWidth=1.2;
+for(let x=-110;x<365;x+=10){
+ fasciaCtx.beginPath();fasciaCtx.moveTo(x,20);fasciaCtx.lineTo(x+104,109);fasciaCtx.stroke();
+ fasciaCtx.beginPath();fasciaCtx.moveTo(x,109);fasciaCtx.lineTo(x+104,20);fasciaCtx.stroke();
+}
+for(const y of [28,52,76,100]){
+ const metal=fasciaCtx.createLinearGradient(0,y,0,y+10);
+ metal.addColorStop(0,'#aeb8b8');metal.addColorStop(.25,'#65727a');
+ metal.addColorStop(.8,'#28343c');metal.addColorStop(1,'#111a21');
+ fasciaCtx.fillStyle=metal;fasciaCtx.fillRect(17,y,222,9);
+ fasciaCtx.fillStyle='rgba(238,240,230,.25)';fasciaCtx.fillRect(20,y,216,1);
+}
+// Recessed badge and oxidized fasteners are printed, not extra meshes.
+fasciaCtx.fillStyle='#b6bfbb';fasciaCtx.beginPath();
+fasciaCtx.arc(128,65,17,0,Math.PI*2);fasciaCtx.fill();
+fasciaCtx.fillStyle='#283b44';fasciaCtx.beginPath();
+fasciaCtx.arc(128,65,13,0,Math.PI*2);fasciaCtx.fill();
+fasciaCtx.fillStyle='#d4d6ce';fasciaCtx.fillRect(120,62,16,3);
+for(const x of [9,247])for(const y of [10,118]){
+ fasciaCtx.fillStyle='#18262e';fasciaCtx.beginPath();
+ fasciaCtx.arc(x,y,2.3,0,Math.PI*2);fasciaCtx.fill();
+}
+for(let i=0;i<110;i++){
+ fasciaCtx.fillStyle=i%3?'rgba(8,14,19,.14)':'rgba(224,207,177,.1)';
+ fasciaCtx.fillRect(16+(i*71)%223,20+(i*37)%89,1+(i%2),1);
+}
+const busFrontFasciaTexture=new THREE.CanvasTexture(busFrontFasciaCanvas);
+busFrontFasciaTexture.colorSpace=THREE.SRGBColorSpace;
+busFrontFasciaTexture.anisotropy=Math.min(2,renderer.capabilities.getMaxAnisotropy());
+const busFrontFasciaMaterial=new THREE.MeshStandardMaterial({
+ map:busFrontFasciaTexture,metalness:.3,roughness:.58,side:THREE.DoubleSide
+});
+const busFrontFasciaPane=new THREE.PlaneGeometry(1.75,.56);
 // Shared Bangkok bus wheel atlas: sidewall, steel rim, lug nuts and tyre tread
 // on a single PBR mesh per wheel (no extra draw calls or per-bus geometry).
 const busWheelCanvas=document.createElement('canvas');
@@ -1939,8 +1986,9 @@ function makeBus(variant='red'){
  part(g,cube(.86,.39,.15,busCream,0,3.06,2.82));
  const frontRoute=new THREE.Mesh(busRoutePane,blue?busRouteSigns.blue:busRouteSigns.red);
  frontRoute.position.set(0,3.06,2.916);part(g,frontRoute);
- part(g,cube(1.62,.36,.10,busDark,0,1.12,2.74));
- for(let j=0;j<3;j++)part(g,cube(1.45,.035,.12,trim,0,1.02+j*.10,2.82));
+ // A single textured PBR grille replaces four rectangular meshes.
+ const frontFascia=new THREE.Mesh(busFrontFasciaPane,busFrontFasciaMaterial);
+ frontFascia.position.set(0,1.12,2.854);part(g,frontFascia);
  part(g,cube(2.64,.22,.18,busDark,0,.55,2.79));
  for(const side of [-1,1]){
   part(g,ball(.18,busLamp,side*.97,.98,2.81));
