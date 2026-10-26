@@ -1455,9 +1455,26 @@ for(const group of busWheelGeometry.groups){
  }
 }
 busWheelUV.needsUpdate=true;
+// Shared rounded pressed-metal bus shell replaces the toy-like rectangular body.
+// Keep the original 2.86 x 2.52 x 5.3 m collision silhouette and one body mesh.
+// Eight short corner arcs soften both Bangkok bus liveries; geometry is built once.
+const busBodyOutline=new THREE.Shape();
+busBodyOutline.moveTo(-1.27,-1.26);
+busBodyOutline.lineTo(1.27,-1.26);
+busBodyOutline.quadraticCurveTo(1.43,-1.26,1.43,-1.10);
+busBodyOutline.lineTo(1.43,1.10);
+busBodyOutline.quadraticCurveTo(1.43,1.26,1.27,1.26);
+busBodyOutline.lineTo(-1.27,1.26);
+busBodyOutline.quadraticCurveTo(-1.43,1.26,-1.43,1.10);
+busBodyOutline.lineTo(-1.43,-1.10);
+busBodyOutline.quadraticCurveTo(-1.43,-1.26,-1.27,-1.26);
+const busBodyGeometry=new THREE.ExtrudeGeometry(busBodyOutline,{
+ depth:5.3,steps:1,bevelEnabled:false,curveSegments:4
+});
 function makeBus(variant='red'){
  const g=new THREE.Group(),blue=variant==='blue',main=blue?busCream:busRed,trim=blue?busBlue:busCream,accent=blue?busYellow:busGreen;
- part(g,cube(2.86,2.52,5.3,main,0,1.67,0));
+ const body=new THREE.Mesh(busBodyGeometry,main);
+ body.position.set(0,1.67,-2.65);part(g,body);
  part(g,cube(2.96,.31,5.38,blue?busBlue:busRed,0,3.03,0));
  part(g,cube(2.89,.23,5.34,accent,0,1.31,0));
  part(g,cube(2.9,.27,5.35,trim,0,.71,0));
