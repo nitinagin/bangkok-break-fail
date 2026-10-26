@@ -1780,6 +1780,44 @@ function makeBusRearPanelMaterial(blue){
 }
 const busRearPanels={red:makeBusRearPanelMaterial(false),blue:makeBusRearPanelMaterial(true)};
 const busRearPanelGeometry=new THREE.PlaneGeometry(2.25,1.10);
+// Baked Bangkok bus rear lamp assemblies: red stop lamps, amber turn signals,
+// clear reverse lenses, stamped chrome rims and fine lens ribbing.
+// Both liveries share one 512x128 atlas; no lights or per-frame allocations.
+const busRearLampCanvas=document.createElement('canvas');
+busRearLampCanvas.width=512;busRearLampCanvas.height=128;
+const busRearLampCtx=busRearLampCanvas.getContext('2d');
+for(const cx of [43,469]){
+ const ctx=busRearLampCtx;
+ ctx.fillStyle='rgba(14,19,23,.96)';ctx.fillRect(cx-25,10,50,108);
+ ctx.fillStyle='#626c70';ctx.fillRect(cx-21,13,42,102);
+ ctx.fillStyle='#1c2329';ctx.fillRect(cx-18,16,36,96);
+ for(const lens of [
+  {y:19,h:49,top:'#f04c48',bottom:'#760e16'},
+  {y:70,h:20,top:'#f4c05e',bottom:'#a95615'},
+  {y:92,h:17,top:'#c6e3e6',bottom:'#647e85'}
+ ]){
+  const grad=ctx.createLinearGradient(0,lens.y,0,lens.y+lens.h);
+  grad.addColorStop(0,lens.top);grad.addColorStop(1,lens.bottom);
+  ctx.fillStyle=grad;ctx.fillRect(cx-15,lens.y,30,lens.h);
+  ctx.fillStyle='rgba(255,255,255,.28)';ctx.fillRect(cx-12,lens.y+3,3,lens.h-6);
+  ctx.strokeStyle='rgba(30,28,28,.35)';ctx.lineWidth=1;
+  for(let y=lens.y+6;y<lens.y+lens.h-2;y+=7){
+   ctx.beginPath();ctx.moveTo(cx-13,y);ctx.lineTo(cx+13,y);ctx.stroke();
+  }
+ }
+ ctx.fillStyle='rgba(228,230,222,.7)';
+ ctx.fillRect(cx-23,20,2,3);ctx.fillRect(cx+21,106,2,3);
+}
+const busRearLampAtlas=new THREE.CanvasTexture(busRearLampCanvas);
+busRearLampAtlas.colorSpace=THREE.SRGBColorSpace;
+busRearLampAtlas.anisotropy=Math.min(2,renderer.capabilities.getMaxAnisotropy());
+const busRearLampMaterial=new THREE.MeshStandardMaterial({
+ map:busRearLampAtlas,transparent:true,alphaTest:.15,depthWrite:false,
+ metalness:.12,roughness:.43,emissive:0x38100b,emissiveIntensity:.18,
+ side:THREE.DoubleSide
+});
+const busRearLampPane=new THREE.PlaneGeometry(2.85,.56);
+
 // Shared Bangkok bus wheel atlas: sidewall, steel rim, lug nuts and tyre tread
 // on a single PBR mesh per wheel (no extra draw calls or per-bus geometry).
 const busWheelCanvas=document.createElement('canvas');
@@ -1907,7 +1945,7 @@ function makeBus(variant='red'){
  for(const side of [-1,1]){
   part(g,ball(.18,busLamp,side*.97,.98,2.81));
   part(g,cube(.24,.15,.11,M.gold,side*1.14,1.49,2.79));
-  part(g,cube(.25,.36,.095,busTailLamp,side*1.18,1.17,-2.74));
+  // Rear light clusters are baked into a single shared PBR atlas.
  }
  // The rear is visible while approaching from behind in the POV game.
  const rearGlass=new THREE.Mesh(busRearGlassPane,busRearWindowMaterial);rearGlass.rotation.y=Math.PI;rearGlass.position.set(0,2.28,-2.748);part(g,rearGlass);
@@ -1920,6 +1958,8 @@ function makeBus(variant='red'){
  // The rear panel is below the window, inside the tail lamps and above the bumper.
  const rearPanel=new THREE.Mesh(busRearPanelGeometry,blue?busRearPanels.blue:busRearPanels.red);
  rearPanel.rotation.y=Math.PI;rearPanel.position.set(0,1.31,-2.785);part(g,rearPanel);
+ const rearLamps=new THREE.Mesh(busRearLampPane,busRearLampMaterial);
+ rearLamps.rotation.y=Math.PI;rearLamps.position.set(0,1.17,-2.91);part(g,rearLamps);
  return g;
 }
 // Lightweight moving traffic: built from simple shared geometry, no new downloads.
