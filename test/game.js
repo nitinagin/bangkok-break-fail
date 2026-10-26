@@ -1816,6 +1816,11 @@ busWheelTexture.colorSpace=THREE.SRGBColorSpace;
 busWheelTexture.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());
 const busWheelMaterial=new THREE.MeshStandardMaterial({map:busWheelTexture,metalness:.22,roughness:.76});
 const busWheelGeometry=new THREE.CylinderGeometry(.48,.48,.21,18);
+// Shared pressed-rubber wheel-arch lips soften the bus side silhouette.
+// Four upper semicircles reuse one PBR material and geometry: one draw call per bus.
+// The road-facing body and collision bounds stay unchanged.
+const busWheelArchGeometry=new THREE.TorusGeometry(.57,.052,6,24,Math.PI);
+const busWheelArchMaterial=new THREE.MeshStandardMaterial({color:0x24282b,metalness:.14,roughness:.73});
 // CylinderGeometry has separate vertices for tread and both caps; pack UVs
 // into their respective atlas regions while keeping one material/draw call.
 const busWheelUV=busWheelGeometry.attributes.uv,busWheelIndex=busWheelGeometry.index;
@@ -1873,6 +1878,20 @@ function makeBus(variant='red'){
  busWheels.instanceMatrix.needsUpdate=true;
  busWheels.frustumCulled=false;
  g.add(busWheels);
+ // Wheel-arch lips sit just outside the body and follow the four tyre centres.
+ // Static instancing avoids separate draw calls and keeps the drivable lane intact.
+ const busWheelArches=new THREE.InstancedMesh(busWheelArchGeometry,busWheelArchMaterial,4);
+ const busArchPose=new THREE.Object3D();
+ let archIndex=0;
+ for(const side of [-1,1])for(const z of [-1.72,1.62]){
+  busArchPose.position.set(side*1.585,.49,z);
+  busArchPose.rotation.y=side*Math.PI/2;
+  busArchPose.updateMatrix();
+  busWheelArches.setMatrixAt(archIndex++,busArchPose.matrix);
+ }
+ busWheelArches.instanceMatrix.needsUpdate=true;
+ busWheelArches.frustumCulled=false;
+ g.add(busWheelArches);
  // Bangkok buses board from the left; the opposite side stays uninterrupted.
  const door=new THREE.Mesh(busDoorPane,busDoorMaterial);
  door.rotation.y=-Math.PI/2;door.position.set(-1.516,1.81,1.67);part(g,door);
