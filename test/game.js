@@ -1799,12 +1799,22 @@ function makeBus(variant='red'){
   const glazing=new THREE.Mesh(busSidePane,blue?busSideGlazing.blue:busSideGlazing.red);
   glazing.rotation.y=side*Math.PI/2;glazing.position.set(side*1.495,2.35,0);
   part(g,glazing);
-  for(const z of [-1.72,1.62]){
-   const wh=new THREE.Mesh(busWheelGeometry,busWheelMaterial);
-   wh.rotation.z=Math.PI/2;wh.position.set(side*1.46,.49,z);part(g,wh);
-  }
+  // All four wheels share one geometry, PBR atlas and instanced draw call.
+  // Matrices are static because traffic obstacles translate as whole groups.
   part(g,cube(.22,.31,.17,busDark,side*1.56,2.42,2.37));
  }
+ const busWheels=new THREE.InstancedMesh(busWheelGeometry,busWheelMaterial,4);
+ const busWheelPose=new THREE.Object3D();
+ busWheelPose.rotation.z=Math.PI/2;
+ let busWheelIndex=0;
+ for(const side of [-1,1])for(const z of [-1.72,1.62]){
+  busWheelPose.position.set(side*1.46,.49,z);
+  busWheelPose.updateMatrix();
+  busWheels.setMatrixAt(busWheelIndex++,busWheelPose.matrix);
+ }
+ busWheels.instanceMatrix.needsUpdate=true;
+ busWheels.frustumCulled=false;
+ g.add(busWheels);
  // Bangkok buses board from the left; the opposite side stays uninterrupted.
  const door=new THREE.Mesh(busDoorPane,busDoorMaterial);
  door.rotation.y=-Math.PI/2;door.position.set(-1.516,1.81,1.67);part(g,door);
@@ -1971,19 +1981,35 @@ function makeTaxi(){
   // Lower door beltline and door handles.
   part(g,cube(.045,.045,1.48,taxiChrome,side*1.005,1.21,-.08));
   for(const z of [-.54,.47])part(g,cube(.045,.055,.2,taxiChrome,side*1.015,1.13,z));
-  for(const z of [-1.08,1.1]){
-   // Shared Bangkok tyre atlas: tread, sidewall, steel rim and lug nuts.
-   // One PBR draw call per wheel replaces the separate toy-like tyre and hub.
-   const tyre=new THREE.Mesh(busWheelGeometry,busWheelMaterial);
-   tyre.rotation.z=Math.PI/2;
-   tyre.scale.set(.37/.48,.2/.21,.37/.48);
-   tyre.position.set(side*1.02,.43,z);
-   g.add(tyre);
-  }
+  // Tyres and wheel-arch lips are instanced below for fewer mobile draw calls.
   part(g,cube(.2,.12,.29,taxiPaintYellow,side*1.04,1.42,.68));
   part(g,cube(.13,.065,.14,taxiTintedGlass,side*1.15,1.44,.71));
   part(g,cube(.34,.16,.075,taxiLight,side*.71,.99,1.76));
   part(g,cube(.3,.16,.075,taxiBrakeLens,side*.73,.97,-1.75));
+ }
+ // Wheel-arch lips break up the sedan's slab-like lower silhouette.
+ // The four narrow rubber seams and four existing tyre atlas wheels each
+ // render in one draw call instead of eight individual meshes.
+ const taxiWheels=new THREE.InstancedMesh(busWheelGeometry,busWheelMaterial,4);
+ const taxiArchGeometry=new THREE.TorusGeometry(.43,.021,5,20,Math.PI);
+ const taxiArches=new THREE.InstancedMesh(taxiArchGeometry,taxiRubber,4);
+ const taxiWheelPose=new THREE.Object3D(),taxiArchPose=new THREE.Object3D();
+ taxiWheelPose.rotation.z=Math.PI/2;
+ taxiWheelPose.scale.set(.37/.48,.2/.21,.37/.48);
+ taxiArchPose.rotation.y=Math.PI/2;
+ let taxiWheelIndex=0;
+ for(const side of [-1,1])for(const z of [-1.08,1.1]){
+  taxiWheelPose.position.set(side*1.02,.43,z);
+  taxiWheelPose.updateMatrix();
+  taxiWheels.setMatrixAt(taxiWheelIndex,taxiWheelPose.matrix);
+  taxiArchPose.position.set(side*1.06,.43,z);
+  taxiArchPose.updateMatrix();
+  taxiArches.setMatrixAt(taxiWheelIndex++,taxiArchPose.matrix);
+ }
+ for(const wheels of [taxiWheels,taxiArches]){
+  wheels.instanceMatrix.needsUpdate=true;
+  wheels.frustumCulled=false;
+  g.add(wheels);
  }
  const frontGlass=new THREE.Mesh(new THREE.PlaneGeometry(1.42,.49),taxiReflectiveGlass);
  frontGlass.position.set(0,1.51,.83);frontGlass.rotation.x=-.48;g.add(frontGlass);
