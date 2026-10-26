@@ -147,6 +147,56 @@ export function createExpresswayArt(THREE){
   flyoverParapets.instanceMatrix.needsUpdate=true;
  }
  placeFlyovers();group.add(flyoverPiers,flyoverDecks,flyoverParapets);
+ // Roadside Bangkok expressway acoustic screens: weathered ribbed panels
+ // and galvanized uprights. Opaque PBR prevents mobile alpha overdraw.
+ // Screens stay outside lamp poles and the full drivable dodge corridor.
+ const acousticCanvas=document.createElement('canvas');
+ acousticCanvas.width=128;acousticCanvas.height=256;
+ const ac=acousticCanvas.getContext('2d');
+ const acousticBase=ac.createLinearGradient(0,0,128,0);
+ acousticBase.addColorStop(0,'#738d8a');
+ acousticBase.addColorStop(.5,'#b2c2b8');
+ acousticBase.addColorStop(1,'#6c8785');
+ ac.fillStyle=acousticBase;ac.fillRect(0,0,128,256);
+ for(let x=0;x<128;x+=16){
+  ac.fillStyle='rgba(24,46,47,.19)';ac.fillRect(x,0,3,256);
+  ac.fillStyle='rgba(236,241,230,.22)';ac.fillRect(x+4,0,2,256);
+ }
+ for(let y=0;y<256;y+=63){
+  ac.fillStyle='rgba(34,54,54,.31)';ac.fillRect(0,y,128,2);
+  ac.fillStyle='rgba(220,227,213,.21)';ac.fillRect(0,y+3,128,1);
+ }
+ for(let i=0;i<90;i++){
+  const x=(i*37+11)%128,y=(i*53+17)%256;
+  ac.fillStyle=i%3===0?'rgba(31,49,47,.17)':'rgba(218,225,211,.15)';
+  ac.fillRect(x,y,1+(i%3),9+(i%17));
+ }
+ const acousticTexture=new THREE.CanvasTexture(acousticCanvas);
+ acousticTexture.colorSpace=THREE.SRGBColorSpace;
+ const acousticMat=new THREE.MeshStandardMaterial({
+  map:acousticTexture,color:0xc4d0c9,metalness:.14,roughness:.73
+ });
+ const acousticCount=24,acousticZ=[];
+ const acousticPanels=new THREE.InstancedMesh(
+  new THREE.BoxGeometry(.12,2.6,5.72),acousticMat,acousticCount
+ );
+ const acousticPosts=new THREE.InstancedMesh(
+  new THREE.BoxGeometry(.17,4.05,.19),steel,acousticCount
+ );
+ const acousticDummy=new THREE.Object3D();
+ for(let i=0;i<acousticCount;i++)acousticZ.push(-8-Math.floor(i/2)*5.9);
+ function placeAcousticScreens(){
+  for(let i=0;i<acousticCount;i++){
+   const side=i%2===0?-1:1,z=acousticZ[i];
+   acousticDummy.position.set(side*6.55,2.45,z);
+   acousticDummy.updateMatrix();acousticPanels.setMatrixAt(i,acousticDummy.matrix);
+   acousticDummy.position.set(side*6.55,2.025,z+2.86);
+   acousticDummy.updateMatrix();acousticPosts.setMatrixAt(i,acousticDummy.matrix);
+  }
+  acousticPanels.instanceMatrix.needsUpdate=true;
+  acousticPosts.instanceMatrix.needsUpdate=true;
+ }
+ placeAcousticScreens();group.add(acousticPanels,acousticPosts);
  // Two reflective bilingual destination panels, one per lane.
  const signCanvas=document.createElement('canvas');signCanvas.width=512;signCanvas.height=160;
  const sc=signCanvas.getContext('2d');sc.fillStyle='#15513e';sc.fillRect(0,0,512,160);
@@ -193,11 +243,12 @@ export function createExpresswayArt(THREE){
   const advance=dt*Math.min(95,30+speed*.12);
   for(const lamp of lampPositions){lamp.z+=advance;if(lamp.z>18)lamp.z-=168;}placeLamps();
   for(let i=0;i<flyoverZ.length;i++){flyoverZ[i]+=advance;if(flyoverZ[i]>26)flyoverZ[i]-=180;}placeFlyovers();
+  for(let i=0;i<acousticCount;i++){acousticZ[i]+=advance;if(acousticZ[i]>24)acousticZ[i]-=12*5.9;}placeAcousticScreens();
   gantry.position.z+=advance;if(gantry.position.z>24)gantry.position.z-=195;
   for(let i=0;i<barrierCount;i++){barrierZ[i]+=advance;if(barrierZ[i]>20)barrierZ[i]-=22*barrierLength*1.15;}placeBarriers();
  },dispose(){
   group.traverse(obj=>{if(obj.geometry)obj.geometry.dispose();});
-  for(const material of [towerMat,mastMaterial,steel,warm,sign.material,concrete,reflective,flyoverConcrete])material.dispose();
-  windowTexture.dispose();signTexture.dispose();flyoverTexture.dispose();
+  for(const material of [towerMat,mastMaterial,steel,warm,sign.material,concrete,reflective,flyoverConcrete,acousticMat])material.dispose();
+  windowTexture.dispose();signTexture.dispose();flyoverTexture.dispose();acousticTexture.dispose();
  }};
 }
