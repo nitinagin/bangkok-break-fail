@@ -39,7 +39,7 @@ function makeBusDestination(THREE){
 }
 export function makeExpresswayVehicle(THREE,type='sportsCar'){
  const isBus=type==='bus',group=new THREE.Group(),w=isBus?2.05:1.8,length=isBus?4.45:3.55;
- const paint=new THREE.MeshStandardMaterial({color:isBus?0xf0e6d4:0xb12438,metalness:isBus?.15:.65,roughness:isBus?.65:.3});
+ const paint=isBus?new THREE.MeshStandardMaterial({color:0xf0e6d4,metalness:.15,roughness:.65}):new THREE.MeshPhysicalMaterial({color:0xb12438,metalness:.62,roughness:.26,clearcoat:.75,clearcoatRoughness:.22});
  const glass=new THREE.MeshStandardMaterial({color:0x173542,metalness:.2,roughness:.16});
  const rubber=new THREE.MeshStandardMaterial({color:0x171a1c,roughness:.96});
  const stripe=new THREE.MeshStandardMaterial({color:0xc72b35,roughness:.55});
@@ -77,6 +77,35 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   steering.position.set(.38,1.04,.38);steering.rotation.x=.3;group.add(steering);
   box(0,1.28,.43,1.4,.035,.63,windshield);
   box(0,1.28,-.65,1.4,.035,.43,windshield);
+
+  // Sports-car grille, splitter, rear wing, supports and side ducts:
+  // seven carbon-finish pieces in one instanced draw call, no texture upload.
+  const carbon=new THREE.MeshStandardMaterial({color:0x111820,metalness:.24,roughness:.54});
+  const aero=new THREE.InstancedMesh(new THREE.BoxGeometry(1,1,1),carbon,7);
+  const aeroMatrix=new THREE.Matrix4();
+  function aeroPart(i,x,y,z,sx,sy,sz){
+   aeroMatrix.makeScale(sx,sy,sz);
+   aeroMatrix.setPosition(x,y,z);
+   aero.setMatrixAt(i,aeroMatrix);
+  }
+  aeroPart(0,0,.54,1.79,1.32,.18,.05); // grille
+  aeroPart(1,0,.42,1.81,1.66,.06,.18); // front splitter
+  aeroPart(2,0,.99,-1.48,1.61,.065,.24); // rear wing
+  aeroPart(3,-.52,.86,-1.46,.08,.23,.09); // wing supports
+  aeroPart(4,.52,.86,-1.46,.08,.23,.09);
+  aeroPart(5,-.91,.69,-.30,.035,.18,.55); // side intakes
+  aeroPart(6,.91,.69,-.30,.035,.18,.55);
+  aero.instanceMatrix.needsUpdate=true;
+  group.add(aero);
+  // Two LED running lights share one draw call; no dynamic lighting.
+  const led=new THREE.InstancedMesh(new THREE.BoxGeometry(.45,.045,.04),
+   new THREE.MeshBasicMaterial({color:0xccefff,toneMapped:false}),2);
+  for(let i=0;i<2;i++){
+   aeroMatrix.makeTranslation((i?1:-1)*.57,.76,1.785);
+   led.setMatrixAt(i,aeroMatrix);
+  }
+  led.instanceMatrix.needsUpdate=true;
+  group.add(led);
  }
  const tailLamps=new THREE.MeshStandardMaterial({color:0xff3028,emissive:0xee1308,emissiveIntensity:.9,roughness:.28});
  // Instanced tires and machined hubs add exterior detail without extra wheel draw calls.
