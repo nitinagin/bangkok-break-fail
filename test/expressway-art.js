@@ -4,25 +4,85 @@
 // Keeps one draw call for 24 skyline towers; no realtime shadow maps or network assets.
 export function createExpresswayArt(THREE){
  const group=new THREE.Group();group.name='BangkokExpresswayNight';
- const windowCanvas=document.createElement('canvas');windowCanvas.width=128;windowCanvas.height=256;
+ // One shared 256x512 PBR facade atlas: real window recesses, concrete
+ // mullions, uneven occupancy and air-con grilles instead of toy-block dots.
+ // Baked once; all 24 buildings share this texture and one tower draw call.
+ const windowCanvas=document.createElement('canvas');windowCanvas.width=256;windowCanvas.height=512;
  const ctx=windowCanvas.getContext('2d');
- ctx.fillStyle='#202b3a';ctx.fillRect(0,0,128,256);
- for(let row=0;row<22;row++)for(let col=0;col<7;col++){
-  const lit=(row*19+col*31+row*col*7)%11<4;
-  ctx.fillStyle=lit?((row+col)%3===0?'#f7d19b':'#9cbac7'):'#344558';
-  ctx.fillRect(8+col*17,7+row*11,10,6);
+ ctx.fillStyle='#384452';ctx.fillRect(0,0,256,512);
+ for(let col=0;col<8;col++){
+  const x=9+col*30;
+  ctx.fillStyle=col%3===0?'#48525c':'#303c48';ctx.fillRect(x-4,0,27,512);
+  ctx.fillStyle='rgba(181,193,198,.12)';ctx.fillRect(x-4,0,2,512);
+ }
+ for(let row=0;row<32;row++)for(let col=0;col<8;col++){
+  const x=9+col*30,y=13+row*15;
+  const lit=(row*19+col*31+row*col*7)%13<5;
+  ctx.fillStyle='#111e2b';ctx.fillRect(x-1,y-1,23,12);
+  ctx.fillStyle=lit?((row+col)%3===0?'#e4bb83':'#94aeba'):'#273a49';
+  ctx.fillRect(x+1,y+1,19,8);
+  ctx.fillStyle=lit?'rgba(255,238,199,.18)':'rgba(179,208,222,.10)';
+  ctx.fillRect(x+2,y+1,2,8);
+  ctx.fillStyle='rgba(5,13,21,.38)';ctx.fillRect(x+10,y+1,1,8);
+  ctx.fillStyle='rgba(13,22,30,.53)';ctx.fillRect(x-2,y+11,26,2);
+  if((row*7+col*11)%17===0){
+   ctx.fillStyle='#65747b';ctx.fillRect(x+3,y+10,13,4);
+   ctx.fillStyle='#29343c';for(let g=0;g<4;g++)ctx.fillRect(x+5+g*3,y+11,1,2);
+  }
+ }
+ for(let floor=0;floor<32;floor+=8){
+  ctx.fillStyle='rgba(13,22,31,.65)';ctx.fillRect(0,8+floor*15,256,4);
+  ctx.fillStyle='rgba(179,191,195,.15)';ctx.fillRect(0,12+floor*15,256,1);
  }
  const windowTexture=new THREE.CanvasTexture(windowCanvas);windowTexture.colorSpace=THREE.SRGBColorSpace;
  const towerMat=new THREE.MeshStandardMaterial({map:windowTexture,roughness:.83,metalness:.13,emissive:0x8e7656,emissiveMap:windowTexture,emissiveIntensity:.13});
- const towers=new THREE.InstancedMesh(new THREE.BoxGeometry(1,1,1),towerMat,24);
+ // Stepped parapets and rooftop plant rooms give each scaled tower a
+ // recognizable Bangkok high-rise silhouette, without adding tower meshes.
+ const towerOutline=new THREE.Shape();
+ towerOutline.moveTo(-.5,-.5);towerOutline.lineTo(.5,-.5);
+ towerOutline.lineTo(.5,.36);towerOutline.lineTo(.43,.36);
+ towerOutline.lineTo(.43,.43);towerOutline.lineTo(.21,.43);
+ towerOutline.lineTo(.21,.5);towerOutline.lineTo(-.19,.5);
+ towerOutline.lineTo(-.19,.44);towerOutline.lineTo(-.42,.44);
+ towerOutline.lineTo(-.42,.37);towerOutline.lineTo(-.5,.37);
+ towerOutline.closePath();
+ const towerGeometry=new THREE.ExtrudeGeometry(towerOutline,{depth:1,steps:1,bevelEnabled:false,curveSegments:1});
+ towerGeometry.translate(0,0,-.5);
+ // ExtrudeGeometry defaults to world-coordinate UVs; normalize to [0,1]
+ // so all facades display the full baked window atlas on both sides.
+ const pos=towerGeometry.getAttribute('position'),norm=towerGeometry.getAttribute('normal'),uv=towerGeometry.getAttribute('uv');
+ for(let vertex=0;vertex<pos.count;vertex++){
+  const u=Math.abs(norm.getX(vertex))>.5?pos.getZ(vertex)+.5:pos.getX(vertex)+.5;
+  uv.setXY(vertex,u,pos.getY(vertex)+.5);
+ }
+ uv.needsUpdate=true;
+ const towers=new THREE.InstancedMesh(towerGeometry,towerMat,24);
  const dummy=new THREE.Object3D();
+ const rooftopMasts=[];
+ const facadeTints=[0xc6d0d8,0xe0d5c9,0xaebfcb,0xc6cbd0];
  for(let i=0;i<24;i++){
   const side=i%2===0?-1:1,row=Math.floor(i/2),height=10+(i*13%19);
   dummy.position.set(side*(12+(i*7%17)),height*.5-2,-15-row*9);
   dummy.scale.set(4+(i*5%7),height,5+(i*3%7));
   dummy.updateMatrix();towers.setMatrixAt(i,dummy.matrix);
+  towers.setColorAt(i,new THREE.Color(facadeTints[i%facadeTints.length]));
+  if(i%3===0)rooftopMasts.push({x:dummy.position.x+dummy.scale.x*.12,y:height-2,z:dummy.position.z,height:1.2+(i%4)*.45});
  }
- towers.instanceMatrix.needsUpdate=true;towers.frustumCulled=false;group.add(towers);
+ towers.instanceMatrix.needsUpdate=true;
+ if(towers.instanceColor)towers.instanceColor.needsUpdate=true;
+ towers.frustumCulled=false;group.add(towers);
+ // Eight slender antennas are batched into one additional draw call,
+ // all outside the drivable road; no shadows or dynamic lights.
+ const mastMaterial=new THREE.MeshStandardMaterial({color:0x9ba9b3,metalness:.74,roughness:.44});
+ const mastMesh=new THREE.InstancedMesh(new THREE.CylinderGeometry(.025,.065,1,6),mastMaterial,rooftopMasts.length);
+ const mastDummy=new THREE.Object3D();
+ for(let i=0;i<rooftopMasts.length;i++){
+  const p=rooftopMasts[i];
+  mastDummy.position.set(p.x,p.y+p.height*.5,p.z);
+  mastDummy.scale.set(1,p.height,1);mastDummy.updateMatrix();
+  mastMesh.setMatrixAt(i,mastDummy.matrix);
+ }
+ mastMesh.instanceMatrix.needsUpdate=true;group.add(mastMesh);
  const steel=new THREE.MeshStandardMaterial({color:0x69717a,roughness:.55,metalness:.65});
  const warm=new THREE.MeshBasicMaterial({color:0xffe6ac});
  const box=(w,h,d,mat,x,y,z)=>{const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);mesh.position.set(x,y,z);return mesh;};
@@ -97,7 +157,7 @@ export function createExpresswayArt(THREE){
   for(let i=0;i<barrierCount;i++){barrierZ[i]+=advance;if(barrierZ[i]>20)barrierZ[i]-=22*barrierLength*1.15;}placeBarriers();
  },dispose(){
   group.traverse(obj=>{if(obj.geometry)obj.geometry.dispose();});
-  for(const material of [towerMat,steel,warm,sign.material,concrete,reflective])material.dispose();
+  for(const material of [towerMat,mastMaterial,steel,warm,sign.material,concrete,reflective])material.dispose();
   windowTexture.dispose();signTexture.dispose();
  }};
 }
