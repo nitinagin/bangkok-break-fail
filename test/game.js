@@ -823,6 +823,34 @@ for(let k=0;k<2;k++){
 const siteConcrete=new THREE.MeshStandardMaterial({color:0xe3d9cb,map:ramaConcreteMap,roughnessMap:ramaConcreteRoughness,roughness:.98,metalness:0});
 const siteSteel=new THREE.MeshLambertMaterial({color:0x666e70});
 const siteCrane=new THREE.MeshLambertMaterial({color:0xe6a632});
+// Shared 128px woven construction net: open diamond holes, UV-stable fibers and
+// faded stripes. Alpha testing avoids costly transparent-layer overdraw on iPhone.
+const ramaSafetyNetCanvas=document.createElement('canvas');
+ramaSafetyNetCanvas.width=ramaSafetyNetCanvas.height=128;
+const ramaSafetyNetCtx=ramaSafetyNetCanvas.getContext('2d');
+ramaSafetyNetCtx.clearRect(0,0,128,128);
+ramaSafetyNetCtx.strokeStyle='rgba(48,104,73,.93)';
+ramaSafetyNetCtx.lineWidth=1.6;
+for(let k=-128;k<256;k+=12){
+ ramaSafetyNetCtx.beginPath();ramaSafetyNetCtx.moveTo(k,0);ramaSafetyNetCtx.lineTo(k+128,128);ramaSafetyNetCtx.stroke();
+ ramaSafetyNetCtx.beginPath();ramaSafetyNetCtx.moveTo(k,128);ramaSafetyNetCtx.lineTo(k+128,0);ramaSafetyNetCtx.stroke();
+}
+ramaSafetyNetCtx.strokeStyle='rgba(115,150,107,.9)';
+ramaSafetyNetCtx.lineWidth=2;
+for(const x of [1,64,126]){ramaSafetyNetCtx.beginPath();ramaSafetyNetCtx.moveTo(x,0);ramaSafetyNetCtx.lineTo(x,128);ramaSafetyNetCtx.stroke();}
+const ramaSafetyNetTexture=new THREE.CanvasTexture(ramaSafetyNetCanvas);
+ramaSafetyNetTexture.colorSpace=THREE.SRGBColorSpace;
+ramaSafetyNetTexture.wrapS=THREE.RepeatWrapping;
+ramaSafetyNetTexture.wrapT=THREE.RepeatWrapping;
+ramaSafetyNetTexture.repeat.set(2,3);
+ramaSafetyNetTexture.anisotropy=Math.min(2,renderer.capabilities.getMaxAnisotropy());
+const ramaSafetyNetMaterial=new THREE.MeshStandardMaterial({
+ map:ramaSafetyNetTexture,alphaTest:.45,transparent:false,side:THREE.DoubleSide,
+ roughness:.96,metalness:0,depthWrite:true
+});
+const ramaSafetyNetGeometry=new THREE.PlaneGeometry(3.2,6.8);
+const ramaScaffoldPostGeometry=new THREE.BoxGeometry(.075,7.6,.075);
+const ramaScaffoldCrossbarGeometry=new THREE.BoxGeometry(.075,.075,14.5);
 // A real Jersey barrier has a wide toe, a sloping impact face and a narrow crown.
 // Share one extruded profile across all 28 barriers per work zone (no extra draw calls).
 const barrierProfile=new THREE.Shape();
@@ -889,6 +917,28 @@ function ramaWorkZone(side,z){
  const jib=cube(.35,.35,13,siteCrane,side*14,16.5,-20);
  jib.rotation.x=-.08;g.add(jib);
  g.add(cube(.06,5,.06,siteSteel,side*14,13.7,-25));
+ // Weathered green construction safety mesh encloses the unfinished pier.
+ // Perforated alpha-test fabric (no alpha blending) is baked once and instanced;
+ // all scaffolding remains beyond x=+/-8.7, well outside the drivable lanes.
+ const safetyScreens=new THREE.InstancedMesh(ramaSafetyNetGeometry,ramaSafetyNetMaterial,4);
+ const scaffoldUprights=new THREE.InstancedMesh(ramaScaffoldPostGeometry,siteSteel,5);
+ const scaffoldCrossbars=new THREE.InstancedMesh(ramaScaffoldCrossbarGeometry,siteSteel,2);
+ const safetyMatrix=new THREE.Matrix4().makeRotationY(Math.PI/2);
+ for(let i=0;i<4;i++){
+  safetyMatrix.setPosition(side*8.7,5.7,-12+i*3.2);
+  safetyScreens.setMatrixAt(i,safetyMatrix);
+ }
+ for(let i=0;i<5;i++){
+  scaffoldUprights.setMatrixAt(i,new THREE.Matrix4().makeTranslation(side*8.7,5.6,-13.6+i*3.2));
+ }
+ for(let i=0;i<2;i++){
+  scaffoldCrossbars.setMatrixAt(i,new THREE.Matrix4().makeTranslation(side*8.7,i===0?2.1:9.1,-7.2));
+ }
+ for(const mesh of [safetyScreens,scaffoldUprights,scaffoldCrossbars]){
+  mesh.instanceMatrix.needsUpdate=true;
+  mesh.computeBoundingSphere();
+  g.add(mesh);
+ }
  g.position.z=z;g.visible=false;scene.add(g);
  ramaStructures.push(g);
 }
