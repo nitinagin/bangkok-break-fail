@@ -105,6 +105,22 @@ export function createExpresswayArt(THREE){
  const lampArms=new THREE.InstancedMesh(new THREE.BoxGeometry(1.35,.11,.16),steel,lampCount);
  const lampHeads=new THREE.InstancedMesh(new THREE.BoxGeometry(.8,.08,.22),warm,lampCount);
  const lampDummy=new THREE.Object3D();
+ // Warm streetlight spill baked once, instanced to avoid per-lamp lights and draw calls.
+ const poolCanvas=document.createElement('canvas');poolCanvas.width=128;poolCanvas.height=256;
+ const pc=poolCanvas.getContext('2d');
+ const poolGlow=pc.createRadialGradient(64,128,4,64,128,125);
+ poolGlow.addColorStop(0,'rgba(255,237,192,.83)');
+ poolGlow.addColorStop(.25,'rgba(255,211,141,.47)');
+ poolGlow.addColorStop(.58,'rgba(245,184,109,.16)');
+ poolGlow.addColorStop(1,'rgba(255,180,92,0)');
+ pc.fillStyle=poolGlow;pc.fillRect(0,0,128,256);
+ const poolTexture=new THREE.CanvasTexture(poolCanvas);poolTexture.colorSpace=THREE.SRGBColorSpace;
+ const poolMaterial=new THREE.MeshBasicMaterial({
+  map:poolTexture,color:0xffe8c5,transparent:true,opacity:.38,
+  blending:THREE.AdditiveBlending,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1
+ });
+ const lightPools=new THREE.InstancedMesh(new THREE.PlaneGeometry(3.8,10.5),poolMaterial,lampCount);
+ const poolDummy=new THREE.Object3D();lightPools.frustumCulled=false;
  for(let i=0;i<lampCount;i++){
   const side=i%2===0?-1:1;
   lampPositions.push({side,x:side*5.9,z:-7-Math.floor(i/2)*21});
@@ -115,12 +131,15 @@ export function createExpresswayArt(THREE){
    lampDummy.position.set(p.x,3.05,p.z);lampDummy.updateMatrix();lampPoles.setMatrixAt(i,lampDummy.matrix);
    lampDummy.position.set(p.x-p.side*.61,6.05,p.z);lampDummy.updateMatrix();lampArms.setMatrixAt(i,lampDummy.matrix);
    lampDummy.position.set(p.x-p.side*1.03,5.97,p.z);lampDummy.updateMatrix();lampHeads.setMatrixAt(i,lampDummy.matrix);
+   poolDummy.position.set(p.side*4.1,.135,p.z);poolDummy.rotation.x=-Math.PI/2;
+   poolDummy.updateMatrix();lightPools.setMatrixAt(i,poolDummy.matrix);
   }
   lampPoles.instanceMatrix.needsUpdate=true;
   lampArms.instanceMatrix.needsUpdate=true;
   lampHeads.instanceMatrix.needsUpdate=true;
+  lightPools.instanceMatrix.needsUpdate=true;
  }
- placeLamps();group.add(lampPoles,lampArms,lampHeads);
+ placeLamps();group.add(lampPoles,lampArms,lampHeads,lightPools);
  // Three elevated Bangkok interchange crossovers create real overhead depth
  // after 12,000 points. All concrete stays >=7.7m above the road and piers
  // stand outside the 11m carriageway, preserving the full dodge corridor.
@@ -282,7 +301,7 @@ export function createExpresswayArt(THREE){
   for(let i=0;i<barrierCount;i++){barrierZ[i]+=advance;if(barrierZ[i]>20)barrierZ[i]-=22*barrierLength*1.15;}placeBarriers();
  },dispose(){
   group.traverse(obj=>{if(obj.geometry)obj.geometry.dispose();});
-  for(const material of [towerMat,mastMaterial,steel,warm,sign.material,concrete,reflective,flyoverConcrete,acousticMat])material.dispose();
-  windowTexture.dispose();emissiveTexture.dispose();signTexture.dispose();flyoverTexture.dispose();acousticTexture.dispose();
+  for(const material of [towerMat,mastMaterial,steel,warm,poolMaterial,sign.material,concrete,reflective,flyoverConcrete,acousticMat])material.dispose();
+  windowTexture.dispose();emissiveTexture.dispose();poolTexture.dispose();signTexture.dispose();flyoverTexture.dispose();acousticTexture.dispose();
  }};
 }
