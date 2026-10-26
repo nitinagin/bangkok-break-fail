@@ -696,6 +696,60 @@ function updateYaowaratReflections(){
 }
 updateYaowaratReflections();
 
+// Night-only neon glints on the front windscreens of passing Bangkok taxis.
+// Reuse the existing Yaowarat reflection atlas and palette: one instanced
+// draw call for all visible taxis, no new textures, dynamic lights or clones.
+const taxiNeonGlints=new THREE.InstancedMesh(
+ new THREE.PlaneGeometry(1.22,.36),
+ new THREE.MeshBasicMaterial({
+  map:neonReflectionTexture,transparent:true,opacity:.24,
+  blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide
+ }),6
+);
+taxiNeonGlints.visible=false;
+taxiNeonGlints.frustumCulled=false;
+taxiNeonGlints.renderOrder=2; // Draw after transparent taxi glass.
+scene.add(taxiNeonGlints);
+const taxiGlintDummy=new THREE.Object3D(),taxiGlintColor=new THREE.Color();
+function updateTaxiNeonGlints(){
+ if(districtIndex!==1){taxiNeonGlints.visible=false;return;}
+ let count=0;
+ for(const h of hazards){
+  if(h.type!=='taxi'||count>=taxiNeonGlints.count)continue;
+  let nearest=null,bestDistance=Infinity;
+  for(const sign of reflectionSignAnchors){
+   const distance=Math.abs(sign.position.z-h.g.position.z);
+   if(distance<bestDistance){bestDistance=distance;nearest=sign;}
+  }
+  // The glint only appears when the taxi passes an actual neon shop sign.
+  if(!nearest||bestDistance>=23)continue;
+  const intensity=Math.max(.12,1-bestDistance/23);
+  const heading=h.g.rotation.y;
+  taxiGlintDummy.position.set(
+   h.g.position.x+Math.sin(heading)*.87,
+   h.g.position.y+1.51,
+   h.g.position.z+Math.cos(heading)*.87
+  );
+  taxiGlintDummy.rotation.set(-.48,heading,0,'YXZ');
+  taxiGlintDummy.scale.set(1.22,.36,1);
+  taxiGlintDummy.updateMatrix();
+  taxiNeonGlints.setMatrixAt(count,taxiGlintDummy.matrix);
+  taxiGlintColor.setHex(neonReflectionPalette[nearest.userData.neonReflectionColorIndex]);
+  taxiGlintColor.multiplyScalar(.32+.68*intensity);
+  taxiNeonGlints.setColorAt(count,taxiGlintColor);
+  count++;
+ }
+ // Hide unused instances rather than leaving stale glints floating on the road.
+ for(let i=count;i<taxiNeonGlints.count;i++){
+  taxiGlintDummy.position.set(0,-100,0);
+  taxiGlintDummy.scale.set(.001,.001,.001);
+  taxiGlintDummy.updateMatrix();
+  taxiNeonGlints.setMatrixAt(i,taxiGlintDummy.matrix);
+ }
+ taxiNeonGlints.visible=count>0;
+ if(count){taxiNeonGlints.instanceMatrix.needsUpdate=true;if(taxiNeonGlints.instanceColor)taxiNeonGlints.instanceColor.needsUpdate=true;}
+}
+
 // Baked, colored neon bounce on the Yaowarat shophouse facades.
 // One instanced draw call follows the existing neon sign anchors as buildings scroll.
 // The wash sits just in front of the x=+/-5.84 storefront plane, behind the
@@ -3321,7 +3375,7 @@ function update(dt,t){if(!active||paused)return;speed+=dt*(3+Math.sqrt(Math.max(
  const legs=h.g.userData.runningLegs;
  if(legs)for(let k=0;k<legs.length;k++)legs[k].rotation.x=Math.sin(stride+(k===0||k===3?0:Math.PI))*.55;
  if(h.g.userData.runningTail)h.g.userData.runningTail.rotation.y=Math.sin(stride*.65)*.35;
-}if(h.type==='police'){h.g.position.x=THREE.MathUtils.clamp(h.baseX+Math.sin(t*.0014+h.phase)*.55,-2.9,2.9);}if(h.type==='pedestrian'){h.g.position.x=THREE.MathUtils.clamp(h.baseX+Math.sin(t*.0011+h.phase)*.45,-3.1,3.1);h.g.rotation.z=Math.sin(t*.006+h.phase)*.07;}if(h.type==='construction'){const fall=THREE.MathUtils.smoothstep(h.g.position.z,-48,-20);h.g.position.y=6*(1-fall);h.g.rotation.z=(1-fall)*.18;}if((h.type==='bottle'||h.type==='watermelon')&&h.g.userData.pattayaProjectile){const flight=THREE.MathUtils.smoothstep(h.g.position.z,-54,-13),p=h.g.userData.pattayaProjectile,a=h.g.userData.pattayaActor,arm=h.g.userData.pattayaArm;p.position.x=THREE.MathUtils.lerp(a.position.x,0,flight);p.position.y=(h.type==='watermelon'?.72:.4)+1.5*Math.sin(Math.PI*flight);p.rotation.z+=dt*6;if(arm)arm.rotation.z=-.5-1.25*Math.sin(Math.PI*flight);a.rotation.z=Math.sin(t*.004+h.phase)*(h.type==='bottle'?.11:.035);}if(h.type==='pattayaDancer'){h.g.rotation.y=Math.sin(t*.002+h.phase)*.32;}if(h.type==='durian'){h.g.rotation.z+=dt*(h.madness?7:3);if(h.g.position.z>-48){const f=THREE.MathUtils.smoothstep(h.g.position.z,-48,-5);h.g.position.x=THREE.MathUtils.lerp(h.baseX,h.durianSide?-h.durianSide*.9:-h.baseX*.85,f)}}if(h.type==='dancer'){h.g.rotation.y=Math.sin(t*.0016+h.phase)*.24;h.g.position.x=h.baseX+Math.sin(t*.0013+h.phase)*.32;h.g.position.y=.17+Math.sin(t*.0027+h.phase)*.16;if(h.g.userData.danceArms?.[0]?.rotation&&h.g.userData.danceArms?.[1]?.rotation){h.g.userData.danceArms[0].rotation.z=Math.sin(t*.003+h.phase)*.45;h.g.userData.danceArms[1].rotation.z=-Math.sin(t*.003+h.phase)*.45}}if((h.type==='bus'||h.type==='busBlue')&&h.g.position.z<0){const p=THREE.MathUtils.smoothstep(h.g.position.z,-38,-13);h.g.position.x=THREE.MathUtils.clamp(h.baseX+Math.sin(t*.001+h.phase)*.18+(h.swerve?p*h.swerve*(h.madness==='cuttingBus'?2.15:.8):0),-4.2,4.2);h.g.rotation.y=-h.swerve*Math.sin(p*Math.PI)*.09;}if((h.type==='taxi'||h.type==='bike')&&!h.madness&&h.g.position.z>h.swerveStart){const f=THREE.MathUtils.smoothstep(h.g.position.z,h.swerveStart,h.swerveStart+20);h.g.position.x=THREE.MathUtils.clamp(h.baseX+h.swerve*f*(h.type==='bike'?1.65:2.1),-4.2,4.2);h.g.rotation.y=-h.swerve*Math.sin(f*Math.PI)*.18}if(h.madness==='wrongWayBike'){h.g.rotation.y=Math.PI+Math.sin(t*.004+h.phase)*.08;h.g.position.z+=advance*.45}if(h.type==='yaksha'){h.g.rotation.y=Math.sin(t*.002+h.phase)*.35;if(h.boss&&h.g.position.z>-34){const f=THREE.MathUtils.smoothstep(h.g.position.z,-34,-8);h.g.position.x=Math.sin(f*Math.PI*1.1)*2.25;}}if(!h.passed&&h.g.position.z>4){h.passed=true;const dx=Math.abs(h.g.position.x-x);const collisionRadius=h.type==='dog'?.95:h.type==='police'?.8:h.type==='pedestrian'?.75:h.type==='laser'?.8:h.type==='bottle'?.7:h.type==='watermelon'?.85:h.type==='flagParade'?.85:h.type==='pattayaDancer'?.95:h.type==='protest'?.9:h.type==='bike'?1.05:h.type==='taxi'||h.type==='sportsCar'?1.55:1.8;if(h.boss&&!bossBeaten){bossBeaten=true;if(dx>=collisionRadius){bonus+=750;hint.textContent='🏆 YAKSHA BOSS CLEARED +750';sound(920,.3,'sine')}else{hint.textContent='👹 YAKSHA HIT! NO BOSS BONUS'}}if(dx<collisionRadius&&!h.hit&&inv<=0){if(h.type==='dog'&&canalActive){x=Math.min(4.3,x+.85);hint.textContent='🐕 DOG PUSH! STEER LEFT OR FALL IN!';if(x>2.85){shake=1;finish();return;}}h.hit=true;crashes++;combo=0;comboTime=0;inv=1.5;flips=5;shake=.55;sound(120,.28,'sawtooth');/* Broken brakes: collisions damage the tuk-tuk but never slow it down. */hint.textContent=h.type==='dog'&&canalActive?'🐕 DOG SHOVE! TILT LEFT — CANAL!':'💥 '+h.type.toUpperCase()+' ATTACK!';if(navigator.vibrate)navigator.vibrate(80);if(crashes>=3){finish();break}}else if(dx>=collisionRadius&&dx<collisionRadius+1.1&&inv<=0){misses++;combo=comboTime>0?Math.min(combo+1,5):1;comboTime=5;const reward=combo*50;bonus+=reward;sound(600+combo*120,.1,'sine');hint.textContent='🔥 NEAR MISS ×'+combo+'  +'+reward}}}for(let i=hazards.length-1;i>=0;i--)if(hazards[i].g.position.z>20){scene.remove(hazards[i].g);hazards.splice(i,1)}if(challengeStage===0&&meters>=500){challengeStage=1;bonus+=250;hint.textContent='🏆 500m SURVIVED +250';sound(760,.22,'sine')}if(challengeStage===1&&misses>=3){challengeStage=2;bonus+=400;hint.textContent='🏆 3 NEAR MISSES +400';sound(850,.24,'sine')}if(!missionDone&&meters>=1000){missionDone=true;bonus+=500;hint.textContent='🏆 1000m MISSION +500';sound(900,.32,'sine')}shake=Math.max(0,shake-dt);inv=Math.max(0,inv-dt);comboTime=Math.max(0,comboTime-dt);if(comboTime===0)combo=0;car.visible=false;const missionText=challengeStage===0?'🎯 SURVIVE '+Math.max(0,500-Math.floor(meters))+'m · +250':challengeStage===1?'🎯 NEAR MISSES '+Math.min(misses,3)+'/3 · +400':'🏆 CHALLENGES COMPLETE';if(challengeDisplay!==missionText){challengeDisplay=missionText;challenge.textContent=missionText}if(t-lastHudUpdate>110){lastHudUpdate=t;hud.textContent=Math.floor(meters+bonus)+' PTS'+(comboTime>0?'  🔥×'+combo:'');status.innerHTML=Math.floor(speed)+' KM/H<br>'+'❤️'.repeat(Math.max(0,3-crashes));}}
+}if(h.type==='police'){h.g.position.x=THREE.MathUtils.clamp(h.baseX+Math.sin(t*.0014+h.phase)*.55,-2.9,2.9);}if(h.type==='pedestrian'){h.g.position.x=THREE.MathUtils.clamp(h.baseX+Math.sin(t*.0011+h.phase)*.45,-3.1,3.1);h.g.rotation.z=Math.sin(t*.006+h.phase)*.07;}if(h.type==='construction'){const fall=THREE.MathUtils.smoothstep(h.g.position.z,-48,-20);h.g.position.y=6*(1-fall);h.g.rotation.z=(1-fall)*.18;}if((h.type==='bottle'||h.type==='watermelon')&&h.g.userData.pattayaProjectile){const flight=THREE.MathUtils.smoothstep(h.g.position.z,-54,-13),p=h.g.userData.pattayaProjectile,a=h.g.userData.pattayaActor,arm=h.g.userData.pattayaArm;p.position.x=THREE.MathUtils.lerp(a.position.x,0,flight);p.position.y=(h.type==='watermelon'?.72:.4)+1.5*Math.sin(Math.PI*flight);p.rotation.z+=dt*6;if(arm)arm.rotation.z=-.5-1.25*Math.sin(Math.PI*flight);a.rotation.z=Math.sin(t*.004+h.phase)*(h.type==='bottle'?.11:.035);}if(h.type==='pattayaDancer'){h.g.rotation.y=Math.sin(t*.002+h.phase)*.32;}if(h.type==='durian'){h.g.rotation.z+=dt*(h.madness?7:3);if(h.g.position.z>-48){const f=THREE.MathUtils.smoothstep(h.g.position.z,-48,-5);h.g.position.x=THREE.MathUtils.lerp(h.baseX,h.durianSide?-h.durianSide*.9:-h.baseX*.85,f)}}if(h.type==='dancer'){h.g.rotation.y=Math.sin(t*.0016+h.phase)*.24;h.g.position.x=h.baseX+Math.sin(t*.0013+h.phase)*.32;h.g.position.y=.17+Math.sin(t*.0027+h.phase)*.16;if(h.g.userData.danceArms?.[0]?.rotation&&h.g.userData.danceArms?.[1]?.rotation){h.g.userData.danceArms[0].rotation.z=Math.sin(t*.003+h.phase)*.45;h.g.userData.danceArms[1].rotation.z=-Math.sin(t*.003+h.phase)*.45}}if((h.type==='bus'||h.type==='busBlue')&&h.g.position.z<0){const p=THREE.MathUtils.smoothstep(h.g.position.z,-38,-13);h.g.position.x=THREE.MathUtils.clamp(h.baseX+Math.sin(t*.001+h.phase)*.18+(h.swerve?p*h.swerve*(h.madness==='cuttingBus'?2.15:.8):0),-4.2,4.2);h.g.rotation.y=-h.swerve*Math.sin(p*Math.PI)*.09;}if((h.type==='taxi'||h.type==='bike')&&!h.madness&&h.g.position.z>h.swerveStart){const f=THREE.MathUtils.smoothstep(h.g.position.z,h.swerveStart,h.swerveStart+20);h.g.position.x=THREE.MathUtils.clamp(h.baseX+h.swerve*f*(h.type==='bike'?1.65:2.1),-4.2,4.2);h.g.rotation.y=-h.swerve*Math.sin(f*Math.PI)*.18}if(h.madness==='wrongWayBike'){h.g.rotation.y=Math.PI+Math.sin(t*.004+h.phase)*.08;h.g.position.z+=advance*.45}if(h.type==='yaksha'){h.g.rotation.y=Math.sin(t*.002+h.phase)*.35;if(h.boss&&h.g.position.z>-34){const f=THREE.MathUtils.smoothstep(h.g.position.z,-34,-8);h.g.position.x=Math.sin(f*Math.PI*1.1)*2.25;}}if(!h.passed&&h.g.position.z>4){h.passed=true;const dx=Math.abs(h.g.position.x-x);const collisionRadius=h.type==='dog'?.95:h.type==='police'?.8:h.type==='pedestrian'?.75:h.type==='laser'?.8:h.type==='bottle'?.7:h.type==='watermelon'?.85:h.type==='flagParade'?.85:h.type==='pattayaDancer'?.95:h.type==='protest'?.9:h.type==='bike'?1.05:h.type==='taxi'||h.type==='sportsCar'?1.55:1.8;if(h.boss&&!bossBeaten){bossBeaten=true;if(dx>=collisionRadius){bonus+=750;hint.textContent='🏆 YAKSHA BOSS CLEARED +750';sound(920,.3,'sine')}else{hint.textContent='👹 YAKSHA HIT! NO BOSS BONUS'}}if(dx<collisionRadius&&!h.hit&&inv<=0){if(h.type==='dog'&&canalActive){x=Math.min(4.3,x+.85);hint.textContent='🐕 DOG PUSH! STEER LEFT OR FALL IN!';if(x>2.85){shake=1;finish();return;}}h.hit=true;crashes++;combo=0;comboTime=0;inv=1.5;flips=5;shake=.55;sound(120,.28,'sawtooth');/* Broken brakes: collisions damage the tuk-tuk but never slow it down. */hint.textContent=h.type==='dog'&&canalActive?'🐕 DOG SHOVE! TILT LEFT — CANAL!':'💥 '+h.type.toUpperCase()+' ATTACK!';if(navigator.vibrate)navigator.vibrate(80);if(crashes>=3){finish();break}}else if(dx>=collisionRadius&&dx<collisionRadius+1.1&&inv<=0){misses++;combo=comboTime>0?Math.min(combo+1,5):1;comboTime=5;const reward=combo*50;bonus+=reward;sound(600+combo*120,.1,'sine');hint.textContent='🔥 NEAR MISS ×'+combo+'  +'+reward}}}updateTaxiNeonGlints();for(let i=hazards.length-1;i>=0;i--)if(hazards[i].g.position.z>20){scene.remove(hazards[i].g);hazards.splice(i,1)}if(challengeStage===0&&meters>=500){challengeStage=1;bonus+=250;hint.textContent='🏆 500m SURVIVED +250';sound(760,.22,'sine')}if(challengeStage===1&&misses>=3){challengeStage=2;bonus+=400;hint.textContent='🏆 3 NEAR MISSES +400';sound(850,.24,'sine')}if(!missionDone&&meters>=1000){missionDone=true;bonus+=500;hint.textContent='🏆 1000m MISSION +500';sound(900,.32,'sine')}shake=Math.max(0,shake-dt);inv=Math.max(0,inv-dt);comboTime=Math.max(0,comboTime-dt);if(comboTime===0)combo=0;car.visible=false;const missionText=challengeStage===0?'🎯 SURVIVE '+Math.max(0,500-Math.floor(meters))+'m · +250':challengeStage===1?'🎯 NEAR MISSES '+Math.min(misses,3)+'/3 · +400':'🏆 CHALLENGES COMPLETE';if(challengeDisplay!==missionText){challengeDisplay=missionText;challenge.textContent=missionText}if(t-lastHudUpdate>110){lastHudUpdate=t;hud.textContent=Math.floor(meters+bonus)+' PTS'+(comboTime>0?'  🔥×'+combo:'');status.innerHTML=Math.floor(speed)+' KM/H<br>'+'❤️'.repeat(Math.max(0,3-crashes));}}
 let lastRender=0,lastHudUpdate=0,graphicsLost=false,frameFailures=0,visualRush=0;let perfFrames=0,perfStart=0;
 function recoveryScreen(message){paused=true;panel.innerHTML='<h1>🛺 GAME INTERRUPTED</h1><p>'+message+'</p><button id="recover">RESTART GAME</button><small>Version 2.7 · Freeze diagnostics</small>';overlay.style.display='grid';$('recover').onclick=()=>location.reload()}
 renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();graphicsLost=true;recoveryScreen('Safari paused the 3D graphics. Tap to restart.')},false);
