@@ -9,6 +9,11 @@ export function createExpresswayArt(THREE){
  // Baked once; all 24 buildings share this texture and one tower draw call.
  const windowCanvas=document.createElement('canvas');windowCanvas.width=256;windowCanvas.height=512;
  const ctx=windowCanvas.getContext('2d');
+ // Emissive window atlas: lit rooms glow, concrete and empty rooms stay dark.
+ const emissiveCanvas=document.createElement('canvas');
+ emissiveCanvas.width=256;emissiveCanvas.height=512;
+ const ec=emissiveCanvas.getContext('2d');
+ ec.fillStyle='#000000';ec.fillRect(0,0,256,512);
  ctx.fillStyle='#384452';ctx.fillRect(0,0,256,512);
  for(let col=0;col<8;col++){
   const x=9+col*30;
@@ -21,6 +26,12 @@ export function createExpresswayArt(THREE){
   ctx.fillStyle='#111e2b';ctx.fillRect(x-1,y-1,23,12);
   ctx.fillStyle=lit?((row+col)%3===0?'#e4bb83':'#94aeba'):'#273a49';
   ctx.fillRect(x+1,y+1,19,8);
+  if(lit){
+   ec.fillStyle=(row+col)%3===0?'#e4bb83':'#94aeba';
+   ec.fillRect(x+1,y+1,19,8);
+   ec.fillStyle='rgba(255,242,210,.18)';
+   ec.fillRect(x+2,y+1,2,8);
+  }
   ctx.fillStyle=lit?'rgba(255,238,199,.18)':'rgba(179,208,222,.10)';
   ctx.fillRect(x+2,y+1,2,8);
   ctx.fillStyle='rgba(5,13,21,.38)';ctx.fillRect(x+10,y+1,1,8);
@@ -35,7 +46,9 @@ export function createExpresswayArt(THREE){
   ctx.fillStyle='rgba(179,191,195,.15)';ctx.fillRect(0,12+floor*15,256,1);
  }
  const windowTexture=new THREE.CanvasTexture(windowCanvas);windowTexture.colorSpace=THREE.SRGBColorSpace;
- const towerMat=new THREE.MeshStandardMaterial({map:windowTexture,roughness:.83,metalness:.13,emissive:0x8e7656,emissiveMap:windowTexture,emissiveIntensity:.13});
+ const emissiveTexture=new THREE.CanvasTexture(emissiveCanvas);
+ emissiveTexture.colorSpace=THREE.SRGBColorSpace;
+ const towerMat=new THREE.MeshStandardMaterial({map:windowTexture,roughness:.83,metalness:.13,emissive:0xffffff,emissiveMap:emissiveTexture,emissiveIntensity:.42});
  // Stepped parapets and rooftop plant rooms give each scaled tower a
  // recognizable Bangkok high-rise silhouette, without adding tower meshes.
  const towerOutline=new THREE.Shape();
@@ -270,6 +283,6 @@ export function createExpresswayArt(THREE){
  },dispose(){
   group.traverse(obj=>{if(obj.geometry)obj.geometry.dispose();});
   for(const material of [towerMat,mastMaterial,steel,warm,sign.material,concrete,reflective,flyoverConcrete,acousticMat])material.dispose();
-  windowTexture.dispose();signTexture.dispose();flyoverTexture.dispose();acousticTexture.dispose();
+  windowTexture.dispose();emissiveTexture.dispose();signTexture.dispose();flyoverTexture.dispose();acousticTexture.dispose();
  }};
 }
