@@ -1936,11 +1936,29 @@ busBodyOutline.quadraticCurveTo(-1.43,-1.26,-1.27,-1.26);
 const busBodyGeometry=new THREE.ExtrudeGeometry(busBodyOutline,{
  depth:5.3,steps:1,bevelEnabled:false,curveSegments:4
 });
+// A shared crowned, pressed-metal roof replaces the flat rectangular bus lid.
+// The narrow rolled edges read as rain gutters; no extra meshes, lights, or textures.
+// One extrusion is reused by both liveries, and stays outside the collision logic.
+const busRoofProfile=new THREE.Shape();
+busRoofProfile.moveTo(-1.48,2.91);
+busRoofProfile.lineTo(-1.48,3.055);
+busRoofProfile.lineTo(-1.435,3.08);
+busRoofProfile.lineTo(-1.38,3.055);
+busRoofProfile.quadraticCurveTo(-1.28,3.18,0,3.27);
+busRoofProfile.quadraticCurveTo(1.28,3.18,1.38,3.055);
+busRoofProfile.lineTo(1.435,3.08);
+busRoofProfile.lineTo(1.48,3.055);
+busRoofProfile.lineTo(1.48,2.91);
+busRoofProfile.closePath();
+const busRoofGeometry=new THREE.ExtrudeGeometry(busRoofProfile,{
+ depth:5.38,steps:1,bevelEnabled:false,curveSegments:8
+});
+busRoofGeometry.translate(0,0,-2.69);
 function makeBus(variant='red'){
  const g=new THREE.Group(),blue=variant==='blue',main=blue?busCream:busRed,trim=blue?busBlue:busCream,accent=blue?busYellow:busGreen;
  const body=new THREE.Mesh(busBodyGeometry,main);
  body.position.set(0,1.67,-2.65);part(g,body);
- part(g,cube(2.96,.31,5.38,blue?busBlue:busRed,0,3.03,0));
+ part(g,new THREE.Mesh(busRoofGeometry,blue?busBlue:busRed));
  part(g,cube(2.89,.23,5.34,accent,0,1.31,0));
  part(g,cube(2.9,.27,5.35,trim,0,.71,0));
  for(const side of [-1,1]){
