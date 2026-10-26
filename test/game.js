@@ -2181,6 +2181,31 @@ function makeTukTuk(){
  g.add(ball(.23,tukTrim,0,1.15,1.44));
  g.add(ball(.18,tukLamp,0,1.15,1.57));
  g.add(cube(.95,.075,.09,tukTrim,0,.61,1.44));
+ // Recessed pressed-metal nose grille: six thin ventilation louvers and
+ // two rolled side rails, not a flat toy-like painted rectangle.
+ // One shared box geometry and a single InstancedMesh for all eight chrome
+ // pieces; the inset uses the existing dark engine steel PBR material.
+ g.add(cube(.72,.235,.025,tukEngineSteel,0,.862,1.502));
+ const grilleGeometry=tukEngineUnitBox;
+ const grille=new THREE.InstancedMesh(grilleGeometry,tukTrim,8);
+ const grillePart=new THREE.Object3D();
+ for(let i=0;i<6;i++){
+  grillePart.position.set(0,.776+i*.035,1.532);
+  grillePart.rotation.set(0,0,0);
+  grillePart.scale.set(.61+Math.sin(i/5*Math.PI)*.065,.013,.026);
+  grillePart.updateMatrix();
+  grille.setMatrixAt(i,grillePart.matrix);
+ }
+ for(const [index,side] of [-1,1].entries()){
+  grillePart.position.set(side*.345,.862,1.532);
+  grillePart.rotation.set(0,0,0);
+  grillePart.scale.set(.018,.232,.027);
+  grillePart.updateMatrix();
+  grille.setMatrixAt(index+6,grillePart.matrix);
+ }
+ grille.instanceMatrix.needsUpdate=true;
+ grille.computeBoundingSphere();
+ g.add(grille);
 // Front and rear Thai registration plates share one InstancedMesh draw call.
 // Both face outward; keep them above the bumper and clear of the headlamp.
  const tukPlates=new THREE.InstancedMesh(tukPlateGeometry,tukPlateMaterial,2);
