@@ -2493,7 +2493,44 @@ const tentColors=tentPalettes.map(([light,dark],variant)=>{
  texture.wrapS=texture.wrapT=THREE.RepeatWrapping;texture.anisotropy=2;
  return new THREE.MeshStandardMaterial({map:texture,roughness:.94,metalness:0,side:THREE.DoubleSide});
 });
-const tentRoofGeometry=new THREE.BoxGeometry(9.7,.12,10.5);
+// One shared pitched canvas roof replaces 16 flat toy-block slabs.
+// Ridge, gentle longitudinal sag and hanging fabric hems are baked into a
+// single double-sided mesh; no extra draw calls, textures or frame-time work.
+function makeMarketTentRoofGeometry(){
+ const xs=[-4.85,-2.425,0,2.425,4.85];
+ const zs=[-5.25,-2.625,0,2.625,5.25];
+ const rise=[-.08,.13,.31,.13,-.08];
+ const positions=[],uvs=[],indices=[];
+ const vertex=(x,y,z,u,v)=>{
+  positions.push(x,y,z);uvs.push(u,v);return positions.length/3-1;
+ };
+ const roofY=(xi,zi)=>rise[xi]-.05*(1-Math.abs(zs[zi])/5.25);
+ for(let zi=0;zi<zs.length;zi++)for(let xi=0;xi<xs.length;xi++){
+  vertex(xs[xi],roofY(xi,zi),zs[zi],xi/4,zi/4);
+ }
+ for(let zi=0;zi<4;zi++)for(let xi=0;xi<4;xi++){
+  const a=zi*5+xi,b=a+1,c=a+5,d=c+1;
+  indices.push(a,c,b,b,c,d);
+ }
+ // Side and end valances are part of the same geometry, not separate meshes.
+ const hem=(ax,ay,az,bx,by,bz,u0,u1)=>{
+  const a=vertex(ax,ay,az,u0,0),b=vertex(bx,by,bz,u1,0);
+  const c=vertex(ax,ay-.24,az,u0,1),d=vertex(bx,by-.24,bz,u1,1);
+  indices.push(a,c,b,b,c,d);
+ };
+ for(let zi=0;zi<4;zi++)for(const xi of [0,4]){
+  hem(xs[xi],roofY(xi,zi),zs[zi],xs[xi],roofY(xi,zi+1),zs[zi+1],zi/4,(zi+1)/4);
+ }
+ for(let xi=0;xi<4;xi++)for(const zi of [0,4]){
+  hem(xs[xi],roofY(xi,zi),zs[zi],xs[xi+1],roofY(xi+1,zi),zs[zi],xi/4,(xi+1)/4);
+ }
+ const geometry=new THREE.BufferGeometry();
+ geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+ geometry.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));
+ geometry.setIndex(indices);geometry.computeVertexNormals();
+ return geometry;
+}
+const tentRoofGeometry=makeMarketTentRoofGeometry();
 const tentPoleGeometry=new THREE.BoxGeometry(.1,5,.1);
 const tentPoleMaterial=mat(0x9a8d79);
 for(let n=0;n<16;n++){
