@@ -2069,6 +2069,44 @@ tukGaugeCtx.fillStyle='#b4bcb5';tukGaugeCtx.fillText('km/h',64,92);
 const tukGaugeTexture=new THREE.CanvasTexture(tukGaugeCanvas);
 tukGaugeTexture.colorSpace=THREE.SRGBColorSpace;tukGaugeTexture.anisotropy=2;
 const tukGaugeMaterial=new THREE.MeshStandardMaterial({map:tukGaugeTexture,metalness:.08,roughness:.53,side:THREE.DoubleSide});
+// One baked Bangkok tuk-tuk registration plate atlas, reused at both ends of
+// every cached traffic model. Thai lettering, weathered yellow enamel and
+// rivets are texture details rather than individual meshes or dynamic decals.
+const tukPlateCanvas=document.createElement('canvas');
+tukPlateCanvas.width=256;tukPlateCanvas.height=128;
+const tukPlateCtx=tukPlateCanvas.getContext('2d');
+const tukPlateBase=tukPlateCtx.createLinearGradient(0,0,0,128);
+tukPlateBase.addColorStop(0,'#f6db72');
+tukPlateBase.addColorStop(.55,'#e5bd45');
+tukPlateBase.addColorStop(1,'#ad832c');
+tukPlateCtx.fillStyle=tukPlateBase;tukPlateCtx.fillRect(0,0,256,128);
+tukPlateCtx.strokeStyle='#54452d';tukPlateCtx.lineWidth=5;
+tukPlateCtx.strokeRect(7,7,242,114);
+tukPlateCtx.strokeStyle='rgba(255,246,183,.65)';tukPlateCtx.lineWidth=2;
+tukPlateCtx.strokeRect(13,13,230,102);
+for(const x of [19,237])for(const y of [20,108]){
+ tukPlateCtx.fillStyle='#716143';tukPlateCtx.beginPath();
+ tukPlateCtx.arc(x,y,3.5,0,Math.PI*2);tukPlateCtx.fill();
+ tukPlateCtx.fillStyle='rgba(255,255,230,.5)';tukPlateCtx.fillRect(x-1,y-2,2,2);
+}
+tukPlateCtx.textAlign='center';
+tukPlateCtx.fillStyle='#272923';
+tukPlateCtx.font='bold 25px sans-serif';
+tukPlateCtx.fillText('กรุงเทพมหานคร',128,48);
+tukPlateCtx.font='bold 45px sans-serif';
+tukPlateCtx.fillText('1 กข 2549',128,98);
+for(let i=0;i<105;i++){
+ const x=(i*83+17)%244+6,y=(i*47+13)%112+8;
+ tukPlateCtx.fillStyle=i%3===0?'rgba(63,49,22,.11)':'rgba(255,248,196,.18)';
+ tukPlateCtx.fillRect(x,y,1+i%2,1);
+}
+const tukPlateTexture=new THREE.CanvasTexture(tukPlateCanvas);
+tukPlateTexture.colorSpace=THREE.SRGBColorSpace;
+tukPlateTexture.anisotropy=mobile?2:4;
+const tukPlateMaterial=new THREE.MeshStandardMaterial({
+ map:tukPlateTexture,metalness:.08,roughness:.59,side:THREE.DoubleSide
+});
+const tukPlateGeometry=new THREE.PlaneGeometry(.46,.23);
 function makeTukTuk(){
  const g=new THREE.Group();
  // The tapered pressed-metal nose and rear wheel arch have rounded bevels.
@@ -2143,6 +2181,19 @@ function makeTukTuk(){
  g.add(ball(.23,tukTrim,0,1.15,1.44));
  g.add(ball(.18,tukLamp,0,1.15,1.57));
  g.add(cube(.95,.075,.09,tukTrim,0,.61,1.44));
+// Front and rear Thai registration plates share one InstancedMesh draw call.
+// Both face outward; keep them above the bumper and clear of the headlamp.
+ const tukPlates=new THREE.InstancedMesh(tukPlateGeometry,tukPlateMaterial,2);
+ const tukPlatePose=new THREE.Object3D();
+ for(const [index,z,angle] of [[0,1.53,0],[1,-1.54,Math.PI]]){
+  tukPlatePose.position.set(0,.89,z);
+  tukPlatePose.rotation.set(0,angle,0);
+  tukPlatePose.updateMatrix();
+  tukPlates.setMatrixAt(index,tukPlatePose.matrix);
+ }
+ tukPlates.instanceMatrix.needsUpdate=true;
+ tukPlates.computeBoundingSphere();
+ g.add(tukPlates);
  // Open cabin with stitched, rounded vinyl cushions (two shared-material meshes).
  // The front-facing backrest and horizontal bench retain the original clearances.
  const bench=new THREE.Mesh(makeTukCushion(1.31,.7,.14),tukSeat);
