@@ -1110,6 +1110,12 @@ const siteStripeMaterial=new THREE.MeshStandardMaterial({
  emissive:0x35130b,emissiveIntensity:.14,side:THREE.DoubleSide
 });
 const siteStripeGeo=new THREE.PlaneGeometry(2.75,.36);
+// Exposed reinforcement at the unfinished pier: rusted PBR steel and one
+// shared instanced box instead of four individual rods plus separate ties.
+const ramaRebarGeometry=new THREE.BoxGeometry(1,1,1);
+const ramaRebarMaterial=new THREE.MeshStandardMaterial({
+ color:0x805b43,metalness:.62,roughness:.78
+});
 function ramaWorkZone(side,z){
  const g=new THREE.Group();
  // Fourteen weathered precast barriers and inward-facing hazard chevrons.
@@ -1128,8 +1134,31 @@ function ramaWorkZone(side,z){
  g.add(cube(2.4,.7,2.4,siteConcrete,side*10,.35,-6));
  g.add(cube(1.7,10,1.7,siteConcrete,side*10,5.35,-6));
  g.add(cube(3.3,.65,3.1,siteConcrete,side*10,10.65,-6));
+ // A real reinforcement cage has four upright bars and six closed
+ // rectangular stirrups. All 28 pieces render in ONE instanced draw call.
+ // The entire cage remains behind the x=+/-6.05 roadside barriers.
+ const rebar=new THREE.InstancedMesh(ramaRebarGeometry,ramaRebarMaterial,28);
+ const rebarPose=new THREE.Object3D();
+ let rebarIndex=0;
+ function addRebar(px,py,pz,w,h,d){
+  rebarPose.position.set(px,py,pz);
+  rebarPose.scale.set(w,h,d);
+  rebarPose.updateMatrix();
+  rebar.setMatrixAt(rebarIndex++,rebarPose.matrix);
+ }
  for(const dx of [-.58,.58])for(const dz of [-.58,.58])
-  g.add(cube(.09,2.8,.09,siteSteel,side*10+dx,12.35,-6+dz));
+  addRebar(side*10+dx,12.35,-6+dz,.075,2.8,.075);
+ for(let level=0;level<6;level++){
+  const y=11.15+level*.43;
+  for(const dz of [-.59,.59])
+   addRebar(side*10,y,-6+dz,1.18,.055,.055);
+  for(const dx of [-.59,.59])
+   addRebar(side*10+dx,y,-6,.055,.055,1.18);
+ }
+ if(rebarIndex!==28)throw Error('Rama II rebar instance count mismatch');
+ rebar.instanceMatrix.needsUpdate=true;
+ rebar.computeBoundingSphere();
+ g.add(rebar);
  // Crane tower and diagonal jib: visible above the viaduct, not across the road.
  g.add(cube(.55,17,.55,siteCrane,side*14,8.5,-15));
  const jib=cube(.35,.35,13,siteCrane,side*14,16.5,-20);
