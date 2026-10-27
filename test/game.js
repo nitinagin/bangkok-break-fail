@@ -3551,10 +3551,51 @@ const jjStallRoofGeometry=makeJjStallRoofGeometry();
 // Chatuchak close-up LOD: shaped, shared PBR merchandise replaces box/sphere
 // placeholders. Only merchandise is culled at distance; roofs, signs, stalls
 // and their collision-free roadside placement remain visible at every range.
-const jjPotGeometry=new THREE.CylinderGeometry(.19,.145,.27,10);
+// A single lathed terracotta pot includes its lip and tapered body.
+const jjPotGeometry=new THREE.LatheGeometry([
+ new THREE.Vector2(0,-.14),new THREE.Vector2(.13,-.14),
+ new THREE.Vector2(.15,-.12),new THREE.Vector2(.18,.09),
+ new THREE.Vector2(.205,.10),new THREE.Vector2(.205,.14),
+ new THREE.Vector2(.17,.14),new THREE.Vector2(.16,.10)
+],12);
 const jjPotMaterial=new THREE.MeshStandardMaterial({color:0x9f674e,roughness:.92});
-const jjFoliageGeometry=new THREE.DodecahedronGeometry(.29,1);
-const jjFoliageMaterial=new THREE.MeshStandardMaterial({color:0x426f43,roughness:.94});
+// Two staggered layers of broad, drooping leaves replace the toy-like
+// dodecahedron shrubs. Every plant reuses one geometry and one PBR material;
+// the existing near-camera merchandise LOD and draw-call count are unchanged.
+function makeJjFoliageGeometry(){
+ const positions=[],colors=[],indices=[],leavesPerTier=11;
+ for(let tier=0;tier<2;tier++)for(let i=0;i<leavesPerTier;i++){
+  const theta=Math.PI*2*(i+(tier?.43:0))/leavesPerTier;
+  const dx=Math.cos(theta),dz=Math.sin(theta),sideX=-dz,sideZ=dx;
+  const reach=tier?.28:.43,baseY=tier?-.015:-.19;
+  const midY=tier?.29:.17,tipY=tier?.16:-.11;
+  const width=tier?.077:.105,base=positions.length/3;
+  const vertices=[
+   [.022*dx,baseY,.022*dz],
+   [reach*.54*dx-width*sideX,midY-.055,reach*.54*dz-width*sideZ],
+   [reach*.60*dx,midY,reach*.60*dz],
+   [reach*.54*dx+width*sideX,midY-.055,reach*.54*dz+width*sideZ],
+   [reach*dx,tipY,reach*dz]
+  ];
+  const shade=(i*7+tier*3)%5;
+  for(let v=0;v<vertices.length;v++){
+   positions.push(...vertices[v]);
+   const light=v===2?.10:v===4?-.045:0;
+   colors.push(.16+shade*.015+light,.32+shade*.018+light,.13+shade*.013+light*.6);
+  }
+  indices.push(base,base+1,base+2,base,base+2,base+3,
+   base+1,base+4,base+2,base+2,base+4,base+3);
+ }
+ const geometry=new THREE.BufferGeometry();
+ geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+ geometry.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));
+ geometry.setIndex(indices);geometry.computeVertexNormals();
+ return geometry;
+}
+const jjFoliageGeometry=makeJjFoliageGeometry();
+const jjFoliageMaterial=new THREE.MeshStandardMaterial({
+ vertexColors:true,roughness:.89,metalness:0,side:THREE.DoubleSide
+});
 const jjShirtOutline=new THREE.Shape();
 jjShirtOutline.moveTo(-.17,.32);
 jjShirtOutline.lineTo(-.32,.23);jjShirtOutline.lineTo(-.38,.07);
