@@ -3485,12 +3485,41 @@ for(let n=0;n<16;n++){
  bump.userData.startZ=bump.position.z;bump.visible=false;scene.add(bump);marketBumps.push(bump);
 }
 const pedestrianSkin=mat(0xe4af8e),pedestrianPants=mat(0x414a63),pedestrianClothes=[mat(0xf59c62),mat(0x4b9bb1),mat(0xc75b9e),mat(0x79a969),mat(0xe3c75c)];
-// Instanced roadside crowd: 64 animated shoppers, only four draw calls on mobile.
+// Chatuchak shoppers: shaped shoulders, waist and tapered limbs replace block
+// silhouettes. All 64 shoppers still render in just four instanced draw calls;
+// geometry/materials are shared and no lights, textures or network assets added.
+function makeMarketCrowdTorsoGeometry(){
+ const rings=[
+  {y:-.36,w:.205,d:.135}, // waist
+  {y:.07,w:.265,d:.17},   // chest
+  {y:.27,w:.29,d:.155},  // shoulders
+  {y:.36,w:.17,d:.12}    // collar, beneath the head
+ ];
+ const positions=[],indices=[];
+ for(const ring of rings){
+  for(const [sx,sz] of [[-1,-1],[1,-1],[1,1],[-1,1]])
+   positions.push(sx*ring.w,ring.y,sz*ring.d);
+ }
+ for(let r=0;r<rings.length-1;r++)for(let k=0;k<4;k++){
+  const a=r*4+k,b=r*4+(k+1)%4,c=(r+1)*4+k,d=(r+1)*4+(k+1)%4;
+  indices.push(a,c,b,b,c,d);
+ }
+ indices.push(0,1,2,0,2,3);
+ const top=(rings.length-1)*4;
+ indices.push(top,top+2,top+1,top,top+3,top+2);
+ const geometry=new THREE.BufferGeometry();
+ geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+ geometry.setIndex(indices);geometry.computeVertexNormals();
+ return geometry;
+}
+const marketCrowdSkin=new THREE.MeshStandardMaterial({color:0xe4af8e,roughness:.88,metalness:0});
+const marketCrowdFabric=new THREE.MeshStandardMaterial({color:0xffffff,roughness:.93,metalness:0});
+const marketCrowdDenim=new THREE.MeshStandardMaterial({color:0x414a63,roughness:.96,metalness:0});
 const marketCrowdCount=marketStalls.length*2,marketCrowdDummy=new THREE.Object3D();
-const marketCrowdHeads=new THREE.InstancedMesh(new THREE.SphereGeometry(.25,7,5),pedestrianSkin,marketCrowdCount);
-const marketCrowdShirts=new THREE.InstancedMesh(new THREE.BoxGeometry(.54,.72,.33),mat(0xffffff),marketCrowdCount);
-const marketCrowdLegs=new THREE.InstancedMesh(new THREE.BoxGeometry(.15,.66,.18),pedestrianPants,marketCrowdCount*2);
-const marketCrowdArms=new THREE.InstancedMesh(new THREE.BoxGeometry(.14,.57,.14),pedestrianSkin,marketCrowdCount*2);
+const marketCrowdHeads=new THREE.InstancedMesh(new THREE.SphereGeometry(.25,9,7),marketCrowdSkin,marketCrowdCount);
+const marketCrowdShirts=new THREE.InstancedMesh(makeMarketCrowdTorsoGeometry(),marketCrowdFabric,marketCrowdCount);
+const marketCrowdLegs=new THREE.InstancedMesh(new THREE.CylinderGeometry(.095,.075,.66,7),marketCrowdDenim,marketCrowdCount*2);
+const marketCrowdArms=new THREE.InstancedMesh(new THREE.CylinderGeometry(.085,.065,.57,7),marketCrowdSkin,marketCrowdCount*2);
 const marketCrowdMeshes=[marketCrowdHeads,marketCrowdShirts,marketCrowdLegs,marketCrowdArms];
 for(const mesh of marketCrowdMeshes){mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);mesh.frustumCulled=false;mesh.visible=false;scene.add(mesh);}
 const marketCrowdColors=[0xf59c62,0x4b9bb1,0xc75b9e,0x79a969,0xe3c75c].map(hex=>new THREE.Color(hex));
