@@ -118,8 +118,20 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   cap.position.set(.38,1.40,-.06);group.add(cap);
   const steering=new THREE.Mesh(new THREE.TorusGeometry(.19,.035,6,12),rubber);
   steering.position.set(.38,1.04,.38);steering.rotation.x=.3;group.add(steering);
-  box(0,1.28,.43,1.4,.035,.63,windshield);
-  box(0,1.28,-.65,1.4,.035,.43,windshield);
+  // Follow the hood/roof and roof/deck slopes instead of laying glass flat.
+  // Two lightweight trapezoids replace the two horizontal box panes (4 triangles total).
+  // Slightly offset from the painted body so the tinted PBR glass remains visible.
+  function slopedGlass(lowerZ,upperZ){
+   const geometry=new THREE.BufferGeometry();
+   geometry.setAttribute('position',new THREE.Float32BufferAttribute([
+    -.73,.83,lowerZ, .73,.83,lowerZ, -.61,1.225,upperZ,
+     .73,.83,lowerZ, .61,1.225,upperZ, -.61,1.225,upperZ
+   ],3));
+   geometry.computeVertexNormals();
+   group.add(new THREE.Mesh(geometry,windshield));
+  }
+  slopedGlass(1.00,.30);    // front: hood to roof
+  slopedGlass(-1.055,-.585); // rear: deck to roof
 
   // Sports-car grille, splitter, rear wing, supports and side ducts:
   // seven carbon-finish pieces in one instanced draw call, no texture upload.
