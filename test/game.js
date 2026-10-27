@@ -2169,6 +2169,74 @@ taxiPlateCtx.font='23px sans-serif';taxiPlateCtx.fillText('กรุงเทพ
 const taxiPlateTexture=new THREE.CanvasTexture(taxiPlateCanvas);taxiPlateTexture.colorSpace=THREE.SRGBColorSpace;
 const taxiPlateMaterial=new THREE.MeshBasicMaterial({map:taxiPlateTexture,side:THREE.DoubleSide});
 const taxiGrilleMaterial=new THREE.MeshStandardMaterial({color:0x17232b,metalness:.3,roughness:.65});
+// Shared contoured Bangkok taxi windscreen PBR atlas. Front glass carries
+// two resting wipers and faint wiped arcs; rear glass has heater traces.
+// One 512x256 texture and one material serve both panes across all taxi clones.
+const taxiWindshieldCanvas=document.createElement('canvas');
+taxiWindshieldCanvas.width=512;taxiWindshieldCanvas.height=256;
+const taxiWindshieldCtx=taxiWindshieldCanvas.getContext('2d');
+for(let panel=0;panel<2;panel++){
+ const ctx=taxiWindshieldCtx;
+ ctx.save();ctx.translate(panel*256,0);
+ const glass=ctx.createLinearGradient(0,0,0,256);
+ glass.addColorStop(0,'#7899a7');glass.addColorStop(.34,'#3d6275');
+ glass.addColorStop(.72,'#213b4a');glass.addColorStop(1,'#14242d');
+ ctx.fillStyle=glass;ctx.fillRect(0,0,256,256);
+ for(let i=0;i<4;i++){
+  const x=27+i*57,reflection=ctx.createLinearGradient(x,0,x+36,0);
+  reflection.addColorStop(0,'rgba(188,222,229,0)');
+  reflection.addColorStop(.4,i%2?'rgba(239,153,103,.18)':'rgba(189,223,229,.26)');
+  reflection.addColorStop(1,'rgba(188,222,229,0)');
+  ctx.fillStyle=reflection;ctx.fillRect(x,12,36,217);
+ }
+ ctx.strokeStyle='#151d23';ctx.lineWidth=13;ctx.strokeRect(7,7,242,242);
+ ctx.strokeStyle='rgba(146,161,162,.6)';ctx.lineWidth=2;ctx.strokeRect(15,15,226,226);
+ if(panel===0){
+  ctx.strokeStyle='rgba(204,218,213,.19)';ctx.lineWidth=3;
+  for(const cx of [69,187]){
+   ctx.beginPath();ctx.arc(cx,220,133,Math.PI*1.13,Math.PI*1.87);ctx.stroke();
+  }
+  ctx.strokeStyle='#1a252a';ctx.lineWidth=6;ctx.lineCap='round';
+  for(const [ax,ay,bx,by] of [[34,219,119,174],[222,219,139,175]]){
+   ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(bx,by);ctx.stroke();
+   ctx.strokeStyle='rgba(173,187,181,.5)';ctx.lineWidth=1.5;
+   ctx.beginPath();ctx.moveTo(ax+3,ay-3);ctx.lineTo(bx,by-3);ctx.stroke();
+   ctx.strokeStyle='#1a252a';ctx.lineWidth=6;
+  }
+ }else{
+  ctx.strokeStyle='rgba(178,132,91,.32)';ctx.lineWidth=1.4;
+  for(let y=56;y<218;y+=21){
+   ctx.beginPath();ctx.moveTo(21,y);ctx.lineTo(235,y);ctx.stroke();
+  }
+ }
+ ctx.restore();
+}
+const taxiWindshieldTexture=new THREE.CanvasTexture(taxiWindshieldCanvas);
+taxiWindshieldTexture.colorSpace=THREE.SRGBColorSpace;
+taxiWindshieldTexture.anisotropy=Math.min(2,renderer.capabilities.getMaxAnisotropy());
+const taxiWindshieldMaterial=new THREE.MeshPhysicalMaterial({
+ map:taxiWindshieldTexture,metalness:.06,roughness:.19,
+ clearcoat:.8,clearcoatRoughness:.12,transparent:true,opacity:.95,
+ side:THREE.DoubleSide,depthWrite:false
+});
+function taxiWindshieldShape(rear=false){
+ // Narrower at the roof, using one half of the shared texture per pane.
+ const bottom=rear?1.45:1.51,top=rear?1.22:1.27,height=rear?.52:.56;
+ const geometry=new THREE.BufferGeometry();
+ geometry.setAttribute('position',new THREE.Float32BufferAttribute([
+  -bottom/2,-height/2,0, bottom/2,-height/2,0,
+  -top/2,height/2,0, top/2,height/2,0
+ ],3));
+ const u0=rear?.5:0,u1=rear?1:.5;
+ geometry.setAttribute('uv',new THREE.Float32BufferAttribute([
+  u0,0,u1,0,u0,1,u1,1
+ ],2));
+ geometry.setIndex([0,1,2,1,3,2]);
+ geometry.computeVertexNormals();
+ return geometry;
+}
+const taxiFrontWindshieldGeometry=taxiWindshieldShape();
+const taxiRearWindshieldGeometry=taxiWindshieldShape(true);
 function makeTaxi(){
  const g=new THREE.Group();
  // Extrude a sedan side profile along X; rounded bevels replace toy-like box edges.
@@ -2236,10 +2304,10 @@ function makeTaxi(){
   wheels.frustumCulled=false;
   g.add(wheels);
  }
- const frontGlass=new THREE.Mesh(new THREE.PlaneGeometry(1.42,.49),taxiReflectiveGlass);
- frontGlass.position.set(0,1.51,.83);frontGlass.rotation.x=-.48;g.add(frontGlass);
- const rearGlass=new THREE.Mesh(new THREE.PlaneGeometry(1.39,.44),taxiReflectiveGlass);
- rearGlass.position.set(0,1.51,-.91);rearGlass.rotation.x=.45;g.add(rearGlass);
+ const frontGlass=new THREE.Mesh(taxiFrontWindshieldGeometry,taxiWindshieldMaterial);
+ frontGlass.position.set(0,1.55,.67);frontGlass.rotation.x=-.62;g.add(frontGlass);
+ const rearGlass=new THREE.Mesh(taxiRearWindshieldGeometry,taxiWindshieldMaterial);
+ rearGlass.position.set(0,1.55,-.83);rearGlass.rotation.x=.62;g.add(rearGlass);
  // Distinct Bangkok TAXI-METER roof sign, painted once for all traffic clones.
  const signCanvas=document.createElement('canvas');signCanvas.width=256;signCanvas.height=128;
  const ctx=signCanvas.getContext('2d');
@@ -3024,8 +3092,8 @@ function makeTrafficLOD(type){
  const wheels=detailed.children.find(child=>child.isInstancedMesh&&child.count===4);
  if(wheels)distant.add(wheels.clone());
  if(taxi){
-  const rear=new THREE.Mesh(new THREE.PlaneGeometry(1.39,.44),taxiReflectiveGlass);
-  rear.position.set(0,1.51,-.91);rear.rotation.x=.45;distant.add(rear);
+  const rear=new THREE.Mesh(taxiRearWindshieldGeometry,taxiWindshieldMaterial);
+  rear.position.set(0,1.55,-.83);rear.rotation.x=.62;distant.add(rear);
   distant.add(cube(.8,.29,.25,taxiLight,0,2.08,-.07));
  }else{
   for(const side of [-1,1]){
