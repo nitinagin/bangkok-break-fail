@@ -1614,7 +1614,49 @@ for(const [x0,y0,x1,y1] of [[88,168,241,105],[426,168,271,105]]){
 const busGlassTexture=new THREE.CanvasTexture(busGlassCanvas);busGlassTexture.colorSpace=THREE.SRGBColorSpace;
 busGlassTexture.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());
 const busWindshield=new THREE.MeshPhysicalMaterial({map:busGlassTexture,metalness:0,roughness:.28,clearcoat:.55,clearcoatRoughness:.19,side:THREE.DoubleSide});
-const busFrontGlassPane=new THREE.PlaneGeometry(2.35,.88);
+// A shallow crowned, rearward-raked front windscreen follows the bus roof
+// rather than reading as a flat toy-like rectangle. Shared by both liveries.
+const busFrontGlassPane=new THREE.BufferGeometry();
+const busGlassPositions=[],busGlassUVs=[],busGlassIndices=[];
+for(let column=0;column<5;column++){
+ const x=-1.175+column*(2.35/4);
+ for(let row=0;row<2;row++){
+  const t=row,edge=Math.pow(x/1.175,2);
+  busGlassPositions.push(x,1.84+.88*t,2.82-.08*t-.06*edge);
+  busGlassUVs.push(column/4,t);
+ }
+}
+for(let column=0;column<4;column++){
+ const left=column*2,right=left+2;
+ busGlassIndices.push(left,right,left+1,right,right+1,left+1);
+}
+busFrontGlassPane.setAttribute('position',new THREE.Float32BufferAttribute(busGlassPositions,3));
+busFrontGlassPane.setAttribute('uv',new THREE.Float32BufferAttribute(busGlassUVs,2));
+busFrontGlassPane.setIndex(busGlassIndices);
+busFrontGlassPane.computeVertexNormals();
+// Side A-pillars, centre mullion and lower rubber seal are one shared mesh.
+// Their surface follows the same rake and crown as the glazing, preserving
+// the original one-draw-call frame budget without extra lights or textures.
+const busFrontFrameGeometry=new THREE.BufferGeometry();
+const busFramePositions=[],busFrameIndices=[];
+function addBusFrontFrameQuad(x0,y0,x1,y1){
+ const base=busFramePositions.length/3;
+ for(const [x,y] of [[x0,y0],[x1,y0],[x0,y1],[x1,y1]]){
+  busFramePositions.push(x,y,2.847-.08*((y-1.84)/.88)-.06*Math.pow(x/1.175,2));
+ }
+ busFrameIndices.push(base,base+1,base+2,base+1,base+3,base+2);
+}
+for(const x of [-1.175,0,1.175]){
+ const halfWidth=x===0?.035:.06;
+ addBusFrontFrameQuad(x-halfWidth,1.82,x+halfWidth,2.74);
+}
+for(let i=0;i<4;i++){
+ const x0=-1.21+i*.605;
+ addBusFrontFrameQuad(x0,1.80,x0+.605,1.86);
+}
+busFrontFrameGeometry.setAttribute('position',new THREE.Float32BufferAttribute(busFramePositions,3));
+busFrontFrameGeometry.setIndex(busFrameIndices);
+busFrontFrameGeometry.computeVertexNormals();
 const busRearGlassPane=new THREE.PlaneGeometry(2.32,.78);
 
 // Rear bus glazing faces the player most often; it should not reuse the
@@ -1998,8 +2040,8 @@ function makeBus(variant='red'){
  // Bangkok buses board from the left; the opposite side stays uninterrupted.
  const door=new THREE.Mesh(busDoorPane,busDoorMaterial);
  door.rotation.y=-Math.PI/2;door.position.set(-1.516,1.81,1.67);part(g,door);
- const frontGlass=new THREE.Mesh(busFrontGlassPane,busWindshield);frontGlass.position.set(0,2.28,2.748);part(g,frontGlass);
- part(g,cube(.075,.87,.09,trim,0,2.28,2.76));
+ const frontGlass=new THREE.Mesh(busFrontGlassPane,busWindshield);part(g,frontGlass);
+ part(g,new THREE.Mesh(busFrontFrameGeometry,trim));
  part(g,cube(2.43,.51,.13,trim,0,3.02,2.73));
  part(g,cube(.86,.39,.15,busCream,0,3.06,2.82));
  const frontRoute=new THREE.Mesh(busRoutePane,blue?busRouteSigns.blue:busRouteSigns.red);
