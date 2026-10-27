@@ -3400,6 +3400,51 @@ const boatWoodTexture=new THREE.CanvasTexture(boatWoodCanvas);
 boatWoodTexture.colorSpace=THREE.SRGBColorSpace;
 boatWoodTexture.anisotropy=Math.min(2,renderer.capabilities.getMaxAnisotropy());
 const boatWoodMaterial=new THREE.MeshStandardMaterial({map:boatWoodTexture,vertexColors:true,roughness:.83,metalness:0,side:THREE.DoubleSide});
+
+ // Eight small, weathered timber landing stages along the road-side canal bank.
+ // All deck planks, cross-beams and mooring posts share one box geometry,
+ // one PBR wood atlas and ONE instanced draw call (104 pieces total).
+ // The closest plank begins at x=3.84, beyond the x=3.65 canal lip;
+ // the outermost post ends at x=5.48, short of the fruit boats at x>=5.82.
+ const canalPierCount=8,canalPierPieces=13;
+ const canalPierMaterial=new THREE.MeshStandardMaterial({
+  map:boatWoodTexture,color:0xd2b996,roughness:.91,metalness:0
+ });
+ const canalPierDecks=new THREE.InstancedMesh(
+  new THREE.BoxGeometry(1,1,1),canalPierMaterial,canalPierCount*canalPierPieces
+ );
+ const pierPose=new THREE.Object3D();
+ const pierWoodTints=[0xc8a57a,0xa8835e,0x896746,0xb4936a].map(c=>new THREE.Color(c));
+ let pierPiece=0;
+ function placePierTimber(x,y,z,width,height,depth,shade){
+  pierPose.position.set(x,y,z);
+  pierPose.rotation.set(0,0,0);
+  pierPose.scale.set(width,height,depth);
+  pierPose.updateMatrix();
+  canalPierDecks.setMatrixAt(pierPiece,pierPose.matrix);
+  canalPierDecks.setColorAt(pierPiece,pierWoodTints[shade%pierWoodTints.length]);
+  pierPiece++;
+ }
+ for(let i=0;i<canalPierCount;i++){
+  const z=-14-i*23;
+  // Separated weathered boards leave narrow drainage gaps visible from above.
+  for(let board=0;board<7;board++){
+   placePierTimber(4.65,.18,z+(board-3)*.22,1.62,.12,.18,i+board);
+  }
+  // Four pilings continue below the waterline, with exposed darkened ends.
+  for(const px of [3.91,5.41])for(const pz of [-.73,.73]){
+   placePierTimber(px,-.14,z+pz,.14,1.05,.14,i+2);
+  }
+  for(const pz of [-.76,.76]){
+   placePierTimber(4.65,-.01,z+pz,1.68,.13,.12,i+1);
+  }
+ }
+ if(pierPiece!==canalPierCount*canalPierPieces)throw new Error('Canal pier instance count mismatch');
+ canalPierDecks.instanceMatrix.needsUpdate=true;
+ canalPierDecks.instanceColor.needsUpdate=true;
+ canalPierDecks.computeBoundingSphere();
+ canalGroup.add(canalPierDecks);
+
 // One shared hull geometry includes sloped exterior, gunwales, recessed walls and floor.
 function makeMarketBoatHull(){
  const zs=[-1.65,-1.35,-.8,0,.8,1.35,1.65],ws=[.10,.45,.63,.68,.63,.45,.10];
