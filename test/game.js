@@ -1040,7 +1040,7 @@ for(let k=0;k<2;k++){
 // unfinished rebar cages and crane silhouettes. All outside the playable lanes.
 const siteConcrete=new THREE.MeshStandardMaterial({color:0xe3d9cb,map:ramaConcreteMap,roughnessMap:ramaConcreteRoughness,roughness:.98,metalness:0});
 const siteSteel=new THREE.MeshLambertMaterial({color:0x666e70});
-const siteCrane=new THREE.MeshLambertMaterial({color:0xe6a632});
+const siteCrane=new THREE.MeshStandardMaterial({color:0xc78e30,metalness:.42,roughness:.72});
 // Shared 128px woven construction net: open diamond holes, UV-stable fibers and
 // faded stripes. Alpha testing avoids costly transparent-layer overdraw on iPhone.
 const ramaSafetyNetCanvas=document.createElement('canvas');
@@ -1116,6 +1116,65 @@ const ramaRebarGeometry=new THREE.BoxGeometry(1,1,1);
 const ramaRebarMaterial=new THREE.MeshStandardMaterial({
  color:0x805b43,metalness:.62,roughness:.78
 });
+// One unit-box geometry and one PBR steel material for every crane strut.
+// Triangulated silhouette replaces three toy-like solid beams, without shadows
+// or per-frame animation; safe for the iPhone's limited draw-call budget.
+const ramaCraneStrutGeometry=new THREE.BoxGeometry(1,1,1);
+const ramaCraneUp=new THREE.Vector3(0,1,0);
+function addRamaLatticeCrane(g,side){
+ const x=side*14,z=-15,parts=[],pose=new THREE.Object3D();
+ function strut(ax,ay,az,bx,by,bz,width=.085){
+  const dx=bx-ax,dy=by-ay,dz=bz-az,length=Math.hypot(dx,dy,dz);
+  if(length<.001)throw Error('Zero-length crane strut');
+  pose.position.set((ax+bx)*.5,(ay+by)*.5,(az+bz)*.5);
+  pose.quaternion.setFromUnitVectors(ramaCraneUp,new THREE.Vector3(dx/length,dy/length,dz/length));
+  pose.scale.set(width,length,width);
+  pose.updateMatrix();parts.push(pose.matrix.clone());
+ }
+ // Four open steel legs with cross-ties and alternating diagonal bracing.
+ for(const ox of [-.36,.36])for(const oz of [-.36,.36])
+  strut(x+ox,0,z+oz,x+ox,16.4,z+oz,.13);
+ for(let level=0;level<=8;level++){
+  const y=level*2.05;
+  for(const oz of [-.36,.36])strut(x-.36,y,z+oz,x+.36,y,z+oz,.09);
+  for(const ox of [-.36,.36])strut(x+ox,y,z-.36,x+ox,y,z+.36,.09);
+  if(level===8)continue;
+  const y2=y+2.05,flip=level%2===0;
+  for(const oz of [-.36,.36])
+   strut(x+(flip?-.36:.36),y,z+oz,x+(flip?.36:-.36),y2,z+oz,.075);
+  for(const ox of [-.36,.36])
+   strut(x+ox,y,z+(flip?-.36:.36),x+ox,y2,z+(flip?.36:-.36),.075);
+ }
+ // A triangular lattice boom extends along the road, not over its dodge lanes.
+ const tip=z-13,boomY=16.25,topY=17.12;
+ for(const ox of [-.42,.42])strut(x+ox,boomY,z,x+ox,boomY,tip,.14);
+ strut(x,topY,z,x,topY,tip,.12);
+ for(let i=0;i<=8;i++){
+  const z0=z-i*13/8;
+  strut(x-.42,boomY,z0,x+.42,boomY,z0,.085);
+  if(i===8)continue;
+  const z1=z-(i+1)*13/8;
+  for(const ox of [-.42,.42]){
+   strut(x+ox,boomY,z0,x,topY,z1,.085);
+   strut(x,topY,z0,x+ox,boomY,z1,.075);
+  }
+ }
+ // Short rear counter-jib balances the boom; the cable ends behind barriers.
+ for(const ox of [-.4,.4])strut(x+ox,16.25,z,x+ox,16.25,z+4.4,.13);
+ strut(x,17.12,z,x,17.12,z+4.4,.12);
+ for(let i=0;i<3;i++){
+  const z0=z+i*4.4/3,z1=z+(i+1)*4.4/3;
+  for(const ox of [-.4,.4])strut(x+ox,16.25,z0,x,17.12,z1,.09);
+ }
+ // Fixed yellow hook block; steel hoist cable is one separate thin mesh.
+ strut(x,10.95,tip+1.9,x,11.35,tip+1.9,.22);
+ const lattice=new THREE.InstancedMesh(ramaCraneStrutGeometry,siteCrane,parts.length);
+ for(let i=0;i<parts.length;i++)lattice.setMatrixAt(i,parts[i]);
+ lattice.instanceMatrix.needsUpdate=true;
+ lattice.computeBoundingSphere();
+ g.add(lattice);
+ g.add(cube(.045,5.05,.045,siteSteel,x,13.9,tip+1.9));
+}
 function ramaWorkZone(side,z){
  const g=new THREE.Group();
  // Fourteen weathered precast barriers and inward-facing hazard chevrons.
@@ -1159,11 +1218,9 @@ function ramaWorkZone(side,z){
  rebar.instanceMatrix.needsUpdate=true;
  rebar.computeBoundingSphere();
  g.add(rebar);
- // Crane tower and diagonal jib: visible above the viaduct, not across the road.
- g.add(cube(.55,17,.55,siteCrane,side*14,8.5,-15));
- const jib=cube(.35,.35,13,siteCrane,side*14,16.5,-20);
- jib.rotation.x=-.08;g.add(jib);
- g.add(cube(.06,5,.06,siteSteel,side*14,13.7,-25));
+ // Shared-geometry lattice crane: open tower, triangulated jib and counter-jib.
+ // It stays at x=+/-14, behind the x=+/-6.05 barriers; one yellow draw call.
+ addRamaLatticeCrane(g,side);
  // Weathered green construction safety mesh encloses the unfinished pier.
  // Perforated alpha-test fabric (no alpha blending) is baked once and instanced;
  // all scaffolding remains beyond x=+/-8.7, well outside the drivable lanes.
