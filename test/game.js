@@ -2921,20 +2921,95 @@ function makeCheckpoint(){
 }
 // Rama II cargo truck: large Thai-style six-wheeler with cargo box and rear safety stripes.
 function makeTruck(){
- const g=new THREE.Group(),body=mat(0xe9e7df),cab=mat(0xf5f2e8),chassis=mat(0x353b40),glass=mat(0x345e70),red=mat(0xc93a2b),yellow=mat(0xe8b83c);
- g.add(cube(2.55,.3,6.4,chassis,0,.9,-.15));
- g.add(cube(2.55,2.55,3.75,body,0,2.45,-1.13));
- g.add(cube(2.45,1.95,1.8,cab,0,1.96,2.05));
- g.add(cube(2.2,.8,.07,glass,0,2.35,2.98));
- g.add(cube(2.28,.28,.12,chassis,0,1.18,3.02));
- for(const z of [-2.55,-.7,2.38])for(const side of [-1,1]){
-  const wheel=new THREE.Mesh(new THREE.CylinderGeometry(.53,.53,.22,12),M.wheel);
-  wheel.rotation.z=Math.PI/2;wheel.position.set(side*1.24,.56,z);g.add(wheel);
+ const g=new THREE.Group();
+ // Rama II six-wheeler: sloped stamped-metal cab, corrugated freight box and
+ // rear safety fittings. This is the local, playable fallback (no GLB download).
+ // cachedObstacle('truck') builds it once; clones share geometry and PBR maps.
+ const cabPaint=new THREE.MeshPhysicalMaterial({color:0xe7e3d7,metalness:.24,roughness:.55,clearcoat:.3,clearcoatRoughness:.38});
+ const chassis=new THREE.MeshStandardMaterial({color:0x252b30,metalness:.48,roughness:.77});
+ const rubber=new THREE.MeshStandardMaterial({color:0x1d2328,metalness:0,roughness:.95});
+ const glass=new THREE.MeshPhysicalMaterial({color:0x34566b,metalness:.18,roughness:.24,clearcoat:.72,clearcoatRoughness:.17,side:THREE.DoubleSide});
+ const red=new THREE.MeshStandardMaterial({color:0xa92524,metalness:.1,roughness:.48});
+ const amber=new THREE.MeshStandardMaterial({color:0xd99a32,metalness:.08,roughness:.43});
+ const reflector=new THREE.MeshStandardMaterial({color:0xe4dfca,metalness:.05,roughness:.38});
+ // One 256px atlas for ribbed aluminium, grime and worn paint. No per-frame work.
+ const canvas=document.createElement('canvas');canvas.width=canvas.height=256;
+ const ctx=canvas.getContext('2d');
+ ctx.fillStyle='#b4b8b3';ctx.fillRect(0,0,256,256);
+ for(let x=0;x<256;x+=15){
+  ctx.fillStyle='rgba(34,43,48,.28)';ctx.fillRect(x,0,2,256);
+  ctx.fillStyle='rgba(245,246,238,.4)';ctx.fillRect(x+3,0,3,256);
+  ctx.fillStyle='rgba(90,100,104,.11)';ctx.fillRect(x+8,0,5,256);
  }
- for(const x of [-.84,.84])g.add(cube(.35,.2,.08,yellow,x,1.48,3.02));
- for(let i=0;i<6;i++)g.add(cube(.29,.17,.09,i%2?yellow:red,-1.03+i*.41,1.06,-3.07));
- g.add(cube(2.4,.15,.14,chassis,0,.86,-3.1));
- return g
+ const grime=ctx.createLinearGradient(0,0,0,256);
+ grime.addColorStop(0,'rgba(38,44,44,.12)');
+ grime.addColorStop(.55,'rgba(44,42,38,0)');
+ grime.addColorStop(1,'rgba(60,53,41,.37)');
+ ctx.fillStyle=grime;ctx.fillRect(0,0,256,256);
+ for(let i=0;i<90;i++){
+  const px=(i*47+13*i*i)%256,py=(i*83+17*i*i)%256;
+  ctx.fillStyle=i%3?'rgba(60,58,50,.12)':'rgba(245,240,222,.19)';
+  ctx.fillRect(px,py,2+i%4,2+i%3);
+ }
+ const cargoMap=new THREE.CanvasTexture(canvas);cargoMap.colorSpace=THREE.SRGBColorSpace;
+ cargoMap.anisotropy=Math.min(2,renderer.capabilities.getMaxAnisotropy());
+ const cargoPaint=new THREE.MeshStandardMaterial({map:cargoMap,color:0xd7d9d5,metalness:.35,roughness:.73});
+ g.add(cube(2.55,.26,6.25,chassis,0,.92,-.05));
+ // Freight compartment ends at z=-3.05; the front cab extends to z=3.08.
+ g.add(cube(2.5,2.45,3.8,cargoPaint,0,2.32,-1.15));
+ for(const side of [-1,1]){
+  g.add(cube(.065,.11,3.9,chassis,side*1.29,1.13,-1.15));
+  g.add(cube(.075,.09,3.85,reflector,side*1.30,3.51,-1.15));
+ }
+ // The cabin is extruded from a raked profile rather than stacked toy boxes.
+ const outline=new THREE.Shape();
+ const profile=[[1.02,1.09],[3.06,1.09],[3.06,1.91],[2.77,2.87],[1.31,2.87],[1.02,2.63]];
+ profile.forEach(([z,y],i)=>i?outline.lineTo(-z,y):outline.moveTo(-z,y));
+ outline.closePath();
+ const cabGeometry=new THREE.ExtrudeGeometry(outline,{depth:2.36,steps:1,bevelEnabled:true,bevelThickness:.045,bevelSize:.045,bevelSegments:1});
+ const cabShell=new THREE.Mesh(cabGeometry,cabPaint);cabShell.rotation.y=Math.PI/2;cabShell.position.x=-1.18;g.add(cabShell);
+ const windshield=new THREE.Mesh(new THREE.PlaneGeometry(2.11,.76),glass);
+ windshield.rotation.x=-.29;windshield.position.set(0,2.37,2.91);g.add(windshield);
+ // Side glazing follows the cabin rake; the mirrored panes share geometry.
+ const windowShape=new THREE.Shape();
+ windowShape.moveTo(-.52,0);windowShape.lineTo(.46,0);windowShape.lineTo(.18,.73);windowShape.lineTo(-.51,.73);windowShape.closePath();
+ const windowGeometry=new THREE.ShapeGeometry(windowShape);
+ for(const side of [-1,1]){
+  const pane=new THREE.Mesh(windowGeometry,glass);
+  pane.rotation.y=side*Math.PI/2;pane.position.set(side*1.239,1.98,2.26);g.add(pane);
+  g.add(cube(.07,.045,.72,chassis,side*1.26,1.96,2.2));
+  // Mirror arms and glass sit outside the cab but inside roadside clearances.
+  g.add(cube(.31,.035,.04,chassis,side*1.34,2.22,2.89));
+  g.add(cube(.21,.3,.08,glass,side*1.48,2.24,2.89));
+ }
+ // One instanced draw for all six PBR wheels, including the rear tandem axle.
+ const wheels=new THREE.InstancedMesh(busWheelGeometry,busWheelMaterial,6);
+ const wheelPose=new THREE.Object3D();wheelPose.rotation.z=Math.PI/2;
+ let wi=0;
+ for(const side of [-1,1])for(const z of [-2.45,-1.12,2.21]){
+  wheelPose.position.set(side*1.33,.53,z);wheelPose.scale.set(1.08,1.1,1.08);
+  wheelPose.updateMatrix();wheels.setMatrixAt(wi++,wheelPose.matrix);
+ }
+ wheels.instanceMatrix.needsUpdate=true;wheels.computeBoundingSphere();g.add(wheels);
+ // Rear cargo doors, locking bars and reflective hazard chevrons face the player.
+ const doors=new THREE.Mesh(new THREE.PlaneGeometry(2.32,2.23),cargoPaint);
+ doors.rotation.y=Math.PI;doors.position.set(0,2.37,-3.065);g.add(doors);
+ for(const x of [-.53,.53])g.add(cube(.047,1.95,.055,chassis,x,2.36,-3.12));
+ g.add(cube(.035,2.22,.055,chassis,0,2.37,-3.13));
+ g.add(cube(2.45,.19,.18,chassis,0,.91,-3.12));
+ for(const side of [-1,1]){
+  g.add(cube(.31,.18,.07,red,side*.96,1.17,-3.17));
+  g.add(cube(.25,.11,.075,amber,side*.96,1.33,-3.17));
+  g.add(cube(.45,.1,.055,reflector,side*.85,.91,-3.22));
+ }
+ // Front bumper, grille and headlamps: no real-time lights or extra textures.
+ g.add(cube(2.35,.23,.13,chassis,0,1.15,3.12));
+ g.add(cube(1.12,.36,.055,rubber,0,1.52,3.12));
+ for(const side of [-1,1]){
+  g.add(cube(.36,.19,.07,reflector,side*.88,1.66,3.14));
+  g.add(cube(.15,.14,.07,amber,side*1.12,1.63,3.14));
+ }
+ return g;
 }
 // Camera-distance traffic LOD: retain detailed PBR buses/taxis up close, but
 // draw only their shared silhouette, glazing and wheels while far down the road.
