@@ -3271,7 +3271,67 @@ const marketSigns=marketSignStyles.map(([thai,english,bg,fg])=>{
  const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
  return new THREE.MeshBasicMaterial({map:texture,side:THREE.DoubleSide});
 });
-const marketRoofs=[mat(0xb08d5d),mat(0x598a65),mat(0xc06d5c)];
+// Shared weathered fabric roofs for all 32 Chatuchak stalls: one roof mesh
+// per stall, with no new lights, network assets, or per-frame texture updates.
+const jjStallRoofPalettes=[['#cbb68b','#92744f'],['#8fb29a','#5a8273'],['#d6a496','#a9695d']];
+const jjStallRoofMaterials=jjStallRoofPalettes.map(([light,dark],variant)=>{
+ const canvas=document.createElement('canvas');canvas.width=canvas.height=128;
+ const ctx=canvas.getContext('2d');
+ ctx.fillStyle=light;ctx.fillRect(0,0,128,128);
+ for(let x=0;x<128;x+=32){
+  ctx.fillStyle=dark;ctx.fillRect(x,0,16,128);
+  const fold=ctx.createLinearGradient(x,0,x+32,0);
+  fold.addColorStop(0,'rgba(18,24,21,.22)');
+  fold.addColorStop(.45,'rgba(255,250,225,.18)');
+  fold.addColorStop(1,'rgba(18,24,21,.15)');
+  ctx.fillStyle=fold;ctx.fillRect(x,0,32,128);
+  ctx.strokeStyle='rgba(236,227,199,.48)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(x+.5,0);ctx.lineTo(x+.5,128);ctx.stroke();
+ }
+ ctx.strokeStyle='rgba(237,227,205,.55)';ctx.setLineDash([3,4]);
+ for(const y of [6,122]){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(128,y);ctx.stroke();}
+ ctx.setLineDash([]);
+ for(let k=0;k<80;k++){
+  const x=(k*47+variant*13)%128,y=(k*83+variant*17)%128;
+  ctx.fillStyle=k%3===0?'rgba(54,44,35,.12)':'rgba(248,233,207,.13)';
+  ctx.fillRect(x,y,1+k%3,1+k%4);
+ }
+ const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
+ texture.anisotropy=1;
+ return new THREE.MeshStandardMaterial({map:texture,metalness:0,roughness:.94,side:THREE.DoubleSide});
+});
+function makeJjStallRoofGeometry(){
+ const positions=[],uvs=[],indices=[],xs=6,zs=8;
+ const crown=(x,z)=>.12*(1-(x/1.25)**2)-.02*Math.cos(z/1.8*Math.PI);
+ for(let iz=0;iz<=zs;iz++)for(let ix=0;ix<=xs;ix++){
+  const x=-1.25+2.5*ix/xs,z=-1.8+3.6*iz/zs;
+  positions.push(x,crown(x,z),z);uvs.push(ix/xs,iz/zs);
+ }
+ for(let iz=0;iz<zs;iz++)for(let ix=0;ix<xs;ix++){
+  const a=iz*(xs+1)+ix,b=a+1,c=a+xs+1,d=c+1;
+  indices.push(a,c,b,b,c,d);
+ }
+ function hem(a,b,segment){
+  const start=positions.length/3,drop=.11+(segment%2===0?.035:0);
+  positions.push(...a,...b,b[0],b[1]-drop,b[2],a[0],a[1]-drop,a[2]);
+  uvs.push(0,0,1,0,1,1,0,1);
+  indices.push(start,start+1,start+2,start,start+2,start+3);
+ }
+ for(let iz=0;iz<zs;iz++){
+  const z0=-1.8+3.6*iz/zs,z1=-1.8+3.6*(iz+1)/zs;
+  for(const x of [-1.25,1.25])hem([x,crown(x,z0),z0],[x,crown(x,z1),z1],iz);
+ }
+ for(let ix=0;ix<xs;ix++){
+  const x0=-1.25+2.5*ix/xs,x1=-1.25+2.5*(ix+1)/xs;
+  for(const z of [-1.8,1.8])hem([x0,crown(x0,z),z],[x1,crown(x1,z),z],ix);
+ }
+ const geometry=new THREE.BufferGeometry();
+ geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+ geometry.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));
+ geometry.setIndex(indices);geometry.computeVertexNormals();
+ return geometry;
+}
+const jjStallRoofGeometry=makeJjStallRoofGeometry();
 // Chatuchak close-up LOD: shaped, shared PBR merchandise replaces box/sphere
 // placeholders. Only merchandise is culled at distance; roofs, signs, stalls
 // and their collision-free roadside placement remain visible at every range.
@@ -3297,8 +3357,10 @@ const jjVaseGeometry=new THREE.LatheGeometry([
 ],12);
 const jjVaseMaterial=new THREE.MeshStandardMaterial({color:0xd8c5a4,roughness:.67,metalness:.02});
 for(let n=0;n<16;n++)for(const side of [-1,1]){
- const stall=new THREE.Group(),x=side*(4.65+(n%3)*.15),roof=marketRoofs[n%3];
- stall.add(cube(2.5,.22,3.6,roof,x,3.05,0));
+ const stall=new THREE.Group(),x=side*(4.65+(n%3)*.15),roof=jjStallRoofMaterials[n%3];
+ // Keep roof as child[0]: the canal-side stall visibility check reads its X.
+ const stallRoof=new THREE.Mesh(jjStallRoofGeometry,roof);
+ stallRoof.position.set(x,3.05,0);stall.add(stallRoof);
  stall.add(cube(2.15,.16,2.7,mat(0x72513d),x,1.22,0));
  for(const dz of [-1.35,1.35])stall.add(cube(.1,2.9,.1,mat(0xd5c4a4),x,1.55,dz));
  const merchandise=new THREE.Group();
