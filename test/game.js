@@ -3399,13 +3399,19 @@ for(const x of [14,43,72,101]){
 const boatWoodTexture=new THREE.CanvasTexture(boatWoodCanvas);
 boatWoodTexture.colorSpace=THREE.SRGBColorSpace;
 boatWoodTexture.anisotropy=Math.min(2,renderer.capabilities.getMaxAnisotropy());
-const boatWoodMaterial=new THREE.MeshStandardMaterial({map:boatWoodTexture,roughness:.83,metalness:0,side:THREE.DoubleSide});
+const boatWoodMaterial=new THREE.MeshStandardMaterial({map:boatWoodTexture,vertexColors:true,roughness:.83,metalness:0,side:THREE.DoubleSide});
 // One shared hull geometry includes sloped exterior, gunwales, recessed walls and floor.
 function makeMarketBoatHull(){
  const zs=[-1.65,-1.35,-.8,0,.8,1.35,1.65],ws=[.10,.45,.63,.68,.63,.45,.10];
- const positions=[],uvs=[];
- function tri(a,b,c){for(const p of [a,b,c]){positions.push(...p);uvs.push((p[0]+.85)/1.7,(p[2]+1.7)/3.4)}}
- function quad(a,b,c,d){tri(a,b,c);tri(a,c,d)}
+ const positions=[],uvs=[],colors=[];
+ // Vertex colour lets woven bamboo trays share the boat's existing PBR draw call.
+ function tri(a,b,c,tint=[1,1,1]){
+  for(const p of [a,b,c]){
+   positions.push(...p);uvs.push((p[0]+.85)/1.7,(p[2]+1.7)/3.4);
+   colors.push(...tint);
+  }
+ }
+ function quad(a,b,c,d,tint){tri(a,b,c,tint);tri(a,c,d,tint)}
  for(let j=0;j<zs.length-1;j++)for(const side of [-1,1]){
   const v=(k,m,y)=>[side*ws[k]*m,y,zs[k]];
   const a=v(j,1,.31),b=v(j+1,1,.31);
@@ -3416,9 +3422,45 @@ function makeMarketBoatHull(){
   quad(e,g,h,f);
   if(side===1)quad(g,h,[-ws[j+1]*.61,.07,zs[j+1]],[-ws[j]*.61,.07,zs[j]]);
  }
+ // Two shallow, woven bamboo produce trays under the existing six mangoes.
+ // They are baked into the hull BufferGeometry: no new meshes or draw calls.
+ const bamboo=[1.48,1.27,.94],darkWeave=[.93,.74,.51],rim=[1.66,1.43,1.08];
+ function basket(cx){
+  const y0=.165,y1=.365,w0=.175,w1=.235,l0=.72,l1=.85;
+  quad([cx-w0,y0,-l0],[cx+w0,y0,-l0],[cx+w0,y0,l0],[cx-w0,y0,l0],bamboo);
+  for(const side of [-1,1]){
+   const bx=cx+side*w0,tx=cx+side*w1;
+   quad([bx,y0,-l0],[bx,y0,l0],[tx,y1,l1],[tx,y1,-l1],bamboo);
+   // Four horizontal wicker courses with raised, narrow slats.
+   for(const t of [.20,.43,.66,.89]){
+    const y=y0+(y1-y0)*t,w=w0+(w1-w0)*t,l=l0+(l1-l0)*t,x=cx+side*(w+.007);
+    quad([x,y-.009,-l],[x,y-.009,l],[x,y+.009,l],[x,y+.009,-l],darkWeave);
+   }
+   // Cross-weave strips follow the taper rather than floating off the wall.
+   for(let k=0;k<8;k++){
+    const z=-.69+k*.195,shift=k%2?.008:-.008;
+    quad([bx+side*.009,y0,z-.012],[bx+side*.009,y0,z+.012],
+     [tx+side*.009,y1,z+shift+.014],[tx+side*.009,y1,z+shift-.014],rim);
+   }
+   quad([tx+side*.012,y1-.016,-l1],[tx+side*.012,y1-.016,l1],
+    [tx+side*.012,y1+.017,l1],[tx+side*.012,y1+.017,-l1],rim);
+  }
+  for(const end of [-1,1]){
+   const bz=end*l0,tz=end*l1;
+   quad([cx-w0,y0,bz],[cx+w0,y0,bz],[cx+w1,y1,tz],[cx-w1,y1,tz],bamboo);
+   for(const t of [.28,.57,.86]){
+    const y=y0+(y1-y0)*t,w=w0+(w1-w0)*t,z=end*(l0+(l1-l0)*t+.007);
+    quad([cx-w,y-.009,z],[cx+w,y-.009,z],[cx+w,y+.009,z],[cx-w,y+.009,z],darkWeave);
+   }
+   quad([cx-w1,y1-.017,tz+end*.012],[cx+w1,y1-.017,tz+end*.012],
+    [cx+w1,y1+.017,tz+end*.012],[cx-w1,y1+.017,tz+end*.012],rim);
+  }
+ }
+ basket(-.27);basket(.27);
  const geometry=new THREE.BufferGeometry();
  geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
  geometry.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));
+ geometry.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));
  geometry.computeVertexNormals();return geometry;
 }
 const boatHullGeometry=makeMarketBoatHull();
