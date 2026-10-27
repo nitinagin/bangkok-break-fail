@@ -3445,6 +3445,57 @@ const boatWoodMaterial=new THREE.MeshStandardMaterial({map:boatWoodTexture,verte
  canalPierDecks.computeBoundingSphere();
  canalGroup.add(canalPierDecks);
 
+// Weathered bamboo mooring stakes with natural growth nodes on the canal bank.
+// 24 tapered stalks and 72 collars use only TWO instanced PBR draw calls.
+// x=5.59 stays beyond the pier decking and clear of fruit-boat hulls.
+const bambooStakeCount=canalPierCount*3;
+const bambooStakeMaterial=new THREE.MeshStandardMaterial({
+ color:0xb3a36b,roughness:.88,metalness:0
+});
+const bambooNodeMaterial=new THREE.MeshStandardMaterial({
+ color:0x665b3a,roughness:.94,metalness:0
+});
+const bambooStakeMesh=new THREE.InstancedMesh(
+ new THREE.CylinderGeometry(.045,.064,1.5,8,1),bambooStakeMaterial,bambooStakeCount
+);
+const bambooNodeMesh=new THREE.InstancedMesh(
+ new THREE.TorusGeometry(.059,.011,4,8),bambooNodeMaterial,bambooStakeCount*3
+);
+const bambooPose=new THREE.Object3D();
+const bambooTints=[0xb8ad72,0x998b54,0x8c9563,0xc0a97a].map(c=>new THREE.Color(c));
+let bambooStalkIndex=0,bambooCollarIndex=0;
+for(let pier=0;pier<canalPierCount;pier++){
+ const pierZ=-14-pier*23;
+ for(let stake=0;stake<3;stake++){
+  const z=pierZ+(stake-1)*1.32;
+  const lean=((pier*3+stake)%5-2)*.017;
+  const stalkX=5.59;
+  bambooPose.position.set(stalkX,.31,z);
+  bambooPose.rotation.set(0,0,lean);
+  bambooPose.scale.set(1,1,1);
+  bambooPose.updateMatrix();
+  bambooStakeMesh.setMatrixAt(bambooStalkIndex,bambooPose.matrix);
+  bambooStakeMesh.setColorAt(bambooStalkIndex,bambooTints[(pier+stake)%bambooTints.length]);
+  bambooStalkIndex++;
+  for(const y of [-.12,.33,.77]){
+   bambooPose.position.set(stalkX-lean*(y-.31),y,z);
+   bambooPose.rotation.set(Math.PI/2,0,0);
+   bambooPose.scale.set(1,1,1);
+   bambooPose.updateMatrix();
+   bambooNodeMesh.setMatrixAt(bambooCollarIndex++,bambooPose.matrix);
+  }
+ }
+}
+if(bambooStalkIndex!==bambooStakeCount||bambooCollarIndex!==bambooStakeCount*3){
+ throw new Error('Canal bamboo stake instance count mismatch');
+}
+for(const mesh of [bambooStakeMesh,bambooNodeMesh]){
+ mesh.instanceMatrix.needsUpdate=true;
+ mesh.computeBoundingSphere();
+ canalGroup.add(mesh);
+}
+bambooStakeMesh.instanceColor.needsUpdate=true;
+
 // One shared hull geometry includes sloped exterior, gunwales, recessed walls and floor.
 function makeMarketBoatHull(){
  const zs=[-1.65,-1.35,-.8,0,.8,1.35,1.65],ws=[.10,.45,.63,.68,.63,.45,.10];
