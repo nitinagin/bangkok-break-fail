@@ -3604,9 +3604,35 @@ jjShirtOutline.lineTo(.22,-.32);jjShirtOutline.lineTo(.25,.02);
 jjShirtOutline.lineTo(.38,.07);jjShirtOutline.lineTo(.32,.23);
 jjShirtOutline.lineTo(.17,.32);jjShirtOutline.lineTo(.09,.23);
 jjShirtOutline.lineTo(-.09,.23);jjShirtOutline.closePath();
-const jjShirtGeometry=new THREE.ShapeGeometry(jjShirtOutline);
-const jjShirtMaterials=[0x98705c,0x668a77,0x6f7490].map(color=>
- new THREE.MeshStandardMaterial({color,roughness:.96,side:THREE.DoubleSide}));
+// Vintage-wear stalls: one instanced set of thick fabric shirts and one of
+// shaped wire hangers. Shared meshes/materials replace three separate flat
+// shirt draw calls without increasing per-stall draw calls or network assets.
+const jjShirtGeometry=new THREE.ExtrudeGeometry(jjShirtOutline,{
+ depth:.045,bevelEnabled:false,curveSegments:1
+});
+const jjShirtMaterial=new THREE.MeshStandardMaterial({color:0xffffff,roughness:.97,metalness:0});
+const jjShirtColors=[0x98705c,0x668a77,0x6f7490].map(hex=>new THREE.Color(hex));
+const jjRackGeometry=new THREE.CylinderGeometry(.018,.018,2.05,6);
+const jjRackMaterial=new THREE.MeshStandardMaterial({color:0x777f83,metalness:.7,roughness:.58});
+function makeJjWireHangerGeometry(){
+ const positions=[],indices=[],width=.012;
+ const addWire=(points)=>{
+  for(let i=1;i<points.length;i++){
+   const [ax,ay]=points[i-1],[bx,by]=points[i],dx=bx-ax,dy=by-ay;
+   const len=Math.hypot(dx,dy),nx=-dy/len*width,ny=dx/len*width;
+   const base=positions.length/3;
+   positions.push(ax-nx,ay-ny,0,ax+nx,ay+ny,0,bx-nx,by-ny,0,bx+nx,by+ny,0);
+   indices.push(base,base+1,base+2,base+1,base+3,base+2);
+  }
+ };
+ addWire([[-.22,-.09],[0,.05],[.22,-.09],[-.22,-.09]]);
+ addWire([[0,.05],[0,.14],[.045,.19],[.075,.15]]);
+ const geometry=new THREE.BufferGeometry();
+ geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+ geometry.setIndex(indices);geometry.computeVertexNormals();
+ return geometry;
+}
+const jjHangerGeometry=makeJjWireHangerGeometry();
 const jjVaseGeometry=new THREE.LatheGeometry([
  new THREE.Vector2(0,0),new THREE.Vector2(.15,.015),
  new THREE.Vector2(.21,.10),new THREE.Vector2(.18,.26),
@@ -3629,8 +3655,28 @@ for(let n=0;n<16;n++)for(const side of [-1,1]){
    const foliage=new THREE.Mesh(jjFoliageGeometry,jjFoliageMaterial);
    foliage.position.set(px,1.92,pz);foliage.scale.set(.94,1.23,.94);merchandise.add(foliage);
   }else if(n%3===1){
-   const shirt=new THREE.Mesh(jjShirtGeometry,jjShirtMaterials[(n+k)%3]);
-   shirt.position.set(px,1.78,pz);merchandise.add(shirt);
+   // Build once per stall; each shirt and hanger is an instance, not a mesh.
+   if(k===0){
+    const rack=new THREE.Mesh(jjRackGeometry,jjRackMaterial);
+    rack.rotation.x=Math.PI/2;
+    rack.position.set(px,2.44,0);merchandise.add(rack);
+    const shirts=new THREE.InstancedMesh(jjShirtGeometry,jjShirtMaterial,3);
+    const hangers=new THREE.InstancedMesh(jjHangerGeometry,jjRackMaterial,3);
+    const pose=new THREE.Object3D();
+    for(let i=0;i<3;i++){
+     const garmentZ=-.7+i*.7;
+     pose.position.set(px,1.78,garmentZ);pose.updateMatrix();
+     shirts.setMatrixAt(i,pose.matrix);
+     shirts.setColorAt(i,jjShirtColors[(n+i)%jjShirtColors.length]);
+     pose.position.set(px,2.23,garmentZ);pose.updateMatrix();
+     hangers.setMatrixAt(i,pose.matrix);
+    }
+    shirts.instanceMatrix.needsUpdate=true;
+    shirts.instanceColor.needsUpdate=true;
+    hangers.instanceMatrix.needsUpdate=true;
+    shirts.computeBoundingSphere();hangers.computeBoundingSphere();
+    merchandise.add(shirts,hangers);
+   }
   }else{
    const vase=new THREE.Mesh(jjVaseGeometry,jjVaseMaterial);
    vase.position.set(px,1.40,pz);merchandise.add(vase);
