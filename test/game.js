@@ -3672,12 +3672,42 @@ function makeJjWireHangerGeometry(){
  return geometry;
 }
 const jjHangerGeometry=makeJjWireHangerGeometry();
+// JJ ceramic stalls: kiln-fired vase silhouette with a proper hollow rim,
+// subtle shared glazed texture and six instanced pieces per display. One draw
+// call per pottery stall instead of three separate vase meshes.
 const jjVaseGeometry=new THREE.LatheGeometry([
- new THREE.Vector2(0,0),new THREE.Vector2(.15,.015),
- new THREE.Vector2(.21,.10),new THREE.Vector2(.18,.26),
- new THREE.Vector2(.12,.36),new THREE.Vector2(.145,.40)
-],12);
-const jjVaseMaterial=new THREE.MeshStandardMaterial({color:0xd8c5a4,roughness:.67,metalness:.02});
+ new THREE.Vector2(0,0),new THREE.Vector2(.105,0),
+ new THREE.Vector2(.14,.022),new THREE.Vector2(.205,.095),
+ new THREE.Vector2(.195,.19),new THREE.Vector2(.14,.31),
+ new THREE.Vector2(.125,.35),new THREE.Vector2(.158,.37),
+ new THREE.Vector2(.158,.393),new THREE.Vector2(.118,.393),
+ new THREE.Vector2(.109,.355)
+],16);
+const jjCeramicCanvas=document.createElement('canvas');
+jjCeramicCanvas.width=jjCeramicCanvas.height=128;
+const jjCeramicCtx=jjCeramicCanvas.getContext('2d');
+jjCeramicCtx.fillStyle='#e9e5dc';jjCeramicCtx.fillRect(0,0,128,128);
+const jjGlazeFade=jjCeramicCtx.createLinearGradient(0,0,0,128);
+jjGlazeFade.addColorStop(0,'rgba(255,255,255,.22)');
+jjGlazeFade.addColorStop(.5,'rgba(77,66,54,.07)');
+jjGlazeFade.addColorStop(1,'rgba(54,43,34,.18)');
+jjCeramicCtx.fillStyle=jjGlazeFade;jjCeramicCtx.fillRect(0,0,128,128);
+jjCeramicCtx.fillStyle='rgba(39,61,68,.28)';
+jjCeramicCtx.fillRect(0,18,128,4);
+jjCeramicCtx.fillStyle='rgba(255,255,255,.32)';
+jjCeramicCtx.fillRect(0,24,128,2);
+for(let i=0;i<190;i++){
+ const px=(i*59+17)%128,py=(i*41+13)%128;
+ jjCeramicCtx.fillStyle=i%3===0?'rgba(51,47,42,.13)':'rgba(255,255,255,.15)';
+ jjCeramicCtx.fillRect(px,py,1,1);
+}
+const jjCeramicTexture=new THREE.CanvasTexture(jjCeramicCanvas);
+jjCeramicTexture.colorSpace=THREE.SRGBColorSpace;
+jjCeramicTexture.anisotropy=1;
+const jjVaseMaterial=new THREE.MeshStandardMaterial({
+ color:0xffffff,map:jjCeramicTexture,roughness:.34,metalness:0
+});
+const jjCeramicColors=[0x91b6b8,0xcfa781,0xa4a0bf,0x88ad99,0xb5c3c3,0xcab99b].map(c=>new THREE.Color(c));
 for(let n=0;n<16;n++)for(const side of [-1,1]){
  const stall=new THREE.Group(),x=side*(4.65+(n%3)*.15),roof=jjStallRoofMaterials[n%3];
  // Keep roof as child[0]: the canal-side stall visibility check reads its X.
@@ -3719,9 +3749,24 @@ for(let n=0;n<16;n++)for(const side of [-1,1]){
     shirts.computeBoundingSphere();hangers.computeBoundingSphere();
     merchandise.add(shirts,hangers);
    }
-  }else{
-   const vase=new THREE.Mesh(jjVaseGeometry,jjVaseMaterial);
-   vase.position.set(px,1.40,pz);merchandise.add(vase);
+  }else if(k===0){
+   // Two compact rows of glazed pottery remain on the roadside counter.
+   // A single instanced draw call keeps dense JJ craft stalls mobile-friendly.
+   const vases=new THREE.InstancedMesh(jjVaseGeometry,jjVaseMaterial,6);
+   const pose=new THREE.Object3D();
+   for(let i=0;i<6;i++){
+    pose.position.set(px+(i<3?-.24:.24),1.34,-.72+(i%3)*.72);
+    const size=.83+((n+i)%3)*.12;
+    pose.scale.set(size,size*(.87+(i%2)*.14),size);
+    pose.rotation.y=(n*7+i)*.51;
+    pose.updateMatrix();
+    vases.setMatrixAt(i,pose.matrix);
+    vases.setColorAt(i,jjCeramicColors[(n+i)%jjCeramicColors.length]);
+   }
+   vases.instanceMatrix.needsUpdate=true;
+   vases.instanceColor.needsUpdate=true;
+   vases.computeBoundingSphere();
+   merchandise.add(vases);
   }
  }
  stall.add(merchandise);stall.userData.merchandise=merchandise;
