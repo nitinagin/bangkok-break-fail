@@ -1175,6 +1175,80 @@ function addRamaLatticeCrane(g,side){
  g.add(lattice);
  g.add(cube(.045,5.05,.045,siteSteel,x,13.9,tip+1.9));
 }
+// Static roadside tracked excavator: articulated boom, hydraulic rams, cab glass,
+// rubber tracks and a scooped bucket. Five shared-material draw calls per work zone;
+// no animation, external assets, dynamic lights or road-lane collision geometry.
+const ramaExcavatorUnit=new THREE.BoxGeometry(1,1,1);
+const ramaExcavatorTrackGeo=new THREE.CapsuleGeometry(.45,2.05,4,8);
+const ramaExcavatorPaint=new THREE.MeshStandardMaterial({color:0xc99a2d,metalness:.32,roughness:.58});
+const ramaExcavatorRubber=new THREE.MeshStandardMaterial({color:0x282b2b,metalness:.18,roughness:.91});
+const ramaExcavatorGlass=new THREE.MeshStandardMaterial({color:0x253b43,metalness:.18,roughness:.22});
+const ramaExcavatorSteel=new THREE.MeshStandardMaterial({color:0x555a5b,metalness:.66,roughness:.72});
+const ramaExcavatorBucketProfile=new THREE.Shape();
+ramaExcavatorBucketProfile.moveTo(-.65,.36);
+ramaExcavatorBucketProfile.lineTo(.48,.29);
+ramaExcavatorBucketProfile.lineTo(.68,-.28);
+ramaExcavatorBucketProfile.quadraticCurveTo(.08,-.68,-.58,-.42);
+ramaExcavatorBucketProfile.closePath();
+const ramaExcavatorBucketGeo=new THREE.ExtrudeGeometry(
+ ramaExcavatorBucketProfile,{depth:1.25,steps:1,bevelEnabled:false}
+);
+ramaExcavatorBucketGeo.translate(0,0,-.625);
+ramaExcavatorBucketGeo.rotateY(Math.PI/2);
+const ramaExcavatorUp=new THREE.Vector3(0,1,0);
+function addRamaExcavator(g,side){
+ const x=side*10.9,z=15.2,pose=new THREE.Object3D();
+ const painted=[],steel=[],glass=[];
+ function box(list,px,py,pz,w,h,d){
+  pose.position.set(px,py,pz);pose.quaternion.identity();pose.scale.set(w,h,d);
+  pose.updateMatrix();list.push(pose.matrix.clone());
+ }
+ function beam(list,ax,ay,az,bx,by,bz,width,depth){
+  const dx=bx-ax,dy=by-ay,dz=bz-az,length=Math.hypot(dx,dy,dz);
+  if(length<.001)throw Error('Invalid excavator hydraulic/boom segment');
+  pose.position.set((ax+bx)/2,(ay+by)/2,(az+bz)/2);
+  pose.quaternion.setFromUnitVectors(ramaExcavatorUp,new THREE.Vector3(dx/length,dy/length,dz/length));
+  pose.scale.set(width,length,depth);pose.updateMatrix();list.push(pose.matrix.clone());
+ }
+ function batch(geometry,material,parts){
+  const mesh=new THREE.InstancedMesh(geometry,material,parts.length);
+  for(let i=0;i<parts.length;i++)mesh.setMatrixAt(i,parts[i]);
+  mesh.instanceMatrix.needsUpdate=true;mesh.computeBoundingSphere();g.add(mesh);
+ }
+ // Rounded track loops are parallel to the work-zone road, not crossing it.
+ const tracks=new THREE.InstancedMesh(ramaExcavatorTrackGeo,ramaExcavatorRubber,2);
+ for(let i=0;i<2;i++){
+  pose.position.set(x+(i? .73:-.73),.55,z);
+  pose.rotation.set(Math.PI/2,0,0);pose.scale.set(1,1,1);pose.updateMatrix();
+  tracks.setMatrixAt(i,pose.matrix);
+ }
+ tracks.instanceMatrix.needsUpdate=true;tracks.computeBoundingSphere();g.add(tracks);
+ // Painted turntable, rear counterweight, offset operator cab and roof.
+ box(painted,x,1.2,z,1.88,.5,2.25);
+ box(painted,x,1.67,z+.8,1.95,.65,.9);
+ box(painted,x-side*.42,2.15,z+.25,.96,1.05,1.25);
+ box(painted,x-side*.42,2.82,z+.25,1.1,.13,1.38);
+ box(painted,x+side*.37,1.83,z-.3,.75,.52,1.0);
+ // Tinted glazing on the traffic-facing side and front of the cab.
+ box(glass,x-side*.93,2.34,z+.25,.045,.67,1.05);
+ box(glass,x-side*.42,2.34,z-.39,.89,.67,.045);
+ // Main boom and dipper stick form an unmistakable raised excavator profile.
+ beam(painted,x,2.05,z-.68,x,5.0,z-2.72,.37,.43);
+ beam(painted,x,5.0,z-2.72,x,1.85,z-5.28,.27,.31);
+ // Silver hydraulic rams, pinned boom joints and dark steel track grousers.
+ beam(steel,x+side*.29,2.15,z-.8,x+side*.29,4.18,z-2.18,.095,.095);
+ beam(steel,x+side*.22,4.57,z-2.82,x+side*.22,2.98,z-4.31,.075,.075);
+ for(let i=0;i<12;i++)for(const dx of [-.73,.73])
+  box(steel,x+dx,.94,z-1.27+i*.23,.51,.075,.10);
+ for(let i=0;i<4;i++)
+  box(steel,x-.47+i*.31,1.03,z-6.03,.105,.19,.38);
+ batch(ramaExcavatorUnit,ramaExcavatorPaint,painted);
+ batch(ramaExcavatorUnit,ramaExcavatorGlass,glass);
+ batch(ramaExcavatorUnit,ramaExcavatorSteel,steel);
+ const bucket=new THREE.Mesh(ramaExcavatorBucketGeo,ramaExcavatorSteel);
+ bucket.position.set(x,1.25,z-5.4);g.add(bucket);
+ // Nearest body edge remains beyond x=+/-9.9, behind barriers at +/-6.05.
+}
 function ramaWorkZone(side,z){
  const g=new THREE.Group();
  // Fourteen weathered precast barriers and inward-facing hazard chevrons.
@@ -1221,6 +1295,8 @@ function ramaWorkZone(side,z){
  // Shared-geometry lattice crane: open tower, triangulated jib and counter-jib.
  // It stays at x=+/-14, behind the x=+/-6.05 barriers; one yellow draw call.
  addRamaLatticeCrane(g,side);
+ // Parked tracked excavator and raised boom remain behind roadside barriers.
+ addRamaExcavator(g,side);
  // Weathered green construction safety mesh encloses the unfinished pier.
  // Perforated alpha-test fabric (no alpha blending) is baked once and instanced;
  // all scaffolding remains beyond x=+/-8.7, well outside the drivable lanes.
