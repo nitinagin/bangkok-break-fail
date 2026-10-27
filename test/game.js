@@ -3610,7 +3610,46 @@ jjShirtOutline.lineTo(-.09,.23);jjShirtOutline.closePath();
 const jjShirtGeometry=new THREE.ExtrudeGeometry(jjShirtOutline,{
  depth:.045,bevelEnabled:false,curveSegments:1
 });
-const jjShirtMaterial=new THREE.MeshStandardMaterial({color:0xffffff,roughness:.97,metalness:0});
+// Front/back UVs follow the garment silhouette, so one tiny baked fabric
+// texture adds seams, drape and a faded chest print without extra meshes.
+const jjShirtPositions=jjShirtGeometry.getAttribute('position');
+const jjShirtUvs=jjShirtGeometry.getAttribute('uv');
+for(let i=0;i<jjShirtPositions.count;i++){
+ jjShirtUvs.setXY(i,(jjShirtPositions.getX(i)+.38)/.76,(jjShirtPositions.getY(i)+.32)/.64);
+}
+jjShirtUvs.needsUpdate=true;
+const jjShirtCanvas=document.createElement('canvas');
+jjShirtCanvas.width=jjShirtCanvas.height=128;
+const jjShirtCtx=jjShirtCanvas.getContext('2d');
+jjShirtCtx.fillStyle='#e9e5df';jjShirtCtx.fillRect(0,0,128,128);
+const jjFabricFold=jjShirtCtx.createLinearGradient(0,0,128,0);
+jjFabricFold.addColorStop(0,'rgba(31,26,24,.26)');
+jjFabricFold.addColorStop(.22,'rgba(255,255,255,.16)');
+jjFabricFold.addColorStop(.48,'rgba(39,32,29,.09)');
+jjFabricFold.addColorStop(.76,'rgba(255,255,255,.12)');
+jjFabricFold.addColorStop(1,'rgba(31,26,24,.24)');
+jjShirtCtx.fillStyle=jjFabricFold;jjShirtCtx.fillRect(0,0,128,128);
+for(let i=0;i<256;i++){
+ const x=(i*53+11)%128,y=(i*71+29)%128;
+ jjShirtCtx.fillStyle=i%3?'rgba(255,255,255,.10)':'rgba(45,40,35,.055)';
+ jjShirtCtx.fillRect(x,y,1,2);
+}
+jjShirtCtx.strokeStyle='rgba(62,53,48,.29)';jjShirtCtx.lineWidth=1.2;
+jjShirtCtx.beginPath();jjShirtCtx.moveTo(48,17);jjShirtCtx.lineTo(64,33);
+jjShirtCtx.lineTo(80,17);jjShirtCtx.stroke();
+jjShirtCtx.setLineDash([3,3]);jjShirtCtx.strokeStyle='rgba(65,56,51,.25)';
+jjShirtCtx.beginPath();jjShirtCtx.moveTo(26,118);jjShirtCtx.lineTo(102,118);jjShirtCtx.stroke();
+jjShirtCtx.setLineDash([]);
+jjShirtCtx.fillStyle='rgba(59,52,47,.16)';
+jjShirtCtx.fillRect(53,52,22,14);
+jjShirtCtx.fillStyle='rgba(243,238,225,.35)';
+jjShirtCtx.fillRect(56,55,16,8);
+const jjShirtTexture=new THREE.CanvasTexture(jjShirtCanvas);
+jjShirtTexture.colorSpace=THREE.SRGBColorSpace;
+jjShirtTexture.anisotropy=1;
+const jjShirtMaterial=new THREE.MeshStandardMaterial({
+ color:0xffffff,map:jjShirtTexture,roughness:.97,metalness:0
+});
 const jjShirtColors=[0x98705c,0x668a77,0x6f7490].map(hex=>new THREE.Color(hex));
 const jjRackGeometry=new THREE.CylinderGeometry(.018,.018,2.05,6);
 const jjRackMaterial=new THREE.MeshStandardMaterial({color:0x777f83,metalness:.7,roughness:.58});
@@ -3663,6 +3702,9 @@ for(let n=0;n<16;n++)for(const side of [-1,1]){
     const shirts=new THREE.InstancedMesh(jjShirtGeometry,jjShirtMaterial,3);
     const hangers=new THREE.InstancedMesh(jjHangerGeometry,jjRackMaterial,3);
     const pose=new THREE.Object3D();
+    // Face the road: XY shirts previously appeared edge-on from the player's
+    // central lane. Rotation keeps every garment within the roadside stall.
+    pose.rotation.y=side>0?-Math.PI/2:Math.PI/2;
     for(let i=0;i<3;i++){
      const garmentZ=-.7+i*.7;
      pose.position.set(px,1.78,garmentZ);pose.updateMatrix();
