@@ -3426,7 +3426,39 @@ const boatHullGeometry=makeMarketBoatHull();
 const canalBoats=[];
 // Shared translucent wake material adds moving V-trails without heavy particle effects.
 const boatWakeMat=new THREE.MeshBasicMaterial({color:0xc8fff0,transparent:true,opacity:.63,depthWrite:false});
-const fruitColors=[mat(0xe8b82f),mat(0xe65b37),mat(0x78b34c)];
+// Floating-market fruit boats: a shared tapered mango mesh and tiny stem mesh
+// replace six separate spherical draw calls per boat. Per-instance colours
+// suggest ripe mangoes and green produce without extra texture downloads.
+const boatMangoGeometry=new THREE.SphereGeometry(.18,12,9);
+const mangoPositions=boatMangoGeometry.getAttribute('position');
+for(let v=0;v<mangoPositions.count;v++){
+ const y=mangoPositions.getY(v),height=y/.18;
+ mangoPositions.setXYZ(v,
+  mangoPositions.getX(v)*(1-.17*height)+.024*height*height,
+  y*1.18,
+  mangoPositions.getZ(v)*.88);
+}
+mangoPositions.needsUpdate=true;
+boatMangoGeometry.computeVertexNormals();
+const boatMangoCanvas=document.createElement('canvas');
+boatMangoCanvas.width=boatMangoCanvas.height=64;
+const boatMangoCtx=boatMangoCanvas.getContext('2d');
+boatMangoCtx.fillStyle='#f2f0dc';boatMangoCtx.fillRect(0,0,64,64);
+for(let p=0;p<140;p++){
+ const px=(p*37+11)%64,py=(p*53+7)%64;
+ boatMangoCtx.fillStyle=p%3===0?'rgba(100,82,47,.13)':'rgba(255,255,255,.17)';
+ boatMangoCtx.fillRect(px,py,1+(p%2),1);
+}
+const boatMangoTexture=new THREE.CanvasTexture(boatMangoCanvas);
+boatMangoTexture.colorSpace=THREE.SRGBColorSpace;
+const boatMangoMaterial=new THREE.MeshStandardMaterial({
+ map:boatMangoTexture,roughness:.82,metalness:0
+});
+const boatMangoColors=[0xe8b82f,0xe65b37,0x78b34c].map(c=>new THREE.Color(c));
+const boatMangoStemGeometry=new THREE.CylinderGeometry(.011,.015,.085,5);
+const boatMangoStemMaterial=new THREE.MeshStandardMaterial({
+ color:0x59472e,roughness:.94,metalness:0
+});
 // Shared curved fabric canopy with scalloped hem: one draw per boat instead of six.
 // Vertex-colored stripes avoid texture downloads and keep the mobile budget small.
 function makeBoatCanopyGeometry(){
@@ -3458,7 +3490,28 @@ const boatCanopyMaterial=new THREE.MeshStandardMaterial({vertexColors:true,rough
 for(let i=0;i<10;i++){
  const boat=new THREE.Group();
  boat.add(new THREE.Mesh(boatHullGeometry,boatWoodMaterial));
- for(let j=0;j<6;j++)boat.add(ball(.18,fruitColors[(i+j)%3],(j%2?1:-1)*.27,.45,(Math.floor(j/2)-1)*.57));
+ // One instanced mango draw and one instanced stem draw per boat:
+ // twelve detailed pieces now cost two calls instead of six spherical calls.
+ const mangoes=new THREE.InstancedMesh(boatMangoGeometry,boatMangoMaterial,6);
+ const stems=new THREE.InstancedMesh(boatMangoStemGeometry,boatMangoStemMaterial,6);
+ const fruitPose=new THREE.Object3D();
+ for(let j=0;j<6;j++){
+  const fx=(j%2?1:-1)*.27,fz=(Math.floor(j/2)-1)*.57;
+  fruitPose.position.set(fx,.46,fz);
+  fruitPose.rotation.set(0,(i*3+j)*.61,(j%2?1:-1)*.09);
+  fruitPose.scale.setScalar(.9+(j%3)*.065);
+  fruitPose.updateMatrix();mangoes.setMatrixAt(j,fruitPose.matrix);
+  mangoes.setColorAt(j,boatMangoColors[(i+j)%boatMangoColors.length]);
+  fruitPose.position.set(fx+.024,.687,fz);
+  fruitPose.rotation.set(0,0,(j%2?1:-1)*.15);
+  fruitPose.scale.set(1,1,1);
+  fruitPose.updateMatrix();stems.setMatrixAt(j,fruitPose.matrix);
+ }
+ mangoes.instanceMatrix.needsUpdate=true;
+ mangoes.instanceColor.needsUpdate=true;
+ stems.instanceMatrix.needsUpdate=true;
+ mangoes.computeBoundingSphere();stems.computeBoundingSphere();
+ boat.add(mangoes,stems);
  boat.add(cube(.055,1.65,.055,canalEdge,0,1.17,0));
  const parasol=new THREE.Mesh(boatCanopyGeometry,boatCanopyMaterial);
  parasol.rotation.y=i*Math.PI/6;parasol.position.y=2.06;boat.add(parasol);
