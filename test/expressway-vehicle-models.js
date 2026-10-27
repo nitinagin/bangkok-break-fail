@@ -37,6 +37,41 @@ function makeBusDestination(THREE){
  const map=new THREE.CanvasTexture(canvas);map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=2;
  return new THREE.MeshBasicMaterial({map,toneMapped:false});
 }
+// Four side windows are baked into one weathered PBR atlas per expressway bus.
+// Two planes replace eight separate glazing boxes: six fewer draw calls per bus.
+function makeBusSideWindows(THREE){
+ const canvas=document.createElement('canvas');canvas.width=512;canvas.height=128;
+ const ctx=canvas.getContext('2d');
+ ctx.fillStyle='#d8d1c4';ctx.fillRect(0,0,512,128);
+ for(let i=0;i<4;i++){
+  const x=i*128,glaze=ctx.createLinearGradient(x+7,9,x+119,115);
+  glaze.addColorStop(0,'#627c87');glaze.addColorStop(.45,'#2b4350');glaze.addColorStop(1,'#101f2a');
+  // Painted window pillars and inset rubber seals are part of the atlas.
+  ctx.fillStyle='#313a40';ctx.fillRect(x+3,3,122,122);
+  ctx.fillStyle=glaze;ctx.fillRect(x+10,10,108,108);
+  // Low-contrast seats and heads give the glazing depth without geometry.
+  const cx=x+42+(i%2)*37;
+  ctx.fillStyle='rgba(12,20,26,.52)';
+  ctx.beginPath();ctx.ellipse(cx,80,14,17,0,0,Math.PI*2);ctx.fill();
+  ctx.fillRect(cx-19,91,38,26);
+  ctx.fillStyle='rgba(211,230,233,.16)';
+  ctx.beginPath();ctx.moveTo(x+20,12);ctx.lineTo(x+43,12);
+  ctx.lineTo(x+22,114);ctx.lineTo(x+12,114);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='rgba(217,229,230,.12)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(x+93,13);ctx.lineTo(x+67,112);ctx.stroke();
+  // Weathered lower sill, drip marks and fine rubber trim.
+  ctx.fillStyle='rgba(173,156,128,.16)';ctx.fillRect(x+10,111,108,7);
+  for(let j=0;j<9;j++){
+   const px=x+14+(j*37+i*11)%100,py=14+(j*23+i*7)%91;
+   ctx.fillStyle='rgba(197,208,208,.10)';ctx.fillRect(px,py,1,4+j%7);
+  }
+ }
+ const map=new THREE.CanvasTexture(canvas);
+ map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=2;
+ return new THREE.MeshStandardMaterial({
+  map,metalness:.12,roughness:.36,side:THREE.DoubleSide
+ });
+}
 export function makeExpresswayVehicle(THREE,type='sportsCar'){
  const isBus=type==='bus',group=new THREE.Group(),w=isBus?2.05:1.8,length=isBus?4.45:3.55;
  const paint=isBus?new THREE.MeshStandardMaterial({color:0xf0e6d4,metalness:.15,roughness:.65}):new THREE.MeshPhysicalMaterial({color:0xb12438,metalness:.62,roughness:.26,clearcoat:.75,clearcoatRoughness:.22});
@@ -57,7 +92,15 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   box(0,1.07,0,2.07,.25,4.4,stripe);
   box(0,2.16,2.25,1.8,.83,.05,busGlazing);
   box(0,2.7,2.29,1.48,.23,.025,destination);
-  for(const side of [-1,1])for(let n=0;n<4;n++)box(side*1.05,2.17,-1.44+n*.96,.05,.65,.76,busGlazing);
+  // Shared, UV-baked window strip follows the bus flank at the original height.
+  const sideGlazing=makeBusSideWindows(THREE);
+  const sideWindowGeometry=new THREE.PlaneGeometry(3.82,.65);
+  for(const side of [-1,1]){
+   const pane=new THREE.Mesh(sideWindowGeometry,sideGlazing);
+   pane.rotation.y=side*Math.PI/2;
+   pane.position.set(side*1.082,2.17,0);
+   group.add(pane);
+  }
  }else{
   // Dark transparent glazing reveals a seated driver instead of an empty car.
   const windshield=new THREE.MeshStandardMaterial({color:0x244451,metalness:.05,roughness:.16,transparent:true,opacity:.34,depthWrite:false,side:THREE.DoubleSide});
