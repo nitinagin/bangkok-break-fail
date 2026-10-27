@@ -3035,15 +3035,42 @@ const boatHullGeometry=makeMarketBoatHull();
 const canalBoats=[];
 // Shared translucent wake material adds moving V-trails without heavy particle effects.
 const boatWakeMat=new THREE.MeshBasicMaterial({color:0xc8fff0,transparent:true,opacity:.63,depthWrite:false});
-const fruitColors=[mat(0xe8b82f),mat(0xe65b37),mat(0x78b34c)],umbrellaColors=[mat(0xffd45c),mat(0xf26e83),mat(0x5bc6bb)];
+const fruitColors=[mat(0xe8b82f),mat(0xe65b37),mat(0x78b34c)];
+// Shared curved fabric canopy with scalloped hem: one draw per boat instead of six.
+// Vertex-colored stripes avoid texture downloads and keep the mobile budget small.
+function makeBoatCanopyGeometry(){
+ const positions=[],colors=[],segments=12,radii=[0,.53,.94],heights=[.38,.22,-.04];
+ const palette=[0xe8bc62,0xd46753,0x3c9185].map(c=>new THREE.Color(c));
+ function point(sector,ring){
+  const angle=sector*Math.PI*2/segments;
+  const scallop=ring===2?(sector%2===0?.018:-.018):0;
+  return [Math.cos(angle)*radii[ring],heights[ring]+scallop,Math.sin(angle)*radii[ring]];
+ }
+ function triangle(a,b,c,color){
+  for(const vertex of [a,b,c]){positions.push(...vertex);colors.push(color.r,color.g,color.b)}
+ }
+ for(let sector=0;sector<segments;sector++){
+  const color=palette[Math.floor(sector/2)%palette.length];
+  const center=point(sector,0),innerA=point(sector,1),innerB=point(sector+1,1);
+  const edgeA=point(sector,2),edgeB=point(sector+1,2);
+  triangle(center,innerB,innerA,color);
+  triangle(innerA,innerB,edgeB,color);
+  triangle(innerA,edgeB,edgeA,color);
+ }
+ const geometry=new THREE.BufferGeometry();
+ geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+ geometry.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));
+ geometry.computeVertexNormals();return geometry;
+}
+const boatCanopyGeometry=makeBoatCanopyGeometry();
+const boatCanopyMaterial=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.94,metalness:0,side:THREE.DoubleSide});
 for(let i=0;i<10;i++){
  const boat=new THREE.Group();
  boat.add(new THREE.Mesh(boatHullGeometry,boatWoodMaterial));
  for(let j=0;j<6;j++)boat.add(ball(.18,fruitColors[(i+j)%3],(j%2?1:-1)*.27,.45,(Math.floor(j/2)-1)*.57));
  boat.add(cube(.055,1.65,.055,canalEdge,0,1.17,0));
- const parasol=new THREE.Group();
- for(let k=0;k<6;k++){const panel=new THREE.Mesh(new THREE.ConeGeometry(.87,.44,3,1),umbrellaColors[(i+k)%3]);panel.rotation.y=k*Math.PI/3;panel.position.y=0;panel.scale.set(.68,1,.68);parasol.add(panel);}
- parasol.position.y=2.06;boat.add(parasol);
+ const parasol=new THREE.Mesh(boatCanopyGeometry,boatCanopyMaterial);
+ parasol.rotation.y=i*Math.PI/6;parasol.position.y=2.06;boat.add(parasol);
  boat.position.set(6.5+(i%3)*1.2,-.02,-12-i*19);
  const wakes=[];
  for(const side of [-1,1]){const wake=cube(.065,.012,1.55,boatWakeMat,side*.49,-.105,-1.95);wake.rotation.y=side*.29;boat.add(wake);wakes.push(wake);}
