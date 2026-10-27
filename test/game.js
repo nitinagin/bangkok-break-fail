@@ -3406,14 +3406,69 @@ function makeFruitPushcart(){const g=new THREE.Group();
  g.add(cube(1.45,.08,.08,cartMetal,0,1.62,.44));
  for(let i=0;i<12;i++){const x=((i%4)-1.5)*.32,z=(Math.floor(i/4)-1)*.29;g.add(ball(.15,cartFruits[(i+Math.floor(i/4))%4],x,1.14,z));}
  return g;}
-const dogFur=mat(0xa46c38),dogEar=mat(0x583b2c),policeBrown=mat(0x765642),policeVest=mat(0xc9db58);
-function makeMarketDog(){const g=new THREE.Group(),legs=[];
- g.add(cube(.65,.5,1,dogFur,0,.56,0));g.add(ball(.36,dogFur,0,.83,-.48));
- for(const side of [-1,1]){g.add(ball(.19,dogEar,side*.22,1.09,-.53));
-  for(const dz of [-.3,.3]){const leg=cube(.15,.44,.16,dogFur,side*.25,.25,dz);g.add(leg);legs.push(leg);}}
- g.add(ball(.17,dogEar,0,.7,-.82));
- const tail=cube(.13,.13,.48,dogFur,0,.75,.68);g.add(tail);
- g.userData.runningLegs=legs;g.userData.runningTail=tail;return g;}
+// Shared PBR coat and low-poly anatomical geometry for canal-side soi dogs.
+// These replace the rectangular toy-block body, ears and legs without changing
+// the existing dog charge, collision radius, steering or animation interfaces.
+const dogCoatCanvas=document.createElement('canvas');
+dogCoatCanvas.width=dogCoatCanvas.height=128;
+const dogCoatCtx=dogCoatCanvas.getContext('2d');
+dogCoatCtx.fillStyle='#b9a58d';dogCoatCtx.fillRect(0,0,128,128);
+for(let i=0;i<440;i++){
+ const px=(i*73+Math.floor(i/17)*19)%128,py=(i*41+Math.floor(i/13)*31)%128;
+ dogCoatCtx.fillStyle=i%3===0?'rgba(59,41,28,.15)':'rgba(248,226,189,.13)';
+ dogCoatCtx.fillRect(px,py,1+i%2,1);
+}
+const dogCoatTexture=new THREE.CanvasTexture(dogCoatCanvas);
+dogCoatTexture.colorSpace=THREE.SRGBColorSpace;
+dogCoatTexture.anisotropy=2;
+const dogFur=new THREE.MeshStandardMaterial({map:dogCoatTexture,color:0xe0c3a0,roughness:.94,metalness:0});
+const dogEar=new THREE.MeshStandardMaterial({color:0x604734,roughness:.96});
+const dogNose=new THREE.MeshStandardMaterial({color:0x25211f,roughness:.72});
+const dogOvalGeometry=new THREE.SphereGeometry(1,12,9);
+const dogEarGeometry=new THREE.ConeGeometry(.12,.29,7);
+const dogLegGeometry=new THREE.CapsuleGeometry(.09,.25,3,7);
+const dogTailGeometry=new THREE.CylinderGeometry(.055,.09,.38,7);
+const policeBrown=mat(0x765642),policeVest=mat(0xc9db58);
+function makeMarketDog(){
+ const g=new THREE.Group(),legs=[];
+ const oval=(material,x,y,z,sx,sy,sz)=>{
+  const mesh=new THREE.Mesh(dogOvalGeometry,material);
+  mesh.position.set(x,y,z);mesh.scale.set(sx,sy,sz);g.add(mesh);return mesh;
+ };
+ // A low-slung street-dog torso, forward neck, defined muzzle and black nose.
+ oval(dogFur,0,.68,0,.37,.29,.57);
+ oval(dogFur,0,.87,-.48,.3,.29,.32);
+ oval(dogFur,0,.75,-.79,.19,.14,.24);
+ oval(dogNose,0,.79,-1.005,.083,.062,.066);
+ // Both ears and eyes are instanced, so they cost two draws, not four.
+ const ears=new THREE.InstancedMesh(dogEarGeometry,dogEar,2);
+ const eyes=new THREE.InstancedMesh(dogOvalGeometry,dogNose,2);
+ const pose=new THREE.Object3D();
+ for(let i=0;i<2;i++){
+  const side=i===0?-1:1;
+  pose.position.set(side*.225,1.16,-.58);
+  pose.rotation.set(-.14,0,side*.19);
+  pose.scale.set(1,1,1);pose.updateMatrix();ears.setMatrixAt(i,pose.matrix);
+  pose.position.set(side*.185,.955,-.756);
+  pose.rotation.set(0,0,0);pose.scale.set(.054,.059,.043);
+  pose.updateMatrix();eyes.setMatrixAt(i,pose.matrix);
+ }
+ ears.instanceMatrix.needsUpdate=true;eyes.instanceMatrix.needsUpdate=true;
+ ears.computeBoundingSphere();eyes.computeBoundingSphere();
+ g.add(ears,eyes);
+ // Animate shoulder/hip pivots rather than rotating each entire leg at its centre.
+ for(const side of [-1,1])for(const z of [-.35,.36]){
+  const pivot=new THREE.Group();pivot.position.set(side*.25,.56,z);
+  const limb=new THREE.Mesh(dogLegGeometry,dogFur);
+  limb.position.y=-.25;pivot.add(limb);g.add(pivot);legs.push(pivot);
+ }
+ const tail=new THREE.Group();tail.position.set(0,.76,.53);
+ const tailMesh=new THREE.Mesh(dogTailGeometry,dogFur);
+ tailMesh.rotation.x=1.16;tailMesh.position.set(0,.08,.18);
+ tail.add(tailMesh);g.add(tail);
+ g.userData.runningLegs=legs;g.userData.runningTail=tail;
+ return g;
+}
 function makeMarketPolice(){const g=makeMarketWalker(1);g.children[1].material=policeBrown;g.add(cube(.66,.28,.35,policeVest,0,1.47,-.02));g.add(cube(.6,.12,.44,policeBrown,0,2.09,0));return g;}
 let marketPedestrianIndex=0;
 // Expressway hazards use a single lane per wave, preserving a clear dodge route.
