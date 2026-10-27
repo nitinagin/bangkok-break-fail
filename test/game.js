@@ -3689,13 +3689,34 @@ function makeMarketTentRoofGeometry(){
  return geometry;
 }
 const tentRoofGeometry=makeMarketTentRoofGeometry();
-const tentPoleGeometry=new THREE.BoxGeometry(.1,5,.1);
-const tentPoleMaterial=mat(0x9a8d79);
+// Galvanized tubular JJ-market tent frames: four upright poles and four
+// eaves rails per canopy. One PBR instanced draw call replaces four box poles;
+// all horizontal rails are above the tuk-tuk's driving clearance.
+const tentFrameGeometry=new THREE.CylinderGeometry(.052,.052,1,8);
+const tentFrameMaterial=new THREE.MeshStandardMaterial({color:0x777e7c,metalness:.64,roughness:.72});
+const tentFrameUp=new THREE.Vector3(0,1,0);
 for(let n=0;n<16;n++){
  const tent=new THREE.Group();
- // Striped awnings shade the passage without creating extra draw calls per roof.
  const canopy=new THREE.Mesh(tentRoofGeometry,tentColors[n%3]);canopy.position.set(0,5.15,0);tent.add(canopy);
- for(const side of [-1,1])for(const dz of [-4.7,4.7]){const pole=new THREE.Mesh(tentPoleGeometry,tentPoleMaterial);pole.position.set(side*4.7,2.55,dz);tent.add(pole);}
+ const frame=new THREE.InstancedMesh(tentFrameGeometry,tentFrameMaterial,8);
+ const framePose=new THREE.Object3D();
+ let frameIndex=0;
+ function frameTube(ax,ay,az,bx,by,bz){
+  const delta=new THREE.Vector3(bx-ax,by-ay,bz-az),length=delta.length();
+  if(length<.001)throw Error('Invalid JJ canopy frame tube');
+  framePose.position.set((ax+bx)*.5,(ay+by)*.5,(az+bz)*.5);
+  framePose.quaternion.setFromUnitVectors(tentFrameUp,delta.multiplyScalar(1/length));
+  framePose.scale.set(1,length,1);framePose.updateMatrix();
+  frame.setMatrixAt(frameIndex++,framePose.matrix);
+ }
+ for(const side of [-1,1])for(const dz of [-4.7,4.7])
+  frameTube(side*4.7,.05,dz,side*4.7,5.02,dz);
+ // Roof perimeter bracing follows the canvas eaves, clear of the road below.
+ for(const dz of [-4.7,4.7])frameTube(-4.7,5.02,dz,4.7,5.02,dz);
+ for(const side of [-1,1])frameTube(side*4.7,5.02,-4.7,side*4.7,5.02,4.7);
+ if(frameIndex!==8)throw Error('JJ canopy frame instance count mismatch');
+ frame.instanceMatrix.needsUpdate=true;frame.computeBoundingSphere();
+ tent.add(frame);
  tent.position.z=-12-n*12;tent.userData.startZ=tent.position.z;tent.visible=false;scene.add(tent);marketCanopies.push(tent);
  const bump=cube(2.1,.045,1.4,mat(n%2?0x827d72:0xaaa397),n%2?-1.5:1.4,.12,-15-n*11);
  bump.userData.startZ=bump.position.z;bump.visible=false;scene.add(bump);marketBumps.push(bump);
