@@ -37,6 +37,51 @@ function makeBusDestination(THREE){
  const map=new THREE.CanvasTexture(canvas);map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=2;
  return new THREE.MeshBasicMaterial({map,toneMapped:false});
 }
+// One weathered Bangkok bus route/livery atlas for both flanks. The two panels
+// share one PBR mesh/draw call and one 512x64 texture per cached bus template.
+function makeBusSideLivery(THREE){
+ const canvas=document.createElement('canvas');canvas.width=512;canvas.height=64;
+ const ctx=canvas.getContext('2d');
+ ctx.fillStyle='#e5dfcf';ctx.fillRect(0,0,512,64);
+ ctx.fillStyle='#1e5874';ctx.fillRect(0,7,512,43);
+ ctx.fillStyle='#d9b16a';ctx.fillRect(0,4,512,3);
+ ctx.fillStyle='#f3d69a';ctx.fillRect(0,51,512,4);
+ // Route number, Thai destination and an English identifier are painted on
+ // the bus body rather than separate geometry or real-time text sprites.
+ ctx.fillStyle='#f8e6b4';ctx.fillRect(10,11,56,34);
+ ctx.fillStyle='#183b50';ctx.font='bold 31px sans-serif';
+ ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('8',38,28);
+ ctx.textAlign='left';ctx.fillStyle='#fff2d4';
+ ctx.font='bold 23px sans-serif';ctx.fillText('กรุงเทพฯ',79,28);
+ ctx.font='bold 13px sans-serif';ctx.fillText('BANGKOK CITY BUS',80,44);
+ ctx.fillStyle='rgba(26,36,41,.15)';
+ for(let i=0;i<54;i++){
+  const x=(i*79+23)%512,y=(i*17+11)%64;
+  ctx.fillRect(x,y,1+(i%3),1+(i%2));
+ }
+ ctx.fillStyle='rgba(240,235,218,.12)';
+ ctx.fillRect(270,10,6,38);ctx.fillRect(439,10,3,38);
+ const map=new THREE.CanvasTexture(canvas);
+ map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=2;
+ const geometry=new THREE.BufferGeometry(),positions=[],uvs=[],indices=[];
+ for(const side of [-1,1]){
+  const start=positions.length/3,x=side*1.085,low=1.20,high=1.64,half=1.92;
+  positions.push(x,low,-half,x,low,half,x,high,half,x,high,-half);
+  // Flip U on the opposite flank so the route lettering reads outward.
+  const u0=side<0?0:1,u1=1-u0;
+  uvs.push(u0,0,u1,0,u1,1,u0,1);
+  if(side<0)indices.push(start,start+1,start+2,start,start+2,start+3);
+  else indices.push(start,start+2,start+1,start,start+3,start+2);
+ }
+ geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+ geometry.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));
+ geometry.setIndex(indices);geometry.computeVertexNormals();
+ const mesh=new THREE.Mesh(geometry,new THREE.MeshStandardMaterial({
+  map,metalness:.08,roughness:.66,side:THREE.DoubleSide
+ }));
+ mesh.name='bangkok-bus-bilingual-side-livery';
+ return mesh;
+}
 // Four side windows are baked into one weathered PBR atlas per expressway bus.
 // Two planes replace eight separate glazing boxes: six fewer draw calls per bus.
 function makeBusSideWindows(THREE){
@@ -267,6 +312,7 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
  if(isBus){
   const busGlazing=makeBusGlazing(THREE),destination=makeBusDestination(THREE);
   box(0,1.07,0,2.07,.25,4.4,stripe);
+  group.add(makeBusSideLivery(THREE));
   box(0,2.16,2.25,1.8,.83,.05,busGlazing);
   box(0,2.7,2.29,1.48,.23,.025,destination);
   // Shared, UV-baked window strip follows the bus flank at the original height.
