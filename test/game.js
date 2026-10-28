@@ -3497,20 +3497,36 @@ function cloneDancerWithRig(){
   return null;
  }
 }
+// Use named humanoid bones when a detailed GLB actually has a rig.
+// Preserve each bone's bind/rest rotation; unrigged GLBs keep the warning-hand fallback.
+function bindDancerGestureRig(dancer){
+ const bones=[];dancer.traverse(node=>{if(node.isBone)bones.push(node)});
+ const named=bones.map(bone=>({bone,name:bone.name.toLowerCase().replace(/[^a-z0-9]/g,'')}));
+ const arm=named.find(entry=>/(rightupperarm|upperarmr|rupperarm|rightarm|armr)/.test(entry.name)&&!/forearm|lowerarm|hand|finger|twist/.test(entry.name))?.bone||null;
+ const head=named.find(entry=>entry.name.endsWith('head')&&!/headtop|headend|headnub/.test(entry.name))?.bone||null;
+ if(!arm&&!head)return null;
+ return {arm,head,armRest:arm?.quaternion.clone(),headRest:head?.quaternion.clone(),
+  armDelta:new THREE.Quaternion(),headDelta:new THREE.Quaternion(),
+  armAxis:new THREE.Vector3(0,0,1),headAxis:new THREE.Vector3(0,1,0)};
+}
 const useDetailedDancer=type==='dancer'&&!!dancerTemplate&&!hazards.some(h=>h.type==='dancer'&&h.g.userData.detailedDancer);
 const useDetailedTukTuk=type==='tuktuk'&&!jamFormation&&!!realTukTuk&&!hazards.some(h=>h.type==='tuktuk'&&h.g.userData.detailedTukTuk);
 const detailedDancer=useDetailedDancer?cloneDancerWithRig():null;
 const g=!mobile&&type==='yaksha'&&yakshaTemplate&&!hazards.some(h=>h.type==='yaksha'&&h.g.userData.detailedYaksha)?yakshaTemplate.clone(true):detailedDancer|| (useDetailedTukTuk?realTukTuk.clone(true):cachedObstacle(type));
 g.userData.detailedDancer=!!detailedDancer;
 if(detailedDancer){
- // A transparent spectral warning hand preserves the pass-by threat even
- // when an AI-generated static GLB has no skeleton or independently movable arm.
- if(!obstacleTemplates.dancer)obstacleTemplates.dancer=makeDancer();
- const gesture=obstacleTemplates.dancer.userData.danceArms[1].clone(true);
- const ghostGestureMaterial=new THREE.MeshStandardMaterial({color:0xc3d4ca,roughness:.86,transparent:true,opacity:.72,depthWrite:false});
- gesture.traverse(o=>{if(o.isMesh)o.material=ghostGestureMaterial});
- gesture.visible=false;g.add(gesture);
- g.userData.danceArms=[null,gesture];g.userData.spectralArm=gesture;
+ // Animate the real upper-arm/head bones if the GLB supplies them.
+ // Only draw the spectral arm when there is no recognizable right-arm bone.
+ const rig=bindDancerGestureRig(g);
+ g.userData.danceRig=rig;
+ if(!rig?.arm){
+  if(!obstacleTemplates.dancer)obstacleTemplates.dancer=makeDancer();
+  const gesture=obstacleTemplates.dancer.userData.danceArms[1].clone(true);
+  const ghostGestureMaterial=new THREE.MeshStandardMaterial({color:0xc3d4ca,roughness:.86,transparent:true,opacity:.72,depthWrite:false});
+  gesture.traverse(o=>{if(o.isMesh)o.material=ghostGestureMaterial});
+  gesture.visible=false;g.add(gesture);
+  g.userData.danceArms=[null,gesture];g.userData.spectralArm=gesture;
+ }
 }
 g.userData.detailedTukTuk=!!useDetailedTukTuk;g.userData.detailedYaksha=type==='yaksha'&&!!yakshaTemplate&&g.children.length===1;const lane=jamFormation?jamOccupied[0]:type==='tuktuk'?([-1.1,0,1.1][spawnIndex%3]):type==='durian'?durianSide*3.35:boss?0:madness==='rollingDurian'?(Math.random()<.5?-3.35:3.35):[-3.35,0,3.35][Math.floor(Math.random()*3)];g.position.set(lane,0,type==='tuktuk'&&!jamFormation?-37:-65);if(type==='dancer')g.scale.setScalar(detailedDancer?1:1.55);if(type==='construction'){g.position.y=6;g.scale.setScalar(1.35);}if(type==='yaksha')g.scale.setScalar(boss?2.3:1.85);if(type==='bus'||type==='busBlue')g.scale.setScalar(1.04);if(type==='taxi')g.scale.setScalar(1.22);if(type==='truck')g.scale.setScalar(1.13);/* GLB is already normalized to road-sized metres; procedural traffic needs a modest scale. */if(type==='tuktuk')g.scale.setScalar(jamFormation?1.75:useDetailedTukTuk?1:1.7);if(type==='bike')g.scale.setScalar(1.6);if(type==='checkpoint')g.scale.setScalar(1.15);if(madness==='rollingDurian')g.scale.setScalar(1.35);if(madness==='wrongWayBike')g.rotation.y=Math.PI;scene.add(g);if(jamFormation){
  // Exactly two aligned, non-swerving vehicles occupy two lanes; the third stays clear.
@@ -5012,6 +5028,17 @@ if(meters+bonus>=8000)queueExpresswayBusModel();const nextDistrict=Math.floor(me
   arms[1].rotation.x=THREE.MathUtils.lerp(0,-.38,warning);
  }
  if(h.g.userData.spectralArm)h.g.userData.spectralArm.visible=warning>.06;
+ const rig=h.g.userData.danceRig;
+ if(rig?.arm){
+  // Quaternions preserve the imported bind pose and avoid cumulative drift.
+  rig.armDelta.setFromAxisAngle(rig.armAxis,warning*.78);
+  rig.arm.quaternion.copy(rig.armRest).multiply(rig.armDelta);
+ }
+ if(rig?.head){
+  const gaze=THREE.MathUtils.clamp(driverAngle-h.g.rotation.y,-.65,.65)*approach;
+  rig.headDelta.setFromAxisAngle(rig.headAxis,gaze);
+  rig.head.quaternion.copy(rig.headRest).multiply(rig.headDelta);
+ }
  const head=h.g.userData.danceHead;
  if(head){
   const towardDriver=Math.atan2(x-h.g.position.x,3.15-z);
