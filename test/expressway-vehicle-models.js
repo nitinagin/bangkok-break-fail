@@ -105,6 +105,44 @@ function makeSportsCarRearFascia(THREE){
  map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=2;
  return new THREE.MeshBasicMaterial({map,toneMapped:false});
 }
+// Five twin-spoke cast alloy wheels, baked once per sports-car template.
+// All four instanced hubs share one 128px PBR atlas: zero extra draw calls.
+function makeSportsCarAlloyWheel(THREE){
+ const canvas=document.createElement('canvas');canvas.width=canvas.height=128;
+ const ctx=canvas.getContext('2d');ctx.translate(64,64);
+ const circle=(r,color)=>{ctx.fillStyle=color;ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.fill();};
+ // Machined rim, dark recess and drilled ventilated brake rotor.
+ circle(63,'#0b1016');circle(59,'#5d6973');circle(56,'#b5c1c7');
+ circle(52,'#172029');circle(46,'#67737c');circle(43,'#27333d');
+ ctx.strokeStyle='#a4adb3';ctx.lineWidth=3;ctx.beginPath();ctx.arc(0,0,51,0,Math.PI*2);ctx.stroke();
+ for(let i=0;i<20;i++){
+  const a=i*Math.PI/10;
+  ctx.fillStyle='#111b24';ctx.beginPath();
+  ctx.arc(Math.cos(a)*39,Math.sin(a)*39,2.4,0,Math.PI*2);ctx.fill();
+ }
+ // Tapered paired spokes with highlighted edges and recessed gaps.
+ for(let i=0;i<5;i++){
+  ctx.save();ctx.rotate(i*Math.PI*2/5);
+  for(const side of [-1,1]){
+   ctx.beginPath();ctx.moveTo(side*2,-10);ctx.lineTo(side*5,-44);
+   ctx.lineTo(side*12,-43);ctx.lineTo(side*9,-12);ctx.closePath();
+   ctx.fillStyle='#b8c4cc';ctx.fill();ctx.strokeStyle='#edf0ee';ctx.lineWidth=1.1;ctx.stroke();
+  }
+  ctx.fillStyle='#0c151c';ctx.fillRect(-1,-43,2,27);
+  ctx.restore();
+ }
+ // Baked red brake caliper, center cap and five lug bolts.
+ ctx.save();ctx.rotate(-.7);ctx.fillStyle='#8d2630';ctx.fillRect(35,-11,9,24);
+ ctx.fillStyle='#cf5260';ctx.fillRect(36,-9,2,18);ctx.restore();
+ circle(13,'#19232c');circle(10,'#a9b7bf');circle(7,'#394955');
+ for(let i=0;i<5;i++){
+  const a=i*Math.PI*2/5;ctx.fillStyle='#dce2e4';ctx.beginPath();
+  ctx.arc(Math.cos(a)*15,Math.sin(a)*15,2,0,Math.PI*2);ctx.fill();
+ }
+ const map=new THREE.CanvasTexture(canvas);
+ map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=2;
+ return new THREE.MeshStandardMaterial({map,metalness:.68,roughness:.35});
+}
 export function makeExpresswayVehicle(THREE,type='sportsCar'){
  const isBus=type==='bus',group=new THREE.Group(),w=isBus?2.05:1.8,length=isBus?4.45:3.55;
  const paint=isBus?new THREE.MeshStandardMaterial({color:0xf0e6d4,metalness:.15,roughness:.65}):new THREE.MeshPhysicalMaterial({color:0xb12438,metalness:.62,roughness:.26,clearcoat:.75,clearcoatRoughness:.22});
@@ -203,7 +241,7 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
  // Instanced tires and machined hubs add exterior detail without extra wheel draw calls.
  const tireGeo=new THREE.CylinderGeometry(isBus?.43:.37,isBus?.43:.37,.18,12);tireGeo.rotateZ(Math.PI/2);
  const hubGeo=new THREE.CylinderGeometry(isBus?.26:.22,isBus?.26:.22,.025,12);hubGeo.rotateZ(Math.PI/2);
- const hubMetal=new THREE.MeshStandardMaterial({color:0x9da9b1,metalness:.8,roughness:.3});
+ const hubMetal=isBus?new THREE.MeshStandardMaterial({color:0x9da9b1,metalness:.8,roughness:.3}):makeSportsCarAlloyWheel(THREE);
  const mirrorShell=new THREE.MeshStandardMaterial({color:0x20272d,metalness:.2,roughness:.48});
  const mirrorGlass=new THREE.MeshStandardMaterial({color:0x8aabb8,metalness:.65,roughness:.16});
  const tires=new THREE.InstancedMesh(tireGeo,rubber,4);
