@@ -3407,8 +3407,63 @@ const boatWoodMaterial=new THREE.MeshStandardMaterial({map:boatWoodTexture,verte
  // The closest plank begins at x=3.84, beyond the x=3.65 canal lip;
  // the outermost post ends at x=5.48, short of the fruit boats at x>=5.82.
  const canalPierCount=8,canalPierPieces=13;
+ // One small, shared 256x128 weathered-plank PBR albedo atlas. Grain runs
+ // along the boards (texture U), with split fibres and recessed nail heads.
+ // Drawn once at startup: no added meshes, draw calls or external downloads.
+ const pierWoodCanvas=document.createElement('canvas');
+ pierWoodCanvas.width=256;pierWoodCanvas.height=128;
+ const pierWoodCtx=pierWoodCanvas.getContext('2d');
+ const pierWoodBase=pierWoodCtx.createLinearGradient(0,0,0,128);
+ pierWoodBase.addColorStop(0,'#947552');
+ pierWoodBase.addColorStop(.28,'#806447');
+ pierWoodBase.addColorStop(.6,'#6c563f');
+ pierWoodBase.addColorStop(1,'#8b6b49');
+ pierWoodCtx.fillStyle=pierWoodBase;
+ pierWoodCtx.fillRect(0,0,256,128);
+ // Fine uneven grain is drawn horizontally, matching the long axis of
+ // each pier board rather than stretching the boat hull's vertical atlas.
+ for(let grain=0;grain<84;grain++){
+  const y=(grain*37+Math.floor(grain/9)*13)%128;
+  const sway=Math.sin(grain*1.71)*3.2;
+  pierWoodCtx.strokeStyle=grain%5===0?'rgba(31,27,23,.28)':'rgba(208,179,131,.17)';
+  pierWoodCtx.lineWidth=grain%7===0?1.3:.55;
+  pierWoodCtx.beginPath();
+  pierWoodCtx.moveTo(-4,y);
+  pierWoodCtx.bezierCurveTo(66,y+sway,177,y-sway*.7,260,y+Math.sin(grain)*2);
+  pierWoodCtx.stroke();
+ }
+ // Long dark checks, lighter exposed fibres and scattered worn patches.
+ for(let crack=0;crack<13;crack++){
+  const x=17+(crack*41)%179,y=10+(crack*23)%107;
+  pierWoodCtx.strokeStyle='rgba(32,27,23,.48)';
+  pierWoodCtx.lineWidth=crack%4===0?1.8:1;
+  pierWoodCtx.beginPath();
+  pierWoodCtx.moveTo(x,y);
+  pierWoodCtx.lineTo(x+12+(crack%4)*7,y+(crack%3-1)*1.5);
+  pierWoodCtx.lineTo(x+24+(crack%4)*9,y+.6);
+  pierWoodCtx.stroke();
+  pierWoodCtx.strokeStyle='rgba(198,166,119,.25)';
+  pierWoodCtx.lineWidth=.7;
+  pierWoodCtx.beginPath();
+  pierWoodCtx.moveTo(x+1,y+2);
+  pierWoodCtx.lineTo(x+18+(crack%4)*8,y+2.2);
+  pierWoodCtx.stroke();
+ }
+ // Small oxidized fasteners near both board ends; four per atlas tile.
+ for(const nx of [15,241])for(const ny of [27,101]){
+  pierWoodCtx.fillStyle='rgba(28,25,23,.65)';
+  pierWoodCtx.beginPath();pierWoodCtx.arc(nx,ny,3.7,0,Math.PI*2);pierWoodCtx.fill();
+  pierWoodCtx.fillStyle='#6b675e';
+  pierWoodCtx.beginPath();pierWoodCtx.arc(nx-.4,ny-.4,2.1,0,Math.PI*2);pierWoodCtx.fill();
+  pierWoodCtx.strokeStyle='rgba(22,22,20,.72)';
+  pierWoodCtx.lineWidth=.8;
+  pierWoodCtx.beginPath();pierWoodCtx.moveTo(nx-1.1,ny+1);pierWoodCtx.lineTo(nx+1.1,ny-1);pierWoodCtx.stroke();
+ }
+ const pierWoodTexture=new THREE.CanvasTexture(pierWoodCanvas);
+ pierWoodTexture.colorSpace=THREE.SRGBColorSpace;
+ pierWoodTexture.anisotropy=Math.min(2,renderer.capabilities.getMaxAnisotropy());
  const canalPierMaterial=new THREE.MeshStandardMaterial({
-  map:boatWoodTexture,color:0xd2b996,roughness:.91,metalness:0
+  map:pierWoodTexture,color:0xd2b996,roughness:.91,metalness:0
  });
  const canalPierDecks=new THREE.InstancedMesh(
   new THREE.BoxGeometry(1,1,1),canalPierMaterial,canalPierCount*canalPierPieces
