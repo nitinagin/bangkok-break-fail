@@ -4356,11 +4356,34 @@ const beamCore=new THREE.Mesh(new THREE.CylinderGeometry(.085,.085,9,8),laserCor
 const beamHalo=new THREE.Mesh(new THREE.CylinderGeometry(.42,.42,9,10,1,true),laserHalo);beamHalo.position.y=4.5;expresswayLaserTemplate.add(beamHalo);
 // Lazy templates share geometry and PBR materials across hazard waves (no per-spawn GPU uploads).
 let expresswayVehicleTemplates=null;
+// Optional local glTF bus replaces the procedural bus only after validated loading.
+ // Failed or slow asset loads retain the original playable PBR fallback.
+ let optimizedExpresswayBus=null;
+ const EXPRESSWAY_BUS_GLTF='./assets/bangkok-city-bus.gltf';
+ new GLTFLoader().load(EXPRESSWAY_BUS_GLTF,({scene:bus})=>{
+  try{
+   bus.updateMatrixWorld(true);
+   const size=new THREE.Box3().setFromObject(bus).getSize(new THREE.Vector3());
+   let meshes=0,triangles=0;
+   bus.traverse(o=>{
+    if(!o.isMesh)return;
+    meshes++;
+    const g=o.geometry;
+    triangles+=(g.index?g.index.count:g.attributes.position.count)/3;
+   });
+   if(meshes<1||meshes>20||triangles>4500||
+      size.x<1.8||size.x>2.6||size.y<2.4||size.y>3.3||
+      size.z<4.0||size.z>5.0)return;
+   bus.traverse(o=>{if(o.isMesh)o.frustumCulled=true;});
+   optimizedExpresswayBus=bus;
+   if(expresswayVehicleTemplates)expresswayVehicleTemplates.bus=bus;
+  }catch(e){/* Keep the original bus fallback. */}
+ },undefined,()=>{/* Keep the original bus fallback. */});
 function expresswayVehicle(type){
  if(!expresswayVehicleTemplates){
   expresswayVehicleTemplates={
    sportsCar:makeExpresswayVehicle(THREE,'sportsCar'),
-   bus:makeExpresswayVehicle(THREE,'bus')
+   bus:optimizedExpresswayBus||makeExpresswayVehicle(THREE,'bus')
   };
  }
  return expresswayVehicleTemplates[type].clone(true);
