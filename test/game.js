@@ -3195,19 +3195,51 @@ new GLTFLoader().load(DANCER_GLB,glb=>{
 }
 // Premium AI-generated Thai Yaksha; fallback stays available on slow connections.
 const YAKSHA_GLB='https://v3b.fal.media/files/b/0aaedd6a/14yrGJ3Iq8XcawwVvTolz_model.glb';
-let yakshaTemplate=null;
+let yakshaTemplate=null,yakshaAttempted=false;
 function loadYakshaAsset(){
-new GLTFLoader().load(YAKSHA_GLB,glb=>{
- try{
- const root=glb.scene;root.updateMatrixWorld(true);
- const box=new THREE.Box3().setFromObject(root),sz=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
- if(!Number.isFinite(sz.y)||sz.y<=0)throw Error('Invalid yaksha geometry');
- root.position.sub(center);root.position.y+=sz.y/2;
- const group=new THREE.Group();group.add(root);group.scale.setScalar(4.8/sz.y);
- root.traverse(o=>{if(o.isMesh)o.frustumCulled=true});
- yakshaTemplate=group;
- }catch(e){console.warn('Yaksha fallback',e)}
-},undefined,e=>console.warn('Yaksha GLB load failed; using fallback',e));
+ if(yakshaAttempted)return;
+ yakshaAttempted=true;
+ new GLTFLoader().load(YAKSHA_GLB,glb=>{
+  try{
+   const root=glb.scene;
+   let triangles=0;
+   const textures=new Set();
+   root.traverse(o=>{
+    if(!o.isMesh)return;
+    o.frustumCulled=true;
+    const geometry=o.geometry;
+    if(geometry?.attributes?.position)triangles+=(geometry.index?.count||geometry.attributes.position.count)/3;
+    if(!mobile)return;
+    for(const material of (Array.isArray(o.material)?o.material:[o.material])){
+     if(!material)continue;
+     for(const key of ['map','normalMap','roughnessMap','metalnessMap','emissiveMap','aoMap']){
+      const tex=material[key];
+      if(!tex||textures.has(tex))continue;
+      textures.add(tex);
+      const img=tex.image;
+      if(!img||Math.max(img.width||0,img.height||0)<=512)continue;
+      const ratio=512/Math.max(img.width,img.height);
+      const canvas=document.createElement('canvas');
+      canvas.width=Math.max(1,Math.round(img.width*ratio));
+      canvas.height=Math.max(1,Math.round(img.height*ratio));
+      try{
+       canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+       tex.image=canvas;tex.needsUpdate=true;
+      }catch(error){console.warn('Yaksha texture reduction skipped',error)}
+     }
+    }
+   });
+   // Only one detailed mobile guardian at once; reject unbounded geometry.
+   if(mobile&&triangles>200000)throw Error('Yaksha GLB exceeds mobile triangle budget');
+   root.updateMatrixWorld(true);
+   const box=new THREE.Box3().setFromObject(root),sz=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
+   if(!Number.isFinite(sz.y)||sz.y<=0)throw Error('Invalid yaksha geometry');
+   root.position.sub(center);root.position.y+=sz.y/2;
+   const group=new THREE.Group();group.add(root);group.scale.setScalar(4.8/sz.y);
+   yakshaTemplate=group;
+   console.info('Detailed Yaksha ready for future spawns',Math.round(triangles),'triangles');
+  }catch(error){console.warn('Yaksha fallback retained',error)}
+ },undefined,error=>console.warn('Yaksha GLB unavailable; keeping playable guardian',error));
 }
 // Optional preview GLBs must not compete with the first playable frame.
 // Load the vehicle after play starts; desktop-only character GLBs are staggered.
@@ -3387,6 +3419,16 @@ function clonedObstacleNode(original,copy,node){
  return target;
 }
 function cachedObstacle(type){
+ // Use the detailed guardian once loaded; share GLB geometry and materials across clones.
+ // Limit simultaneous high-detail guardians, especially on iPhone.
+ if(type==='yaksha'&&yakshaTemplate){
+  const detailedCount=hazards.reduce((count,h)=>count+(h.type==='yaksha'&&h.g.userData.premiumYaksha?1:0),0);
+  if(detailedCount<(mobile?1:2)){
+   const detailed=yakshaTemplate.clone(true);
+   detailed.userData.premiumYaksha=true;
+   return detailed;
+  }
+ }
  if(!obstacleTemplates[type])obstacleTemplates[type]=type==='truck'?makeTruck():type==='checkpoint'?makeCheckpoint():type==='construction'?makeConstructionDebris():type==='durian'?makeDurian():type==='bus'?makeTrafficLOD('bus'):type==='busBlue'?makeTrafficLOD('busBlue'):type==='tuktuk'?makeTukTuk():type==='taxi'?makeTrafficLOD('taxi'):type==='bike'?makeBike():type==='yaksha'?makeYaksha():makeDancer();
  const original=obstacleTemplates[type],copy=original.clone(true);
  if(type==='dancer'){
@@ -4850,7 +4892,11 @@ function spawnMarketPedestrians(){
  g.position.set(lane,0,-65);scene.add(g);
  hazards.push({g,type:kind,madness:null,boss:false,durianSide:0,passed:false,hit:false,phase:wave,baseX:lane,announced:false,nearAwarded:false,swerve:0,swerveStart:-100});
 }
-function update(dt,t){if(!active||paused)return;speed+=dt*(3+Math.sqrt(Math.max(0,speed-60))*.16);meters+=dt*speed/3.6;if(meters+bonus>=8000)queueExpresswayBusModel();const nextDistrict=Math.floor(meters+bonus)>=16000?5:Math.floor(meters+bonus)>=12000?4:Math.floor(meters+bonus)>=8000?3:Math.floor(meters+bonus)>=3000?2:1;const currentNight=Math.floor(meters/1600)+(meters%1600<800?1:0);if(currentNight>nightCount){nightCount=currentNight;if(nightCount>0){hint.textContent='🌙 NIGHT '+nightCount+' — SPIRITS AWAKEN';if(nightCount%2===0&&grandmaTriggeredNight!==nightCount){makeRoadsideStory('shrine',Math.random()<.5?-1:1,-70);grandmaTriggeredNight=nightCount}}}if(nextDistrict!==districtIndex){applyDistrict(nextDistrict);if(nextDistrict>=3){for(const h of hazards)scene.remove(h.g);hazards.length=0;spawnClock=.5;hint.textContent=nextDistrict===5?'🌈 PATTAYA WALKING STREET!':nextDistrict===4?'🛣️ EXPRESSWAY! DODGE TRAFFIC AND UFO LASERS!':'🌞 JJ MARKET · TWO NARROW LANES!';}}const onRamaII=nextDistrict===2;const inMarket=nextDistrict===3;const onExpressway=nextDistrict===4,inPattaya=nextDistrict===5;pattayaStreet.visible=inPattaya;if(inPattaya){for(let i=0;i<pattayaShops.length;i++){const g=pattayaShops[i];g.position.z+=dt*(60+300*(1-Math.exp(-(speed-60)/240)))*.22;if(g.position.z>26)g.position.z-=192;}updatePattayaReflections();}expresswaySet.visible=onExpressway;expresswayArt.group.visible=onExpressway;if(onExpressway)expresswayArt.update(dt,speed);if(onExpressway){ufo.position.x=Math.sin(t*.0012)*2.4;ufo.position.y=13+Math.sin(t*.002)*.8;ufo.rotation.y+=dt*.4;}if(inMarket&&meters+bonus>=10000&&meters+bonus-speed*dt/3.6<10000)hint.textContent='🚣 FLOATING MARKET RIGHT · DO NOT FALL INTO CANAL!';road.material=onExpressway?expresswayAsphalt:onRamaII?ramaRoadAsphalt:inMarket?dryAsphalt:wetAsphalt;road.scale.x+=((inMarket?.65:1)-road.scale.x)*Math.min(1,dt*3);for(const p of props)p.visible=!onRamaII&&!inMarket&&!onExpressway&&!inPattaya;neonReflections.visible=nextDistrict===1;for(const mesh of streetLampMeshes)mesh.visible=nextDistrict===1;facadeBounce.visible=nextDistrict===1;for(const glow of roadsideNeonGlow)glow.visible=nextDistrict===1;for(const p of ramaStructures)p.visible=onRamaII;const canalVisible=inMarket&&meters+bonus>=9700;const canalActive=inMarket&&meters+bonus>=10000;canalGroup.visible=canalVisible;if(canalVisible)canalRippleTexture.offset.y=(t*.000025)%1;if(canalVisible){for(const boat of canalBoats){const phase=boat.userData.phase;boat.position.z=boat.userData.homeZ+((meters*.12+phase*3)%210);boat.position.y=-.02+Math.sin(t*.0017+phase)*.065;boat.rotation.z=Math.sin(t*.0011+phase)*.045;boat.userData.parasol.rotation.z=Math.sin(t*.0014+phase)*.035;for(let j=0;j<2;j++){const wake=boat.userData.wakes[j];wake.scale.z=.82+.18*Math.sin(t*.004+phase+j);wake.position.z=-1.95-.16*Math.sin(t*.0027+phase+j);}}}for(const stall of marketStalls){
+function update(dt,t){if(!active||paused)return;speed+=dt*(3+Math.sqrt(Math.max(0,speed-60))*.16);meters+=dt*speed/3.6;
+// Defer the optional detailed guardian on mobile until the player has progressed.
+// Respect data-saving / very slow connections and retain the procedural guardian.
+if(mobile&&meters+bonus>=1000&&!yakshaAttempted&&!navigator.connection?.saveData&&!['slow-2g','2g'].includes(navigator.connection?.effectiveType))loadYakshaAsset();
+if(meters+bonus>=8000)queueExpresswayBusModel();const nextDistrict=Math.floor(meters+bonus)>=16000?5:Math.floor(meters+bonus)>=12000?4:Math.floor(meters+bonus)>=8000?3:Math.floor(meters+bonus)>=3000?2:1;const currentNight=Math.floor(meters/1600)+(meters%1600<800?1:0);if(currentNight>nightCount){nightCount=currentNight;if(nightCount>0){hint.textContent='🌙 NIGHT '+nightCount+' — SPIRITS AWAKEN';if(nightCount%2===0&&grandmaTriggeredNight!==nightCount){makeRoadsideStory('shrine',Math.random()<.5?-1:1,-70);grandmaTriggeredNight=nightCount}}}if(nextDistrict!==districtIndex){applyDistrict(nextDistrict);if(nextDistrict>=3){for(const h of hazards)scene.remove(h.g);hazards.length=0;spawnClock=.5;hint.textContent=nextDistrict===5?'🌈 PATTAYA WALKING STREET!':nextDistrict===4?'🛣️ EXPRESSWAY! DODGE TRAFFIC AND UFO LASERS!':'🌞 JJ MARKET · TWO NARROW LANES!';}}const onRamaII=nextDistrict===2;const inMarket=nextDistrict===3;const onExpressway=nextDistrict===4,inPattaya=nextDistrict===5;pattayaStreet.visible=inPattaya;if(inPattaya){for(let i=0;i<pattayaShops.length;i++){const g=pattayaShops[i];g.position.z+=dt*(60+300*(1-Math.exp(-(speed-60)/240)))*.22;if(g.position.z>26)g.position.z-=192;}updatePattayaReflections();}expresswaySet.visible=onExpressway;expresswayArt.group.visible=onExpressway;if(onExpressway)expresswayArt.update(dt,speed);if(onExpressway){ufo.position.x=Math.sin(t*.0012)*2.4;ufo.position.y=13+Math.sin(t*.002)*.8;ufo.rotation.y+=dt*.4;}if(inMarket&&meters+bonus>=10000&&meters+bonus-speed*dt/3.6<10000)hint.textContent='🚣 FLOATING MARKET RIGHT · DO NOT FALL INTO CANAL!';road.material=onExpressway?expresswayAsphalt:onRamaII?ramaRoadAsphalt:inMarket?dryAsphalt:wetAsphalt;road.scale.x+=((inMarket?.65:1)-road.scale.x)*Math.min(1,dt*3);for(const p of props)p.visible=!onRamaII&&!inMarket&&!onExpressway&&!inPattaya;neonReflections.visible=nextDistrict===1;for(const mesh of streetLampMeshes)mesh.visible=nextDistrict===1;facadeBounce.visible=nextDistrict===1;for(const glow of roadsideNeonGlow)glow.visible=nextDistrict===1;for(const p of ramaStructures)p.visible=onRamaII;const canalVisible=inMarket&&meters+bonus>=9700;const canalActive=inMarket&&meters+bonus>=10000;canalGroup.visible=canalVisible;if(canalVisible)canalRippleTexture.offset.y=(t*.000025)%1;if(canalVisible){for(const boat of canalBoats){const phase=boat.userData.phase;boat.position.z=boat.userData.homeZ+((meters*.12+phase*3)%210);boat.position.y=-.02+Math.sin(t*.0017+phase)*.065;boat.rotation.z=Math.sin(t*.0011+phase)*.045;boat.userData.parasol.rotation.z=Math.sin(t*.0014+phase)*.035;for(let j=0;j<2;j++){const wake=boat.userData.wakes[j];wake.scale.z=.82+.18*Math.sin(t*.004+phase+j);wake.position.z=-1.95-.16*Math.sin(t*.0027+phase+j);}}}for(const stall of marketStalls){
  stall.visible=inMarket&&(!canalActive||stall.children[0].position.x<0);
  // Cull only small display goods beyond ~43 m; retain silhouettes and signs.
  // This avoids rendering up to 192 tiny meshes in the distant JJ market.
