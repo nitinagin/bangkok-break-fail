@@ -326,6 +326,52 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   archMesh.name='sports-car-contoured-wheel-arches';
   group.add(archMesh);
 
+  // Stamped coupe door skins: a shallow shoulder crease and recessed rocker
+  // replace the flat box-like sides without any texture fetch or extra lights.
+  // Both sides, their shut-lines and handles share ONE low-poly PBR mesh.
+  const doorVertices=[],doorColors=[],doorIndices=[];
+  const doorZ=[-.59,-.48,-.16,.16,.48,.59];
+  const doorY=[.49,.55,.64,.72,.825];
+  const doorPalette=[0x421e2a,0x842535,0xac2d40,0xc34555,0x922b3d];
+  function doorQuad(side,x,z0,z1,y0,y1,color){
+   const first=doorVertices.length/3;
+   doorVertices.push(side*x,y0,z0,side*x,y0,z1,side*x,y1,z1,side*x,y1,z0);
+   const shade=new THREE.Color(color);
+   for(let k=0;k<4;k++)doorColors.push(shade.r,shade.g,shade.b);
+   doorIndices.push(first,first+1,first+2,first,first+2,first+3);
+  }
+  for(const side of [-1,1]){
+   const start=doorVertices.length/3;
+   for(let row=0;row<doorY.length;row++){
+    const y=doorY[row],shoulder=Math.sin((y-.49)/.335*Math.PI);
+    for(const z of doorZ){
+     const x=.945+.020*shoulder+.012*(1-Math.abs(z)/.59);
+     doorVertices.push(side*x,y,z);
+     const shade=new THREE.Color(doorPalette[row]);
+     doorColors.push(shade.r,shade.g,shade.b);
+    }
+   }
+   for(let row=0;row<doorY.length-1;row++){
+    for(let col=0;col<doorZ.length-1;col++){
+     const a=start+row*doorZ.length+col,b=a+doorZ.length;
+     doorIndices.push(a,b,a+1,a+1,b,b+1);
+    }
+   }
+   // Flush dark rocker, narrow rear door shut-line and satin-metal handle.
+   doorQuad(side,.984,-.59,.59,.492,.519,0x171d23);
+   doorQuad(side,.985,-.407,-.395,.536,.819,0x401d28);
+   doorQuad(side,.989,-.30,-.16,.786,.804,0x9aabb2);
+  }
+  const doorGeo=new THREE.BufferGeometry();
+  doorGeo.setAttribute('position',new THREE.Float32BufferAttribute(doorVertices,3));
+  doorGeo.setAttribute('color',new THREE.Float32BufferAttribute(doorColors,3));
+  doorGeo.setIndex(doorIndices);doorGeo.computeVertexNormals();
+  const doorMesh=new THREE.Mesh(doorGeo,new THREE.MeshStandardMaterial({
+   vertexColors:true,metalness:.47,roughness:.34,side:THREE.DoubleSide
+  }));
+  doorMesh.name='sports-car-sculpted-door-skins';
+  group.add(doorMesh);
+
   // Sports-car grille, splitter, rear wing, supports and side ducts:
   // Nine carbon-finish pieces in one instanced draw call, no texture upload.
   const carbon=new THREE.MeshStandardMaterial({color:0x111820,metalness:.24,roughness:.54});
