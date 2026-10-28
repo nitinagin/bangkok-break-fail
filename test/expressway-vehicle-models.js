@@ -72,6 +72,39 @@ function makeBusSideWindows(THREE){
   map,metalness:.12,roughness:.36,side:THREE.DoubleSide
  });
 }
+// One 256x64 baked rear light/plate atlas replaces two separate car tail lamps.
+// The texture is created once per shared template, not on each hazard spawn.
+function makeSportsCarRearFascia(THREE){
+ const canvas=document.createElement('canvas');canvas.width=256;canvas.height=64;
+ const ctx=canvas.getContext('2d');
+ const panel=ctx.createLinearGradient(0,0,0,64);
+ panel.addColorStop(0,'#2d3034');panel.addColorStop(.42,'#0e131a');panel.addColorStop(1,'#25282b');
+ ctx.fillStyle=panel;ctx.fillRect(0,0,256,64);
+ for(const left of [true,false]){
+  const x=left?7:181;
+  ctx.fillStyle='#420c15';ctx.fillRect(x,9,68,31);
+  ctx.fillStyle='#9b1822';ctx.fillRect(x+3,12,62,23);
+  for(let j=0;j<4;j++){
+   const lx=x+6+j*15;
+   ctx.fillStyle='#ff3c3a';ctx.fillRect(lx,14,11,6);
+   ctx.fillStyle='#f5242c';ctx.fillRect(lx,23,11,7);
+   ctx.fillStyle='rgba(255,202,174,.46)';ctx.fillRect(lx,14,11,1);
+  }
+  ctx.fillStyle='rgba(255,242,225,.28)';ctx.fillRect(x+4,11,60,1);
+  ctx.fillStyle='#5a1017';ctx.fillRect(x+3,34,62,3);
+ }
+ // Fictional Thai plate with a dark recessed mounting panel.
+ ctx.fillStyle='#080c11';ctx.fillRect(86,10,84,43);
+ ctx.fillStyle='#e5e5d8';ctx.fillRect(91,14,74,34);
+ ctx.fillStyle='#182c35';ctx.font='bold 15px Tahoma, sans-serif';
+ ctx.textAlign='center';ctx.fillText('กท 918',128,31);
+ ctx.font='8px Tahoma, sans-serif';ctx.fillText('กรุงเทพฯ',128,42);
+ ctx.fillStyle='#717c80';ctx.fillRect(119,4,18,3);
+ ctx.fillStyle='#4d5558';ctx.fillRect(4,52,248,3);
+ const map=new THREE.CanvasTexture(canvas);
+ map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=2;
+ return new THREE.MeshBasicMaterial({map,toneMapped:false});
+}
 export function makeExpresswayVehicle(THREE,type='sportsCar'){
  const isBus=type==='bus',group=new THREE.Group(),w=isBus?2.05:1.8,length=isBus?4.45:3.55;
  const paint=isBus?new THREE.MeshStandardMaterial({color:0xf0e6d4,metalness:.15,roughness:.65}):new THREE.MeshPhysicalMaterial({color:0xb12438,metalness:.62,roughness:.26,clearcoat:.75,clearcoatRoughness:.22});
@@ -161,6 +194,10 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   }
   led.instanceMatrix.needsUpdate=true;
   group.add(led);
+  // Baked rear lamps replace two separate rear lamp meshes.
+  const rearFascia=new THREE.Mesh(new THREE.PlaneGeometry(1.62,.32),makeSportsCarRearFascia(THREE));
+  rearFascia.rotation.y=Math.PI;rearFascia.position.set(0,.8,-length/2-.09);
+  group.add(rearFascia);
  }
  const tailLamps=new THREE.MeshStandardMaterial({color:0xff3028,emissive:0xee1308,emissiveIntensity:.9,roughness:.28});
  // Instanced tires and machined hubs add exterior detail without extra wheel draw calls.
@@ -188,7 +225,7 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   mirrorIndex++;
   // Keep distinct front and rear lamps.
   box(side*w*.37,.8,length/2+.04,.27,.14,.06,lamps);
-  box(side*w*.37,.8,-length/2-.04,.27,.14,.06,tailLamps);
+  if(isBus)box(side*w*.37,.8,-length/2-.04,.27,.14,.06,tailLamps);
  }
  group.add(tires,hubs,mirrorBodies,mirrorFaces);
  group.userData.type=type;
