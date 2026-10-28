@@ -82,6 +82,50 @@ function makeBusSideLivery(THREE){
  mesh.name='bangkok-bus-bilingual-side-livery';
  return mesh;
 }
+// Single textured front fascia: a two-triangle PBR replacement for two box lights.
+// All details are baked once per cached bus, avoiding dynamic lighting.
+function makeBusFrontFascia(THREE){
+ const canvas=document.createElement('canvas');canvas.width=512;canvas.height=192;
+ const ctx=canvas.getContext('2d'),body=ctx.createLinearGradient(0,0,0,192);
+ body.addColorStop(0,'#e1dcd0');body.addColorStop(.55,'#b9b9b1');body.addColorStop(1,'#4c5961');
+ ctx.fillStyle=body;ctx.fillRect(0,0,512,192);
+ ctx.fillStyle='#24323a';ctx.fillRect(112,31,288,88);
+ for(let i=0;i<7;i++){
+  ctx.fillStyle=i%2?'#14242b':'#1b2d35';ctx.fillRect(119,45+i*10,274,5);
+  ctx.fillStyle='rgba(221,231,229,.18)';ctx.fillRect(119,44+i*10,274,1);
+ }
+ // Integrated headlamps, projector lenses and amber indicators.
+ for(const x of [12,408]){
+  ctx.fillStyle='#202d35';ctx.fillRect(x,26,92,62);
+  const lens=ctx.createLinearGradient(x,30,x+85,83);
+  lens.addColorStop(0,'#e5e9e3');lens.addColorStop(.42,'#9baeb8');lens.addColorStop(1,'#405662');
+  ctx.fillStyle=lens;ctx.fillRect(x+6,32,80,41);
+  ctx.fillStyle='#f2c06c';ctx.fillRect(x+6,76,80,7);
+  ctx.fillStyle='rgba(255,255,255,.55)';ctx.fillRect(x+11,36,64,3);
+  ctx.fillStyle='#536872';ctx.fillRect(x+29,43,29,25);
+  ctx.fillStyle='#d6e3e8';ctx.fillRect(x+35,47,17,15);
+ }
+ // Steel bumper, tow sockets and fictional Bangkok plate.
+ ctx.fillStyle='#303f49';ctx.fillRect(0,122,512,14);
+ ctx.fillStyle='#89969a';ctx.fillRect(0,138,512,30);
+ ctx.fillStyle='#d7dad2';ctx.fillRect(0,169,512,7);
+ ctx.fillStyle='#1e2a31';ctx.fillRect(26,143,38,12);ctx.fillRect(448,143,38,12);
+ ctx.fillStyle='#242d31';ctx.fillRect(201,132,110,47);
+ ctx.fillStyle='#f1eee2';ctx.fillRect(207,137,98,37);
+ ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#27363c';
+ ctx.font='bold 18px sans-serif';ctx.fillText('กท ๘๐๘',256,150);
+ ctx.font='11px sans-serif';ctx.fillText('กรุงเทพมหานคร',256,165);
+ for(let i=0;i<40;i++){
+  const x=(i*79+17)%512,y=108+(i*29)%75;
+  ctx.fillStyle='rgba(32,37,36,.09)';ctx.fillRect(x,y,1+(i%3),1+(i%2));
+ }
+ const map=new THREE.CanvasTexture(canvas);map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=2;
+ const mesh=new THREE.Mesh(new THREE.PlaneGeometry(2,.72),
+  new THREE.MeshStandardMaterial({map,metalness:.23,roughness:.52}));
+ mesh.position.set(0,.8,2.30);mesh.name='bangkok-bus-pbr-front-fascia';
+ return mesh;
+}
+
 // Four side windows are baked into one weathered PBR atlas per expressway bus.
 // Two planes replace eight separate glazing boxes: six fewer draw calls per bus.
 function makeBusSideWindows(THREE){
@@ -300,7 +344,6 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
  const glass=new THREE.MeshStandardMaterial({color:0x173542,metalness:.2,roughness:.16});
  const rubber=new THREE.MeshStandardMaterial({color:0x171a1c,roughness:.96});
  const stripe=new THREE.MeshStandardMaterial({color:0xc72b35,roughness:.55});
- const lamps=new THREE.MeshBasicMaterial({color:0xffedc1});
  const shape=new THREE.Shape();
  if(isBus){shape.moveTo(-2.22,.43);shape.lineTo(-2.22,2.62);shape.lineTo(-2.04,2.86);shape.lineTo(2.04,2.86);shape.lineTo(2.22,2.62);shape.lineTo(2.22,.43);}
  else{shape.moveTo(-1.77,.4);shape.lineTo(-1.55,.65);shape.lineTo(-.73,.74);shape.lineTo(-.31,1.2);shape.lineTo(.6,1.2);shape.lineTo(1.07,.73);shape.lineTo(1.55,.64);shape.lineTo(1.77,.4);}
@@ -313,6 +356,7 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   const busGlazing=makeBusGlazing(THREE),destination=makeBusDestination(THREE);
   box(0,1.07,0,2.07,.25,4.4,stripe);
   group.add(makeBusSideLivery(THREE));
+  group.add(makeBusFrontFascia(THREE));
   box(0,2.16,2.25,1.8,.83,.05,busGlazing);
   box(0,2.7,2.29,1.48,.23,.025,destination);
   // Shared, UV-baked window strip follows the bus flank at the original height.
@@ -641,7 +685,6 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   matrix.makeTranslation(mirrorX,mirrorY,mirrorZ-.081);mirrorFaces.setMatrixAt(mirrorIndex,matrix);
   mirrorIndex++;
   // Keep distinct front and rear lamps.
-  if(isBus)box(side*w*.37,.8,length/2+.04,.27,.14,.06,lamps);
   if(isBus)box(side*w*.37,.8,-length/2-.04,.27,.14,.06,tailLamps);
  }
  group.add(tires,hubs,mirrorBodies,mirrorFaces);
