@@ -284,6 +284,48 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   hood.name='sports-car-sculpted-bonnet';
   group.add(hood);
 
+  // Four sculpted fender lips and dark wheel liners in one PBR draw call.
+  // Each 12-segment arch follows its existing axle; no extra textures or lights.
+  const archPositions=[],archColors=[],archIndices=[];
+  const archPalette=[
+   new THREE.Color(0x111820), // recessed tire-side liner
+   new THREE.Color(0x32343a), // shadowed metal transition
+   new THREE.Color(0xb12438)  // body-colored outer fender shoulder
+  ];
+  const archRadii=[.385,.423,.47],archSegments=12;
+  for(const side of [-1,1]){
+   for(const axle of [-1,1]){
+    const start=archPositions.length/3;
+    for(let band=0;band<archRadii.length;band++){
+     const radius=archRadii[band];
+     for(let step=0;step<=archSegments;step++){
+      const angle=Math.PI*step/archSegments;
+      archPositions.push(side*(w*.5+.065),.4+Math.sin(angle)*radius,
+       axle*1.1+Math.cos(angle)*radius);
+      const color=archPalette[band];
+      archColors.push(color.r,color.g,color.b);
+     }
+    }
+    for(let band=0;band<2;band++){
+     for(let step=0;step<archSegments;step++){
+      const a=start+band*(archSegments+1)+step,b=a+archSegments+1;
+      if(side>0)archIndices.push(a,b,a+1,a+1,b,b+1);
+      else archIndices.push(a,a+1,b,a+1,b+1,b);
+     }
+    }
+   }
+  }
+  const archGeo=new THREE.BufferGeometry();
+  archGeo.setAttribute('position',new THREE.Float32BufferAttribute(archPositions,3));
+  archGeo.setAttribute('color',new THREE.Float32BufferAttribute(archColors,3));
+  archGeo.setIndex(archIndices);
+  archGeo.computeVertexNormals();
+  const archMesh=new THREE.Mesh(archGeo,new THREE.MeshStandardMaterial({
+   vertexColors:true,metalness:.32,roughness:.46
+  }));
+  archMesh.name='sports-car-contoured-wheel-arches';
+  group.add(archMesh);
+
   // Sports-car grille, splitter, rear wing, supports and side ducts:
   // Nine carbon-finish pieces in one instanced draw call, no texture upload.
   const carbon=new THREE.MeshStandardMaterial({color:0x111820,metalness:.24,roughness:.54});
