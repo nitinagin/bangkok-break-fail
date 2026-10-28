@@ -3503,11 +3503,42 @@ function bindDancerGestureRig(dancer){
  const bones=[];dancer.traverse(node=>{if(node.isBone)bones.push(node)});
  const named=bones.map(bone=>({bone,name:bone.name.toLowerCase().replace(/[^a-z0-9]/g,'')}));
  const arm=named.find(entry=>/(rightupperarm|upperarmr|rupperarm|rightarm|armr)/.test(entry.name)&&!/forearm|lowerarm|hand|finger|twist/.test(entry.name))?.bone||null;
+ const forearm=named.find(entry=>/(rightforearm|forearmr|rforearm|rightlowerarm|lowerarmr|rlowerarm)/.test(entry.name)&&!/twist|finger/.test(entry.name))?.bone||null;
+ const hand=named.find(entry=>/(righthand|handr|rhand)/.test(entry.name)&&!/finger|thumb|index|middle|ring|pinky/.test(entry.name))?.bone||null;
  const head=named.find(entry=>entry.name.endsWith('head')&&!/headtop|headend|headnub/.test(entry.name))?.bone||null;
  if(!arm&&!head)return null;
- return {arm,head,armRest:arm?.quaternion.clone(),headRest:head?.quaternion.clone(),
+ const rig={arm,head,armRest:arm?.quaternion.clone(),headRest:head?.quaternion.clone(),
   armDelta:new THREE.Quaternion(),headDelta:new THREE.Quaternion(),
-  armAxis:new THREE.Vector3(0,0,1),headAxis:new THREE.Vector3(0,1,0)};
+  armAxis:new THREE.Vector3(0,0,1),headAxis:new THREE.Vector3(0,1,0),
+  armPose:null,forearm:null,forearmRest:null,forearmPose:null};
+ // Derive the stop gesture from actual bone directions, not a hard-coded local Z
+ // rotation. This supports common Mixamo/Blender humanoid rigs with different
+ // bind-pose axes. All poses are calculated once, not in the render loop.
+ function aimBoneAt(bone,child,targetWorld){
+  if(!bone.parent||!child||child.parent!==bone)return null;
+  bone.parent.updateWorldMatrix(true,false);
+  const restDirection=child.position.clone().applyQuaternion(bone.quaternion);
+  if(restDirection.lengthSq()<1e-6)return null;
+  const parentWorld=bone.parent.getWorldQuaternion(new THREE.Quaternion());
+  const targetParent=targetWorld.clone().applyQuaternion(parentWorld.invert()).normalize();
+  return new THREE.Quaternion().setFromUnitVectors(restDirection.normalize(),targetParent).multiply(bone.quaternion.clone());
+ }
+ if(arm&&forearm?.parent===arm){
+  rig.armPose=aimBoneAt(arm,forearm,new THREE.Vector3(.24,.78,.58));
+  if(rig.armPose&&hand?.parent===forearm){
+   arm.quaternion.copy(rig.armPose);
+   arm.updateWorldMatrix(true,true);
+   rig.forearmPose=aimBoneAt(forearm,hand,new THREE.Vector3(.12,.58,.82));
+   arm.quaternion.copy(rig.armRest);
+   arm.updateWorldMatrix(true,true);
+   if(rig.forearmPose){rig.forearm=forearm;rig.forearmRest=forearm.quaternion.clone();}
+  }
+ }
+ if(head?.parent){
+  head.parent.updateWorldMatrix(true,false);
+  rig.headAxis=new THREE.Vector3(0,1,0).applyQuaternion(head.parent.getWorldQuaternion(new THREE.Quaternion()).invert()).normalize();
+ }
+ return rig;
 }
 const useDetailedDancer=type==='dancer'&&!!dancerTemplate&&!hazards.some(h=>h.type==='dancer'&&h.g.userData.detailedDancer);
 const useDetailedTukTuk=type==='tuktuk'&&!jamFormation&&!!realTukTuk&&!hazards.some(h=>h.type==='tuktuk'&&h.g.userData.detailedTukTuk);
@@ -5030,14 +5061,20 @@ if(meters+bonus>=8000)queueExpresswayBusModel();const nextDistrict=Math.floor(me
  if(h.g.userData.spectralArm)h.g.userData.spectralArm.visible=warning>.06;
  const rig=h.g.userData.danceRig;
  if(rig?.arm){
-  // Quaternions preserve the imported bind pose and avoid cumulative drift.
-  rig.armDelta.setFromAxisAngle(rig.armAxis,warning*.78);
-  rig.arm.quaternion.copy(rig.armRest).multiply(rig.armDelta);
+  // Blend the imported shoulder and elbow toward a forward-facing stop pose.
+  // An unrecognized rig still uses the original lightweight shoulder gesture.
+  if(rig.armPose){
+   rig.arm.quaternion.slerpQuaternions(rig.armRest,rig.armPose,warning);
+   if(rig.forearmPose)rig.forearm.quaternion.slerpQuaternions(rig.forearmRest,rig.forearmPose,warning);
+  }else{
+   rig.armDelta.setFromAxisAngle(rig.armAxis,warning*.78);
+   rig.arm.quaternion.copy(rig.armRest).multiply(rig.armDelta);
+  }
  }
  if(rig?.head){
   const gaze=THREE.MathUtils.clamp(driverAngle-h.g.rotation.y,-.65,.65)*approach;
   rig.headDelta.setFromAxisAngle(rig.headAxis,gaze);
-  rig.head.quaternion.copy(rig.headRest).multiply(rig.headDelta);
+  rig.head.quaternion.copy(rig.headDelta).multiply(rig.headRest);
  }
  const head=h.g.userData.danceHead;
  if(head){
