@@ -253,10 +253,41 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   group.add(new THREE.Mesh(sideGeometry,sideGlass));
 
 
+  // Sculpted bonnet: tapered nose, raised centre ridge and pressed shoulder creases.
+  // One 96-triangle painted PBR mesh replaces the flat, toy-like hood silhouette.
+  // Geometry is built only once for the shared sports-car template.
+  const hoodStations=[
+   [0.84,.785,.81],[.96,.778,.81],[1.08,.768,.805],
+   [1.20,.753,.795],[1.32,.739,.785],[1.44,.725,.775],
+   [1.56,.710,.765],[1.68,.693,.75],[1.73,.683,.735]
+  ];
+  const hoodAcross=[-1,-.82,-.57,0,.57,.82,1];
+  const hoodVertices=[],hoodIndices=[];
+  for(const [z,y,halfWidth] of hoodStations){
+   for(const across of hoodAcross){
+    const shoulder=Math.exp(-Math.pow((Math.abs(across)-.70)/.19,2))*.022;
+    const crown=(1-Math.abs(across))*.031;
+    hoodVertices.push(across*halfWidth,y+shoulder+crown,z);
+   }
+  }
+  for(let row=0;row<hoodStations.length-1;row++){
+   for(let col=0;col<hoodAcross.length-1;col++){
+    const a=row*hoodAcross.length+col,b=a+hoodAcross.length;
+    hoodIndices.push(a,b,a+1,a+1,b,b+1);
+   }
+  }
+  const hoodGeo=new THREE.BufferGeometry();
+  hoodGeo.setAttribute('position',new THREE.Float32BufferAttribute(hoodVertices,3));
+  hoodGeo.setIndex(hoodIndices);
+  hoodGeo.computeVertexNormals();
+  const hood=new THREE.Mesh(hoodGeo,paint);
+  hood.name='sports-car-sculpted-bonnet';
+  group.add(hood);
+
   // Sports-car grille, splitter, rear wing, supports and side ducts:
-  // seven carbon-finish pieces in one instanced draw call, no texture upload.
+  // Nine carbon-finish pieces in one instanced draw call, no texture upload.
   const carbon=new THREE.MeshStandardMaterial({color:0x111820,metalness:.24,roughness:.54});
-  const aero=new THREE.InstancedMesh(new THREE.BoxGeometry(1,1,1),carbon,7);
+  const aero=new THREE.InstancedMesh(new THREE.BoxGeometry(1,1,1),carbon,9);
   const aeroMatrix=new THREE.Matrix4();
   function aeroPart(i,x,y,z,sx,sy,sz){
    aeroMatrix.makeScale(sx,sy,sz);
@@ -270,6 +301,9 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   aeroPart(4,.52,.86,-1.46,.08,.23,.09);
   aeroPart(5,-.91,.69,-.30,.035,.18,.55); // side intakes
   aeroPart(6,.91,.69,-.30,.035,.18,.55);
+  // Low-profile hood extractor slits share the existing carbon draw call.
+  aeroPart(7,-.48,.788,1.16,.115,.012,.27);
+  aeroPart(8,.48,.788,1.16,.115,.012,.27);
   aero.instanceMatrix.needsUpdate=true;
   group.add(aero);
   // Two LED running lights share one draw call; no dynamic lighting.
