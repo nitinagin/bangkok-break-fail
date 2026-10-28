@@ -22,8 +22,49 @@ function makeBusGlazing(THREE){
   ctx.fillStyle=i%3===0?'rgba(211,224,232,.16)':'rgba(159,175,182,.09)';
   ctx.fillRect(x,y,1,18+(i%5)*9);
  }
+ // Bake two parked windscreen wipers and a weathered rubber surround
+ // into the existing glass atlas: no extra draw calls or dynamic lights.
+ ctx.strokeStyle='rgba(11,19,23,.85)';ctx.lineWidth=7;
+ ctx.strokeRect(4,4,248,248);ctx.lineCap='round';
+ for(const side of [-1,1]){
+  const pivot=side<0?45:211,tip=side<0?133:123;
+  ctx.strokeStyle='rgba(10,15,18,.92)';ctx.lineWidth=5;
+  ctx.beginPath();ctx.moveTo(pivot,234);ctx.lineTo(tip,202);ctx.stroke();
+  ctx.strokeStyle='rgba(185,196,194,.35)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(pivot,231);ctx.lineTo(tip,199);ctx.stroke();
+ }
  const map=new THREE.CanvasTexture(canvas);map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=2;
  return new THREE.MeshStandardMaterial({map,metalness:.18,roughness:.29});
+}
+// A raked, slightly bowed windshield replaces the square bus glass box.
+// Eight segments, sixteen triangles, and the existing shared PBR glass atlas.
+function makeBusCurvedWindshield(THREE,material){
+ const positions=[],uvs=[],indices=[],segments=8;
+ for(let row=0;row<=1;row++){
+  const y=1.745+row*.83;
+  for(let i=0;i<=segments;i++){
+   const nx=i/segments*2-1,x=nx*.9;
+   const z=2.335-row*.055+.028*(1-nx*nx);
+   positions.push(x,y,z);uvs.push(i/segments,row);
+  }
+ }
+ for(let i=0;i<segments;i++){
+  const a=i,b=i+1,c=i+segments+1,d=c+1;
+  indices.push(a,b,c,b,d,c);
+ }
+ const geometry=new THREE.BufferGeometry();
+ geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+ geometry.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));
+ geometry.setIndex(indices);geometry.computeVertexNormals();
+ const mesh=new THREE.Mesh(geometry,material);
+ mesh.name='bangkok-bus-curved-pbr-windshield';
+ return mesh;
+}
+function makeBusRoutePanel(THREE,material){
+ const mesh=new THREE.Mesh(new THREE.PlaneGeometry(1.48,.23),material);
+ mesh.position.set(0,2.7,2.315);
+ mesh.name='bangkok-bus-front-route-panel';
+ return mesh;
 }
 // A real bilingual route panel replaces an existing blank window: zero extra meshes.
 function makeBusDestination(THREE){
@@ -357,8 +398,10 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   box(0,1.07,0,2.07,.25,4.4,stripe);
   group.add(makeBusSideLivery(THREE));
   group.add(makeBusFrontFascia(THREE));
-  box(0,2.16,2.25,1.8,.83,.05,busGlazing);
-  box(0,2.7,2.29,1.48,.23,.025,destination);
+  // Front-facing route sign and curved glass replace texture-stretched boxes.
+  // Vehicle footprint, collision and stage behavior are unchanged.
+  group.add(makeBusCurvedWindshield(THREE,busGlazing));
+  group.add(makeBusRoutePanel(THREE,destination));
   // Shared, UV-baked window strip follows the bus flank at the original height.
   const sideGlazing=makeBusSideWindows(THREE);
   const sideWindowGeometry=new THREE.PlaneGeometry(3.82,.65);
