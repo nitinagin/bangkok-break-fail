@@ -189,6 +189,66 @@ function makeSportsCarFrontIntake(THREE){
  mesh.name='sports-car-contoured-front-intake';
  return mesh;
 }
+// Low-poly projector headlamps replace the two rectangular front lamp boxes.
+// One shared 256x128 baked lens atlas and eight triangles for both swept housings.
+// No runtime lighting, texture fetches, or per-hazard allocations (template is cloned).
+function makeSportsCarProjectorHeadlights(THREE){
+ const canvas=document.createElement('canvas');canvas.width=256;canvas.height=128;
+ const ctx=canvas.getContext('2d');
+ const housing=ctx.createLinearGradient(0,0,0,128);
+ housing.addColorStop(0,'#455660');housing.addColorStop(.16,'#17252e');
+ housing.addColorStop(.76,'#0b121a');housing.addColorStop(1,'#3e4951');
+ ctx.fillStyle=housing;ctx.fillRect(0,0,256,128);
+ // Inset lens surround and chrome bowls; baked highlights suggest curved glass.
+ ctx.fillStyle='#080d13';ctx.fillRect(7,12,242,103);
+ ctx.strokeStyle='#7e919d';ctx.lineWidth=4;ctx.strokeRect(8,13,240,101);
+ for(const cx of [72,176]){
+  const reflector=ctx.createRadialGradient(cx-10,47,3,cx,61,43);
+  reflector.addColorStop(0,'#d7e3e5');reflector.addColorStop(.27,'#7d98a6');
+  reflector.addColorStop(.64,'#263e4d');reflector.addColorStop(1,'#090e15');
+  ctx.fillStyle=reflector;ctx.beginPath();ctx.ellipse(cx,63,40,37,0,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#9eb0b8';ctx.lineWidth=2;ctx.stroke();
+  ctx.fillStyle='#0d2637';ctx.beginPath();ctx.ellipse(cx,65,19,22,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#9fc2d1';ctx.beginPath();ctx.ellipse(cx-5,56,6,9,-.3,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='rgba(231,242,239,.46)';ctx.lineWidth=2;
+  ctx.beginPath();ctx.arc(cx,63,29,3.75,5.7);ctx.stroke();
+ }
+ // Continuous upper LED signature, lower smoked trim and restrained reflections.
+ ctx.strokeStyle='#e5f2ed';ctx.lineWidth=6;ctx.beginPath();
+ ctx.moveTo(13,26);ctx.lineTo(55,21);ctx.lineTo(119,24);
+ ctx.lineTo(195,21);ctx.lineTo(242,28);ctx.stroke();
+ ctx.strokeStyle='rgba(154,207,221,.75)';ctx.lineWidth=2;
+ ctx.beginPath();ctx.moveTo(14,33);ctx.lineTo(243,34);ctx.stroke();
+ ctx.fillStyle='rgba(200,217,222,.20)';ctx.fillRect(14,101,228,4);
+ const map=new THREE.CanvasTexture(canvas);
+ map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=2;
+ const positions=[],uvs=[],indices=[];
+ for(const side of [-1,1]){
+  const first=positions.length/3;
+  const bottom=[[.45,.78,1.855],[.62,.775,1.83],[.80,.765,1.79]];
+  const top=[[.46,.91,1.852],[.62,.895,1.825],[.78,.865,1.785]];
+  for(const [row,vertices] of [[0,bottom],[1,top]]){
+   for(let i=0;i<3;i++){
+    const [x,y,z]=vertices[i];positions.push(side*x,y,z);
+    uvs.push(i/2,row);
+   }
+  }
+  for(let i=0;i<2;i++){
+   const a=first+i,b=first+3+i;
+   indices.push(a,b,a+1,a+1,b,b+1);
+  }
+ }
+ const geometry=new THREE.BufferGeometry();
+ geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+ geometry.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));
+ geometry.setIndex(indices);geometry.computeVertexNormals();
+ const mesh=new THREE.Mesh(geometry,new THREE.MeshStandardMaterial({
+  map,metalness:.30,roughness:.23,side:THREE.DoubleSide,
+  emissive:0x13222b,emissiveIntensity:.25
+ }));
+ mesh.name='sports-car-swept-projector-headlamps';
+ return mesh;
+}
 export function makeExpresswayVehicle(THREE,type='sportsCar'){
  const isBus=type==='bus',group=new THREE.Group(),w=isBus?2.05:1.8,length=isBus?4.45:3.55;
  const paint=isBus?new THREE.MeshStandardMaterial({color:0xf0e6d4,metalness:.15,roughness:.65}):new THREE.MeshPhysicalMaterial({color:0xb12438,metalness:.62,roughness:.26,clearcoat:.75,clearcoatRoughness:.22});
@@ -495,6 +555,7 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   group.add(aero);
   // Baked cooling ducts curve across the front, above the splitter.
   group.add(makeSportsCarFrontIntake(THREE));
+   group.add(makeSportsCarProjectorHeadlights(THREE));
   // Two LED running lights share one draw call; no dynamic lighting.
   const led=new THREE.InstancedMesh(new THREE.BoxGeometry(.45,.045,.04),
    new THREE.MeshBasicMaterial({color:0xccefff,toneMapped:false}),2);
@@ -534,7 +595,7 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   matrix.makeTranslation(mirrorX,mirrorY,mirrorZ-.081);mirrorFaces.setMatrixAt(mirrorIndex,matrix);
   mirrorIndex++;
   // Keep distinct front and rear lamps.
-  box(side*w*.37,.8,length/2+.04,.27,.14,.06,lamps);
+  if(isBus)box(side*w*.37,.8,length/2+.04,.27,.14,.06,lamps);
   if(isBus)box(side*w*.37,.8,-length/2-.04,.27,.14,.06,tailLamps);
  }
  group.add(tires,hubs,mirrorBodies,mirrorFaces);
