@@ -3134,10 +3134,10 @@ const crown=part(g,new THREE.Mesh(new THREE.ConeGeometry(.72,1.2,8),gold2));crow
 for(let i=0;i<8;i++){const a=i*Math.PI/4;part(g,ball(.11,M.red,Math.cos(a)*.55,4.05,Math.sin(a)*.55))}
 part(g,cube(1.8,.2,1.15,gold2,0,2.94,0));return g}
 // V0.7 art pass: curved silhouette, patterned cloth, facial features and articulated dance
-function silkTexture(){const c=document.createElement('canvas');c.width=256;c.height=512;const q=c.getContext('2d');const grad=q.createLinearGradient(0,0,256,0);grad.addColorStop(0,'#6d154a');grad.addColorStop(.35,'#d34987');grad.addColorStop(.7,'#f07ba3');grad.addColorStop(1,'#721b55');q.fillStyle=grad;q.fillRect(0,0,256,512);q.strokeStyle='#f6c55d';q.lineWidth=5;for(let x=18;x<256;x+=44){q.beginPath();q.moveTo(x,0);q.bezierCurveTo(x+20,130,x-16,290,x+12,512);q.stroke()}for(let y=50;y<512;y+=86){q.strokeStyle='#ffdd8a';q.lineWidth=2;q.beginPath();for(let x=0;x<256;x+=8){const yy=y+Math.sin(x/15)*8;if(x===0)q.moveTo(x,yy);else q.lineTo(x,yy)}q.stroke()}const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return t}
-const silk=new THREE.MeshBasicMaterial({map:silkTexture(),side:THREE.DoubleSide});
+function silkTexture(){const c=document.createElement('canvas');c.width=256;c.height=512;const q=c.getContext('2d');const grad=q.createLinearGradient(0,0,256,0);grad.addColorStop(0,'#360b19');grad.addColorStop(.35,'#86172d');grad.addColorStop(.7,'#b92b3d');grad.addColorStop(1,'#400b1c');q.fillStyle=grad;q.fillRect(0,0,256,512);q.strokeStyle='#f6c55d';q.lineWidth=5;for(let x=18;x<256;x+=44){q.beginPath();q.moveTo(x,0);q.bezierCurveTo(x+20,130,x-16,290,x+12,512);q.stroke()}for(let y=50;y<512;y+=86){q.strokeStyle='#ffdd8a';q.lineWidth=2;q.beginPath();for(let x=0;x<256;x+=8){const yy=y+Math.sin(x/15)*8;if(x===0)q.moveTo(x,yy);else q.lineTo(x,yy)}q.stroke()}const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return t}
+const silk=new THREE.MeshStandardMaterial({map:silkTexture(),roughness:.64,metalness:.12,side:THREE.DoubleSide});
 const pearl=new THREE.MeshStandardMaterial({color:0xffe5a5,metalness:.65,roughness:.3});
-const skinShade=new THREE.MeshStandardMaterial({color:0xc6ced6,roughness:.9});const ghostWhite=new THREE.MeshBasicMaterial({color:0xf5f6ed});const ghostBlack=new THREE.MeshBasicMaterial({color:0x100c1a});const ghostRed=new THREE.MeshBasicMaterial({color:0xb30722});
+const skinShade=new THREE.MeshStandardMaterial({color:0xb8b3ae,roughness:.86});const ghostWhite=new THREE.MeshStandardMaterial({color:0xc9c5bd,roughness:.82});const eyeIvory=new THREE.MeshStandardMaterial({color:0xded8ce,roughness:.67});const ghostBlack=new THREE.MeshStandardMaterial({color:0x20161b,roughness:.68});const ghostRed=new THREE.MeshStandardMaterial({color:0x6f2634,roughness:.66});
 const hair=new THREE.MeshStandardMaterial({color:0x201728,roughness:.72});
 function makeDancer(){const g=new THREE.Group();
 const profile=[[0,0],[.65,0],[.93,.13],[.82,.45],[.65,.85],[.46,1.35],[.32,1.78],[.31,1.95]].map(p=>new THREE.Vector2(...p));
@@ -3148,15 +3148,19 @@ for(const side of [-1,1]){const ep=part(g,ball(.22,pearl,side*.36,2.69,0));ep.sc
 const neck=part(g,new THREE.Mesh(new THREE.CylinderGeometry(.14,.15,.25,12),skinShade));neck.position.y=3.03;
 // Head is a separate lightweight pivot so the spirit can track the passing player.
 const headStart=g.children.length;
-const face=part(g,new THREE.Mesh(new THREE.SphereGeometry(.44,18,14),ghostWhite));face.scale.set(.85,1.14,.76);face.position.set(0,3.4,.05);
+const face=part(g,new THREE.Mesh(new THREE.SphereGeometry(.44,24,18),ghostWhite));face.scale.set(.85,1.14,.76);face.position.set(0,3.4,.05);
 const bun=part(g,ball(.42,hair,0,3.61,-.19));bun.scale.set(.95,.85,.8);
 const fringe=part(g,ball(.33,hair,0,3.73,.16));fringe.scale.set(1.05,.32,.85);
+// Smaller, shaded eyes and eyelids replace the oversized cartoon stare.
 for(const side of [-1,1]){
- const eye=part(g,ball(.145,ghostBlack,side*.18,3.44,.365));eye.scale.set(1.16,1.18,.45);part(g,ball(.092,ghostWhite,side*.18,3.44,.421));part(g,ball(.058,ghostBlack,side*.18,3.44,.483));
- const brow=rod(g,[side*.08,3.65,.41],[side*.29,3.64,.38],.037,ghostBlack);
- part(g,ball(.09,pearl,side*.34,3.26,.1));
+ const eye=part(g,ball(.085,eyeIvory,side*.17,3.44,.352));eye.scale.set(1.12,.58,.38);
+ const iris=part(g,ball(.045,ghostBlack,side*.17,3.44,.386));iris.scale.set(.84,1,.45);
+ rod(g,[side*.075,3.495,.36],[side*.255,3.485,.35],.022,ghostBlack);
+ rod(g,[side*.085,3.59,.335],[side*.27,3.6,.31],.027,ghostBlack);
+ part(g,ball(.065,pearl,side*.34,3.26,.1));
 }
-const lips=part(g,ball(.12,ghostRed,0,3.19,.40));lips.scale.set(1.05,.35,.28);
+const nose=part(g,new THREE.Mesh(new THREE.ConeGeometry(.065,.16,8),ghostWhite));nose.rotation.x=Math.PI/2;nose.position.set(0,3.29,.37);
+const lips=part(g,ball(.095,ghostRed,0,3.18,.36));lips.scale.set(1.45,.36,.32);
 const headdress=part(g,new THREE.Mesh(new THREE.CylinderGeometry(.19,.38,.32,16),pearl));headdress.position.y=3.98;
 for(let i=0;i<5;i++){const tip=part(g,new THREE.Mesh(new THREE.ConeGeometry(.12,.62+(2-Math.abs(i-2))*.18,9),pearl));tip.position.set((i-2)*.17,4.35+(2-Math.abs(i-2))*.09,0)}
 for(const side of [-1,1]){const curl=part(g,new THREE.Mesh(new THREE.TorusGeometry(.22,.045,8,20,Math.PI*1.35),pearl));curl.position.set(side*.31,4.02,.12);curl.rotation.z=side*.3}
