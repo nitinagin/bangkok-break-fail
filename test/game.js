@@ -3179,23 +3179,62 @@ const arms=[];for(const side of [-1,1]){
 g.userData.danceArms=arms;g.userData.danceHead=headPivot;g.userData.dance=true;return g}
 // AI-generated GLB: remote preview asset. Replace with a permanent repo-hosted asset for release.
 const DANCER_GLB='https://v3b.fal.media/files/b/0aaedcc4/8RK96n7S6Aiz1KkcI1Z6Q_model.glb';
-let dancerTemplate=null,dancerLoading=false;
+let dancerTemplate=null,dancerLoading=false,dancerAttempted=false;
 function loadDancerAsset(){
-dancerLoading=true;
-new GLTFLoader().load(DANCER_GLB,glb=>{
- try{
- const root=glb.scene;
- // Clamp oversized PBR textures to 1024px to reduce GPU memory on phones.
- const processed=new Set();root.traverse(obj=>{if(!obj.isMesh)return;obj.frustumCulled=true;const mats=Array.isArray(obj.material)?obj.material:[obj.material];for(const m of mats){if(!m)continue;for(const key of ['map','normalMap','roughnessMap','metalnessMap','emissiveMap','aoMap']){const tex=m[key];if(!tex||processed.has(tex))continue;processed.add(tex);const img=tex.image;if(img&&img.width>768&&img.height>0&&typeof document!=='undefined'){const ratio=Math.min(1,768/Math.max(img.width,img.height));const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(img.width*ratio));canvas.height=Math.max(1,Math.round(img.height*ratio));try{canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);tex.image=canvas;tex.needsUpdate=true}catch(e){}}}}});
- root.updateMatrixWorld(true);
- const bounds=new THREE.Box3().setFromObject(root),size=bounds.getSize(new THREE.Vector3());
- if(!Number.isFinite(size.y)||size.y<=0)throw Error('Invalid dancer model bounds');
- const center=bounds.getCenter(new THREE.Vector3());
- root.position.sub(center);root.position.y+=size.y/2;
- const normalized=new THREE.Group();normalized.add(root);normalized.scale.setScalar(4.25/size.y);
- dancerTemplate=normalized;dancerLoading=false;
- }catch(error){dancerLoading=false;console.warn('Dancer GLB invalid; procedural fallback retained',error)}
-},undefined,err=>{console.warn('GLB unavailable, using procedural fallback',err);dancerLoading=false});
+ if(dancerAttempted)return;
+ dancerAttempted=true;dancerLoading=true;
+ new GLTFLoader().load(DANCER_GLB,glb=>{
+  try{
+   const root=glb.scene;
+   if(!root)throw Error('Dancer GLB has no scene');
+   let triangles=0,meshCount=0,drawCalls=0;
+   const textures=new Set();
+   const textureKeys=['map','normalMap','roughnessMap','metalnessMap','emissiveMap','aoMap','alphaMap','bumpMap'];
+   root.traverse(obj=>{
+    if(!obj.isMesh)return;
+    meshCount++;obj.frustumCulled=true;
+    const geometry=obj.geometry,positions=geometry?.getAttribute('position');
+    if(!positions||positions.count<3)throw Error('Dancer GLB invalid mesh');
+    const count=geometry.getIndex()?.count||positions.count;
+    triangles+=count/3;
+    const mats=Array.isArray(obj.material)?obj.material:[obj.material];
+    drawCalls+=mats.length>1&&geometry.groups.length?geometry.groups.length:1;
+    for(const material of mats)if(material)for(const key of textureKeys)if(material[key])textures.add(material[key]);
+   });
+   if(!meshCount||meshCount>(mobile?85:180)||drawCalls>(mobile?90:180)||!Number.isFinite(triangles)||triangles>(mobile?150000:300000))throw Error('Dancer GLB exceeds mesh/draw/triangle budget');
+   if(textures.size>(mobile?18:32))throw Error('Dancer GLB exceeds texture count budget');
+   const maxEdge=mobile?512:768,textureSizes=[],resized=new Map();
+   let texels=0;
+   for(const tex of textures){
+    const img=tex.image;if(!img)continue;
+    const w=img.width,h=img.height;
+    if(!Number.isFinite(w)||!Number.isFinite(h)||w<1||h<1)throw Error('Dancer GLB invalid texture');
+    const ratio=Math.min(1,maxEdge/Math.max(w,h));
+    const tw=Math.max(1,Math.round(w*ratio)),th=Math.max(1,Math.round(h*ratio));
+    texels+=tw*th;textureSizes.push({tex,img,w,h,tw,th});
+   }
+   if(texels>(mobile?6500000:16000000))throw Error('Dancer GLB exceeds texture budget');
+   for(const {tex,img,w,h,tw,th} of textureSizes){
+    if(w<=maxEdge&&h<=maxEdge)continue;
+    let canvas=resized.get(img);
+    if(!canvas){
+     canvas=document.createElement('canvas');canvas.width=tw;canvas.height=th;
+     const ctx=canvas.getContext('2d');if(!ctx)throw Error('Dancer GLB resize unavailable');
+     ctx.drawImage(img,0,0,tw,th);resized.set(img,canvas);
+    }
+    tex.image=canvas;tex.needsUpdate=true;
+   }
+   root.updateMatrixWorld(true);
+   const bounds=new THREE.Box3().setFromObject(root),size=bounds.getSize(new THREE.Vector3());
+   if(!Number.isFinite(size.y)||size.y<=.001)throw Error('Invalid dancer model bounds');
+   const center=bounds.getCenter(new THREE.Vector3());
+   root.position.sub(center);root.position.y+=size.y/2;
+   const normalized=new THREE.Group();normalized.add(root);normalized.scale.setScalar(4.25/size.y);
+   dancerTemplate=normalized;
+   console.info('Optional detailed dancer ready', {triangles:Math.round(triangles),meshCount,drawCalls});
+  }catch(error){console.warn('Dancer GLB rejected; retaining animated procedural fallback',error)}
+  finally{dancerLoading=false}
+ },undefined,error=>{console.warn('Dancer GLB unavailable; retaining animated procedural fallback',error);dancerLoading=false});
 }
 // Premium AI-generated Thai Yaksha; fallback stays available on slow connections.
 const YAKSHA_GLB='https://v3b.fal.media/files/b/0aaedd6a/14yrGJ3Iq8XcawwVvTolz_model.glb';
@@ -3246,8 +3285,8 @@ function loadYakshaAsset(){
  },undefined,error=>console.warn('Yaksha GLB unavailable; keeping playable guardian',error));
 }
 // Optional preview GLBs must not compete with the first playable frame.
-// Load the vehicle after play starts; desktop-only character GLBs are staggered.
-// Mobile uses the existing procedural dancer/yaksha, so never download unused models.
+// Load the vehicle after play starts; desktop character GLBs are staggered.
+// Mobile requests detailed dancers only after gameplay progress, with strict budgets and fallbacks.
 let optionalModelsQueued=false;
 function queueOptionalModels(){
  if(optionalModelsQueued)return;
@@ -3441,9 +3480,20 @@ function cachedObstacle(type){
  }
  return copy;
 }
-let bossSpawned=false,bossBeaten=false,eventCount=0,lastEventMeters=-250;let spawnIndex=0;const intro=['tuktuk','taxi','bus','bike','tuktuk','taxi','bus','bike','durian'];function spawn(){if(meters+bonus>=16000){spawnPattayaHazard();return;}if(meters+bonus>=12000){spawnExpresswayHazard();return;}if(meters+bonus>=8000){spawnMarketPedestrians();return;}const boss=nightCount>=1&&meters>=3200&&!bossSpawned;if(boss)bossSpawned=true;const chance=Math.random();const eventEligible=!boss&&spawnIndex>=intro.length&&meters>160&&meters-lastEventMeters>85&&Math.random()<.38;const madness=eventEligible?['rollingDurian','cuttingBus','wrongWayBike'][Math.floor(Math.random()*3)]:null;if(madness){eventCount++;lastEventMeters=meters}let type=boss?'yaksha':madness==='rollingDurian'?'durian':madness==='cuttingBus'?'bus':madness==='wrongWayBike'?'bike':spawnIndex<intro.length?intro[spawnIndex]:chance<.10?'construction':chance<.18?'durian':chance<.34?'bus':chance<.47?'yaksha':chance<.59?'dancer':chance<.78?'taxi':chance<.9?'tuktuk':'bike';if(nightCount===0&&(type==='yaksha'||type==='dancer'))type='taxi';if(nightCount>=1&&spawnIndex%9===0)type='yaksha';if(nightCount>=1&&spawnIndex%7===0)type='dancer';if(Math.floor(meters+bonus)<3000&&type==='construction')type='taxi';if(Math.floor(meters+bonus)>=3000&&spawnIndex%3===0)type='construction';if(Math.floor(meters+bonus)>=3000&&spawnIndex%13===5)type='checkpoint';if(Math.floor(meters+bonus)>=3000&&spawnIndex%8===3)type='truck';if(type==='bus'&&spawnIndex%2===0)type='busBlue';spawnIndex++;const jamFormation=!boss&&!madness&&spawnIndex>intro.length&&spawnIndex%5===0&&(type==='taxi'||type==='tuktuk');const jamLanes=[-3.35,0,3.35];const jamOpenLane=jamFormation?jamLanes[Math.floor(Math.random()*3)]:null;const jamOccupied=jamFormation?jamLanes.filter(v=>v!==jamOpenLane):null;let durianSide=0;if(type==='durian'){durianSide=Math.random()<.5?-1:1;if(storyProps.filter(p=>p.kind==='vendor').length<2)makeRoadsideStory('vendor',durianSide,-65)}const useDetailedDancer=type==='dancer'&&!mobile&&!!dancerTemplate&&!hazards.some(h=>h.type==='dancer'&&h.g.userData.detailedDancer);
+let bossSpawned=false,bossBeaten=false,eventCount=0,lastEventMeters=-250;let spawnIndex=0;const intro=['tuktuk','taxi','bus','bike','tuktuk','taxi','bus','bike','durian'];function spawn(){if(meters+bonus>=16000){spawnPattayaHazard();return;}if(meters+bonus>=12000){spawnExpresswayHazard();return;}if(meters+bonus>=8000){spawnMarketPedestrians();return;}const boss=nightCount>=1&&meters>=3200&&!bossSpawned;if(boss)bossSpawned=true;const chance=Math.random();const eventEligible=!boss&&spawnIndex>=intro.length&&meters>160&&meters-lastEventMeters>85&&Math.random()<.38;const madness=eventEligible?['rollingDurian','cuttingBus','wrongWayBike'][Math.floor(Math.random()*3)]:null;if(madness){eventCount++;lastEventMeters=meters}let type=boss?'yaksha':madness==='rollingDurian'?'durian':madness==='cuttingBus'?'bus':madness==='wrongWayBike'?'bike':spawnIndex<intro.length?intro[spawnIndex]:chance<.10?'construction':chance<.18?'durian':chance<.34?'bus':chance<.47?'yaksha':chance<.59?'dancer':chance<.78?'taxi':chance<.9?'tuktuk':'bike';if(nightCount===0&&(type==='yaksha'||type==='dancer'))type='taxi';if(nightCount>=1&&spawnIndex%9===0)type='yaksha';if(nightCount>=1&&spawnIndex%7===0)type='dancer';if(Math.floor(meters+bonus)<3000&&type==='construction')type='taxi';if(Math.floor(meters+bonus)>=3000&&spawnIndex%3===0)type='construction';if(Math.floor(meters+bonus)>=3000&&spawnIndex%13===5)type='checkpoint';if(Math.floor(meters+bonus)>=3000&&spawnIndex%8===3)type='truck';if(type==='bus'&&spawnIndex%2===0)type='busBlue';spawnIndex++;const jamFormation=!boss&&!madness&&spawnIndex>intro.length&&spawnIndex%5===0&&(type==='taxi'||type==='tuktuk');const jamLanes=[-3.35,0,3.35];const jamOpenLane=jamFormation?jamLanes[Math.floor(Math.random()*3)]:null;const jamOccupied=jamFormation?jamLanes.filter(v=>v!==jamOpenLane):null;let durianSide=0;if(type==='durian'){durianSide=Math.random()<.5?-1:1;if(storyProps.filter(p=>p.kind==='vendor').length<2)makeRoadsideStory('vendor',durianSide,-65)}const useDetailedDancer=type==='dancer'&&!!dancerTemplate&&!hazards.some(h=>h.type==='dancer'&&h.g.userData.detailedDancer);
 const useDetailedTukTuk=type==='tuktuk'&&!jamFormation&&!!realTukTuk&&!hazards.some(h=>h.type==='tuktuk'&&h.g.userData.detailedTukTuk);
-const g=!mobile&&type==='yaksha'&&yakshaTemplate&&!hazards.some(h=>h.type==='yaksha'&&h.g.userData.detailedYaksha)?yakshaTemplate.clone(true):useDetailedDancer?dancerTemplate.clone(true):useDetailedTukTuk?realTukTuk.clone(true):cachedObstacle(type);g.userData.detailedDancer=!!useDetailedDancer;g.userData.detailedTukTuk=!!useDetailedTukTuk;g.userData.detailedYaksha=type==='yaksha'&&!!yakshaTemplate&&g.children.length===1;const lane=jamFormation?jamOccupied[0]:type==='tuktuk'?([-1.1,0,1.1][spawnIndex%3]):type==='durian'?durianSide*3.35:boss?0:madness==='rollingDurian'?(Math.random()<.5?-3.35:3.35):[-3.35,0,3.35][Math.floor(Math.random()*3)];g.position.set(lane,0,type==='tuktuk'&&!jamFormation?-37:-65);if(type==='dancer')g.scale.setScalar(useDetailedDancer?1:1.55);if(type==='construction'){g.position.y=6;g.scale.setScalar(1.35);}if(type==='yaksha')g.scale.setScalar(boss?2.3:1.85);if(type==='bus'||type==='busBlue')g.scale.setScalar(1.04);if(type==='taxi')g.scale.setScalar(1.22);if(type==='truck')g.scale.setScalar(1.13);/* GLB is already normalized to road-sized metres; procedural traffic needs a modest scale. */if(type==='tuktuk')g.scale.setScalar(jamFormation?1.75:useDetailedTukTuk?1:1.7);if(type==='bike')g.scale.setScalar(1.6);if(type==='checkpoint')g.scale.setScalar(1.15);if(madness==='rollingDurian')g.scale.setScalar(1.35);if(madness==='wrongWayBike')g.rotation.y=Math.PI;scene.add(g);if(jamFormation){
+const g=!mobile&&type==='yaksha'&&yakshaTemplate&&!hazards.some(h=>h.type==='yaksha'&&h.g.userData.detailedYaksha)?yakshaTemplate.clone(true):useDetailedDancer?dancerTemplate.clone(true):useDetailedTukTuk?realTukTuk.clone(true):cachedObstacle(type);g.userData.detailedDancer=!!useDetailedDancer;
+if(useDetailedDancer){
+ // A transparent spectral warning hand preserves the pass-by threat even
+ // when an AI-generated static GLB has no skeleton or independently movable arm.
+ if(!obstacleTemplates.dancer)obstacleTemplates.dancer=makeDancer();
+ const gesture=obstacleTemplates.dancer.userData.danceArms[1].clone(true);
+ const ghostGestureMaterial=new THREE.MeshStandardMaterial({color:0xc3d4ca,roughness:.86,transparent:true,opacity:.72,depthWrite:false});
+ gesture.traverse(o=>{if(o.isMesh)o.material=ghostGestureMaterial});
+ gesture.visible=false;g.add(gesture);
+ g.userData.danceArms=[null,gesture];g.userData.spectralArm=gesture;
+}
+g.userData.detailedTukTuk=!!useDetailedTukTuk;g.userData.detailedYaksha=type==='yaksha'&&!!yakshaTemplate&&g.children.length===1;const lane=jamFormation?jamOccupied[0]:type==='tuktuk'?([-1.1,0,1.1][spawnIndex%3]):type==='durian'?durianSide*3.35:boss?0:madness==='rollingDurian'?(Math.random()<.5?-3.35:3.35):[-3.35,0,3.35][Math.floor(Math.random()*3)];g.position.set(lane,0,type==='tuktuk'&&!jamFormation?-37:-65);if(type==='dancer')g.scale.setScalar(useDetailedDancer?1:1.55);if(type==='construction'){g.position.y=6;g.scale.setScalar(1.35);}if(type==='yaksha')g.scale.setScalar(boss?2.3:1.85);if(type==='bus'||type==='busBlue')g.scale.setScalar(1.04);if(type==='taxi')g.scale.setScalar(1.22);if(type==='truck')g.scale.setScalar(1.13);/* GLB is already normalized to road-sized metres; procedural traffic needs a modest scale. */if(type==='tuktuk')g.scale.setScalar(jamFormation?1.75:useDetailedTukTuk?1:1.7);if(type==='bike')g.scale.setScalar(1.6);if(type==='checkpoint')g.scale.setScalar(1.15);if(madness==='rollingDurian')g.scale.setScalar(1.35);if(madness==='wrongWayBike')g.rotation.y=Math.PI;scene.add(g);if(jamFormation){
  // Exactly two aligned, non-swerving vehicles occupy two lanes; the third stays clear.
  const trafficLane=jamOccupied[1],jamType=type==='taxi'?'tuktuk':'taxi';
  const jam=cachedObstacle(jamType);
@@ -4900,6 +4950,8 @@ function update(dt,t){if(!active||paused)return;speed+=dt*(3+Math.sqrt(Math.max(
 // Defer the optional detailed guardian on mobile until the player has progressed.
 // Respect data-saving / very slow connections and retain the procedural guardian.
 if(mobile&&meters+bonus>=1000&&!yakshaAttempted&&!navigator.connection?.saveData&&!['slow-2g','2g'].includes(navigator.connection?.effectiveType))loadYakshaAsset();
+// Avoid downloading both detailed character assets at the same early-game moment.
+if(mobile&&meters+bonus>=2200&&!dancerAttempted&&!navigator.connection?.saveData&&!['slow-2g','2g'].includes(navigator.connection?.effectiveType))loadDancerAsset();
 if(meters+bonus>=8000)queueExpresswayBusModel();const nextDistrict=Math.floor(meters+bonus)>=16000?5:Math.floor(meters+bonus)>=12000?4:Math.floor(meters+bonus)>=8000?3:Math.floor(meters+bonus)>=3000?2:1;const currentNight=Math.floor(meters/1600)+(meters%1600<800?1:0);if(currentNight>nightCount){nightCount=currentNight;if(nightCount>0){hint.textContent='🌙 NIGHT '+nightCount+' — SPIRITS AWAKEN';if(nightCount%2===0&&grandmaTriggeredNight!==nightCount){makeRoadsideStory('shrine',Math.random()<.5?-1:1,-70);grandmaTriggeredNight=nightCount}}}if(nextDistrict!==districtIndex){applyDistrict(nextDistrict);if(nextDistrict>=3){for(const h of hazards)scene.remove(h.g);hazards.length=0;spawnClock=.5;hint.textContent=nextDistrict===5?'🌈 PATTAYA WALKING STREET!':nextDistrict===4?'🛣️ EXPRESSWAY! DODGE TRAFFIC AND UFO LASERS!':'🌞 JJ MARKET · TWO NARROW LANES!';}}const onRamaII=nextDistrict===2;const inMarket=nextDistrict===3;const onExpressway=nextDistrict===4,inPattaya=nextDistrict===5;pattayaStreet.visible=inPattaya;if(inPattaya){for(let i=0;i<pattayaShops.length;i++){const g=pattayaShops[i];g.position.z+=dt*(60+300*(1-Math.exp(-(speed-60)/240)))*.22;if(g.position.z>26)g.position.z-=192;}updatePattayaReflections();}expresswaySet.visible=onExpressway;expresswayArt.group.visible=onExpressway;if(onExpressway)expresswayArt.update(dt,speed);if(onExpressway){ufo.position.x=Math.sin(t*.0012)*2.4;ufo.position.y=13+Math.sin(t*.002)*.8;ufo.rotation.y+=dt*.4;}if(inMarket&&meters+bonus>=10000&&meters+bonus-speed*dt/3.6<10000)hint.textContent='🚣 FLOATING MARKET RIGHT · DO NOT FALL INTO CANAL!';road.material=onExpressway?expresswayAsphalt:onRamaII?ramaRoadAsphalt:inMarket?dryAsphalt:wetAsphalt;road.scale.x+=((inMarket?.65:1)-road.scale.x)*Math.min(1,dt*3);for(const p of props)p.visible=!onRamaII&&!inMarket&&!onExpressway&&!inPattaya;neonReflections.visible=nextDistrict===1;for(const mesh of streetLampMeshes)mesh.visible=nextDistrict===1;facadeBounce.visible=nextDistrict===1;for(const glow of roadsideNeonGlow)glow.visible=nextDistrict===1;for(const p of ramaStructures)p.visible=onRamaII;const canalVisible=inMarket&&meters+bonus>=9700;const canalActive=inMarket&&meters+bonus>=10000;canalGroup.visible=canalVisible;if(canalVisible)canalRippleTexture.offset.y=(t*.000025)%1;if(canalVisible){for(const boat of canalBoats){const phase=boat.userData.phase;boat.position.z=boat.userData.homeZ+((meters*.12+phase*3)%210);boat.position.y=-.02+Math.sin(t*.0017+phase)*.065;boat.rotation.z=Math.sin(t*.0011+phase)*.045;boat.userData.parasol.rotation.z=Math.sin(t*.0014+phase)*.035;for(let j=0;j<2;j++){const wake=boat.userData.wakes[j];wake.scale.z=.82+.18*Math.sin(t*.004+phase+j);wake.position.z=-1.95-.16*Math.sin(t*.0027+phase+j);}}}for(const stall of marketStalls){
  stall.visible=inMarket&&(!canalActive||stall.children[0].position.x<0);
  // Cull only small display goods beyond ~43 m; retain silhouettes and signs.
@@ -4930,15 +4982,17 @@ if(meters+bonus>=8000)queueExpresswayBusModel();const nextDistrict=Math.floor(me
  const approach=THREE.MathUtils.smoothstep(z,-24,-7);
  const hold=1-THREE.MathUtils.smoothstep(z,10,20);
  const warning=approach*hold;
- h.g.rotation.y=Math.sin(t*.0016+h.phase)*.10;
+ const driverAngle=Math.atan2(x-h.g.position.x,3.15-z);
+ h.g.rotation.y=Math.sin(t*.0016+h.phase)*.10+(h.g.userData.detailedDancer?THREE.MathUtils.clamp(driverAngle,-.7,.7)*approach*.4:0);
  h.g.position.x=h.baseX+Math.sin(t*.0013+h.phase)*.25;
  h.g.position.y=.17+Math.sin(t*.0027+h.phase)*.16;
  const arms=h.g.userData.danceArms;
- if(arms?.[0]&&arms?.[1]){
-  arms[0].rotation.z=Math.sin(t*.003+h.phase)*.20;
+ if(arms?.[0])arms[0].rotation.z=Math.sin(t*.003+h.phase)*.20;
+ if(arms?.[1]){
   arms[1].rotation.z=THREE.MathUtils.lerp(-Math.sin(t*.003+h.phase)*.20,1.12,warning);
   arms[1].rotation.x=THREE.MathUtils.lerp(0,-.38,warning);
  }
+ if(h.g.userData.spectralArm)h.g.userData.spectralArm.visible=warning>.06;
  const head=h.g.userData.danceHead;
  if(head){
   const towardDriver=Math.atan2(x-h.g.position.x,3.15-z);
