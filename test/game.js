@@ -3496,6 +3496,42 @@ for(const mesh of [bambooStakeMesh,bambooNodeMesh]){
 }
 bambooStakeMesh.instanceColor.needsUpdate=true;
 
+// Eight weathered hemp mooring lines lie coiled on the pier planks and
+// finish at the matching bamboo stakes. Bake all curved tubes into ONE
+// static PBR mesh (one draw call, no animation or extra texture downloads).
+// The nearest strand stays beyond x=4.2, safely outside the driving lanes.
+const canalRopePositions=[],canalRopeNormals=[],canalRopeColors=[];
+const ropeLight=new THREE.Color(0xbda67e),ropeDark=new THREE.Color(0x786448);
+for(let pier=0;pier<canalPierCount;pier++){
+ const z=-14-pier*23;
+ // A loose loop on the landing, followed by a slightly sagging tie-off.
+ const knots=[
+  [4.33,.282,z-.29],[4.55,.282,z-.38],[4.84,.282,z-.26],
+  [4.89,.282,z+.02],[4.67,.282,z+.17],[4.46,.282,z+.02],
+  [4.51,.282,z-.20],[4.89,.282,z-.14],[5.13,.27,z-.08],
+  [5.36,.245,z-.025],[5.52,.36,z],[5.59,.50,z]
+ ];
+ const curve=new THREE.CatmullRomCurve3(knots.map(p=>new THREE.Vector3(...p)),false,'centripetal');
+ const tube=new THREE.TubeGeometry(curve,44,.019,5,false);
+ const positions=tube.getAttribute('position'),normals=tube.getAttribute('normal'),indices=tube.getIndex();
+ for(let i=0;i<indices.count;i++){
+  const v=indices.getX(i),tint=(Math.floor(i/30)+pier)%9===0?ropeDark:ropeLight;
+  canalRopePositions.push(positions.getX(v),positions.getY(v),positions.getZ(v));
+  canalRopeNormals.push(normals.getX(v),normals.getY(v),normals.getZ(v));
+  canalRopeColors.push(tint.r,tint.g,tint.b);
+ }
+ tube.dispose();
+}
+const canalRopeGeometry=new THREE.BufferGeometry();
+canalRopeGeometry.setAttribute('position',new THREE.Float32BufferAttribute(canalRopePositions,3));
+canalRopeGeometry.setAttribute('normal',new THREE.Float32BufferAttribute(canalRopeNormals,3));
+canalRopeGeometry.setAttribute('color',new THREE.Float32BufferAttribute(canalRopeColors,3));
+canalRopeGeometry.computeBoundingSphere();
+const canalMooringRopes=new THREE.Mesh(canalRopeGeometry,new THREE.MeshStandardMaterial({
+ vertexColors:true,roughness:.96,metalness:0
+}));
+canalGroup.add(canalMooringRopes);
+
 // One shared hull geometry includes sloped exterior, gunwales, recessed walls and floor.
 function makeMarketBoatHull(){
  const zs=[-1.65,-1.35,-.8,0,.8,1.35,1.65],ws=[.10,.45,.63,.68,.63,.45,.10];
