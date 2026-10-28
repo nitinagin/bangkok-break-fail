@@ -1,6 +1,7 @@
 
 import * as THREE from "three";
 import {GLTFLoader} from "three/addons/loaders/GLTFLoader.js";
+import {clone as cloneSkinnedScene} from "three/addons/utils/SkeletonUtils.js";
 import {createExpresswayArt} from "./expressway-art.js";
 import {makeExpresswayVehicle} from "./expressway-vehicle-models.js";
 const $=id=>document.getElementById(id),hud=$('score'),status=$('status'),hint=$('hint'),challenge=$('challenge'),districtLabel=$('district'),overlay=$('overlay'),panel=$('panel');
@@ -3480,10 +3481,28 @@ function cachedObstacle(type){
  }
  return copy;
 }
-let bossSpawned=false,bossBeaten=false,eventCount=0,lastEventMeters=-250;let spawnIndex=0;const intro=['tuktuk','taxi','bus','bike','tuktuk','taxi','bus','bike','durian'];function spawn(){if(meters+bonus>=16000){spawnPattayaHazard();return;}if(meters+bonus>=12000){spawnExpresswayHazard();return;}if(meters+bonus>=8000){spawnMarketPedestrians();return;}const boss=nightCount>=1&&meters>=3200&&!bossSpawned;if(boss)bossSpawned=true;const chance=Math.random();const eventEligible=!boss&&spawnIndex>=intro.length&&meters>160&&meters-lastEventMeters>85&&Math.random()<.38;const madness=eventEligible?['rollingDurian','cuttingBus','wrongWayBike'][Math.floor(Math.random()*3)]:null;if(madness){eventCount++;lastEventMeters=meters}let type=boss?'yaksha':madness==='rollingDurian'?'durian':madness==='cuttingBus'?'bus':madness==='wrongWayBike'?'bike':spawnIndex<intro.length?intro[spawnIndex]:chance<.10?'construction':chance<.18?'durian':chance<.34?'bus':chance<.47?'yaksha':chance<.59?'dancer':chance<.78?'taxi':chance<.9?'tuktuk':'bike';if(nightCount===0&&(type==='yaksha'||type==='dancer'))type='taxi';if(nightCount>=1&&spawnIndex%9===0)type='yaksha';if(nightCount>=1&&spawnIndex%7===0)type='dancer';if(Math.floor(meters+bonus)<3000&&type==='construction')type='taxi';if(Math.floor(meters+bonus)>=3000&&spawnIndex%3===0)type='construction';if(Math.floor(meters+bonus)>=3000&&spawnIndex%13===5)type='checkpoint';if(Math.floor(meters+bonus)>=3000&&spawnIndex%8===3)type='truck';if(type==='bus'&&spawnIndex%2===0)type='busBlue';spawnIndex++;const jamFormation=!boss&&!madness&&spawnIndex>intro.length&&spawnIndex%5===0&&(type==='taxi'||type==='tuktuk');const jamLanes=[-3.35,0,3.35];const jamOpenLane=jamFormation?jamLanes[Math.floor(Math.random()*3)]:null;const jamOccupied=jamFormation?jamLanes.filter(v=>v!==jamOpenLane):null;let durianSide=0;if(type==='durian'){durianSide=Math.random()<.5?-1:1;if(storyProps.filter(p=>p.kind==='vendor').length<2)makeRoadsideStory('vendor',durianSide,-65)}const useDetailedDancer=type==='dancer'&&!!dancerTemplate&&!hazards.some(h=>h.type==='dancer'&&h.g.userData.detailedDancer);
+let bossSpawned=false,bossBeaten=false,eventCount=0,lastEventMeters=-250;let spawnIndex=0;const intro=['tuktuk','taxi','bus','bike','tuktuk','taxi','bus','bike','durian'];function spawn(){if(meters+bonus>=16000){spawnPattayaHazard();return;}if(meters+bonus>=12000){spawnExpresswayHazard();return;}if(meters+bonus>=8000){spawnMarketPedestrians();return;}const boss=nightCount>=1&&meters>=3200&&!bossSpawned;if(boss)bossSpawned=true;const chance=Math.random();const eventEligible=!boss&&spawnIndex>=intro.length&&meters>160&&meters-lastEventMeters>85&&Math.random()<.38;const madness=eventEligible?['rollingDurian','cuttingBus','wrongWayBike'][Math.floor(Math.random()*3)]:null;if(madness){eventCount++;lastEventMeters=meters}let type=boss?'yaksha':madness==='rollingDurian'?'durian':madness==='cuttingBus'?'bus':madness==='wrongWayBike'?'bike':spawnIndex<intro.length?intro[spawnIndex]:chance<.10?'construction':chance<.18?'durian':chance<.34?'bus':chance<.47?'yaksha':chance<.59?'dancer':chance<.78?'taxi':chance<.9?'tuktuk':'bike';if(nightCount===0&&(type==='yaksha'||type==='dancer'))type='taxi';if(nightCount>=1&&spawnIndex%9===0)type='yaksha';if(nightCount>=1&&spawnIndex%7===0)type='dancer';if(Math.floor(meters+bonus)<3000&&type==='construction')type='taxi';if(Math.floor(meters+bonus)>=3000&&spawnIndex%3===0)type='construction';if(Math.floor(meters+bonus)>=3000&&spawnIndex%13===5)type='checkpoint';if(Math.floor(meters+bonus)>=3000&&spawnIndex%8===3)type='truck';if(type==='bus'&&spawnIndex%2===0)type='busBlue';spawnIndex++;const jamFormation=!boss&&!madness&&spawnIndex>intro.length&&spawnIndex%5===0&&(type==='taxi'||type==='tuktuk');const jamLanes=[-3.35,0,3.35];const jamOpenLane=jamFormation?jamLanes[Math.floor(Math.random()*3)]:null;const jamOccupied=jamFormation?jamLanes.filter(v=>v!==jamOpenLane):null;let durianSide=0;if(type==='durian'){durianSide=Math.random()<.5?-1:1;if(storyProps.filter(p=>p.kind==='vendor').length<2)makeRoadsideStory('vendor',durianSide,-65)}// A skinned GLB needs its own correctly rebound bones. Object3D.clone(true)
+// copies the skinned mesh without reliably remapping its skeleton to cloned bones.
+// Static GLBs keep the cheaper standard clone; either path shares GPU geometry.
+function cloneDancerWithRig(){
+ if(!dancerTemplate)return null;
+ try{
+  let hasSkin=false;
+  dancerTemplate.traverse(node=>{if(node.isSkinnedMesh)hasSkin=true});
+  const copy=hasSkin?cloneSkinnedScene(dancerTemplate):dancerTemplate.clone(true);
+  if(!copy||!copy.children.length)throw Error('Empty detailed dancer clone');
+  return copy;
+ }catch(error){
+  console.warn('Detailed dancer rig clone failed; retaining animated fallback',error);
+  return null;
+ }
+}
+const useDetailedDancer=type==='dancer'&&!!dancerTemplate&&!hazards.some(h=>h.type==='dancer'&&h.g.userData.detailedDancer);
 const useDetailedTukTuk=type==='tuktuk'&&!jamFormation&&!!realTukTuk&&!hazards.some(h=>h.type==='tuktuk'&&h.g.userData.detailedTukTuk);
-const g=!mobile&&type==='yaksha'&&yakshaTemplate&&!hazards.some(h=>h.type==='yaksha'&&h.g.userData.detailedYaksha)?yakshaTemplate.clone(true):useDetailedDancer?dancerTemplate.clone(true):useDetailedTukTuk?realTukTuk.clone(true):cachedObstacle(type);g.userData.detailedDancer=!!useDetailedDancer;
-if(useDetailedDancer){
+const detailedDancer=useDetailedDancer?cloneDancerWithRig():null;
+const g=!mobile&&type==='yaksha'&&yakshaTemplate&&!hazards.some(h=>h.type==='yaksha'&&h.g.userData.detailedYaksha)?yakshaTemplate.clone(true):detailedDancer|| (useDetailedTukTuk?realTukTuk.clone(true):cachedObstacle(type));
+g.userData.detailedDancer=!!detailedDancer;
+if(detailedDancer){
  // A transparent spectral warning hand preserves the pass-by threat even
  // when an AI-generated static GLB has no skeleton or independently movable arm.
  if(!obstacleTemplates.dancer)obstacleTemplates.dancer=makeDancer();
@@ -3493,7 +3512,7 @@ if(useDetailedDancer){
  gesture.visible=false;g.add(gesture);
  g.userData.danceArms=[null,gesture];g.userData.spectralArm=gesture;
 }
-g.userData.detailedTukTuk=!!useDetailedTukTuk;g.userData.detailedYaksha=type==='yaksha'&&!!yakshaTemplate&&g.children.length===1;const lane=jamFormation?jamOccupied[0]:type==='tuktuk'?([-1.1,0,1.1][spawnIndex%3]):type==='durian'?durianSide*3.35:boss?0:madness==='rollingDurian'?(Math.random()<.5?-3.35:3.35):[-3.35,0,3.35][Math.floor(Math.random()*3)];g.position.set(lane,0,type==='tuktuk'&&!jamFormation?-37:-65);if(type==='dancer')g.scale.setScalar(useDetailedDancer?1:1.55);if(type==='construction'){g.position.y=6;g.scale.setScalar(1.35);}if(type==='yaksha')g.scale.setScalar(boss?2.3:1.85);if(type==='bus'||type==='busBlue')g.scale.setScalar(1.04);if(type==='taxi')g.scale.setScalar(1.22);if(type==='truck')g.scale.setScalar(1.13);/* GLB is already normalized to road-sized metres; procedural traffic needs a modest scale. */if(type==='tuktuk')g.scale.setScalar(jamFormation?1.75:useDetailedTukTuk?1:1.7);if(type==='bike')g.scale.setScalar(1.6);if(type==='checkpoint')g.scale.setScalar(1.15);if(madness==='rollingDurian')g.scale.setScalar(1.35);if(madness==='wrongWayBike')g.rotation.y=Math.PI;scene.add(g);if(jamFormation){
+g.userData.detailedTukTuk=!!useDetailedTukTuk;g.userData.detailedYaksha=type==='yaksha'&&!!yakshaTemplate&&g.children.length===1;const lane=jamFormation?jamOccupied[0]:type==='tuktuk'?([-1.1,0,1.1][spawnIndex%3]):type==='durian'?durianSide*3.35:boss?0:madness==='rollingDurian'?(Math.random()<.5?-3.35:3.35):[-3.35,0,3.35][Math.floor(Math.random()*3)];g.position.set(lane,0,type==='tuktuk'&&!jamFormation?-37:-65);if(type==='dancer')g.scale.setScalar(detailedDancer?1:1.55);if(type==='construction'){g.position.y=6;g.scale.setScalar(1.35);}if(type==='yaksha')g.scale.setScalar(boss?2.3:1.85);if(type==='bus'||type==='busBlue')g.scale.setScalar(1.04);if(type==='taxi')g.scale.setScalar(1.22);if(type==='truck')g.scale.setScalar(1.13);/* GLB is already normalized to road-sized metres; procedural traffic needs a modest scale. */if(type==='tuktuk')g.scale.setScalar(jamFormation?1.75:useDetailedTukTuk?1:1.7);if(type==='bike')g.scale.setScalar(1.6);if(type==='checkpoint')g.scale.setScalar(1.15);if(madness==='rollingDurian')g.scale.setScalar(1.35);if(madness==='wrongWayBike')g.rotation.y=Math.PI;scene.add(g);if(jamFormation){
  // Exactly two aligned, non-swerving vehicles occupy two lanes; the third stays clear.
  const trafficLane=jamOccupied[1],jamType=type==='taxi'?'tuktuk':'taxi';
  const jam=cachedObstacle(jamType);
