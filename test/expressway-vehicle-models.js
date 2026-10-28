@@ -418,6 +418,59 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   doorMesh.name='sports-car-sculpted-door-skins';
   group.add(doorMesh);
 
+  // Contoured fastback roof and three sloping window pillars per side.
+  // A single shared PBR mesh gives the coupe a rounded greenhouse silhouette,
+  // replacing the flat-looking roof edge without extra textures or animation.
+  const roofStations=[
+   [-.62,.47,1.205],[-.49,.59,1.238],[-.31,.65,1.262],
+   [-.08,.67,1.274],[.16,.66,1.266],[.35,.59,1.241],[.56,.46,1.205]
+  ];
+  const roofAcross=[-1,-.76,-.46,0,.46,.76,1];
+  const roofVertices=[],roofColors=[],roofIndices=[];
+  const roofPaint=new THREE.Color(0xb12438);
+  for(const [z,halfWidth,centerY] of roofStations){
+   for(const across of roofAcross){
+    const edge=Math.pow(Math.abs(across),1.6);
+    roofVertices.push(across*halfWidth,centerY+.024*(1-edge)-.046*edge,z);
+    const tint=roofPaint.clone().multiplyScalar(1.02-.13*edge);
+    roofColors.push(tint.r,tint.g,tint.b);
+   }
+  }
+  for(let row=0;row<roofStations.length-1;row++){
+   for(let col=0;col<roofAcross.length-1;col++){
+    const a=row*roofAcross.length+col,b=a+roofAcross.length;
+    roofIndices.push(a,b,a+1,a+1,b,b+1);
+   }
+  }
+  // Pillars slope inward from the door shoulders to the narrower roof.
+  // The B-pillar aligns with the existing front/rear quarter-glass gap.
+  function roofPillar(side,bottomZ,topZ,bottomY,topY,width){
+   const first=roofVertices.length/3;
+   roofVertices.push(
+    side*.951,bottomY,bottomZ-width/2,
+    side*.951,bottomY,bottomZ+width/2,
+    side*.625,topY,topZ+width/2,
+    side*.625,topY,topZ-width/2
+   );
+   const trim=new THREE.Color(0x26313a);
+   for(let k=0;k<4;k++)roofColors.push(trim.r,trim.g,trim.b);
+   roofIndices.push(first,first+1,first+2,first,first+2,first+3);
+  }
+  for(const side of [-1,1]){
+   roofPillar(side,.65,.35,.87,1.24,.065); // swept front A-pillar
+   roofPillar(side,-.08,-.08,.87,1.27,.048); // central B-pillar
+   roofPillar(side,-.65,-.49,.87,1.24,.075); // fastback C-pillar
+  }
+  const roofGeo=new THREE.BufferGeometry();
+  roofGeo.setAttribute('position',new THREE.Float32BufferAttribute(roofVertices,3));
+  roofGeo.setAttribute('color',new THREE.Float32BufferAttribute(roofColors,3));
+  roofGeo.setIndex(roofIndices);roofGeo.computeVertexNormals();
+  const roofMesh=new THREE.Mesh(roofGeo,new THREE.MeshStandardMaterial({
+   vertexColors:true,metalness:.48,roughness:.30,side:THREE.DoubleSide
+  }));
+  roofMesh.name='sports-car-fastback-greenhouse';
+  group.add(roofMesh);
+
   // Sports-car grille, splitter, rear wing, supports and side ducts:
   // Nine carbon-finish pieces in one instanced draw call, no texture upload.
   const carbon=new THREE.MeshStandardMaterial({color:0x111820,metalness:.24,roughness:.54});
