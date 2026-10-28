@@ -204,6 +204,55 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   slopedGlass(1.00,.30);    // front: hood to roof
   slopedGlass(-1.055,-.585); // rear: deck to roof
 
+  // Four flush side panes (two per flank) replace the solid, toy-like cabin.
+  // Bake reflections once and draw all eight triangles in a single PBR mesh.
+  const sideCanvas=document.createElement('canvas');
+  sideCanvas.width=sideCanvas.height=128;
+  const sideCtx=sideCanvas.getContext('2d');
+  const sideGradient=sideCtx.createLinearGradient(0,0,128,128);
+  sideGradient.addColorStop(0,'#56717c');
+  sideGradient.addColorStop(.38,'#243e4b');
+  sideGradient.addColorStop(1,'#0d1d28');
+  sideCtx.fillStyle=sideGradient;sideCtx.fillRect(0,0,128,128);
+  sideCtx.fillStyle='rgba(220,238,237,.19)';
+  sideCtx.beginPath();sideCtx.moveTo(15,0);sideCtx.lineTo(33,0);
+  sideCtx.lineTo(86,128);sideCtx.lineTo(65,128);sideCtx.closePath();sideCtx.fill();
+  sideCtx.fillStyle='rgba(194,219,224,.09)';
+  sideCtx.beginPath();sideCtx.moveTo(101,0);sideCtx.lineTo(111,0);
+  sideCtx.lineTo(73,128);sideCtx.lineTo(65,128);sideCtx.closePath();sideCtx.fill();
+  sideCtx.strokeStyle='rgba(203,221,220,.11)';sideCtx.lineWidth=1;
+  for(let streak=0;streak<6;streak++){
+   const sx=12+streak*19;
+   sideCtx.beginPath();sideCtx.moveTo(sx,18);sideCtx.lineTo(sx-5,82);sideCtx.stroke();
+  }
+  const sideMap=new THREE.CanvasTexture(sideCanvas);
+  sideMap.colorSpace=THREE.SRGBColorSpace;sideMap.anisotropy=2;
+  const sideGlass=new THREE.MeshStandardMaterial({
+   map:sideMap,metalness:.18,roughness:.24,side:THREE.DoubleSide
+  });
+  const sidePositions=[],sideUvs=[];
+  function sidePane(side,nearZ,farZ,nearTop,farTop){
+   const x=side*.945;
+   const corners=[
+    [x,.865,nearZ],[x,.88,farZ],[x,farTop,farZ],[x,nearTop,nearZ]
+   ];
+   for(const vertex of [0,1,2,0,2,3]){
+    sidePositions.push(...corners[vertex]);
+    const uv=[[0,0],[1,0],[1,1],[0,1]][vertex];
+    sideUvs.push(...uv);
+   }
+  }
+  for(const side of [-1,1]){
+   sidePane(side,.27,-.035,1.17,1.205); // front door glass
+   sidePane(side,-.125,-.545,1.205,1.165); // rear quarter glass
+  }
+  const sideGeometry=new THREE.BufferGeometry();
+  sideGeometry.setAttribute('position',new THREE.Float32BufferAttribute(sidePositions,3));
+  sideGeometry.setAttribute('uv',new THREE.Float32BufferAttribute(sideUvs,2));
+  sideGeometry.computeVertexNormals();
+  group.add(new THREE.Mesh(sideGeometry,sideGlass));
+
+
   // Sports-car grille, splitter, rear wing, supports and side ducts:
   // seven carbon-finish pieces in one instanced draw call, no texture upload.
   const carbon=new THREE.MeshStandardMaterial({color:0x111820,metalness:.24,roughness:.54});
