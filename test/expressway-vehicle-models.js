@@ -143,6 +143,52 @@ function makeSportsCarAlloyWheel(THREE){
  map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=2;
  return new THREE.MeshStandardMaterial({map,metalness:.68,roughness:.35});
 }
+// One baked PBR grille atlas and a contoured nose surface; no dynamic lights.
+// The low-poly bumper keeps its air ducts visible below the existing LEDs.
+function makeSportsCarFrontIntake(THREE){
+ const canvas=document.createElement('canvas');canvas.width=256;canvas.height=128;
+ const ctx=canvas.getContext('2d'),paint=ctx.createLinearGradient(0,0,0,128);
+ paint.addColorStop(0,'#76283b');paint.addColorStop(.25,'#401e2b');
+ paint.addColorStop(.78,'#141920');paint.addColorStop(1,'#4d2331');
+ ctx.fillStyle=paint;ctx.fillRect(0,0,256,128);
+ // Three dark recesses: central radiator grille and side brake-cooling ducts.
+ for(const [x,w] of [[10,47],[65,126],[199,47]]){
+  ctx.fillStyle='#080d12';ctx.fillRect(x,23,w,76);
+  ctx.fillStyle='#39434a';ctx.fillRect(x+2,26,w-4,3);
+  ctx.fillStyle='#18222a';ctx.fillRect(x+3,92,w-6,4);
+  ctx.save();ctx.beginPath();ctx.rect(x+4,31,w-8,59);ctx.clip();
+  ctx.strokeStyle='rgba(126,144,150,.33)';ctx.lineWidth=1;
+  for(let line=-75;line<w+75;line+=9){
+   ctx.beginPath();ctx.moveTo(x+line,31);ctx.lineTo(x+line+48,90);ctx.stroke();
+   ctx.beginPath();ctx.moveTo(x+line+48,31);ctx.lineTo(x+line,90);ctx.stroke();
+  }
+  ctx.restore();
+ }
+ ctx.fillStyle='#a63c4f';ctx.fillRect(58,19,5,84);ctx.fillRect(193,19,5,84);
+ ctx.fillStyle='rgba(220,224,223,.40)';ctx.fillRect(65,24,126,2);
+ ctx.fillStyle='#50565b';ctx.fillRect(7,102,242,4);
+ ctx.fillStyle='rgba(226,129,140,.21)';ctx.fillRect(0,8,256,5);
+ const map=new THREE.CanvasTexture(canvas);map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=2;
+ const positions=[],uvs=[],indices=[],cols=8,rows=2;
+ for(let row=0;row<=rows;row++)for(let col=0;col<=cols;col++){
+  const u=col/cols,v=row/rows,x=(u-.5)*1.48,y=.49+v*.19;
+  positions.push(x,y,1.835+.021*(1-Math.pow(Math.abs(x)/.74,2))+.008*(1-v));
+  uvs.push(u,v);
+ }
+ for(let row=0;row<rows;row++)for(let col=0;col<cols;col++){
+  const a=row*(cols+1)+col,b=a+cols+1;
+  indices.push(a,a+1,b,a+1,b+1,b);
+ }
+ const geometry=new THREE.BufferGeometry();
+ geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+ geometry.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));
+ geometry.setIndex(indices);geometry.computeVertexNormals();
+ const mesh=new THREE.Mesh(geometry,new THREE.MeshStandardMaterial({
+  map,metalness:.24,roughness:.48,side:THREE.DoubleSide
+ }));
+ mesh.name='sports-car-contoured-front-intake';
+ return mesh;
+}
 export function makeExpresswayVehicle(THREE,type='sportsCar'){
  const isBus=type==='bus',group=new THREE.Group(),w=isBus?2.05:1.8,length=isBus?4.45:3.55;
  const paint=isBus?new THREE.MeshStandardMaterial({color:0xf0e6d4,metalness:.15,roughness:.65}):new THREE.MeshPhysicalMaterial({color:0xb12438,metalness:.62,roughness:.26,clearcoat:.75,clearcoatRoughness:.22});
@@ -394,6 +440,8 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   aeroPart(8,.48,.788,1.16,.115,.012,.27);
   aero.instanceMatrix.needsUpdate=true;
   group.add(aero);
+  // Baked cooling ducts curve across the front, above the splitter.
+  group.add(makeSportsCarFrontIntake(THREE));
   // Two LED running lights share one draw call; no dynamic lighting.
   const led=new THREE.InstancedMesh(new THREE.BoxGeometry(.45,.045,.04),
    new THREE.MeshBasicMaterial({color:0xccefff,toneMapped:false}),2);
