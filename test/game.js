@@ -3518,10 +3518,18 @@ function cachedObstacle(type){
  // Limit simultaneous high-detail guardians, especially on iPhone.
  if(type==='yaksha'&&yakshaTemplate){
   const detailedCount=hazards.reduce((count,h)=>count+(h.type==='yaksha'&&h.g.userData.premiumYaksha?1:0),0);
-  if(detailedCount<(mobile?1:2)){
-   const detailed=yakshaTemplate.clone(true);
-   detailed.userData.premiumYaksha=true;
-   return detailed;
+  // One detailed guardian at a time on either platform keeps the GPU budget predictable.
+  if(detailedCount<1){
+   try{
+    // Standard clone(true) does not reliably rebind SkinnedMesh skeletons.
+    // Match the dancer pipeline: use SkeletonUtils only when a real rig exists.
+    let hasSkin=false;
+    yakshaTemplate.traverse(node=>{if(node.isSkinnedMesh)hasSkin=true});
+    const detailed=hasSkin?cloneSkinnedScene(yakshaTemplate):yakshaTemplate.clone(true);
+    if(!detailed||!detailed.children.length)throw Error('Empty detailed Yaksha clone');
+    detailed.userData.premiumYaksha=true;
+    return detailed;
+   }catch(error){console.warn('Yaksha rig clone failed; keeping procedural guardian',error)}
   }
  }
  if(!obstacleTemplates[type])obstacleTemplates[type]=type==='truck'?makeTruck():type==='checkpoint'?makeCheckpoint():type==='construction'?makeConstructionDebris():type==='durian'?makeDurian():type==='bus'?makeTrafficLOD('bus'):type==='busBlue'?makeTrafficLOD('busBlue'):type==='tuktuk'?makeTukTuk():type==='taxi'?makeTrafficLOD('taxi'):type==='bike'?makeBike():type==='yaksha'?makeYaksha():makeDancer();
@@ -3594,7 +3602,7 @@ function bindDancerGestureRig(dancer){
 const useDetailedDancer=type==='dancer'&&!!dancerTemplate&&!hazards.some(h=>h.type==='dancer'&&h.g.userData.detailedDancer);
 const useDetailedTukTuk=type==='tuktuk'&&!jamFormation&&!!realTukTuk&&!hazards.some(h=>h.type==='tuktuk'&&h.g.userData.detailedTukTuk);
 const detailedDancer=useDetailedDancer?cloneDancerWithRig():null;
-const g=!mobile&&type==='yaksha'&&yakshaTemplate&&!hazards.some(h=>h.type==='yaksha'&&h.g.userData.detailedYaksha)?yakshaTemplate.clone(true):detailedDancer|| (useDetailedTukTuk?realTukTuk.clone(true):cachedObstacle(type));
+const g=detailedDancer|| (useDetailedTukTuk?realTukTuk.clone(true):cachedObstacle(type));
 g.userData.detailedDancer=!!detailedDancer;
 if(detailedDancer){
  // Animate the real upper-arm/head bones if the GLB supplies them.
@@ -3610,7 +3618,7 @@ if(detailedDancer){
   g.userData.danceArms=[null,gesture];g.userData.spectralArm=gesture;
  }
 }
-g.userData.detailedTukTuk=!!useDetailedTukTuk;g.userData.detailedYaksha=type==='yaksha'&&!!yakshaTemplate&&g.children.length===1;const lane=jamFormation?jamOccupied[0]:type==='tuktuk'?([-1.1,0,1.1][spawnIndex%3]):type==='durian'?durianSide*3.35:boss?0:madness==='rollingDurian'?(Math.random()<.5?-3.35:3.35):[-3.35,0,3.35][Math.floor(Math.random()*3)];g.position.set(lane,0,type==='tuktuk'&&!jamFormation?-37:-65);if(type==='dancer')g.scale.setScalar(detailedDancer?1:1.55);if(type==='construction'){g.position.y=6;g.scale.setScalar(1.35);}if(type==='yaksha')g.scale.setScalar(boss?2.3:1.85);if(type==='bus'||type==='busBlue')g.scale.setScalar(1.04);if(type==='taxi')g.scale.setScalar(1.22);if(type==='truck')g.scale.setScalar(1.13);/* GLB is already normalized to road-sized metres; procedural traffic needs a modest scale. */if(type==='tuktuk')g.scale.setScalar(jamFormation?1.75:useDetailedTukTuk?1:1.7);if(type==='bike')g.scale.setScalar(1.6);if(type==='checkpoint')g.scale.setScalar(1.15);if(madness==='rollingDurian')g.scale.setScalar(1.35);if(madness==='wrongWayBike')g.rotation.y=Math.PI;scene.add(g);if(jamFormation){
+g.userData.detailedTukTuk=!!useDetailedTukTuk;g.userData.detailedYaksha=type==='yaksha'&&!!g.userData.premiumYaksha;const lane=jamFormation?jamOccupied[0]:type==='tuktuk'?([-1.1,0,1.1][spawnIndex%3]):type==='durian'?durianSide*3.35:boss?0:madness==='rollingDurian'?(Math.random()<.5?-3.35:3.35):[-3.35,0,3.35][Math.floor(Math.random()*3)];g.position.set(lane,0,type==='tuktuk'&&!jamFormation?-37:-65);if(type==='dancer')g.scale.setScalar(detailedDancer?1:1.55);if(type==='construction'){g.position.y=6;g.scale.setScalar(1.35);}if(type==='yaksha')g.scale.setScalar(boss?2.3:1.85);if(type==='bus'||type==='busBlue')g.scale.setScalar(1.04);if(type==='taxi')g.scale.setScalar(1.22);if(type==='truck')g.scale.setScalar(1.13);/* GLB is already normalized to road-sized metres; procedural traffic needs a modest scale. */if(type==='tuktuk')g.scale.setScalar(jamFormation?1.75:useDetailedTukTuk?1:1.7);if(type==='bike')g.scale.setScalar(1.6);if(type==='checkpoint')g.scale.setScalar(1.15);if(madness==='rollingDurian')g.scale.setScalar(1.35);if(madness==='wrongWayBike')g.rotation.y=Math.PI;scene.add(g);if(jamFormation){
  // Exactly two aligned, non-swerving vehicles occupy two lanes; the third stays clear.
  const trafficLane=jamOccupied[1],jamType=type==='taxi'?'tuktuk':'taxi';
  const jam=cachedObstacle(jamType);
