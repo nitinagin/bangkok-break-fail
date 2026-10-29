@@ -458,6 +458,57 @@ function makeRoadsideStory(kind,side,z){const g=new THREE.Group();if(kind==='shr
  const grandmaDress=new THREE.MeshStandardMaterial({color:0x525b63,map:grandmaFabricTexture,roughness:.96,side:THREE.DoubleSide});
  const grandmaShawl=new THREE.MeshStandardMaterial({color:0x99968d,map:grandmaFabricTexture,roughness:.94});
  const grandmaSkin=new THREE.MeshStandardMaterial({color:0xa88c7b,roughness:.91});
+
+ // Mobile PBR portrait atlas: the front of SphereGeometry (+Z) is near U=.25.
+ // Paint subtle age marks into one 512x256 albedo instead of five separate
+ // wrinkle tube meshes. Better human facial depth at fewer draw calls.
+ const grandmaFaceCanvas=document.createElement('canvas');
+ grandmaFaceCanvas.width=512;grandmaFaceCanvas.height=256;
+ const grandmaFaceCtx=grandmaFaceCanvas.getContext('2d');
+ grandmaFaceCtx.fillStyle='#ae9381';grandmaFaceCtx.fillRect(0,0,512,256);
+ const faceLight=grandmaFaceCtx.createRadialGradient(128,116,5,128,123,160);
+ faceLight.addColorStop(0,'rgba(240,208,182,.16)');
+ faceLight.addColorStop(.65,'rgba(226,192,164,.06)');
+ faceLight.addColorStop(1,'rgba(74,53,47,0)');
+ grandmaFaceCtx.fillStyle=faceLight;grandmaFaceCtx.fillRect(0,0,512,256);
+ // Deterministic pores and age pigmentation, baked once rather than animated.
+ for(let i=0;i<1900;i++){
+  const px=(i*131+i*i*17+31)%512,py=(i*71+i*i*11+17)%256;
+  grandmaFaceCtx.fillStyle=i%3===0?'rgba(76,51,45,.055)':'rgba(240,216,190,.07)';
+  grandmaFaceCtx.fillRect(px,py,1+(i%2),1);
+ }
+ for(let i=0;i<36;i++){
+  const px=76+(i*37)%105,py=69+(i*47)%132;
+  grandmaFaceCtx.fillStyle='rgba(90,57,48,.085)';
+  grandmaFaceCtx.beginPath();grandmaFaceCtx.ellipse(px,py,1.2+i%3,.8+i%2,i*.3,0,Math.PI*2);grandmaFaceCtx.fill();
+ }
+ // Fine, irregular wrinkles follow the forehead, lower eyelids and cheeks.
+ // Keep strokes translucent: this is skin relief, not cartoon line art.
+ function grandmaFaceLine(points,alpha=.22,width=1){
+  grandmaFaceCtx.beginPath();grandmaFaceCtx.moveTo(points[0][0],points[0][1]);
+  for(let i=1;i<points.length-1;i++){
+   const a=points[i],b=points[i+1];
+   grandmaFaceCtx.quadraticCurveTo(a[0],a[1],(a[0]+b[0])*.5,(a[1]+b[1])*.5);
+  }
+  const last=points[points.length-1];
+  grandmaFaceCtx.lineTo(last[0],last[1]);
+  grandmaFaceCtx.strokeStyle='rgba(83,53,48,'+alpha+')';
+  grandmaFaceCtx.lineWidth=width;grandmaFaceCtx.lineCap='round';grandmaFaceCtx.stroke();
+ }
+ grandmaFaceLine([[89,80],[111,77],[139,78],[166,83]],.18,1.1);
+ grandmaFaceLine([[94,91],[117,89],[145,90],[163,94]],.15,.9);
+ for(const side of [-1,1]){
+  const eyeX=128+side*37;
+  grandmaFaceLine([[eyeX-side*14,129],[eyeX,134],[eyeX+side*13,130]],.23,1.25);
+  grandmaFaceLine([[eyeX+side*12,119],[eyeX+side*21,122],[eyeX+side*27,126]],.18,.9);
+  grandmaFaceLine([[eyeX+side*11,126],[eyeX+side*20,130],[eyeX+side*25,135]],.14,.85);
+  grandmaFaceLine([[128+side*17,158],[128+side*25,165],[128+side*28,173]],.16,.85);
+ }
+ grandmaFaceLine([[108,189],[128,192],[149,189]],.12,.8);
+ const grandmaFaceTexture=new THREE.CanvasTexture(grandmaFaceCanvas);
+ grandmaFaceTexture.colorSpace=THREE.SRGBColorSpace;
+ grandmaFaceTexture.anisotropy=Math.min(2,renderer.capabilities.getMaxAnisotropy());
+ const grandmaFace=new THREE.MeshStandardMaterial({map:grandmaFaceTexture,roughness:.88,metalness:0});
  const grandmaHair=new THREE.MeshStandardMaterial({color:0x8e9292,roughness:.98});
  const grandmaEyes=new THREE.MeshStandardMaterial({color:0x25272b,roughness:.67});
  function makeGrandma(){
@@ -471,7 +522,20 @@ function makeRoadsideStory(kind,side,z){const g=new THREE.Group();if(kind==='shr
   shoulders.scale.set(1,.22,.67);shoulders.position.set(0,1.75,0);g.add(shoulders);
   const neck=new THREE.Mesh(new THREE.CylinderGeometry(.105,.13,.24,9),grandmaSkin);
   neck.position.y=1.89;g.add(neck);
-  const head=new THREE.Mesh(new THREE.SphereGeometry(.27,16,12),grandmaSkin);
+  // A subtly sculpted jaw, temples and cheekbones avoid the toy-like perfect sphere.
+  // Geometry remains under 500 vertices, with no new character draw calls.
+  const headGeometry=new THREE.SphereGeometry(.27,24,18);
+  const headPositions=headGeometry.getAttribute('position');
+  for(let i=0;i<headPositions.count;i++){
+   const px=headPositions.getX(i),py=headPositions.getY(i),pz=headPositions.getZ(i);
+   const jaw=Math.max(0,-py/.27);
+   const cheek=pz>0?Math.exp(-Math.pow((py-.012)/.095,2))*.038:0;
+   const forehead=Math.max(0,py/.27)*.045;
+   headPositions.setX(i,px*(1-jaw*.16+cheek-forehead));
+   if(pz>0)headPositions.setZ(i,pz*(1+cheek*.34-jaw*.045));
+  }
+  headPositions.needsUpdate=true;headGeometry.computeVertexNormals();
+  const head=new THREE.Mesh(headGeometry,grandmaFace);
   head.scale.set(.83,1.07,.92);head.position.set(0,2.14,.04);g.add(head);
   const hair=new THREE.Mesh(new THREE.SphereGeometry(.27,14,10),grandmaHair);
   hair.scale.set(.92,.52,.93);hair.position.set(0,2.38,.015);g.add(hair);
@@ -483,19 +547,7 @@ function makeRoadsideStory(kind,side,z){const g=new THREE.Group();if(kind==='shr
    const brow=new THREE.Mesh(new THREE.CylinderGeometry(.012,.012,.14,6),grandmaHair);
    brow.rotation.z=Math.PI/2+side*.15;brow.position.set(side*.103,2.25,.268);g.add(brow);
   }
-  // Five fine, curved facial creases age the face without a face-screen avatar.
-  // Thin tubes hug the ellipsoid; only this single chasing character uses them.
-  const creaseMaterial=new THREE.MeshStandardMaterial({color:0x756254,roughness:1});
-  function faceCrease(points){
-   const curve=new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(...p)));
-   g.add(new THREE.Mesh(new THREE.TubeGeometry(curve,8,.0035,3,false),creaseMaterial));
-  }
-  faceCrease([[-.11,2.285,.226],[0,2.288,.253],[.11,2.285,.226]]);
-  faceCrease([[-.085,2.322,.220],[0,2.325,.242],[.085,2.322,.220]]);
-  for(const side of [-1,1]){
-   faceCrease([[side*.09,2.09,.267],[side*.14,2.075,.238],[side*.165,2.05,.213]]);
-   faceCrease([[side*.095,2.012,.256],[side*.14,2.001,.225],[side*.165,1.988,.195]]);
-  }
+  // Fine age creases are now baked into grandmaFaceTexture (no extra meshes).
   const nose=new THREE.Mesh(new THREE.SphereGeometry(.055,8,6),grandmaSkin);
   nose.scale.set(.68,1.1,1.1);nose.position.set(0,2.09,.292);g.add(nose);
   const mouth=new THREE.Mesh(new THREE.SphereGeometry(.062,8,6),grandmaEyes);
