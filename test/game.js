@@ -228,7 +228,7 @@ const road=cube(11,.12,230,wetAsphalt,0,0,-60);scene.add(road);
 const shoulderPaint=mat(0x4b4b4d),curbPaint=mat(0x8b776b);for(const side of [-1,1]){scene.add(cube(1.25,.11,230,shoulderPaint,side*6.2,-.015,-60));scene.add(cube(.22,.09,230,curbPaint,side*5.58,.08,-60));scene.add(cube(.1,.045,230,M.gold,side*5.37,.10,-60))}
 const roadStuds=[];for(let i=0;i<12;i++){const stud=cube(.22,.025,.38,M.gold,0,.09,-i*19+10);scene.add(stud);roadStuds.push(stud)}const stripes=[];for(let i=0;i<23;i++){for(const x of [-1.85,1.85]){const s=cube(.18,.035,3.5,M.stripe,x,.09,-i*10+10);scene.add(s);stripes.push(s)}}
 // Bangkok street set: shophouses, awnings, shutters, windows, signs and cables.
-const props=[];const storyProps=[];let nightCount=0,grandmaTriggeredNight=0,grandmaChase=null;const nightLength=2400;const storyMat={wood:mat(0x7d4134),roof:mat(0xb52c35),gold:mat(0xf6c847),leaf:mat(0x5b9b39),cloth:mat(0xe85c4c),ghost:mat(0xd8d1ed)};
+const props=[];const storyProps=[];let nightCount=0,grandmaTriggeredNight=0,grandmaChase=null,nextDarkGrandmaScore=24000;const nightLength=2400;const storyMat={wood:mat(0x7d4134),roof:mat(0xb52c35),gold:mat(0xf6c847),leaf:mat(0x5b9b39),cloth:mat(0xe85c4c),ghost:mat(0xd8d1ed)};
 const shopPaint=[mat(0xb6534d),mat(0x9b7760),mat(0xd2aa77),mat(0x796f76),mat(0xb17865)];
 // Baked, shared ground-floor PBR storefronts: realistic shutter corrugation and warm glass displays.
 function makeShopfrontMaterial(glazed){
@@ -367,7 +367,67 @@ const signMaterials=[mat(0xff267a),mat(0x086bd8),mat(0x1cbf7a)];const neonSigns=
  skyFill.intensity=light[0];sun.intensity=light[1];
  skyFill.color.setHex(light[2]);skyFill.groundColor.setHex(light[3]);sun.color.setHex(light[4]);scene.fog.near=i===6?7:48;scene.fog.far=i===6?52:145;districtLabel.textContent=['☀️ BANGKOK DAYTIME','🌃 YAOWARAT NIGHT · TEST 6.9','🚧 RAMA II CONSTRUCTION · TEST 6.9','🛍️ JJ MARKET · CHATUCHAK · 8000+','🛣️ BANGKOK EXPRESSWAY · 12000+','🌈 PATTAYA WALKING STREET · 16000+','🌑 DARK ROAD · 23000+'][i];for(let k=0;k<3;k++)signMaterials[k]=i===1?neonSigns[k]:daySigns[k];for(const b of props){if(b.userData.sign)b.userData.sign.material=signMaterials[b.userData.signIndex%3]}const rama=i===2;M.grass.color.setHex(rama?0x78746d:0x34333b);M.road.color.setHex(rama?0x777b81:0x56535c);M.stripe.color.setHex(rama?0xe5e1d3:0xe2c579);shoulderPaint.color.setHex(rama?0x77736e:0x444148);curbPaint.color.setHex(rama?0x9d968b:0x756866);hint.textContent=['🛺 WELCOME TO BANGKOK!','🏮 WELCOME TO YAOWARAT!','🌇 SUNSET DRIVE!','🌿 JJ MARKET! WATCH THE TRAFFIC!','🛸 EXPRESSWAY! UFO LASERS INCOMING!','🌈 PATTAYA WALKING STREET!','🔦 DARK ROAD! HEADLIGHTS ONLY!'][i]}
 function makeRoadsideStory(kind,side,z){const g=new THREE.Group();if(kind==='shrine'){g.add(cube(1.5,.25,1.3,storyMat.wood,0,.55,0));for(const sx of [-.53,.53])for(const sz of [-.42,.42])g.add(cube(.12,1.55,.12,storyMat.gold,sx,1.4,sz));g.add(cube(1.9,.3,1.65,storyMat.roof,0,2.25,0));g.add(cube(.55,.8,.52,storyMat.gold,0,1.4,0))}else{g.add(cube(2.4,.95,1.45,storyMat.wood,0,.7,0));g.add(cube(2.65,.15,1.8,storyMat.cloth,0,1.65,0));for(let i=0;i<5;i++){const d=new THREE.Mesh(new THREE.IcosahedronGeometry(.24,0),M.durian);d.position.set((i-2)*.38,1.3,(i%2)*.34-.2);g.add(d)}const vendor=new THREE.Group();vendor.add(cube(.45,.8,.34,storyMat.cloth,0,1.48,0));vendor.add(ball(.34,M.skin,0,2.07,0));vendor.add(ball(.37,M.black,0,2.36,.02));vendor.add(ball(.08,M.white,-.13,2.1,-.29));vendor.add(ball(.08,M.white,.13,2.1,-.29));const arm=cube(.13,.63,.14,M.skin,-.37,1.55,0);vendor.add(arm);vendor.position.x=-.85;g.add(vendor);g.userData.vendorArm=arm;g.userData.vendorFruit=ball(.29,M.durian,-.35,1.65,-.4);g.add(g.userData.vendorFruit)}g.position.set(side*7.35,0,z);scene.add(g);storyProps.push({g,kind,side,triggered:false,dropTime:0});return g}
-function makeGrandma(){const g=new THREE.Group();g.add(cube(.72,1.25,.48,storyMat.ghost,0,1.18,0));g.add(ball(.44,M.skin,0,2.06,0));g.add(ball(.49,storyMat.ghost,0,2.37,.06));g.add(ball(.10,M.black,-.13,2.08,-.30));g.add(ball(.10,M.black,.13,2.08,-.30));g.add(cube(.23,.045,.05,M.red,0,1.88,-.34));const arms=[],legs=[];for(const side of [-1,1]){const leg=cube(.16,.86,.18,storyMat.ghost,side*.25,.52,0);g.add(leg);legs.push(leg);const arm=cube(.13,.82,.16,M.skin,side*.49,1.35,0);g.add(arm);arms.push(arm)}g.userData.runArms=arms;g.userData.runLegs=legs;return g}
+// Mobile-budget PBR Speed Grandma: curved silhouette and human-scale features,
+ // not the previous flat-shaded box character. No external assets or skinning.
+ const grandmaDress=new THREE.MeshStandardMaterial({color:0x525b63,roughness:.96,side:THREE.DoubleSide});
+ const grandmaShawl=new THREE.MeshStandardMaterial({color:0x99968d,roughness:.94});
+ const grandmaSkin=new THREE.MeshStandardMaterial({color:0xa88c7b,roughness:.91});
+ const grandmaHair=new THREE.MeshStandardMaterial({color:0x8e9292,roughness:.98});
+ const grandmaEyes=new THREE.MeshStandardMaterial({color:0x25272b,roughness:.67});
+ function makeGrandma(){
+  const g=new THREE.Group();
+  const skirt=new THREE.Mesh(new THREE.LatheGeometry([
+   new THREE.Vector2(.37,.11),new THREE.Vector2(.45,.2),new THREE.Vector2(.38,.65),
+   new THREE.Vector2(.29,1.18),new THREE.Vector2(.27,1.48)],14),grandmaDress);g.add(skirt);
+  const torso=new THREE.Mesh(new THREE.CylinderGeometry(.25,.3,.57,12),grandmaDress);
+  torso.position.y=1.46;g.add(torso);
+  const shoulders=new THREE.Mesh(new THREE.SphereGeometry(.38,12,8),grandmaShawl);
+  shoulders.scale.set(1,.22,.67);shoulders.position.set(0,1.75,0);g.add(shoulders);
+  const neck=new THREE.Mesh(new THREE.CylinderGeometry(.105,.13,.24,9),grandmaSkin);
+  neck.position.y=1.89;g.add(neck);
+  const head=new THREE.Mesh(new THREE.SphereGeometry(.27,16,12),grandmaSkin);
+  head.scale.set(.83,1.07,.92);head.position.set(0,2.14,.04);g.add(head);
+  const hair=new THREE.Mesh(new THREE.SphereGeometry(.27,14,10),grandmaHair);
+  hair.scale.set(.92,.52,.93);hair.position.set(0,2.38,.015);g.add(hair);
+  const bun=new THREE.Mesh(new THREE.SphereGeometry(.17,12,9),grandmaHair);
+  bun.position.set(0,2.34,-.25);g.add(bun);
+  for(const side of [-1,1]){
+   const eye=new THREE.Mesh(new THREE.SphereGeometry(.024,8,7),grandmaEyes);
+   eye.position.set(side*.103,2.17,.276);g.add(eye);
+   const brow=new THREE.Mesh(new THREE.CylinderGeometry(.012,.012,.14,6),grandmaHair);
+   brow.rotation.z=Math.PI/2+side*.15;brow.position.set(side*.103,2.25,.268);g.add(brow);
+  }
+  const nose=new THREE.Mesh(new THREE.SphereGeometry(.055,8,6),grandmaSkin);
+  nose.scale.set(.68,1.1,1.1);nose.position.set(0,2.09,.292);g.add(nose);
+  const mouth=new THREE.Mesh(new THREE.SphereGeometry(.062,8,6),grandmaEyes);
+  mouth.scale.set(1,.13,.16);mouth.position.set(0,1.997,.276);g.add(mouth);
+  const arms=[],legs=[];
+  for(const side of [-1,1]){
+   const arm=new THREE.Group();arm.position.set(side*.32,1.7,0);
+   const sleeve=new THREE.Mesh(new THREE.CylinderGeometry(.105,.09,.42,9),grandmaDress);
+   sleeve.position.set(side*.085,-.19,0);sleeve.rotation.z=side*.26;arm.add(sleeve);
+   const forearm=new THREE.Mesh(new THREE.CylinderGeometry(.072,.059,.32,9),grandmaSkin);
+   forearm.position.set(side*.16,-.51,.05);forearm.rotation.z=side*.17;arm.add(forearm);
+   const hand=new THREE.Mesh(new THREE.SphereGeometry(.088,9,7),grandmaSkin);
+   hand.scale.set(.8,1.18,.72);hand.position.set(side*.19,-.69,.09);arm.add(hand);
+   g.add(arm);arms.push(arm);
+   const leg=new THREE.Group();leg.position.set(side*.18,.73,0);
+   const calf=new THREE.Mesh(new THREE.CylinderGeometry(.095,.073,.61,9),grandmaSkin);
+   calf.position.y=-.31;leg.add(calf);
+   const shoe=new THREE.Mesh(new THREE.SphereGeometry(.15,10,7),grandmaEyes);
+   shoe.scale.set(.85,.44,1.3);shoe.position.set(0,-.64,.085);leg.add(shoe);
+   g.add(leg);legs.push(leg);
+  }
+  g.userData.runArms=arms;g.userData.runLegs=legs;
+  return g;
+ }
+ function startGrandmaChase(side){
+  if(grandmaChase)scene.remove(grandmaChase.g);
+  const g=makeGrandma();g.position.set(side*4.65,0,-14);scene.add(g);
+  grandmaChase={g,side,time:3,elapsed:0,stepSound:0,mirrorTaken:false};
+  hint.textContent='👵 GRANDMA SPEED! WATCH YOUR MIRROR!';
+  sound(750,.22,'sawtooth');
+ }
 // Eight shared, weathered Yaowarat plaster facades: PBR response without extra meshes or textures.
 function facadeMaterial(seed){
  const c=document.createElement('canvas');c.width=256;c.height=512;
@@ -1596,11 +1656,13 @@ function cockpitTube(pts,r,m){const path=new THREE.CatmullRomCurve3(pts.map(p=>n
 cockpit.add(cube(2.45,.28,.5,cockpitBlue,0,-.99,-1.35));
 cockpit.add(cube(1.6,.13,.36,cockpitGold,0,-.78,-1.48));
 cockpitTube([[-.75,-.70,-1.36],[-.45,-.64,-1.42],[0,-.68,-1.48],[.45,-.64,-1.42],[.75,-.70,-1.36]],.046,cockpitChrome);
+const cockpitSideMirrors=[];
 for(const side of [-1,1]){
  cockpit.add(cube(.33,.13,.19,cockpitMat,side*.76,-.70,-1.36));
  cockpitTube([[side*.9,-.92,-1.42],[side*1.03,.1,-1.55],[side*1.09,.71,-1.52]],.046,cockpitChrome);
- cockpit.add(cube(.38,.30,.075,cockpitChrome,side*1.12,.05,-1.55));
- cockpit.add(cube(.29,.22,.078,cockpitMirrorMaterial,side*1.12,.05,-1.60));
+ const housing=cube(.38,.30,.075,cockpitChrome,side*1.12,.05,-1.55);
+ const glass=cube(.29,.22,.078,cockpitMirrorMaterial,side*1.12,.05,-1.60);
+ cockpit.add(housing,glass);cockpitSideMirrors.push({side,housing,glass});
 }
 // Remove the overhead trim from the camera view; keep the lower dashboard and side frame.
 // Upper windshield crossbar removed to expose the street.
@@ -3844,7 +3906,7 @@ g.userData.detailedTukTuk=!!useDetailedTukTuk;g.userData.detailedYaksha=type==='
 hazards.push({g,type,madness,boss,durianSide,passed:false,hit:false,phase:Math.random()*6.28,baseX:lane,announced:false,nearAwarded:false,swerve:jamFormation?0:madness==='cuttingBus'?(lane===3.35?-1:lane===-3.35?1:(Math.random()<.5?-1:1)):Math.random()<.6?(Math.random()<.5?-1:1):0,swerveStart:madness==='cuttingBus'?-40:-23-Math.random()*15})}
 let fallbackKeySteer=0,fallbackDragSteer=0,fallbackLeft=false,fallbackRight=false;
 let paused=false,challengeStage=0,challengeDisplay='',comboTime=0,active=false,meters=0,bonus=0,speed=120,x=0,tilt=0,neutral=null,lastGamma=null,hasMotion=false,smoothed=0,spawnClock=0,inv=0,flips=0,combo=0,misses=0,crashes=0,best=0,last=performance.now(),shake=0,missionDone=false,soundOn=true,audio=null;try{best=Number(localStorage.getItem('bbf-best3d')||0)}catch(e){}
-function reset(){updateYaowaratWires(0,true);nightCount=0;expresswayArt.group.visible=false;pattayaStreet.visible=false;darkRoadMarkers.visible=false;darkHeadlight.visible=false;darkRoadWave=0;for(let i=0;i<darkMarkerZ.length;i++)darkMarkerZ[i]=9-i*8;updateDarkRoadMarkers(0);pattayaWave=0;for(let i=0;i<pattayaShops.length;i++)pattayaShops[i].position.z=-8-i*9.6;updatePattayaReflections();grandmaTriggeredNight=0;if(grandmaChase){scene.remove(grandmaChase.g);grandmaChase=null}storyProps.forEach(p=>scene.remove(p.g));storyProps.length=0;visualRush=0;camera.fov=76;camera.updateProjectionMatrix();cockpit.position.y=-.22;paused=false;$('pauseBtn').textContent='⏸';bossSpawned=false;bossBeaten=false;for(const p of props)p.visible=true;neonReflections.visible=true;for(const mesh of streetLampMeshes)mesh.visible=true;updateYaowaratStreetlights();updateYaowaratReflections();for(const p of ramaStructures){p.visible=false;p.position.z=p.userData.startZ;}for(const shop of roadsideShops){shop.g.visible=shop.stage===1;shop.g.position.z=shop.startZ;}for(const stall of marketStalls){stall.visible=false;stall.position.z=stall.userData.startZ;}for(const tent of marketCanopies){tent.visible=false;tent.position.z=tent.userData.startZ;}for(const bump of marketBumps){bump.visible=false;bump.position.z=bump.userData.startZ;}for(const mesh of marketCrowdMeshes)mesh.visible=false;canalGroup.visible=false;districtIndex=-1;applyDistrict(1);scene.background.copy(districtSkies[1]);scene.fog.color.copy(districtSkies[1]);spawnIndex=0;eventCount=0;lastEventMeters=-250;active=true;queueOptionalModels();meters=0;bonus=0;missionDone=false;shake=0;speed=120;x=0;tilt=0;fallbackKeySteer=0;fallbackDragSteer=0;fallbackLeft=false;fallbackRight=false;fallbackPointer=null;neutral=lastGamma;smoothed=0;spawnClock=.45;inv=0;flips=0;combo=0;comboTime=0;challengeStage=0;challengeDisplay='';challenge.textContent='🎯 SURVIVE 500m · +250';misses=0;crashes=0;hazards.forEach(h=>scene.remove(h.g));hazards.length=0;trafficContactShadows.count=0;overlay.style.display='none';hint.textContent='📱 SMALL TILTS TO STEER · 🎯 RECENTER'}
+function reset(){updateYaowaratWires(0,true);nightCount=0;expresswayArt.group.visible=false;pattayaStreet.visible=false;darkRoadMarkers.visible=false;darkHeadlight.visible=false;darkRoadWave=0;for(let i=0;i<darkMarkerZ.length;i++)darkMarkerZ[i]=9-i*8;updateDarkRoadMarkers(0);pattayaWave=0;for(let i=0;i<pattayaShops.length;i++)pattayaShops[i].position.z=-8-i*9.6;updatePattayaReflections();grandmaTriggeredNight=0;nextDarkGrandmaScore=24000;for(const mirror of cockpitSideMirrors){mirror.housing.visible=true;mirror.glass.visible=true}if(grandmaChase){scene.remove(grandmaChase.g);grandmaChase=null}storyProps.forEach(p=>scene.remove(p.g));storyProps.length=0;visualRush=0;camera.fov=76;camera.updateProjectionMatrix();cockpit.position.y=-.22;paused=false;$('pauseBtn').textContent='⏸';bossSpawned=false;bossBeaten=false;for(const p of props)p.visible=true;neonReflections.visible=true;for(const mesh of streetLampMeshes)mesh.visible=true;updateYaowaratStreetlights();updateYaowaratReflections();for(const p of ramaStructures){p.visible=false;p.position.z=p.userData.startZ;}for(const shop of roadsideShops){shop.g.visible=shop.stage===1;shop.g.position.z=shop.startZ;}for(const stall of marketStalls){stall.visible=false;stall.position.z=stall.userData.startZ;}for(const tent of marketCanopies){tent.visible=false;tent.position.z=tent.userData.startZ;}for(const bump of marketBumps){bump.visible=false;bump.position.z=bump.userData.startZ;}for(const mesh of marketCrowdMeshes)mesh.visible=false;canalGroup.visible=false;districtIndex=-1;applyDistrict(1);scene.background.copy(districtSkies[1]);scene.fog.color.copy(districtSkies[1]);spawnIndex=0;eventCount=0;lastEventMeters=-250;active=true;queueOptionalModels();meters=0;bonus=0;missionDone=false;shake=0;speed=120;x=0;tilt=0;fallbackKeySteer=0;fallbackDragSteer=0;fallbackLeft=false;fallbackRight=false;fallbackPointer=null;neutral=lastGamma;smoothed=0;spawnClock=.45;inv=0;flips=0;combo=0;comboTime=0;challengeStage=0;challengeDisplay='';challenge.textContent='🎯 SURVIVE 500m · +250';misses=0;crashes=0;hazards.forEach(h=>scene.remove(h.g));hazards.length=0;trafficContactShadows.count=0;overlay.style.display='none';hint.textContent='📱 SMALL TILTS TO STEER · 🎯 RECENTER'}
 function finish(){active=false;const points=Math.floor(meters+bonus);if(points>best){best=points;try{localStorage.setItem('bbf-best3d',String(best))}catch(e){}}panel.innerHTML='<h1>💥 GAME OVER!</h1><p>SCORE '+points+' · BEST '+best+'</p><p>Near misses '+misses+' · Crashes '+crashes+'</p><p>'+(missionDone?'🏆 1000m mission complete!':'🎯 Reach 1000m for +500 points')+'</p><button id="again">TRY AGAIN</button><small>No brakes. No rules. Just Bangkok.</small>';overlay.style.display='grid';$('again').onclick=reset}
 function sound(freq=240,duration=.12,type='square'){if(!soundOn)return;try{audio=audio||new (window.AudioContext||window.webkitAudioContext)();if(audio.state==='suspended')audio.resume();const o=audio.createOscillator(),gain=audio.createGain();o.type=type;o.frequency.setValueAtTime(freq,audio.currentTime);o.frequency.exponentialRampToValueAtTime(Math.max(55,freq*.55),audio.currentTime+duration);gain.gain.setValueAtTime(.075,audio.currentTime);gain.gain.exponentialRampToValueAtTime(.001,audio.currentTime+duration);o.connect(gain);gain.connect(audio.destination);o.start();o.stop(audio.currentTime+duration)}catch(e){}}
 // 8000-point stage: Chatuchak (JJ Market) craft, vintage and plant stalls.
@@ -5531,7 +5593,26 @@ if(meters+bonus>=8000)queueExpresswayBusModel();const nextDistrict=Math.floor(me
   marketCanopyShadows.setMatrixAt(canopyIndex++,marketShadePose.matrix);
  }
  marketCanopyShadows.instanceMatrix.needsUpdate=true;
-}for(const bump of marketBumps)if(inMarket){bump.position.z+=advance;if(bump.position.z>20)bump.position.z-=180;}for(const shop of roadsideShops)if(shop.stage===nextDistrict){shop.g.position.z+=advance;if(shop.g.position.z>25)shop.g.position.z-=205;}for(let i=storyProps.length-1;i>=0;i--){const p=storyProps[i];p.g.position.z+=advance;if(p.kind==='vendor'&&!p.triggered&&p.g.position.z>-48){p.triggered=true;p.dropTime=.8;hint.textContent='🌰 WATCH OUT! DURIAN FALLING!'}if(p.kind==='vendor'&&p.dropTime>0){p.dropTime=Math.max(0,p.dropTime-dt);const f=1-p.dropTime/.8;if(p.g.userData.vendorArm)p.g.userData.vendorArm.rotation.z=-Math.sin(f*Math.PI)*1.15;if(p.g.userData.vendorFruit){p.g.userData.vendorFruit.position.x=-.35+p.side*-f*1.1;p.g.userData.vendorFruit.position.y=1.65-f*1.25;p.g.userData.vendorFruit.rotation.z+=dt*8;if(p.dropTime===0)p.g.userData.vendorFruit.visible=false}}if(p.kind==='shrine'&&!p.triggered&&p.g.position.z>0){p.triggered=true;if(grandmaChase)scene.remove(grandmaChase.g);const g=makeGrandma();g.position.set(p.side*4.65,0,-14);scene.add(g);grandmaChase={g,side:p.side,time:3,elapsed:0,stepSound:0};hint.textContent='👵 GRANDMA SPEED! RUN!';sound(750,.22,'sawtooth')}if(p.g.position.z>22){scene.remove(p.g);storyProps.splice(i,1)}}if(grandmaChase){const q=grandmaChase;q.time-=dt;q.elapsed+=dt;q.stepSound-=dt;const rush=THREE.MathUtils.smoothstep(q.elapsed,0,.65);const cling=THREE.MathUtils.smoothstep(q.elapsed,.5,.85);q.g.position.z=THREE.MathUtils.lerp(-14,-2.7,rush);q.g.position.x=x+q.side*THREE.MathUtils.lerp(3.8,1.25,cling)+Math.sin(t*.024)*.04;q.g.position.y=Math.abs(Math.sin(q.elapsed*22))*.12;q.g.scale.setScalar(1+cling*.8);q.g.rotation.y=q.side*(.2+Math.sin(q.elapsed*3)*.12);const stride=Math.sin(q.elapsed*22)*.7;for(let i=0;i<2;i++){const arm=q.g.userData.runArms?.[i],leg=q.g.userData.runLegs?.[i];if(arm)arm.rotation.x=(i===0?1:-1)*stride;if(leg)leg.rotation.x=(i===0?-1:1)*stride}if(q.stepSound<=0&&q.elapsed>.5&&q.elapsed<2.8){sound(95,.055,'triangle');q.stepSound=.3}if(q.time<=0){scene.remove(q.g);grandmaChase=null}}spawnClock-=dt;if(spawnClock<=0){if(hazards.length<(inMarket?9:onExpressway?7:4))spawn();spawnClock=bossSpawned&&!bossBeaten&&hazards.some(h=>h.boss)?2.6:Math.max(.72,1.95-visualSpeed/230)}for(const h of hazards){h.g.position.z+=advance;if(!h.announced&&h.g.position.z>-47){h.announced=true;if(h.type==='flagParade')hint.textContent='🌈 PRIDE PARADE! DODGE SAFELY!';else if(h.type==='bottle')hint.textContent='🍾 DRUNK TOURIST THROWS A BOTTLE!';else if(h.type==='watermelon')hint.textContent='🍉 FRUIT VENDOR THROWS A WATERMELON!';else if(h.type==='pattayaDancer')hint.textContent='👻 HAUNTED DANCER!';else if(h.type==='whiteGhost')hint.textContent='👻 WOMAN IN WHITE! KEEP YOUR DISTANCE!';else if(h.type==='laser')hint.textContent='🛸 UFO LASER! DODGE THE RED BEAM!';else if(h.type==='sportsCar')hint.textContent='🏎️ SPORTS CAR AHEAD!';else if(h.type==='protest')hint.textContent='📢 EXPRESSWAY PROTEST!';else if(h.type==='dog')hint.textContent='🐕 CANAL-SIDE DOG CHARGING! TILT LEFT!';else if(h.type==='police')hint.textContent='👮 POLICE AHEAD!';else if(h.type==='fruitCart')hint.textContent='🍉 JJ MARKET · FRUIT CART AHEAD!';else if(h.type==='pedestrian')hint.textContent='🚶 JJ MARKET · WATCH FOR SHOPPERS!';else hint.textContent=h.boss?'👹 BOSS YAKSHA! WATCH HIS MOVE!':h.madness?({rollingDurian:'🌰 DURIAN ROLLING ACROSS!',cuttingBus:'🚌 BUS CUTTING ACROSS!',wrongWayBike:'🏍️ WRONG-WAY BIKE!'})[h.madness]:({bus:'🚌 RED BUS AHEAD!',busBlue:'🚌 ROUTE 8 BLUE BUS!',taxi:'🚕 TAXI CUTTING IN!',bike:'🏍️ MOTORBIKE!',dancer:'👻 HAUNTED THAI DANCER!',construction:'🚧 RAMA II — FALLING CONCRETE!',yaksha:'👹 GIANT YAKSHA AHEAD!',durian:'🌰 GIANT DURIAN!'})[h.type]}if(h.type==='whiteGhost'){h.g.position.y=.045+Math.sin(t*.002+h.phase)*.045;h.g.rotation.y=Math.sin(t*.001+h.phase)*.08;}if(h.type==='dog'){const charge=THREE.MathUtils.smoothstep(h.g.position.z,-36,-7);
+}for(const bump of marketBumps)if(inMarket){bump.position.z+=advance;if(bump.position.z>20)bump.position.z-=180;}for(const shop of roadsideShops)if(shop.stage===nextDistrict){shop.g.position.z+=advance;if(shop.g.position.z>25)shop.g.position.z-=205;}for(let i=storyProps.length-1;i>=0;i--){const p=storyProps[i];p.g.position.z+=advance;if(p.kind==='vendor'&&!p.triggered&&p.g.position.z>-48){p.triggered=true;p.dropTime=.8;hint.textContent='🌰 WATCH OUT! DURIAN FALLING!'}if(p.kind==='vendor'&&p.dropTime>0){p.dropTime=Math.max(0,p.dropTime-dt);const f=1-p.dropTime/.8;if(p.g.userData.vendorArm)p.g.userData.vendorArm.rotation.z=-Math.sin(f*Math.PI)*1.15;if(p.g.userData.vendorFruit){p.g.userData.vendorFruit.position.x=-.35+p.side*-f*1.1;p.g.userData.vendorFruit.position.y=1.65-f*1.25;p.g.userData.vendorFruit.rotation.z+=dt*8;if(p.dropTime===0)p.g.userData.vendorFruit.visible=false}}if(p.kind==='shrine'&&!p.triggered&&p.g.position.z>0){p.triggered=true;startGrandmaChase(p.side)}if(p.g.position.z>22){scene.remove(p.g);storyProps.splice(i,1)}}if(inDarkRoad&&!grandmaChase&&meters+bonus>=nextDarkGrandmaScore){
+ const available=cockpitSideMirrors.find(m=>m.housing.visible);
+ startGrandmaChase(available?available.side:(darkRoadWave%2?1:-1));
+ nextDarkGrandmaScore=Math.floor(meters+bonus)+2600;
+}if(grandmaChase){const q=grandmaChase;q.time-=dt;q.elapsed+=dt;q.stepSound-=dt;const rush=THREE.MathUtils.smoothstep(q.elapsed,0,.65);const cling=THREE.MathUtils.smoothstep(q.elapsed,.5,.85);q.g.position.z=THREE.MathUtils.lerp(-14,-2.7,rush);q.g.position.x=x+q.side*THREE.MathUtils.lerp(3.8,1.25,cling)+Math.sin(t*.024)*.04;q.g.position.y=Math.abs(Math.sin(q.elapsed*22))*.12;q.g.scale.setScalar(1+cling*.8);q.g.rotation.y=q.side*(.2+Math.sin(q.elapsed*3)*.12);const stride=Math.sin(q.elapsed*22)*.7;for(let i=0;i<2;i++){const arm=q.g.userData.runArms?.[i],leg=q.g.userData.runLegs?.[i];if(arm)arm.rotation.x=(i===0?1:-1)*stride;if(leg)leg.rotation.x=(i===0?-1:1)*stride}if(q.elapsed>1.05&&q.elapsed<2.35){const pullingArm=q.g.userData.runArms?.[q.side===1?0:1];if(pullingArm)pullingArm.rotation.x=-1.1+Math.sin(q.elapsed*15)*.22;}
+if(!q.mirrorTaken&&q.elapsed>=1.55){
+ q.mirrorTaken=true;
+ const mirror=cockpitSideMirrors.find(m=>m.side===q.side&&m.housing.visible);
+ if(mirror){
+  mirror.housing.visible=false;mirror.glass.visible=false;
+  const stolen=new THREE.Group(),housing=mirror.housing.clone(),glass=mirror.glass.clone();
+  housing.position.set(0,0,0);glass.position.set(0,0,-.055);
+  stolen.add(housing,glass);stolen.position.set(-q.side*.45,1.55,.34);
+  stolen.scale.setScalar(1.55);q.g.add(stolen);q.g.userData.stolenMirror=stolen;
+  hint.textContent='👵 GRANDMA SPEED TORE OFF A SIDE MIRROR!';
+  sound(175,.16,'sawtooth');
+ }
+}
+if(q.g.userData.stolenMirror){const piece=q.g.userData.stolenMirror;piece.rotation.z+=dt*4;piece.position.y=1.55+Math.sin(q.elapsed*10)*.09;}
+if(q.stepSound<=0&&q.elapsed>.5&&q.elapsed<2.8){sound(95,.055,'triangle');q.stepSound=.3}if(q.time<=0){scene.remove(q.g);grandmaChase=null}}spawnClock-=dt;if(spawnClock<=0){if(hazards.length<(inMarket?9:onExpressway?7:4))spawn();spawnClock=bossSpawned&&!bossBeaten&&hazards.some(h=>h.boss)?2.6:Math.max(.72,1.95-visualSpeed/230)}for(const h of hazards){h.g.position.z+=advance;if(!h.announced&&h.g.position.z>-47){h.announced=true;if(h.type==='flagParade')hint.textContent='🌈 PRIDE PARADE! DODGE SAFELY!';else if(h.type==='bottle')hint.textContent='🍾 DRUNK TOURIST THROWS A BOTTLE!';else if(h.type==='watermelon')hint.textContent='🍉 FRUIT VENDOR THROWS A WATERMELON!';else if(h.type==='pattayaDancer')hint.textContent='👻 HAUNTED DANCER!';else if(h.type==='whiteGhost')hint.textContent='👻 WOMAN IN WHITE! KEEP YOUR DISTANCE!';else if(h.type==='laser')hint.textContent='🛸 UFO LASER! DODGE THE RED BEAM!';else if(h.type==='sportsCar')hint.textContent='🏎️ SPORTS CAR AHEAD!';else if(h.type==='protest')hint.textContent='📢 EXPRESSWAY PROTEST!';else if(h.type==='dog')hint.textContent='🐕 CANAL-SIDE DOG CHARGING! TILT LEFT!';else if(h.type==='police')hint.textContent='👮 POLICE AHEAD!';else if(h.type==='fruitCart')hint.textContent='🍉 JJ MARKET · FRUIT CART AHEAD!';else if(h.type==='pedestrian')hint.textContent='🚶 JJ MARKET · WATCH FOR SHOPPERS!';else hint.textContent=h.boss?'👹 BOSS YAKSHA! WATCH HIS MOVE!':h.madness?({rollingDurian:'🌰 DURIAN ROLLING ACROSS!',cuttingBus:'🚌 BUS CUTTING ACROSS!',wrongWayBike:'🏍️ WRONG-WAY BIKE!'})[h.madness]:({bus:'🚌 RED BUS AHEAD!',busBlue:'🚌 ROUTE 8 BLUE BUS!',taxi:'🚕 TAXI CUTTING IN!',bike:'🏍️ MOTORBIKE!',dancer:'👻 HAUNTED THAI DANCER!',construction:'🚧 RAMA II — FALLING CONCRETE!',yaksha:'👹 GIANT YAKSHA AHEAD!',durian:'🌰 GIANT DURIAN!'})[h.type]}if(h.type==='whiteGhost'){h.g.position.y=.045+Math.sin(t*.002+h.phase)*.045;h.g.rotation.y=Math.sin(t*.001+h.phase)*.08;}if(h.type==='dog'){const charge=THREE.MathUtils.smoothstep(h.g.position.z,-36,-7);
  h.g.position.x=THREE.MathUtils.lerp(h.baseX,Math.max(.5,x),charge*.62);
  const stride=t*.022+h.phase;
  h.g.position.y=Math.abs(Math.sin(stride))*.085*(.4+charge*.6);
