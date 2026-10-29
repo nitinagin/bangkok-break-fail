@@ -330,7 +330,50 @@ gantry.add(vmsPanel);
 gantry.position.z=-75;group.add(gantry);
  // Concrete Jersey shoulder barriers: 44 instances, two batched draw calls.
  const barrierCount=44,barrierLength=4.4;
- const concrete=new THREE.MeshStandardMaterial({color:0x9ca2a7,roughness:.94,metalness:0});
+ // One baked 128x256 PBR albedo for all 44 Jersey barriers. Deterministic
+ // aggregate, casting seams, rain streaks and tyre scuffs replace flat grey
+ // blocks without adding meshes, draw calls, external assets or runtime work.
+ const barrierCanvas=document.createElement('canvas');
+ barrierCanvas.width=128;barrierCanvas.height=256;
+ const bc=barrierCanvas.getContext('2d');
+ const barrierGrime=bc.createLinearGradient(0,0,0,256);
+ barrierGrime.addColorStop(0,'#c5c7c2');
+ barrierGrime.addColorStop(.48,'#afb4b1');
+ barrierGrime.addColorStop(.76,'#969e9e');
+ barrierGrime.addColorStop(1,'#6b7477');
+ bc.fillStyle=barrierGrime;bc.fillRect(0,0,128,256);
+ // Fixed pseudo-random pattern: no per-frame texture updates or flicker.
+ for(let i=0;i<1900;i++){
+  const px=(i*73+Math.floor(i/11)*19)%128;
+  const py=(i*109+Math.floor(i/7)*43)%256;
+  bc.fillStyle=i%4===0?'rgba(35,43,47,.17)':'rgba(235,233,220,.13)';
+  bc.fillRect(px,py,1+i%3,1+(i%2));
+ }
+ // Weathered casting joints and shallow vertical water-runoff streaks.
+ for(const y of [64,189]){
+  bc.fillStyle='rgba(39,46,48,.24)';bc.fillRect(0,y,128,2);
+  bc.fillStyle='rgba(241,238,223,.16)';bc.fillRect(0,y+3,128,1);
+ }
+ for(let i=0;i<26;i++){
+  const px=(i*47+13)%128,py=(i*31+37)%170;
+  bc.fillStyle='rgba(41,48,51,.12)';
+  bc.fillRect(px,py,1+(i%2),26+(i%5)*8);
+ }
+ for(let i=0;i<14;i++){
+  const px=(i*53+11)%126,py=180+(i*17)%65;
+  bc.fillStyle='rgba(24,29,32,.15)';
+  bc.fillRect(px,py,8+(i%3)*6,2+(i%2));
+ }
+ const barrierTexture=new THREE.CanvasTexture(barrierCanvas);
+ barrierTexture.colorSpace=THREE.SRGBColorSpace;
+ barrierTexture.wrapS=barrierTexture.wrapT=THREE.RepeatWrapping;
+ // ExtrudeGeometry side UVs use world units; repeat instead of smearing
+ // the last texel over each 4.4m segment.
+ barrierTexture.repeat.set(.26,.68);
+ barrierTexture.anisotropy=2;
+ const concrete=new THREE.MeshStandardMaterial({
+  color:0xd5d5d2,map:barrierTexture,roughness:.94,metalness:0
+ });
  const reflective=new THREE.MeshBasicMaterial({color:0xf4cb60});
  const profile=new THREE.Shape();
  profile.moveTo(-.42,0);profile.lineTo(.42,0);profile.lineTo(.42,.22);
@@ -363,6 +406,6 @@ gantry.position.z=-75;group.add(gantry);
  },dispose(){
   group.traverse(obj=>{if(obj.geometry)obj.geometry.dispose();});
   for(const material of [towerMat,mastMaterial,steel,warm,poolMaterial,sign.material,concrete,reflective,flyoverConcrete,acousticMat])material.dispose();
-  windowTexture.dispose();emissiveTexture.dispose();poolTexture.dispose();signTexture.dispose();flyoverTexture.dispose();acousticTexture.dispose();vmsTexture.dispose();vmsMaterial.dispose();
+  windowTexture.dispose();emissiveTexture.dispose();poolTexture.dispose();signTexture.dispose();flyoverTexture.dispose();acousticTexture.dispose();barrierTexture.dispose();vmsTexture.dispose();vmsMaterial.dispose();
  }};
 }
