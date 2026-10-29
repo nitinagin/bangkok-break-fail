@@ -5597,7 +5597,22 @@ if(meters+bonus>=8000)queueExpresswayBusModel();const nextDistrict=Math.floor(me
  const available=cockpitSideMirrors.find(m=>m.housing.visible);
  startGrandmaChase(available?available.side:(darkRoadWave%2?1:-1));
  nextDarkGrandmaScore=Math.floor(meters+bonus)+2600;
-}if(grandmaChase){const q=grandmaChase;q.time-=dt;q.elapsed+=dt;q.stepSound-=dt;const rush=THREE.MathUtils.smoothstep(q.elapsed,0,.65);const cling=THREE.MathUtils.smoothstep(q.elapsed,.5,.85);q.g.position.z=THREE.MathUtils.lerp(-14,-2.7,rush);q.g.position.x=x+q.side*THREE.MathUtils.lerp(3.8,1.25,cling)+Math.sin(t*.024)*.04;q.g.position.y=Math.abs(Math.sin(q.elapsed*22))*.12;q.g.scale.setScalar(1+cling*.8);q.g.rotation.y=q.side*(.2+Math.sin(q.elapsed*3)*.12);const stride=Math.sin(q.elapsed*22)*.7;for(let i=0;i<2;i++){const arm=q.g.userData.runArms?.[i],leg=q.g.userData.runLegs?.[i];if(arm)arm.rotation.x=(i===0?1:-1)*stride;if(leg)leg.rotation.x=(i===0?-1:1)*stride}if(q.elapsed>1.05&&q.elapsed<2.35){const pullingArm=q.g.userData.runArms?.[q.side===1?0:1];if(pullingArm)pullingArm.rotation.x=-1.1+Math.sin(q.elapsed*15)*.22;}
+}if(grandmaChase){const q=grandmaChase;q.time-=dt;q.elapsed+=dt;q.stepSound-=dt;const rush=THREE.MathUtils.smoothstep(q.elapsed,0,.65);const cling=THREE.MathUtils.smoothstep(q.elapsed,.5,.85);// Run -> leap -> cling: settle into a believable human-sized grip instead of
+// continuing a running cycle while enlarged to nearly twice her height.
+const pull=THREE.MathUtils.smoothstep(q.elapsed,1.05,1.55)*(1-THREE.MathUtils.smoothstep(q.elapsed,2.2,2.65));
+q.g.position.z=THREE.MathUtils.lerp(-14,-1.7,rush);
+q.g.position.x=x+q.side*THREE.MathUtils.lerp(3.8,1.20,cling)+Math.sin(t*.024)*.04*(1-cling);
+q.g.position.y=(1-cling)*Math.abs(Math.sin(q.elapsed*22))*.12+cling*.12;
+q.g.scale.setScalar(1+cling*.10);
+q.g.rotation.y=q.side*(.2+cling*.25);
+q.g.rotation.z=-q.side*cling*.22+q.side*pull*Math.sin(q.elapsed*15)*.045;
+q.g.rotation.x=cling*.14;
+const stride=Math.sin(q.elapsed*22)*.7;
+for(let i=0;i<2;i++){
+ const arm=q.g.userData.runArms?.[i],leg=q.g.userData.runLegs?.[i];
+ if(arm){arm.rotation.x=THREE.MathUtils.lerp((i===0?1:-1)*stride,-.7,cling);arm.rotation.z=THREE.MathUtils.lerp(0,i===0?-.32:.32,cling);}
+ if(leg){leg.rotation.x=THREE.MathUtils.lerp((i===0?-1:1)*stride,i===0?-.38:.52,cling);leg.rotation.z=cling*(i===0?-.08:.08);}
+}if(q.elapsed>1.05&&q.elapsed<2.35){const pullingArm=q.g.userData.runArms?.[q.side===1?1:0];if(pullingArm)pullingArm.rotation.x=-1.1+Math.sin(q.elapsed*15)*.22;}
 if(!q.mirrorTaken&&q.elapsed>=1.55){
  q.mirrorTaken=true;
  const mirror=cockpitSideMirrors.find(m=>m.side===q.side&&m.housing.visible);
@@ -5605,13 +5620,13 @@ if(!q.mirrorTaken&&q.elapsed>=1.55){
   mirror.housing.visible=false;mirror.glass.visible=false;
   const stolen=new THREE.Group(),housing=mirror.housing.clone(),glass=mirror.glass.clone();
   housing.visible=true;glass.visible=true;housing.position.set(0,0,0);glass.position.set(0,0,-.055);
-  stolen.add(housing,glass);stolen.position.set(-q.side*.45,1.55,.34);
-  stolen.scale.setScalar(1.55);q.g.add(stolen);q.g.userData.stolenMirror=stolen;
+  stolen.add(housing,glass);stolen.position.set(q.side*.42,1.18,.42);
+  stolen.scale.setScalar(1.25);q.g.add(stolen);q.g.userData.stolenMirror=stolen;
   hint.textContent='👵 GRANDMA SPEED TORE OFF A SIDE MIRROR!';
   sound(175,.16,'sawtooth');
  }
 }
-if(q.g.userData.stolenMirror){const piece=q.g.userData.stolenMirror;piece.rotation.z+=dt*4;piece.position.y=1.55+Math.sin(q.elapsed*10)*.09;}
+if(q.g.userData.stolenMirror){const piece=q.g.userData.stolenMirror;piece.rotation.z=q.side*(.15+Math.sin(q.elapsed*10)*.08);piece.position.y=1.18+Math.sin(q.elapsed*10)*.045;}
 if(q.stepSound<=0&&q.elapsed>.5&&q.elapsed<2.8){sound(95,.055,'triangle');q.stepSound=.3}if(q.time<=0){scene.remove(q.g);grandmaChase=null}}spawnClock-=dt;if(spawnClock<=0){if(hazards.length<(inMarket?9:onExpressway?7:4))spawn();spawnClock=bossSpawned&&!bossBeaten&&hazards.some(h=>h.boss)?2.6:Math.max(.72,1.95-visualSpeed/230)}for(const h of hazards){h.g.position.z+=advance;if(!h.announced&&h.g.position.z>-47){h.announced=true;if(h.type==='flagParade')hint.textContent='🌈 PRIDE PARADE! DODGE SAFELY!';else if(h.type==='bottle')hint.textContent='🍾 DRUNK TOURIST THROWS A BOTTLE!';else if(h.type==='watermelon')hint.textContent='🍉 FRUIT VENDOR THROWS A WATERMELON!';else if(h.type==='pattayaDancer')hint.textContent='👻 HAUNTED DANCER!';else if(h.type==='whiteGhost')hint.textContent='👻 WOMAN IN WHITE! KEEP YOUR DISTANCE!';else if(h.type==='laser')hint.textContent='🛸 UFO LASER! DODGE THE RED BEAM!';else if(h.type==='sportsCar')hint.textContent='🏎️ SPORTS CAR AHEAD!';else if(h.type==='protest')hint.textContent='📢 EXPRESSWAY PROTEST!';else if(h.type==='dog')hint.textContent='🐕 CANAL-SIDE DOG CHARGING! TILT LEFT!';else if(h.type==='police')hint.textContent='👮 POLICE AHEAD!';else if(h.type==='fruitCart')hint.textContent='🍉 JJ MARKET · FRUIT CART AHEAD!';else if(h.type==='pedestrian')hint.textContent='🚶 JJ MARKET · WATCH FOR SHOPPERS!';else hint.textContent=h.boss?'👹 BOSS YAKSHA! WATCH HIS MOVE!':h.madness?({rollingDurian:'🌰 DURIAN ROLLING ACROSS!',cuttingBus:'🚌 BUS CUTTING ACROSS!',wrongWayBike:'🏍️ WRONG-WAY BIKE!'})[h.madness]:({bus:'🚌 RED BUS AHEAD!',busBlue:'🚌 ROUTE 8 BLUE BUS!',taxi:'🚕 TAXI CUTTING IN!',bike:'🏍️ MOTORBIKE!',dancer:'👻 HAUNTED THAI DANCER!',construction:'🚧 RAMA II — FALLING CONCRETE!',yaksha:'👹 GIANT YAKSHA AHEAD!',durian:'🌰 GIANT DURIAN!'})[h.type]}if(h.type==='whiteGhost'){h.g.position.y=.045+Math.sin(t*.002+h.phase)*.045;h.g.rotation.y=Math.sin(t*.001+h.phase)*.08;}if(h.type==='dog'){const charge=THREE.MathUtils.smoothstep(h.g.position.z,-36,-7);
  h.g.position.x=THREE.MathUtils.lerp(h.baseX,Math.max(.5,x),charge*.62);
  const stride=t*.022+h.phase;
