@@ -1834,6 +1834,71 @@ function updateTrafficContactShadows(){
  trafficContactShadows.count=used;
  if(used)trafficContactShadows.instanceMatrix.needsUpdate=true;
 }
+// Low-cost night headlight bloom makes oncoming Bangkok traffic legible without
+// real-time point lights, extra model downloads or changes to collision geometry.
+// A single 64px baked halo and one instanced draw call cover all visible vehicles.
+const trafficLampCanvas=document.createElement('canvas');
+trafficLampCanvas.width=trafficLampCanvas.height=64;
+const trafficLampCtx=trafficLampCanvas.getContext('2d');
+const trafficLampGradient=trafficLampCtx.createRadialGradient(32,32,2,32,32,32);
+trafficLampGradient.addColorStop(0,'rgba(255,251,223,.95)');
+trafficLampGradient.addColorStop(.20,'rgba(255,235,174,.67)');
+trafficLampGradient.addColorStop(.55,'rgba(255,195,104,.17)');
+trafficLampGradient.addColorStop(1,'rgba(255,169,81,0)');
+trafficLampCtx.fillStyle=trafficLampGradient;
+trafficLampCtx.fillRect(0,0,64,64);
+const trafficLampTexture=new THREE.CanvasTexture(trafficLampCanvas);
+const trafficHeadlightGlows=new THREE.InstancedMesh(
+ new THREE.PlaneGeometry(1,1),
+ new THREE.MeshBasicMaterial({
+  map:trafficLampTexture,color:0xffeed4,transparent:true,opacity:.72,
+  depthWrite:false,blending:THREE.AdditiveBlending,side:THREE.DoubleSide
+ }),32
+);
+trafficHeadlightGlows.count=0;
+trafficHeadlightGlows.visible=false;
+trafficHeadlightGlows.frustumCulled=false;
+trafficHeadlightGlows.renderOrder=2;
+scene.add(trafficHeadlightGlows);
+const trafficLampPose=new THREE.Object3D();
+// Local-space front lamp centres; negative Z is the rear of these procedural vehicles.
+const trafficLampPositions={
+ taxi:[.71,.99,1.81],bus:[.97,.98,2.88],busBlue:[.97,.98,2.88],
+ truck:[.88,1.66,3.20],tuktuk:[0,1.15,1.50],
+ bike:[0,1.12,1.45],sportsCar:[.68,.68,1.78]
+};
+function updateTrafficHeadlightGlows(){
+ // JJ Market is daylight; Pattaya has its own neon and projectile effects.
+ if(districtIndex===3||districtIndex===5){
+  trafficHeadlightGlows.visible=false;trafficHeadlightGlows.count=0;return;
+ }
+ let used=0;
+ for(const h of hazards){
+  const spec=trafficLampPositions[h.type];
+  // Imported GLBs have unverified lamp axes: never place a glow in mid-air.
+  if(!spec||h.g.userData.detailedTukTuk)continue;
+  const scale=h.g.scale.x,yaw=h.g.rotation.y,cos=Math.cos(yaw),sin=Math.sin(yaw);
+  const sides=spec[0]===0?[0]:[-1,1];
+  for(const side of sides){
+   if(used>=trafficHeadlightGlows.instanceMatrix.count)break;
+   const localX=side*spec[0]*scale,localZ=spec[2]*scale;
+   trafficLampPose.position.set(
+    h.g.position.x+localX*cos+localZ*sin,
+    h.g.position.y+spec[1]*scale,
+    h.g.position.z-localX*sin+localZ*cos
+   );
+   trafficLampPose.rotation.set(0,yaw,0);
+   const diameter=(side===0?.62:.53)*scale;
+   trafficLampPose.scale.set(diameter,diameter,1);
+   trafficLampPose.updateMatrix();
+   trafficHeadlightGlows.setMatrixAt(used++,trafficLampPose.matrix);
+  }
+  if(used>=trafficHeadlightGlows.instanceMatrix.count)break;
+ }
+ trafficHeadlightGlows.count=used;
+ trafficHeadlightGlows.visible=used>0;
+ if(used)trafficHeadlightGlows.instanceMatrix.needsUpdate=true;
+}
 // Rolling durian: textured oval fruit + one instanced thorn draw call.
 // The rolling body is centered at its axle, while its ground shadow stays still.
 function makeDurian(){
@@ -5279,7 +5344,7 @@ if(meters+bonus>=8000)queueExpresswayBusModel();const nextDistrict=Math.floor(me
   head.rotation.y+=(target-head.rotation.y)*(1-Math.exp(-dt*8));
   head.rotation.x=THREE.MathUtils.lerp(.10,-.12,warning);
  }
-}if((h.type==='bus'||h.type==='busBlue')&&h.g.position.z<0){const p=THREE.MathUtils.smoothstep(h.g.position.z,-38,-13);h.g.position.x=THREE.MathUtils.clamp(h.baseX+Math.sin(t*.001+h.phase)*.18+(h.swerve?p*h.swerve*(h.madness==='cuttingBus'?2.15:.8):0),-4.2,4.2);h.g.rotation.y=-h.swerve*Math.sin(p*Math.PI)*.09;}if((h.type==='taxi'||h.type==='bike')&&!h.madness&&h.g.position.z>h.swerveStart){const f=THREE.MathUtils.smoothstep(h.g.position.z,h.swerveStart,h.swerveStart+20);h.g.position.x=THREE.MathUtils.clamp(h.baseX+h.swerve*f*(h.type==='bike'?1.65:2.1),-4.2,4.2);h.g.rotation.y=-h.swerve*Math.sin(f*Math.PI)*.18}if(h.madness==='wrongWayBike'){h.g.rotation.y=Math.PI+Math.sin(t*.004+h.phase)*.08;h.g.position.z+=advance*.45}if(h.type==='yaksha'){h.g.rotation.y=Math.sin(t*.002+h.phase)*.35;if(h.boss&&h.g.position.z>-34){const f=THREE.MathUtils.smoothstep(h.g.position.z,-34,-8);h.g.position.x=Math.sin(f*Math.PI*1.1)*2.25;}}if(!h.passed&&h.g.position.z>4){h.passed=true;const dx=Math.abs(h.g.position.x-x);const collisionRadius=h.type==='dog'?.95:h.type==='police'?.8:h.type==='pedestrian'?.75:h.type==='laser'?.8:h.type==='bottle'?.7:h.type==='watermelon'?.85:h.type==='flagParade'?.85:h.type==='pattayaDancer'?.95:h.type==='protest'?.9:h.type==='bike'?1.05:h.type==='taxi'||h.type==='sportsCar'?1.55:1.8;if(h.boss&&!bossBeaten){bossBeaten=true;if(dx>=collisionRadius){bonus+=750;hint.textContent='🏆 YAKSHA BOSS CLEARED +750';sound(920,.3,'sine')}else{hint.textContent='👹 YAKSHA HIT! NO BOSS BONUS'}}if(dx<collisionRadius&&!h.hit&&inv<=0){if(h.type==='dog'&&canalActive){x=Math.min(4.3,x+.85);hint.textContent='🐕 DOG PUSH! STEER LEFT OR FALL IN!';if(x>2.85){shake=1;finish();return;}}h.hit=true;crashes++;combo=0;comboTime=0;inv=1.5;flips=5;shake=.55;sound(120,.28,'sawtooth');/* Broken brakes: collisions damage the tuk-tuk but never slow it down. */hint.textContent=h.type==='dog'&&canalActive?'🐕 DOG SHOVE! TILT LEFT — CANAL!':'💥 '+h.type.toUpperCase()+' ATTACK!';if(navigator.vibrate)navigator.vibrate(80);if(crashes>=3){finish();break}}else if(dx>=collisionRadius&&dx<collisionRadius+1.1&&inv<=0){misses++;combo=comboTime>0?Math.min(combo+1,5):1;comboTime=5;const reward=combo*50;bonus+=reward;sound(600+combo*120,.1,'sine');hint.textContent='🔥 NEAR MISS ×'+combo+'  +'+reward}}}updateTaxiNeonGlints();updateTukNeonGlints();updateTrafficContactShadows();for(let i=hazards.length-1;i>=0;i--)if(hazards[i].g.position.z>20){scene.remove(hazards[i].g);hazards.splice(i,1)}if(challengeStage===0&&meters>=500){challengeStage=1;bonus+=250;hint.textContent='🏆 500m SURVIVED +250';sound(760,.22,'sine')}if(challengeStage===1&&misses>=3){challengeStage=2;bonus+=400;hint.textContent='🏆 3 NEAR MISSES +400';sound(850,.24,'sine')}if(!missionDone&&meters>=1000){missionDone=true;bonus+=500;hint.textContent='🏆 1000m MISSION +500';sound(900,.32,'sine')}shake=Math.max(0,shake-dt);inv=Math.max(0,inv-dt);comboTime=Math.max(0,comboTime-dt);if(comboTime===0)combo=0;car.visible=false;const missionText=challengeStage===0?'🎯 SURVIVE '+Math.max(0,500-Math.floor(meters))+'m · +250':challengeStage===1?'🎯 NEAR MISSES '+Math.min(misses,3)+'/3 · +400':'🏆 CHALLENGES COMPLETE';if(challengeDisplay!==missionText){challengeDisplay=missionText;challenge.textContent=missionText}if(t-lastHudUpdate>110){lastHudUpdate=t;hud.textContent=Math.floor(meters+bonus)+' PTS'+(comboTime>0?'  🔥×'+combo:'');status.innerHTML=Math.floor(speed)+' KM/H<br>'+'❤️'.repeat(Math.max(0,3-crashes));}}
+}if((h.type==='bus'||h.type==='busBlue')&&h.g.position.z<0){const p=THREE.MathUtils.smoothstep(h.g.position.z,-38,-13);h.g.position.x=THREE.MathUtils.clamp(h.baseX+Math.sin(t*.001+h.phase)*.18+(h.swerve?p*h.swerve*(h.madness==='cuttingBus'?2.15:.8):0),-4.2,4.2);h.g.rotation.y=-h.swerve*Math.sin(p*Math.PI)*.09;}if((h.type==='taxi'||h.type==='bike')&&!h.madness&&h.g.position.z>h.swerveStart){const f=THREE.MathUtils.smoothstep(h.g.position.z,h.swerveStart,h.swerveStart+20);h.g.position.x=THREE.MathUtils.clamp(h.baseX+h.swerve*f*(h.type==='bike'?1.65:2.1),-4.2,4.2);h.g.rotation.y=-h.swerve*Math.sin(f*Math.PI)*.18}if(h.madness==='wrongWayBike'){h.g.rotation.y=Math.PI+Math.sin(t*.004+h.phase)*.08;h.g.position.z+=advance*.45}if(h.type==='yaksha'){h.g.rotation.y=Math.sin(t*.002+h.phase)*.35;if(h.boss&&h.g.position.z>-34){const f=THREE.MathUtils.smoothstep(h.g.position.z,-34,-8);h.g.position.x=Math.sin(f*Math.PI*1.1)*2.25;}}if(!h.passed&&h.g.position.z>4){h.passed=true;const dx=Math.abs(h.g.position.x-x);const collisionRadius=h.type==='dog'?.95:h.type==='police'?.8:h.type==='pedestrian'?.75:h.type==='laser'?.8:h.type==='bottle'?.7:h.type==='watermelon'?.85:h.type==='flagParade'?.85:h.type==='pattayaDancer'?.95:h.type==='protest'?.9:h.type==='bike'?1.05:h.type==='taxi'||h.type==='sportsCar'?1.55:1.8;if(h.boss&&!bossBeaten){bossBeaten=true;if(dx>=collisionRadius){bonus+=750;hint.textContent='🏆 YAKSHA BOSS CLEARED +750';sound(920,.3,'sine')}else{hint.textContent='👹 YAKSHA HIT! NO BOSS BONUS'}}if(dx<collisionRadius&&!h.hit&&inv<=0){if(h.type==='dog'&&canalActive){x=Math.min(4.3,x+.85);hint.textContent='🐕 DOG PUSH! STEER LEFT OR FALL IN!';if(x>2.85){shake=1;finish();return;}}h.hit=true;crashes++;combo=0;comboTime=0;inv=1.5;flips=5;shake=.55;sound(120,.28,'sawtooth');/* Broken brakes: collisions damage the tuk-tuk but never slow it down. */hint.textContent=h.type==='dog'&&canalActive?'🐕 DOG SHOVE! TILT LEFT — CANAL!':'💥 '+h.type.toUpperCase()+' ATTACK!';if(navigator.vibrate)navigator.vibrate(80);if(crashes>=3){finish();break}}else if(dx>=collisionRadius&&dx<collisionRadius+1.1&&inv<=0){misses++;combo=comboTime>0?Math.min(combo+1,5):1;comboTime=5;const reward=combo*50;bonus+=reward;sound(600+combo*120,.1,'sine');hint.textContent='🔥 NEAR MISS ×'+combo+'  +'+reward}}}updateTaxiNeonGlints();updateTukNeonGlints();updateTrafficContactShadows();updateTrafficHeadlightGlows();for(let i=hazards.length-1;i>=0;i--)if(hazards[i].g.position.z>20){scene.remove(hazards[i].g);hazards.splice(i,1)}if(challengeStage===0&&meters>=500){challengeStage=1;bonus+=250;hint.textContent='🏆 500m SURVIVED +250';sound(760,.22,'sine')}if(challengeStage===1&&misses>=3){challengeStage=2;bonus+=400;hint.textContent='🏆 3 NEAR MISSES +400';sound(850,.24,'sine')}if(!missionDone&&meters>=1000){missionDone=true;bonus+=500;hint.textContent='🏆 1000m MISSION +500';sound(900,.32,'sine')}shake=Math.max(0,shake-dt);inv=Math.max(0,inv-dt);comboTime=Math.max(0,comboTime-dt);if(comboTime===0)combo=0;car.visible=false;const missionText=challengeStage===0?'🎯 SURVIVE '+Math.max(0,500-Math.floor(meters))+'m · +250':challengeStage===1?'🎯 NEAR MISSES '+Math.min(misses,3)+'/3 · +400':'🏆 CHALLENGES COMPLETE';if(challengeDisplay!==missionText){challengeDisplay=missionText;challenge.textContent=missionText}if(t-lastHudUpdate>110){lastHudUpdate=t;hud.textContent=Math.floor(meters+bonus)+' PTS'+(comboTime>0?'  🔥×'+combo:'');status.innerHTML=Math.floor(speed)+' KM/H<br>'+'❤️'.repeat(Math.max(0,3-crashes));}}
 let lastRender=0,lastHudUpdate=0,graphicsLost=false,frameFailures=0,visualRush=0;let perfFrames=0,perfStart=0;
 function recoveryScreen(message){paused=true;panel.innerHTML='<h1>🛺 GAME INTERRUPTED</h1><p>'+message+'</p><button id="recover">RESTART GAME</button><small>Version 2.7 · Freeze diagnostics</small>';overlay.style.display='grid';$('recover').onclick=()=>location.reload()}
 renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();graphicsLost=true;recoveryScreen('Safari paused the 3D graphics. Tap to restart.')},false);
