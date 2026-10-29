@@ -4435,19 +4435,31 @@ function makeMarketCrowdTorsoGeometry(){
  geometry.setIndex(indices);geometry.computeVertexNormals();
  return geometry;
 }
-const marketCrowdSkin=new THREE.MeshStandardMaterial({color:0xe4af8e,roughness:.88,metalness:0});
+// JJ Market shoppers: instanced hair silhouettes and varied skin tones replace
+// identical bald mannequin heads. One additional draw call, no new textures.
+const marketCrowdSkin=new THREE.MeshStandardMaterial({color:0xffffff,roughness:.88,metalness:0});
+const marketCrowdHairMaterial=new THREE.MeshStandardMaterial({color:0xffffff,roughness:.9,metalness:0,side:THREE.DoubleSide});
 const marketCrowdFabric=new THREE.MeshStandardMaterial({color:0xffffff,roughness:.93,metalness:0});
 const marketCrowdDenim=new THREE.MeshStandardMaterial({color:0x414a63,roughness:.96,metalness:0});
 const marketCrowdCount=marketStalls.length*2,marketCrowdDummy=new THREE.Object3D();
 const marketCrowdHeads=new THREE.InstancedMesh(new THREE.SphereGeometry(.25,9,7),marketCrowdSkin,marketCrowdCount);
+const marketCrowdHair=new THREE.InstancedMesh(new THREE.SphereGeometry(.258,9,7,0,Math.PI*2,0,Math.PI*.56),marketCrowdHairMaterial,marketCrowdCount);
 const marketCrowdShirts=new THREE.InstancedMesh(makeMarketCrowdTorsoGeometry(),marketCrowdFabric,marketCrowdCount);
 const marketCrowdLegs=new THREE.InstancedMesh(new THREE.CylinderGeometry(.095,.075,.66,7),marketCrowdDenim,marketCrowdCount*2);
 const marketCrowdArms=new THREE.InstancedMesh(new THREE.CylinderGeometry(.085,.065,.57,7),marketCrowdSkin,marketCrowdCount*2);
-const marketCrowdMeshes=[marketCrowdHeads,marketCrowdShirts,marketCrowdLegs,marketCrowdArms];
+const marketCrowdMeshes=[marketCrowdHeads,marketCrowdHair,marketCrowdShirts,marketCrowdLegs,marketCrowdArms];
 for(const mesh of marketCrowdMeshes){mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);mesh.frustumCulled=false;mesh.visible=false;scene.add(mesh);}
 const marketCrowdColors=[0xf59c62,0x4b9bb1,0xc75b9e,0x79a969,0xe3c75c].map(hex=>new THREE.Color(hex));
-for(let i=0;i<marketCrowdCount;i++)marketCrowdShirts.setColorAt(i,marketCrowdColors[(i*7+Math.floor(i/2))%marketCrowdColors.length]);
-marketCrowdShirts.instanceColor.needsUpdate=true;
+const marketCrowdSkinTones=[0xe5b18e,0xc78c6e,0xf0c6a2,0xb77959,0xdba17c].map(hex=>new THREE.Color(hex));
+const marketCrowdHairTones=[0x181718,0x30251f,0x473228,0x22242b,0x554437].map(hex=>new THREE.Color(hex));
+for(let i=0;i<marketCrowdCount;i++){
+ marketCrowdShirts.setColorAt(i,marketCrowdColors[(i*7+Math.floor(i/2))%marketCrowdColors.length]);
+ const skin=marketCrowdSkinTones[(i*3+Math.floor(i/2))%marketCrowdSkinTones.length];
+ marketCrowdHeads.setColorAt(i,skin);
+ marketCrowdHair.setColorAt(i,marketCrowdHairTones[(i*7+Math.floor(i/3))%marketCrowdHairTones.length]);
+ marketCrowdArms.setColorAt(i*2,skin);marketCrowdArms.setColorAt(i*2+1,skin);
+}
+for(const mesh of [marketCrowdShirts,marketCrowdHeads,marketCrowdHair,marketCrowdArms])mesh.instanceColor.needsUpdate=true;
 function updateMarketCrowd(t,canalActive){
  const put=(mesh,index,px,py,pz,angle,size)=>{
   marketCrowdDummy.position.set(px,py,pz);marketCrowdDummy.rotation.set(angle,0,0);
@@ -4461,6 +4473,7 @@ function updateMarketCrowd(t,canalActive){
   // At 10,000 points the right-hand shops become canal, so their shoppers leave too.
   const size=canalActive&&side>0?.001:1;
   put(marketCrowdHeads,i,x,1.82+bob,z,0,size);
+  put(marketCrowdHair,i,x,1.84+bob,z,0,size);
   put(marketCrowdShirts,i,x,1.22+bob,z,0,size);
   for(let leg=0;leg<2;leg++){
    const sign=leg?1:-1,j=i*2+leg;
