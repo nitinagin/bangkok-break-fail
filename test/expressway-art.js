@@ -161,6 +161,29 @@ export function createExpresswayArt(THREE){
  const flyoverPiers=new THREE.InstancedMesh(new THREE.BoxGeometry(.88,7.8,1.08),flyoverConcrete,6);
  const flyoverDecks=new THREE.InstancedMesh(new THREE.BoxGeometry(15.9,.75,2.6),flyoverConcrete,3);
  const flyoverParapets=new THREE.InstancedMesh(new THREE.BoxGeometry(15.9,.62,.18),flyoverConcrete,6);
+ // Structural I-section girders under each crossover: shaped flanges/web,
+ // not floating rectangular slabs. Six beams share one PBR draw call.
+ // Lowest point is 7.36m, safely above every drivable lane.
+ const girderProfile=new THREE.Shape();
+ const girderPoints=[
+  [-.18,-.19],[.18,-.19],[.18,-.135],[.045,-.135],
+  [.045,.135],[.18,.135],[.18,.19],[-.18,.19],
+  [-.18,.135],[-.045,.135],[-.045,-.135],[-.18,-.135]
+ ];
+ girderProfile.moveTo(...girderPoints[0]);
+ for(let k=1;k<girderPoints.length;k++)girderProfile.lineTo(...girderPoints[k]);
+ girderProfile.closePath();
+ const girderGeometry=new THREE.ExtrudeGeometry(girderProfile,{
+  depth:15.3,steps:1,bevelEnabled:false,curveSegments:1
+ });
+ girderGeometry.translate(0,0,-7.65);
+ girderGeometry.rotateY(Math.PI/2);
+ const flyoverGirders=new THREE.InstancedMesh(girderGeometry,steel,6);
+ // Broad weathered concrete pier heads tie the uprights to the deck;
+ // all six stay beyond the road edge, without collision or shadows.
+ const flyoverPierCaps=new THREE.InstancedMesh(
+  new THREE.BoxGeometry(1.28,.5,3.08),flyoverConcrete,6
+ );
  const flyoverMatrix=new THREE.Matrix4();
  function placeFlyovers(){
   for(let i=0;i<flyoverZ.length;i++){
@@ -172,13 +195,19 @@ export function createExpresswayArt(THREE){
     flyoverPiers.setMatrixAt(i*2+j,flyoverMatrix);
     flyoverMatrix.makeTranslation(0,8.88,z+(j?1.19:-1.19));
     flyoverParapets.setMatrixAt(i*2+j,flyoverMatrix);
+    flyoverMatrix.makeTranslation(0,7.55,z+(j?.87:-.87));
+    flyoverGirders.setMatrixAt(i*2+j,flyoverMatrix);
+    flyoverMatrix.makeTranslation(j?7.45:-7.45,7.45,z);
+    flyoverPierCaps.setMatrixAt(i*2+j,flyoverMatrix);
    }
   }
   flyoverPiers.instanceMatrix.needsUpdate=true;
   flyoverDecks.instanceMatrix.needsUpdate=true;
   flyoverParapets.instanceMatrix.needsUpdate=true;
+  flyoverGirders.instanceMatrix.needsUpdate=true;
+  flyoverPierCaps.instanceMatrix.needsUpdate=true;
  }
- placeFlyovers();group.add(flyoverPiers,flyoverDecks,flyoverParapets);
+ placeFlyovers();group.add(flyoverPiers,flyoverDecks,flyoverParapets,flyoverGirders,flyoverPierCaps);
  // Roadside Bangkok expressway acoustic screens: weathered ribbed panels
  // and galvanized uprights. Opaque PBR prevents mobile alpha overdraw.
  // Screens stay outside lamp poles and the full drivable dodge corridor.
