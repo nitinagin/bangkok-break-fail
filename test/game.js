@@ -369,8 +369,42 @@ const signMaterials=[mat(0xff267a),mat(0x086bd8),mat(0x1cbf7a)];const neonSigns=
 function makeRoadsideStory(kind,side,z){const g=new THREE.Group();if(kind==='shrine'){g.add(cube(1.5,.25,1.3,storyMat.wood,0,.55,0));for(const sx of [-.53,.53])for(const sz of [-.42,.42])g.add(cube(.12,1.55,.12,storyMat.gold,sx,1.4,sz));g.add(cube(1.9,.3,1.65,storyMat.roof,0,2.25,0));g.add(cube(.55,.8,.52,storyMat.gold,0,1.4,0))}else{g.add(cube(2.4,.95,1.45,storyMat.wood,0,.7,0));g.add(cube(2.65,.15,1.8,storyMat.cloth,0,1.65,0));for(let i=0;i<5;i++){const d=new THREE.Mesh(new THREE.IcosahedronGeometry(.24,0),M.durian);d.position.set((i-2)*.38,1.3,(i%2)*.34-.2);g.add(d)}const vendor=new THREE.Group();vendor.add(cube(.45,.8,.34,storyMat.cloth,0,1.48,0));vendor.add(ball(.34,M.skin,0,2.07,0));vendor.add(ball(.37,M.black,0,2.36,.02));vendor.add(ball(.08,M.white,-.13,2.1,-.29));vendor.add(ball(.08,M.white,.13,2.1,-.29));const arm=cube(.13,.63,.14,M.skin,-.37,1.55,0);vendor.add(arm);vendor.position.x=-.85;g.add(vendor);g.userData.vendorArm=arm;g.userData.vendorFruit=ball(.29,M.durian,-.35,1.65,-.4);g.add(g.userData.vendorFruit)}g.position.set(side*7.35,0,z);scene.add(g);storyProps.push({g,kind,side,triggered:false,dropTime:0});return g}
 // Mobile-budget PBR Speed Grandma: curved silhouette and human-scale features,
  // not the previous flat-shaded box character. No external assets or skinning.
- const grandmaDress=new THREE.MeshStandardMaterial({color:0x525b63,roughness:.96,side:THREE.DoubleSide});
- const grandmaShawl=new THREE.MeshStandardMaterial({color:0x99968d,roughness:.94});
+ // Bake one deterministic 256x512 worn-fabric PBR albedo at startup.
+ // The same atlas dresses the skirt, sleeves and shawl without additional draw calls.
+ const grandmaFabricCanvas=document.createElement('canvas');
+ grandmaFabricCanvas.width=256;grandmaFabricCanvas.height=512;
+ const grandmaFabricCtx=grandmaFabricCanvas.getContext('2d');
+ grandmaFabricCtx.fillStyle='#d9d7d1';grandmaFabricCtx.fillRect(0,0,256,512);
+ for(let column=0;column<256;column++){
+  const fold=Math.sin(column*.085+Math.sin(column*.019)*1.7)*.055+
+   Math.sin(column*.21)*.022;
+  grandmaFabricCtx.fillStyle=fold<0?
+   'rgba(29,30,33,'+(-fold*2.4).toFixed(3)+')':
+   'rgba(255,248,228,'+(fold*1.1).toFixed(3)+')';
+  grandmaFabricCtx.fillRect(column,0,1,512);
+ }
+ // Fine woven threads, repaired seams and weathering are baked, never animated.
+ for(let row=1;row<512;row+=4){
+  grandmaFabricCtx.fillStyle='rgba(39,43,48,.038)';
+  grandmaFabricCtx.fillRect(0,row,256,1);
+ }
+ for(let i=0;i<1150;i++){
+  const px=(i*73+i*i*17)%256,py=(i*131+i*i*11)%512;
+  grandmaFabricCtx.fillStyle=i%3===0?'rgba(32,34,37,.095)':'rgba(255,252,234,.11)';
+  grandmaFabricCtx.fillRect(px,py,1+i%2,1);
+ }
+ for(const seamX of [28,128,228]){
+  grandmaFabricCtx.fillStyle='rgba(34,36,39,.12)';
+  grandmaFabricCtx.fillRect(seamX,0,2,512);
+  grandmaFabricCtx.fillStyle='rgba(246,239,221,.13)';
+  grandmaFabricCtx.fillRect(seamX+3,0,1,512);
+ }
+ const grandmaFabricTexture=new THREE.CanvasTexture(grandmaFabricCanvas);
+ grandmaFabricTexture.colorSpace=THREE.SRGBColorSpace;
+ grandmaFabricTexture.wrapS=grandmaFabricTexture.wrapT=THREE.RepeatWrapping;
+ grandmaFabricTexture.anisotropy=Math.min(2,renderer.capabilities.getMaxAnisotropy());
+ const grandmaDress=new THREE.MeshStandardMaterial({color:0x525b63,map:grandmaFabricTexture,roughness:.96,side:THREE.DoubleSide});
+ const grandmaShawl=new THREE.MeshStandardMaterial({color:0x99968d,map:grandmaFabricTexture,roughness:.94});
  const grandmaSkin=new THREE.MeshStandardMaterial({color:0xa88c7b,roughness:.91});
  const grandmaHair=new THREE.MeshStandardMaterial({color:0x8e9292,roughness:.98});
  const grandmaEyes=new THREE.MeshStandardMaterial({color:0x25272b,roughness:.67});
@@ -396,6 +430,19 @@ function makeRoadsideStory(kind,side,z){const g=new THREE.Group();if(kind==='shr
    eye.position.set(side*.103,2.17,.276);g.add(eye);
    const brow=new THREE.Mesh(new THREE.CylinderGeometry(.012,.012,.14,6),grandmaHair);
    brow.rotation.z=Math.PI/2+side*.15;brow.position.set(side*.103,2.25,.268);g.add(brow);
+  }
+  // Five fine, curved facial creases age the face without a face-screen avatar.
+  // Thin tubes hug the ellipsoid; only this single chasing character uses them.
+  const creaseMaterial=new THREE.MeshStandardMaterial({color:0x756254,roughness:1});
+  function faceCrease(points){
+   const curve=new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(...p)));
+   g.add(new THREE.Mesh(new THREE.TubeGeometry(curve,8,.0035,3,false),creaseMaterial));
+  }
+  faceCrease([[-.11,2.285,.226],[0,2.288,.253],[.11,2.285,.226]]);
+  faceCrease([[-.085,2.322,.220],[0,2.325,.242],[.085,2.322,.220]]);
+  for(const side of [-1,1]){
+   faceCrease([[side*.09,2.09,.267],[side*.14,2.075,.238],[side*.165,2.05,.213]]);
+   faceCrease([[side*.095,2.012,.256],[side*.14,2.001,.225],[side*.165,1.988,.195]]);
   }
   const nose=new THREE.Mesh(new THREE.SphereGeometry(.055,8,6),grandmaSkin);
   nose.scale.set(.68,1.1,1.1);nose.position.set(0,2.09,.292);g.add(nose);
