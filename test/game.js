@@ -4844,17 +4844,78 @@ function makeMarketWalker(style){const g=new THREE.Group(),shirt=pedestrianCloth
  if(style===3){g.add(cube(.95,.52,.56,mat(0x977450),.52,1.02,0));}
  if(style===4){g.add(cube(.55,.7,.5,mat(0xb98a4f),-.48,1.0,0));}
  return g;}
-// Thai fruit pushcarts at Chatuchak, keeping one escape lane open.
-const cartWood=mat(0x9b5833),cartMetal=mat(0x555c65),cartWheel=mat(0x242831);
-const cartFruits=[mat(0xf0bc32),mat(0xe95731),mat(0x72a743),mat(0xe6d456)];
-function makeFruitPushcart(){const g=new THREE.Group();
- g.add(cube(1.55,.2,1.05,cartWood,0,.93,0));g.add(cube(1.48,.14,.98,cartMetal,0,.78,0));
- for(const side of [-1,1]){g.add(cube(.08,.85,.08,cartMetal,side*.64,.44,-.35));
-  for(const dz of [-.36,.36]){const wheel=new THREE.Mesh(new THREE.CylinderGeometry(.23,.23,.12,10),cartWheel);wheel.rotation.z=Math.PI/2;wheel.position.set(side*.79,.27,dz);g.add(wheel);}}
- for(const side of [-1,1])g.add(cube(.09,.75,.09,cartMetal,side*.65,1.25,.44));
- g.add(cube(1.45,.08,.08,cartMetal,0,1.62,.44));
- for(let i=0;i<12;i++){const x=((i%4)-1.5)*.32,z=(Math.floor(i/4)-1)*.29;g.add(ball(.15,cartFruits[(i+Math.floor(i/4))%4],x,1.14,z));}
- return g;}
+// Reusable Chatuchak fruit cart: curved striped canvas, open metal frame,
+// tyre/hub instancing and real fruit silhouettes replace the toy-block cart.
+let fruitCartTemplate=null;
+function makeFruitPushcart(){
+ if(fruitCartTemplate)return fruitCartTemplate.clone(true);
+ const g=new THREE.Group();
+ const wood=new THREE.MeshStandardMaterial({color:0x936c46,roughness:.87});
+ const steel=new THREE.MeshStandardMaterial({color:0x636d70,roughness:.47,metalness:.68});
+ const rubber=new THREE.MeshStandardMaterial({color:0x202327,roughness:.94});
+ const hubMetal=new THREE.MeshStandardMaterial({color:0xb7b5a7,roughness:.38,metalness:.75});
+ g.add(cube(1.48,.09,.98,steel,0,.78,0));
+ g.add(cube(1.50,.12,1.00,wood,0,.88,0));
+ for(let i=0;i<5;i++)g.add(cube(1.42,.025,.055,wood,0,.967,-.4+i*.2));
+ for(const side of [-1,1]){
+  g.add(cube(.055,.16,1.01,steel,side*.74,1.0,0));
+  for(const z of [-.39,.39])rod(g,[side*.61,.72,z],[side*.61,.24,z],.035,steel);
+  rod(g,[side*.68,.94,.46],[side*.73,1.37,.63],.035,steel);
+ }
+ rod(g,[-.73,1.37,.63],[.73,1.37,.63],.04,steel);
+ // Four tyres and four hubs take two instanced draw calls.
+ const tyres=new THREE.InstancedMesh(new THREE.TorusGeometry(.22,.07,8,16),rubber,4);
+ const hubs=new THREE.InstancedMesh(new THREE.CylinderGeometry(.085,.085,.055,12),hubMetal,4);
+ const pose=new THREE.Object3D();let wheelIndex=0;
+ for(const side of [-1,1])for(const z of [-.37,.37]){
+  pose.position.set(side*.8,.28,z);pose.rotation.set(0,Math.PI/2,0);
+  pose.scale.set(1,1,1);pose.updateMatrix();tyres.setMatrixAt(wheelIndex,pose.matrix);
+  pose.rotation.set(0,0,Math.PI/2);pose.updateMatrix();hubs.setMatrixAt(wheelIndex,pose.matrix);
+  wheelIndex++;
+ }
+ tyres.instanceMatrix.needsUpdate=true;hubs.instanceMatrix.needsUpdate=true;
+ tyres.computeBoundingSphere();hubs.computeBoundingSphere();g.add(tyres,hubs);
+ // One canvas-textured, pitched striped fabric roof; no extra lights or downloads.
+ const clothCanvas=document.createElement('canvas');clothCanvas.width=64;clothCanvas.height=64;
+ const cc=clothCanvas.getContext('2d');cc.fillStyle='#eee1c9';cc.fillRect(0,0,64,64);
+ cc.fillStyle='#a73535';cc.fillRect(0,0,32,64);
+ for(let i=0;i<64;i+=4){cc.fillStyle='rgba(44,26,19,.045)';cc.fillRect(0,i,64,1)}
+ const clothTex=new THREE.CanvasTexture(clothCanvas);clothTex.colorSpace=THREE.SRGBColorSpace;
+ clothTex.wrapS=THREE.RepeatWrapping;clothTex.repeat.set(4,1);clothTex.anisotropy=mobile?2:4;
+ const cloth=new THREE.MeshStandardMaterial({map:clothTex,roughness:.98,side:THREE.DoubleSide});
+ const verts=[],uv=[],indices=[],segments=8;
+ for(let j=0;j<=1;j++)for(let i=0;i<=segments;i++){
+  const x=-.96+i*1.92/segments,edge=Math.abs(x)/.96;
+  verts.push(x,2.27-.23*Math.pow(edge,1.45),j?-.68:.68);uv.push(i/segments,j);
+ }
+ for(let i=0;i<segments;i++){
+  const a=i,b=i+1,c=i+segments+1,d=i+segments+2;indices.push(a,c,b,b,c,d);
+ }
+ const roofGeo=new THREE.BufferGeometry();
+ roofGeo.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));
+ roofGeo.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));
+ roofGeo.setIndex(indices);roofGeo.computeVertexNormals();g.add(new THREE.Mesh(roofGeo,cloth));
+ for(const side of [-1,1])for(const z of [-.56,.56])
+  rod(g,[side*.7,.97,z],[side*.7,2.12,z],.023,steel);
+ const valance=new THREE.Mesh(new THREE.PlaneGeometry(1.92,.18),cloth);
+ valance.position.set(0,1.97,.685);g.add(valance);
+ // 24 mango, citrus and guava shapes in only three instanced draw calls.
+ const fruitGeometry=new THREE.SphereGeometry(1,12,9);
+ const produce=[{color:0xd5a32b,scale:[.15,.13,.19]},
+  {color:0x6b943b,scale:[.13,.17,.13]},{color:0xe17a3d,scale:[.13,.13,.13]}];
+ for(let k=0;k<produce.length;k++){
+  const item=produce[k],material=new THREE.MeshStandardMaterial({color:item.color,roughness:.79});
+  const fruits=new THREE.InstancedMesh(fruitGeometry,material,8);
+  for(let i=0;i<8;i++){
+   const slot=k*8+i;
+   pose.position.set(((slot%6)-2.5)*.235,1.14+(slot%3)*.035,(Math.floor(slot/6)-1.5)*.21);
+   pose.rotation.set(.13*(slot%3),.55*slot,.09*(slot%4));
+   pose.scale.set(...item.scale);pose.updateMatrix();fruits.setMatrixAt(i,pose.matrix);
+  }
+  fruits.instanceMatrix.needsUpdate=true;fruits.computeBoundingSphere();g.add(fruits);
+ }
+ fruitCartTemplate=g;return g.clone(true);
+}
 // Shared PBR coat and low-poly anatomical geometry for canal-side soi dogs.
 // These replace the rectangular toy-block body, ears and legs without changing
 // the existing dog charge, collision radius, steering or animation interfaces.
