@@ -3661,7 +3661,57 @@ function sound(freq=240,duration=.12,type='square'){if(!soundOn)return;try{audio
 // Lightweight geometry keeps the center road playable for tilt steering.
 const marketStalls=[],marketCanopies=[],marketBumps=[];
 // At 10,000 points the market's right edge becomes an open canal.
-const canalGroup=new THREE.Group(),canalWater=mat(0x167c91),canalEdge=mat(0xb7ad92);
+const canalGroup=new THREE.Group(),canalEdge=mat(0xb7ad92);
+// Baked, tileable PBR khlong water: muddy green-brown instead of flat turquoise.
+// Two shared 256px maps, no runtime lights, particles or additional draw calls.
+const canalWaterCanvas=document.createElement('canvas');
+const canalWaterNormalCanvas=document.createElement('canvas');
+canalWaterCanvas.width=canalWaterCanvas.height=256;
+canalWaterNormalCanvas.width=canalWaterNormalCanvas.height=256;
+const canalWaterCtx=canalWaterCanvas.getContext('2d');
+const canalWaterNormalCtx=canalWaterNormalCanvas.getContext('2d');
+const canalWaterColor=canalWaterCtx.createImageData(256,256);
+const canalWaterNormal=canalWaterNormalCtx.createImageData(256,256);
+const canalWaterHeights=new Float32Array(256*256);
+const canalTau=Math.PI*2;
+for(let y=0;y<256;y++)for(let x=0;x<256;x++){
+ const i=y*256+x;
+ // Integer-frequency waves tile seamlessly across both edges.
+ const a=canalTau*(4*x+y)/256,b=canalTau*(9*x-3*y)/256;
+ const c=canalTau*(15*x+7*y)/256;
+ const wave=.54*Math.sin(a)+.3*Math.sin(b)+.16*Math.sin(c);
+ canalWaterHeights[i]=wave;
+ const reflection=Math.pow(Math.max(0,Math.sin(canalTau*(3*x+y)/256)),16);
+ const silt=Math.sin(canalTau*(2*x+5*y)/256)*3;
+ const p=i*4;
+ canalWaterColor.data[p]=Math.round(46+wave*9+silt+reflection*34);
+ canalWaterColor.data[p+1]=Math.round(71+wave*11+silt+reflection*29);
+ canalWaterColor.data[p+2]=Math.round(59+wave*9+silt+reflection*18);
+ canalWaterColor.data[p+3]=255;
+}
+for(let y=0;y<256;y++)for(let x=0;x<256;x++){
+ const i=y*256+x,p=i*4;
+ const dx=canalWaterHeights[y*256+((x+1)&255)]-canalWaterHeights[y*256+((x+255)&255)];
+ const dy=canalWaterHeights[((y+1)&255)*256+x]-canalWaterHeights[((y+255)&255)*256+x];
+ canalWaterNormal.data[p]=Math.round(128-dx*35);
+ canalWaterNormal.data[p+1]=Math.round(128-dy*35);
+ canalWaterNormal.data[p+2]=252;
+ canalWaterNormal.data[p+3]=255;
+}
+canalWaterCtx.putImageData(canalWaterColor,0,0);
+canalWaterNormalCtx.putImageData(canalWaterNormal,0,0);
+const canalWaterTexture=new THREE.CanvasTexture(canalWaterCanvas);
+canalWaterTexture.colorSpace=THREE.SRGBColorSpace;
+canalWaterTexture.wrapS=canalWaterTexture.wrapT=THREE.RepeatWrapping;
+canalWaterTexture.repeat.set(2,18);
+canalWaterTexture.anisotropy=Math.min(2,renderer.capabilities.getMaxAnisotropy());
+const canalWaterNormalTexture=new THREE.CanvasTexture(canalWaterNormalCanvas);
+canalWaterNormalTexture.wrapS=canalWaterNormalTexture.wrapT=THREE.RepeatWrapping;
+canalWaterNormalTexture.repeat.copy(canalWaterTexture.repeat);
+const canalWater=new THREE.MeshStandardMaterial({
+ map:canalWaterTexture,normalMap:canalWaterNormalTexture,
+ normalScale:new THREE.Vector2(.18,.18),roughness:.44,metalness:.06
+});
 canalGroup.add(cube(9,.07,220,canalWater,8.2,-.16,-86));
 canalGroup.add(cube(.28,.38,220,canalEdge,3.65,.12,-86));
  // One scrolling translucent texture creates moving canal ripples at a fixed GPU cost.
@@ -3672,8 +3722,8 @@ canalGroup.add(cube(.28,.38,220,canalEdge,3.65,.12,-86));
  rippleCtx.clearRect(0,0,256,512);
  for(let row=0;row<12;row++){
   const ry=16+row*43,shift=(row*37)%75;
-  rippleCtx.strokeStyle=row%3===0?'rgba(235,255,239,.55)':'rgba(119,220,224,.38)';
-  rippleCtx.lineWidth=row%3===0?2.8:1.7;
+  rippleCtx.strokeStyle=row%3===0?'rgba(207,220,188,.27)':'rgba(147,186,167,.21)';
+  rippleCtx.lineWidth=row%3===0?1.9:1.15;
   for(let col=0;col<3;col++){
    const rx=14+col*88+shift%21;
    rippleCtx.beginPath();
@@ -3688,7 +3738,7 @@ canalGroup.add(cube(.28,.38,220,canalEdge,3.65,.12,-86));
  canalRippleTexture.repeat.set(1,9);
  const canalRippleSurface=new THREE.Mesh(
   new THREE.PlaneGeometry(8.65,219),
-  new THREE.MeshBasicMaterial({map:canalRippleTexture,transparent:true,opacity:.78,depthWrite:false,side:THREE.DoubleSide})
+  new THREE.MeshBasicMaterial({map:canalRippleTexture,transparent:true,opacity:.38,depthWrite:false,side:THREE.DoubleSide})
  );
  canalRippleSurface.rotation.x=-Math.PI/2;
  canalRippleSurface.position.set(8.2,-.118,-86);
