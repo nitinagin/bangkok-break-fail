@@ -5604,7 +5604,7 @@ if(!q.mirrorTaken&&q.elapsed>=1.55){
  if(mirror){
   mirror.housing.visible=false;mirror.glass.visible=false;
   const stolen=new THREE.Group(),housing=mirror.housing.clone(),glass=mirror.glass.clone();
-  housing.position.set(0,0,0);glass.position.set(0,0,-.055);
+  housing.visible=true;glass.visible=true;housing.position.set(0,0,0);glass.position.set(0,0,-.055);
   stolen.add(housing,glass);stolen.position.set(-q.side*.45,1.55,.34);
   stolen.scale.setScalar(1.55);q.g.add(stolen);q.g.userData.stolenMirror=stolen;
   hint.textContent='👵 GRANDMA SPEED TORE OFF A SIDE MIRROR!';
