@@ -3302,7 +3302,58 @@ function queueOptionalModels(){
   setTimeout(loadYakshaAsset,8600);
  }
 }
-const obstacleTemplates={};function makeConstructionDebris(){const g=new THREE.Group(),concrete=mat(0x9c9b94),steel=mat(0x9a5c32);part(g,cube(2.6,.85,1.45,concrete,0,.44,0));for(const side of [-1,1]){part(g,cube(.12,.9,.12,steel,side*.7,.85,0));part(g,cube(.13,.15,1.2,steel,side*.58,.75,0));}return g}
+// Rama II falling debris: fractured concrete, weathered aggregate and exposed rebar.
+// Shared 128px PBR albedo; geometry is built only once through obstacleTemplates.
+const ramaDebrisCanvas=document.createElement('canvas');
+ramaDebrisCanvas.width=ramaDebrisCanvas.height=128;
+const ramaDebrisCtx=ramaDebrisCanvas.getContext('2d');
+ramaDebrisCtx.fillStyle='#9e9c95';ramaDebrisCtx.fillRect(0,0,128,128);
+for(let i=0;i<1700;i++){
+ const px=(i*73+Math.floor(i/13)*19)%128,py=(i*41+Math.floor(i/11)*31)%128;
+ ramaDebrisCtx.fillStyle=i%5===0?'rgba(42,40,35,.23)':i%3===0?'rgba(243,239,227,.24)':'rgba(82,77,67,.12)';
+ ramaDebrisCtx.fillRect(px,py,1+i%3,1+i%2);
+}
+ramaDebrisCtx.strokeStyle='rgba(55,52,46,.35)';ramaDebrisCtx.lineWidth=1;
+for(let i=0;i<5;i++){
+ ramaDebrisCtx.beginPath();ramaDebrisCtx.moveTo((i*29+9)%128,0);
+ ramaDebrisCtx.lineTo((i*29+17)%128,46);ramaDebrisCtx.lineTo((i*29+7)%128,128);ramaDebrisCtx.stroke();
+}
+const ramaDebrisTexture=new THREE.CanvasTexture(ramaDebrisCanvas);
+ramaDebrisTexture.colorSpace=THREE.SRGBColorSpace;
+ramaDebrisTexture.anisotropy=mobile?2:4;
+const ramaDebrisConcrete=new THREE.MeshStandardMaterial({map:ramaDebrisTexture,color:0xffffff,roughness:.94,metalness:0,side:THREE.DoubleSide});
+const ramaDebrisRebar=new THREE.MeshStandardMaterial({color:0x6c5446,roughness:.83,metalness:.68});
+const obstacleTemplates={};
+function makeConstructionDebris(){
+ const g=new THREE.Group();
+ // Irregular broken outline keeps the same 2.6m-wide collision silhouette.
+ const outline=new THREE.Shape();
+ const perimeter=[[-1.24,-.58],[-.92,-.74],[-.38,-.64],[.14,-.77],[.67,-.61],[1.29,-.7],[1.2,-.19],[1.33,.26],[1.1,.68],[.41,.62],[-.23,.77],[-.82,.57],[-1.3,.3]];
+ perimeter.forEach(([px,pz],i)=>i?outline.lineTo(px,pz):outline.moveTo(px,pz));
+ outline.closePath();
+ const slabGeometry=new THREE.ExtrudeGeometry(outline,{depth:.68,steps:1,bevelEnabled:true,bevelThickness:.035,bevelSize:.035,bevelSegments:1,curveSegments:1});
+ slabGeometry.rotateX(-Math.PI/2);
+ const slab=new THREE.Mesh(slabGeometry,ramaDebrisConcrete);slab.position.y=.09;g.add(slab);
+ // Bent reinforcement protrudes through the shattered edge; one instanced draw.
+ const rebar=new THREE.InstancedMesh(new THREE.CylinderGeometry(.033,.033,.8,6),ramaDebrisRebar,6);
+ const dummy=new THREE.Object3D();
+ for(let i=0;i<6;i++){
+  const side=i<3?-1:1,j=i%3;
+  dummy.position.set(side*(.42+j*.3),.82,(j-1)*.35);
+  dummy.rotation.set(.25*(j-1),0,side*(.2+j*.19));
+  dummy.scale.set(1,1,1);dummy.updateMatrix();rebar.setMatrixAt(i,dummy.matrix);
+ }
+ rebar.instanceMatrix.needsUpdate=true;rebar.computeBoundingSphere();g.add(rebar);
+ // Chipped fragments break the smooth rectangular silhouette without extra materials.
+ const chips=new THREE.InstancedMesh(new THREE.TetrahedronGeometry(.15,0),ramaDebrisConcrete,6);
+ for(let i=0;i<6;i++){
+  dummy.position.set((i-2.5)*.42,.18+(i%3)*.08,i%2?.7:-.68);
+  dummy.rotation.set(i*.7,i*.37,i*.23);
+  dummy.scale.set(1+(i%3)*.3,.65+(i%2)*.4,.9);dummy.updateMatrix();chips.setMatrixAt(i,dummy.matrix);
+ }
+ chips.instanceMatrix.needsUpdate=true;chips.computeBoundingSphere();g.add(chips);
+ return g;
+}
 // Rama II police checkpoint: cones, wheeled red barricades and traffic officers.
 function makeCheckpoint(){
  const g=new THREE.Group();
