@@ -3247,24 +3247,78 @@ function makeBike(){
  part(g,cube(.5,.25,.25,orange,0,1.1,-.88));
  return g
 }
-function makeYaksha(){const g=new THREE.Group();
-const torso=part(g,cube(1.65,1.85,.9,jade,0,2.18,0));part(g,cube(1.85,.3,1.05,gold2,0,1.45,0));
-for(const side of [-1,1]){
- part(g,cube(.54,1.55,.64,M.purple,side*.46,.78,0));
- part(g,ball(.49,gold2,side*1.0,2.85,0));
- const arm=part(g,cube(.43,1.55,.45,jade,side*1.06,2.25,0));arm.rotation.z=side*.35;
- part(g,ball(.29,gold2,side*1.32,1.57,0));
+// Sculpted, PBR-lit Yaksha fallback for when the optional remote GLB is unavailable.
+// Tapered armor, articulated limbs and layered Thai guardian crown replace toy-box cubes.
+// All geometry is constructed once in obstacleTemplates and shared by spawned clones.
+function makeYaksha(){
+ const g=new THREE.Group();
+ const enamel=new THREE.MeshStandardMaterial({color:0x176e62,metalness:.36,roughness:.42});
+ const armor=new THREE.MeshStandardMaterial({color:0x263c55,metalness:.32,roughness:.56});
+ const darkGold=new THREE.MeshStandardMaterial({color:0x876126,metalness:.76,roughness:.36});
+ const porcelain=new THREE.MeshStandardMaterial({color:0xe7d9b5,roughness:.54});
+ const pupil=new THREE.MeshStandardMaterial({color:0x171d1d,roughness:.3});
+ const add=(mesh,x=0,y=0,z=0)=>{mesh.position.set(x,y,z);g.add(mesh);return mesh};
+ const lathe=(profile,material,x=0,y=0,z=0)=>add(new THREE.Mesh(
+  new THREE.LatheGeometry(profile.map(p=>new THREE.Vector2(p[0],p[1])),16),material),x,y,z);
+ const orb=(radius,material,x,y,z,sx=1,sy=1,sz=1)=>{
+  const mesh=add(new THREE.Mesh(new THREE.SphereGeometry(radius,14,10),material),x,y,z);
+  mesh.scale.set(sx,sy,sz);return mesh;
+ };
+ const limb=(a,b,r1,r2,material)=>{
+  const from=new THREE.Vector3(...a),to=new THREE.Vector3(...b);
+  const delta=to.clone().sub(from);
+  const mesh=add(new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,delta.length(),12),material),
+   (a[0]+b[0])/2,(a[1]+b[1])/2,(a[2]+b[2])/2);
+  mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),delta.normalize());
+  return mesh;
+ };
+ // A human-shaped silhouette, with tapered waist, flared armored shoulders and a cloth skirt.
+ lathe([[0,0],[.48,0],[.69,.18],[.73,.52],[.6,.84],[.57,1.2],[.78,1.55],[.88,1.75],[.65,1.9],[0,1.94]],enamel,0,1.32);
+ lathe([[0,0],[.62,0],[.78,.15],[.67,.7],[.47,1.05],[0,1.09]],armor,0,.55);
+ const waist=add(new THREE.Mesh(new THREE.TorusGeometry(.62,.075,8,24),gold2),0,1.49,0);
+ waist.rotation.x=Math.PI/2;
+ const chestBand=add(new THREE.Mesh(new THREE.TorusGeometry(.72,.048,8,24),darkGold),0,2.45,0);
+ chestBand.rotation.x=Math.PI/2;
+ for(const side of [-1,1]){
+  limb([side*.43,.27,0],[side*.48,1.38,0],.28,.34,armor);
+  orb(.27,darkGold,side*.48,.3,.08,1,.45,1.5);
+  orb(.47,gold2,side*.86,2.86,0,1.25,.48,1.1);
+  limb([side*.9,2.8,0],[side*1.18,2.14,.05],.27,.34,enamel);
+  limb([side*1.18,2.14,.05],[side*1.06,1.65,.32],.21,.25,enamel);
+  orb(.26,darkGold,side*1.18,2.13,.05,1,.8,1);
+  orb(.21,enamel,side*1.06,1.57,.34,.9,1.3,.72);
+  // Thai guardian's curled ear ornaments and angular, dark brow ridges.
+  orb(.25,gold2,side*.68,3.58,.05,.42,1.35,.75);
+  limb([side*.13,3.76,.59],[side*.44,3.72,.51],.065,.09,darkGold);
+  orb(.17,porcelain,side*.3,3.55,.59,1,.58,.45);
+  orb(.075,pupil,side*.3,3.55,.665,1,.75,.6);
+  const fang=add(new THREE.Mesh(new THREE.ConeGeometry(.11,.43,9),porcelain),side*.31,3.14,.64);
+  fang.rotation.z=side*.19;
+ }
+ // Cheekbones, broad jaw, long nose and a non-cartoon mouth.
+ orb(.76,enamel,0,3.51,.03,.86,1.04,.79);
+ orb(.39,enamel,0,3.19,.4,1.2,.48,.85);
+ orb(.19,enamel,0,3.43,.66,.65,1.6,.8);
+ orb(.36,maroon,0,3.09,.59,1,.16,.42);
+ // Layered, pointed chada crown and embossed gold forehead band.
+ lathe([[0,0],[.68,0],[.73,.12],[.58,.27],[.52,.49],[.35,.65],[.28,.94],[.16,1.23],[0,1.56]],gold2,0,4.09);
+ const rim=add(new THREE.Mesh(new THREE.TorusGeometry(.65,.075,8,24),darkGold),0,4.11,0);
+ rim.rotation.x=Math.PI/2;
+ const studs=new THREE.InstancedMesh(new THREE.SphereGeometry(.09,8,6),darkGold,8);
+ const dummy=new THREE.Object3D();
+ for(let i=0;i<8;i++){
+  const angle=i*Math.PI/4;
+  dummy.position.set(Math.cos(angle)*.67,4.19,Math.sin(angle)*.67);
+  dummy.scale.set(1,1.2,.7);dummy.updateMatrix();studs.setMatrixAt(i,dummy.matrix);
+ }
+ studs.instanceMatrix.needsUpdate=true;studs.computeBoundingSphere();g.add(studs);
+ // Fine relief follows the armor without adding a texture download.
+ for(const side of [-1,1]){
+  limb([side*.24,2.08,.65],[side*.47,2.67,.51],.035,.035,darkGold);
+ }
+ g.userData.proceduralYaksha=true;
+ return g;
 }
-part(g,ball(.78,jade,0,3.55,.05));
-for(const side of [-1,1]){
- part(g,ball(.21,M.white,side*.31,3.64,.7));
- part(g,ball(.10,ink,side*.31,3.64,.88));
- part(g,ball(.18,M.gold,side*.72,3.65,0));
- const tusk=new THREE.Mesh(new THREE.ConeGeometry(.13,.52,7),cream);tusk.position.set(side*.37,3.15,.76);part(g,tusk)}
-part(g,cube(.68,.16,.08,maroon,0,3.24,.78));
-const crown=part(g,new THREE.Mesh(new THREE.ConeGeometry(.72,1.2,8),gold2));crown.position.y=4.6;
-for(let i=0;i<8;i++){const a=i*Math.PI/4;part(g,ball(.11,M.red,Math.cos(a)*.55,4.05,Math.sin(a)*.55))}
-part(g,cube(1.8,.2,1.15,gold2,0,2.94,0));return g}
 // V0.7 art pass: curved silhouette, patterned cloth, facial features and articulated dance
 function silkTexture(){const c=document.createElement('canvas');c.width=256;c.height=512;const q=c.getContext('2d');const grad=q.createLinearGradient(0,0,256,0);grad.addColorStop(0,'#360b19');grad.addColorStop(.35,'#86172d');grad.addColorStop(.7,'#b92b3d');grad.addColorStop(1,'#400b1c');q.fillStyle=grad;q.fillRect(0,0,256,512);q.strokeStyle='#f6c55d';q.lineWidth=5;for(let x=18;x<256;x+=44){q.beginPath();q.moveTo(x,0);q.bezierCurveTo(x+20,130,x-16,290,x+12,512);q.stroke()}for(let y=50;y<512;y+=86){q.strokeStyle='#ffdd8a';q.lineWidth=2;q.beginPath();for(let x=0;x<256;x+=8){const yy=y+Math.sin(x/15)*8;if(x===0)q.moveTo(x,yy);else q.lineTo(x,yy)}q.stroke()}const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return t}
 const silk=new THREE.MeshStandardMaterial({map:silkTexture(),roughness:.64,metalness:.12,side:THREE.DoubleSide});
