@@ -266,7 +266,39 @@ export function createExpresswayArt(THREE){
  for(const side of [-1,1])gantry.add(box(.19,7,.19,steel,side*4.7,3.5,0));
  gantry.add(box(9.5,.18,.2,steel,0,7,0));
  const sign=new THREE.Mesh(new THREE.PlaneGeometry(6.8,2.13),new THREE.MeshBasicMaterial({map:signTexture,side:THREE.DoubleSide}));
- sign.position.set(0,5.7,.12);gantry.add(sign);gantry.position.z=-75;group.add(gantry);
+ sign.position.set(0,5.7,.12);gantry.add(sign);// Bangkok-style overhead variable-message sign: one 512x128 baked LED atlas,
+// one additional draw call, no realtime lights. Mounted above the existing
+// gantry, safely outside the vehicle clearance and dodge corridor.
+const vmsCanvas=document.createElement('canvas');vmsCanvas.width=512;vmsCanvas.height=128;
+const vc=vmsCanvas.getContext('2d');
+vc.fillStyle='#10171a';vc.fillRect(0,0,512,128);
+vc.fillStyle='#273138';vc.fillRect(0,0,512,7);vc.fillRect(0,121,512,7);
+vc.fillStyle='#3d484e';vc.fillRect(5,5,502,2);vc.fillRect(5,121,502,2);
+vc.fillStyle='#080d0e';vc.fillRect(10,11,492,106);
+// Dark unlit LED cells give the panel depth without emissive point lights.
+for(let y=17;y<113;y+=5)for(let x=16;x<499;x+=5){
+ vc.fillStyle='rgba(106,68,26,.18)';vc.fillRect(x,y,2,2);
+}
+// Render Thai/English into a temporary canvas, then bake an amber LED matrix.
+// No per-frame canvas updates, shadow blur or additional textures on the GPU.
+const glyphCanvas=document.createElement('canvas');glyphCanvas.width=512;glyphCanvas.height=128;
+const gc=glyphCanvas.getContext('2d');gc.fillStyle='#fff';gc.textAlign='center';gc.textBaseline='middle';
+gc.font='bold 44px "Noto Sans Thai",Tahoma,sans-serif';
+gc.fillText('ระวังรถชะลอตัว',256,46,468);
+gc.font='bold 31px Arial,sans-serif';gc.fillText('SLOW TRAFFIC',256,91,460);
+const glyphPixels=gc.getImageData(0,0,512,128).data;
+for(let y=17;y<113;y+=5)for(let x=16;x<499;x+=5){
+ if(glyphPixels[((y+1)*512+x+1)*4+3]<110)continue;
+ vc.fillStyle='rgba(255,146,38,.22)';vc.fillRect(x-1,y-1,5,5);
+ vc.fillStyle='#ffc05c';vc.fillRect(x,y,3,3);
+}
+const vmsTexture=new THREE.CanvasTexture(vmsCanvas);vmsTexture.colorSpace=THREE.SRGBColorSpace;
+vmsTexture.anisotropy=2;
+const vmsMaterial=new THREE.MeshBasicMaterial({map:vmsTexture,toneMapped:false,side:THREE.DoubleSide});
+const vmsPanel=new THREE.Mesh(new THREE.PlaneGeometry(6.5,1.65),vmsMaterial);
+vmsPanel.position.set(0,7.95,.16);vmsPanel.name='bangkok-expressway-amber-led-advisory';
+gantry.add(vmsPanel);
+gantry.position.z=-75;group.add(gantry);
  // Concrete Jersey shoulder barriers: 44 instances, two batched draw calls.
  const barrierCount=44,barrierLength=4.4;
  const concrete=new THREE.MeshStandardMaterial({color:0x9ca2a7,roughness:.94,metalness:0});
@@ -302,6 +334,6 @@ export function createExpresswayArt(THREE){
  },dispose(){
   group.traverse(obj=>{if(obj.geometry)obj.geometry.dispose();});
   for(const material of [towerMat,mastMaterial,steel,warm,poolMaterial,sign.material,concrete,reflective,flyoverConcrete,acousticMat])material.dispose();
-  windowTexture.dispose();emissiveTexture.dispose();poolTexture.dispose();signTexture.dispose();flyoverTexture.dispose();acousticTexture.dispose();
+  windowTexture.dispose();emissiveTexture.dispose();poolTexture.dispose();signTexture.dispose();flyoverTexture.dispose();acousticTexture.dispose();vmsTexture.dispose();vmsMaterial.dispose();
  }};
 }
