@@ -3246,42 +3246,66 @@ function loadYakshaAsset(){
  new GLTFLoader().load(YAKSHA_GLB,glb=>{
   try{
    const root=glb.scene;
-   let triangles=0;
+   if(!root)throw Error('Yaksha GLB has no scene');
+   // Validate the complete rig and PBR texture budget before allocating resize canvases.
+   // A preview GLB must never overwhelm mobile Safari or remove the playable guardian.
+   let triangles=0,meshCount=0,drawCalls=0;
    const textures=new Set();
+   const textureKeys=['map','normalMap','roughnessMap','metalnessMap','emissiveMap','aoMap','alphaMap','bumpMap','clearcoatMap','clearcoatNormalMap','clearcoatRoughnessMap'];
    root.traverse(o=>{
     if(!o.isMesh)return;
-    o.frustumCulled=true;
-    const geometry=o.geometry;
-    if(geometry?.attributes?.position)triangles+=(geometry.index?.count||geometry.attributes.position.count)/3;
-    if(!mobile)return;
-    for(const material of (Array.isArray(o.material)?o.material:[o.material])){
-     if(!material)continue;
-     for(const key of ['map','normalMap','roughnessMap','metalnessMap','emissiveMap','aoMap']){
-      const tex=material[key];
-      if(!tex||textures.has(tex))continue;
-      textures.add(tex);
-      const img=tex.image;
-      if(!img||Math.max(img.width||0,img.height||0)<=512)continue;
-      const ratio=512/Math.max(img.width,img.height);
-      const canvas=document.createElement('canvas');
-      canvas.width=Math.max(1,Math.round(img.width*ratio));
-      canvas.height=Math.max(1,Math.round(img.height*ratio));
-      try{
-       canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
-       tex.image=canvas;tex.needsUpdate=true;
-      }catch(error){console.warn('Yaksha texture reduction skipped',error)}
-     }
+    meshCount++;o.frustumCulled=true;
+    const geometry=o.geometry,positions=geometry?.getAttribute('position');
+    if(!positions||positions.count<3)throw Error('Yaksha GLB invalid mesh');
+    const count=geometry.getIndex()?.count||positions.count;
+    if(!Number.isFinite(count)||count<3)throw Error('Yaksha GLB invalid geometry');
+    triangles+=count/3;
+    const materials=Array.isArray(o.material)?o.material:[o.material];
+    drawCalls+=materials.length>1&&geometry.groups.length?geometry.groups.length:1;
+    for(const material of materials)if(material){
+     for(const key of textureKeys)if(material[key])textures.add(material[key]);
     }
    });
-   // Only one detailed mobile guardian at once; reject unbounded geometry.
-   if(mobile&&triangles>200000)throw Error('Yaksha GLB exceeds mobile triangle budget');
+   if(!meshCount||meshCount>(mobile?80:160)||drawCalls>(mobile?90:180)||
+      !Number.isFinite(triangles)||triangles>(mobile?200000:400000))
+    throw Error('Yaksha GLB exceeds mesh/draw/triangle budget');
+   if(textures.size>(mobile?18:32))throw Error('Yaksha GLB exceeds texture count budget');
+   const maxEdge=mobile?512:1024,textureSizes=[];
+   let texels=0;
+   for(const tex of textures){
+    const img=tex.image;
+    if(!img)continue;
+    const w=img.width,h=img.height;
+    if(!Number.isFinite(w)||!Number.isFinite(h)||w<1||h<1)
+     throw Error('Yaksha GLB invalid texture dimensions');
+    const scale=Math.min(1,maxEdge/Math.max(w,h));
+    const tw=Math.max(1,Math.round(w*scale)),th=Math.max(1,Math.round(h*scale));
+    texels+=tw*th;textureSizes.push({tex,img,w,h,tw,th});
+   }
+   if(texels>(mobile?6500000:16000000))
+    throw Error('Yaksha GLB exceeds texture memory budget');
+   // Reuse resized images across normal/albedo/roughness maps when they share a source.
+   // Preserve each texture's color space and sampler settings.
+   const resized=new Map();
+   for(const {tex,img,w,h,tw,th} of textureSizes){
+    if(w<=maxEdge&&h<=maxEdge)continue;
+    let canvas=resized.get(img);
+    if(!canvas){
+     canvas=document.createElement('canvas');canvas.width=tw;canvas.height=th;
+     const ctx=canvas.getContext('2d');
+     if(!ctx)throw Error('Yaksha GLB texture resize unavailable');
+     ctx.drawImage(img,0,0,tw,th);
+     resized.set(img,canvas);
+    }
+    tex.image=canvas;tex.needsUpdate=true;
+   }
    root.updateMatrixWorld(true);
    const box=new THREE.Box3().setFromObject(root),sz=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
    if(!Number.isFinite(sz.y)||sz.y<=0)throw Error('Invalid yaksha geometry');
    root.position.sub(center);root.position.y+=sz.y/2;
    const group=new THREE.Group();group.add(root);group.scale.setScalar(4.8/sz.y);
    yakshaTemplate=group;
-   console.info('Detailed Yaksha ready for future spawns',Math.round(triangles),'triangles');
+   console.info('Detailed Yaksha ready for future spawns',{triangles:Math.round(triangles),meshCount,drawCalls,textures:textures.size});
   }catch(error){console.warn('Yaksha fallback retained',error)}
  },undefined,error=>console.warn('Yaksha GLB unavailable; keeping playable guardian',error));
 }
