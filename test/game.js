@@ -5694,7 +5694,17 @@ renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();g
 renderer.domElement.addEventListener('webglcontextrestored',()=>{graphicsLost=false;recoveryScreen('Graphics restored. Tap to restart safely.')},false);
 addEventListener('error',e=>{if(active)recoveryScreen('Game error: '+String(e.message||'unknown').slice(0,100))});
 addEventListener('unhandledrejection',e=>{console.warn('Optional asset failed:',e.reason);hint.textContent='🛺 USING LIGHTWEIGHT GRAPHICS'});
-function frame(t){requestAnimationFrame(frame);if(graphicsLost)return;if(mobile&&t-lastRender<32)return;lastRender=t;try{const dt=Math.min((t-last)/1000,.07);last=t;update(dt,t);camera.position.x+=(x-camera.position.x)*(1-Math.exp(-dt*11));const rushTarget=active&&!paused?Math.min(1,Math.log1p(Math.max(0,speed-90)/250)):0;visualRush+=(rushTarget-visualRush)*(1-Math.exp(-dt*2.4));const newFov=76+visualRush*7;if(Math.abs(newFov-camera.fov)>.07){camera.fov=newFov;camera.updateProjectionMatrix()}cockpit.position.y=-.22+(active&&!paused?Math.sin(t*.018)*visualRush*.018:0);camera.position.y=2.42+(shake>0?(Math.random()-.5)*shake*.16:0)+(active&&!paused?Math.sin(t*.024)*visualRush*.016:0);camera.position.z=3.15-visualRush*.12;dialNeedle.rotation.z=-.9+(Math.log1p(speed/60)/Math.log1p(2000/60))*1.8;camera.lookAt(camera.position.x+smoothed*.26,1.72,-18);renderer.render(scene,camera);
+function frame(t){requestAnimationFrame(frame);if(graphicsLost)return;if(mobile&&t-lastRender<32)return;lastRender=t;try{const dt=Math.min((t-last)/1000,.07);last=t;update(dt,t);camera.position.x+=(x-camera.position.x)*(1-Math.exp(-dt*11));const rushTarget=active&&!paused?Math.min(1,Math.log1p(Math.max(0,speed-90)/250)):0;visualRush+=(rushTarget-visualRush)*(1-Math.exp(-dt*2.4));const newFov=76+visualRush*7;if(Math.abs(newFov-camera.fov)>.07){camera.fov=newFov;camera.updateProjectionMatrix()}cockpit.position.y=-.22+(active&&!paused?Math.sin(t*.018)*visualRush*.018:0);camera.position.y=2.42+(shake>0?(Math.random()-.5)*shake*.16:0)+(active&&!paused?Math.sin(t*.024)*visualRush*.016:0);camera.position.z=3.15-visualRush*.12;dialNeedle.rotation.z=-.9+(Math.log1p(speed/60)/Math.log1p(2000/60))*1.8;camera.lookAt(camera.position.x+smoothed*.26,1.72,-18);
+// Dark Road low beam must travel with the driver's cockpit, not stay fixed at
+// world X=0. Follow the smoothed camera to avoid a jittering light pool while
+// steering, and gently sweep its aim into the turn. Reuse the existing single
+// shadow-free spotlight: zero extra draw calls, meshes or texture allocations.
+if(darkHeadlight.visible){
+ const lampX=camera.position.x;
+ darkHeadlight.position.x=lampX;
+ darkHeadlight.target.position.x=lampX+smoothed*1.15;
+}
+renderer.render(scene,camera);
  // Keep the scene crisp on fast phones and lower resolution only if FPS drops.
  if(mobile&&active&&!paused){
   if(!perfStart)perfStart=t;
