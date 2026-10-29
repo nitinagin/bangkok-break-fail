@@ -5187,9 +5187,10 @@ function expresswayVehicle(type){
   return root;
  }
  function spawnPattayaHazard(){
-  const wave=++pattayaWave,type=['flagParade','bottle','pattayaDancer','watermelon'][wave%4],
+  const wave=++pattayaWave,type=wave%6===0?'durian':['flagParade','bottle','pattayaDancer','watermelon'][wave%4],
         lane=(wave%2?1:-1)*1.55,g=new THREE.Group();
-  if(type==='flagParade'){
+  if(type==='durian'){g.add(cachedObstacle('durian'));}
+  else if(type==='flagParade'){
    g.add(cube(.7,1.1,.4,pattayaCloth,0,1.1,0));
    g.add(ball(.33,pattayaSkin,0,1.93,0));
    g.add(cube(.05,2,.05,M.white,.5,1.8,0));
@@ -5359,23 +5360,24 @@ function makeExpresswayProtest(){
  return g.clone(true);
 }
 function spawnExpresswayHazard(){
- const wave=++expresswayWave,kind=['sportsCar','bike','bus','protest','laser','sportsCar','bike'][wave%7],lane=(wave%2?1:-1)*1.55;
+ const wave=++expresswayWave,kind=wave%6===0?'durian':['sportsCar','bike','bus','protest','laser','sportsCar','bike'][wave%7],lane=(wave%2?1:-1)*1.55;
  const g=new THREE.Group();
  if(kind==='sportsCar'){try{g.add(expresswayVehicle('sportsCar'));}catch(error){console.warn('Sports car PBR fallback',error);g.add(cube(1.8,.48,3.4,mat(0xf23b69),0,.6,0));g.add(cube(1.4,.45,1.4,M.glass,0,1.05,-.2));for(const xx of [-.82,.82])for(const zz of [-1.05,1.05])g.add(ball(.35,M.wheel,xx,.34,zz));}}
  else if(kind==='bike'){try{g.add(makeExpresswayMotorcycle());}catch(error){console.warn('Expressway motorcycle PBR fallback',error);g.add(cachedObstacle('bike'));}}
  else if(kind==='bus'){try{g.add(expresswayVehicle('bus'));}catch(error){console.warn('Bus PBR fallback',error);g.add(cube(2.05,2.5,4.4,mat(0xf5a33b),0,1.55,0));g.add(cube(1.85,.9,.09,M.glass,0,2.1,2.23));}}
  else if(kind==='protest'){try{g.add(makeExpresswayProtest());}catch(error){console.warn('Expressway crowd fallback',error);g.add(cube(.85,1.2,.5,M.pink,0,1.1,0));g.add(ball(.34,M.skin,0,1.92,0));g.add(cube(1.3,.65,.12,M.white,0,2.8,0));}}
+ else if(kind==='durian'){g.add(cachedObstacle('durian'));}
  else {g.add(expresswayLaserTemplate.clone(true));}
  g.position.set(lane,0,-65);scene.add(g);
  hazards.push({g,type:kind,madness:null,boss:false,durianSide:0,passed:false,hit:false,phase:wave,baseX:lane,announced:false,nearAwarded:false,swerve:0,swerveStart:100});
 }
 function spawnMarketPedestrians(){
  const wave=++marketPedestrianIndex,floatingMarket=meters+bonus>=10000;
- const kind=floatingMarket&&wave%3===0?'dog':wave%6===0?'police':wave%5===0?'fruitCart':'pedestrian';
+ const kind=wave%7===0?'durian':floatingMarket&&wave%3===0?'dog':wave%6===0?'police':wave%5===0?'fruitCart':'pedestrian';
  // Dogs always charge from the canal (right); the left escape lane stays clear.
  const side=kind==='dog'?1:wave%2===1?1:-1,lane=side*1.45,style=(wave+side+5)%5;
  // Build only the actual hazard: previously the unused opposite-side model was built then discarded.
- const g=kind==='dog'?makeMarketDog():kind==='police'?makeMarketPolice():kind==='fruitCart'?makeFruitPushcart():makeMarketWalker(style);
+ const g=kind==='durian'?cachedObstacle('durian'):kind==='dog'?makeMarketDog():kind==='police'?makeMarketPolice():kind==='fruitCart'?makeFruitPushcart():makeMarketWalker(style);
  g.position.set(lane,0,-65);scene.add(g);
  hazards.push({g,type:kind,madness:null,boss:false,durianSide:0,passed:false,hit:false,phase:wave,baseX:lane,announced:false,nearAwarded:false,swerve:0,swerveStart:-100});
 }
