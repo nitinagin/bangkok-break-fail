@@ -3609,44 +3609,89 @@ function makeTukTuk(){
  instrument.position.set(0,1.34,.97);instrument.rotation.x=-.22;g.add(instrument);
  return g;
 }
+// PBR Thai street scooter: swept body panels, real tyre profiles and human-shaped riders.
+// All meshes are cached in obstacleTemplates and cloned with shared geometries/materials;
+// the dodge-lane footprint and existing spawn/collision logic stay unchanged.
 function makeBike(){
  const g=new THREE.Group();
- const orange=new THREE.MeshStandardMaterial({color:0xf4511e,roughness:.48});
- const dark=new THREE.MeshStandardMaterial({color:0x20232b,roughness:.85});
- const skin=new THREE.MeshStandardMaterial({color:0xe9ae86,roughness:.94});
- const pink=new THREE.MeshStandardMaterial({color:0xf02d79,roughness:.78});
- const helmet=new THREE.MeshStandardMaterial({color:0xff6728,roughness:.32});
- const hairBike=new THREE.MeshStandardMaterial({color:0x482322,roughness:.9});
- for(const z of [-.83,.88]){
-  const w=new THREE.Mesh(new THREE.CylinderGeometry(.43,.43,.16,14),dark);w.rotation.z=Math.PI/2;w.position.set(0,.44,z);part(g,w);
-  const rim=new THREE.Mesh(new THREE.TorusGeometry(.29,.035,6,16),bikeMetal);rim.rotation.y=Math.PI/2;rim.position.set(.09,.44,z);part(g,rim);
+ const orange=new THREE.MeshPhysicalMaterial({color:0xd84b22,metalness:.22,roughness:.36,clearcoat:.5,clearcoatRoughness:.26});
+ const dark=new THREE.MeshStandardMaterial({color:0x20252a,roughness:.88,metalness:.06});
+ const seat=new THREE.MeshStandardMaterial({color:0x28262b,roughness:.92,metalness:0});
+ const skin=new THREE.MeshStandardMaterial({color:0xc99c7c,roughness:.95});
+ const pink=new THREE.MeshStandardMaterial({color:0xb92b69,roughness:.84});
+ const helmet=new THREE.MeshPhysicalMaterial({color:0xe76625,roughness:.28,metalness:.16,clearcoat:.72,clearcoatRoughness:.18});
+ const visor=new THREE.MeshPhysicalMaterial({color:0x1b303b,metalness:.25,roughness:.19,clearcoat:.6,clearcoatRoughness:.17});
+ const hair=new THREE.MeshStandardMaterial({color:0x282022,roughness:.95});
+ const lamp=new THREE.MeshStandardMaterial({color:0xf0e9c8,emissive:0x67512c,emissiveIntensity:.32,roughness:.3});
+ const tyreGeometry=new THREE.TorusGeometry(.35,.095,8,18);
+ const hubGeometry=new THREE.CylinderGeometry(.18,.18,.16,12);
+ const hubMat=new THREE.MeshStandardMaterial({color:0x8c9699,metalness:.76,roughness:.41});
+ for(const z of [-.84,.88]){
+  const tyre=new THREE.Mesh(tyreGeometry,dark);tyre.rotation.y=Math.PI/2;tyre.position.set(0,.43,z);g.add(tyre);
+  const hub=new THREE.Mesh(hubGeometry,hubMat);hub.rotation.z=Math.PI/2;hub.position.set(0,.43,z);g.add(hub);
  }
- part(g,cube(.31,.19,1.5,bikeMetal,0,.66,0));
- part(g,cube(.64,.43,.85,orange,0,.97,.32));
- part(g,cube(.5,.16,.85,dark,0,1.12,-.36));
- part(g,cube(.53,.66,.21,orange,0,1.03,.76));
- part(g,cube(.56,.12,.12,bikeMetal,0,1.55,.91));
- part(g,ball(.16,M.white,0,1.22,.9));
- // Dek waen driver: orange helmet, dark clothes and hands on bars.
- part(g,cube(.45,.66,.34,dark,0,1.64,.06));
- part(g,ball(.27,skin,0,2.12,.22));
- part(g,ball(.32,helmet,0,2.36,.2));
- part(g,cube(.35,.09,.09,dark,0,2.32,.46));
- for(const x of [-.23,.23]){
-  const arm=part(g,cube(.13,.53,.13,skin,x,1.66,.46));arm.rotation.x=-.48;
-  part(g,cube(.16,.49,.17,dark,x,1.05,-.18));
+ function sideShell(points,width,material){
+  const shape=new THREE.Shape();
+  points.forEach(([z,y],i)=>i?shape.lineTo(-z,y):shape.moveTo(-z,y));
+  shape.closePath();
+  const geometry=new THREE.ExtrudeGeometry(shape,{depth:width-.05,steps:1,bevelEnabled:true,bevelThickness:.025,bevelSize:.03,bevelSegments:2,curveSegments:3});
+  const mesh=new THREE.Mesh(geometry,material);mesh.rotation.y=Math.PI/2;
+  mesh.position.x=-(width-.05)/2;g.add(mesh);return mesh;
  }
- // Skoy passenger: pink shirt, orange helmet and flowing hair.
- part(g,cube(.4,.56,.31,pink,0,1.66,-.59));
- part(g,ball(.25,skin,0,2.13,-.58));
- part(g,ball(.31,helmet,0,2.36,-.59));
- for(const x of [-.28,.28]){
-  const lock=part(g,ball(.19,hairBike,x,2.12,-.77));lock.scale.set(.65,1.55,.65);
-  const leg=part(g,cube(.14,.68,.14,skin,x,1.02,-.83));leg.rotation.x=.45;
-  part(g,cube(.22,.11,.33,dark,x,.72,-.56));
+ // Tapered step-through scooter frame and raked front leg shield.
+ sideShell([[-1.08,.59],[.95,.59],[1.05,.78],[.82,1.18],[.58,1.25],[.21,1.04],[-.46,1.04],[-.85,1.12],[-1.08,.91]],.63,orange);
+ sideShell([[.55,.73],[1.05,.78],[1.09,1.41],[.91,1.49],[.69,1.29]],.72,orange);
+ sideShell([[-.96,1.04],[-.61,1.29],[.17,1.32],[.38,1.18]],.58,seat);
+ const footwell=part(g,cube(.55,.08,.86,dark,0,.73,.03));
+ footwell.rotation.x=-.06;
+ // Forks, front brake and handlebar use slim PBR metal rather than square slabs.
+ for(const side of [-1,1]){
+  rod(g,[side*.16,.52,.87],[side*.24,1.47,.84],.035,bikeMetal);
+  rod(g,[side*.23,1.47,.82],[side*.36,1.5,.9],.026,bikeMetal);
  }
- part(g,cube(.5,.25,.25,orange,0,1.1,-.88));
- return g
+ rod(g,[-.38,1.5,.9],[.38,1.5,.9],.027,bikeMetal);
+ const headlamp=part(g,new THREE.Mesh(new THREE.SphereGeometry(.17,12,8),lamp));
+ headlamp.position.set(0,1.2,1.06);headlamp.scale.set(1,.68,.35);
+ const taillamp=part(g,new THREE.Mesh(new THREE.SphereGeometry(.12,10,8),
+  new THREE.MeshStandardMaterial({color:0xa51b20,emissive:0x5b090c,emissiveIntensity:.35})));
+ taillamp.position.set(0,1.05,-1.11);taillamp.scale.set(1,.7,.35);
+ // Smooth torso, tapered limbs and rounded helmets: no block-bodied passengers.
+ function oval(x,y,z,sx,sy,sz,material){
+  const mesh=new THREE.Mesh(new THREE.SphereGeometry(1,12,9),material);
+  mesh.position.set(x,y,z);mesh.scale.set(sx,sy,sz);g.add(mesh);return mesh;
+ }
+ function limb(a,b,r0,r1,material){
+  const from=new THREE.Vector3(...a),to=new THREE.Vector3(...b),direction=to.clone().sub(from);
+  const mesh=new THREE.Mesh(new THREE.CylinderGeometry(r1,r0,direction.length(),8),material);
+  mesh.position.copy(from).add(to).multiplyScalar(.5);
+  mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),direction.normalize());
+  g.add(mesh);
+ }
+ function rider(z,shirt,passenger){
+  const torso=oval(0,1.73,z,.33,.42,.25,shirt);torso.rotation.x=passenger?-.11:.16;
+  oval(0,2.25,z+.07,.245,.26,.245,skin);
+  oval(0,2.38,z+.055,.29,.26,.285,helmet);
+  oval(0,2.36,z+.31,.235,.105,.085,visor);
+  // Thin rear helmet trim reads clearly from the approaching driver's POV.
+  oval(0,2.33,z-.215,.21,.037,.025,hubMat);
+  for(const side of [-1,1]){
+   const sx=side*.27;
+   limb([sx,1.96,z+.07],[side*.36,1.68,z+.3],.105,.082,shirt);
+   limb([side*.36,1.68,z+.3],[side*.31,1.5,passenger?z+.38:.88],.082,.055,skin);
+   limb([side*.19,1.43,z-.06],[side*.25,.98,z-.22],.14,.105,dark);
+   limb([side*.25,.98,z-.22],[side*.27,.74,z+.02],.10,.07,dark);
+   oval(side*.27,.72,z+.06,.14,.08,.24,seat);
+  }
+  if(passenger){
+   for(const side of [-1,1]){
+    const lock=oval(side*.22,2.09,z-.22,.095,.29,.10,hair);
+    lock.rotation.z=side*.16;
+   }
+  }
+ }
+ rider(.24,dark,false);
+ rider(-.53,pink,true);
+ return g;
 }
 // Sculpted, PBR-lit Yaksha fallback for when the optional remote GLB is unavailable.
 // Tapered armor, articulated limbs and layered Thai guardian crown replace toy-box cubes.
