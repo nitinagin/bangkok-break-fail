@@ -1990,12 +1990,26 @@ function cockpitTube(pts,r,m){const path=new THREE.CatmullRomCurve3(pts.map(p=>n
 cockpit.add(cube(2.45,.28,.5,cockpitBlue,0,-.99,-1.35));
 cockpit.add(cube(1.6,.13,.36,cockpitGold,0,-.78,-1.48));
 cockpitTube([[-.75,-.70,-1.36],[-.45,-.64,-1.42],[0,-.68,-1.48],[.45,-.64,-1.42],[.75,-.70,-1.36]],.046,cockpitChrome);
+// Curved, forward-facing mirrors replace the flat box housings. Geometry and
+// materials are shared across both sides; the lens faces the driver's camera
+// (+Z), so the existing baked night-street reflection is actually visible.
+// Keep housing and glass separately addressable for Grandma Speed's tear-off.
+const cockpitMirrorShellGeometry=new THREE.SphereGeometry(1,20,12);
+const cockpitMirrorLensGeometry=new THREE.CircleGeometry(1,24);
+const cockpitMirrorGasket=new THREE.MeshStandardMaterial({color:0x14191c,metalness:0,roughness:.87});
 const cockpitSideMirrors=[];
 for(const side of [-1,1]){
  cockpit.add(cube(.33,.13,.19,cockpitMat,side*.76,-.70,-1.36));
- cockpitTube([[side*.9,-.92,-1.42],[side*1.03,.1,-1.55],[side*1.09,.71,-1.52]],.046,cockpitChrome);
- const housing=cube(.38,.30,.075,cockpitChrome,side*1.12,.05,-1.55);
- const glass=cube(.29,.22,.078,cockpitMirrorMaterial,side*1.12,.05,-1.60);
+ cockpitTube([[side*.9,-.92,-1.42],[side*1.01,-.31,-1.50],[side*1.06,-.04,-1.54],[side*1.12,.05,-1.55]],.033,cockpitChrome);
+ const housing=new THREE.Group();
+ housing.position.set(side*1.12,.05,-1.55);
+ const shell=new THREE.Mesh(cockpitMirrorShellGeometry,cockpitChrome);
+ shell.scale.set(.205,.172,.068);
+ const gasket=new THREE.Mesh(cockpitMirrorLensGeometry,cockpitMirrorGasket);
+ gasket.scale.set(.177,.143,1);gasket.position.z=.071;
+ housing.add(shell,gasket);
+ const glass=new THREE.Mesh(cockpitMirrorLensGeometry,cockpitMirrorMaterial);
+ glass.scale.set(.161,.129,1);glass.position.set(side*1.12,.05,-1.474);
  cockpit.add(housing,glass);cockpitSideMirrors.push({side,housing,glass});
 }
 // Remove the overhead trim from the camera view; keep the lower dashboard and side frame.
@@ -6159,7 +6173,7 @@ if(!q.mirrorTaken&&q.elapsed>=1.55){
  if(mirror){
   mirror.housing.visible=false;mirror.glass.visible=false;
   const stolen=new THREE.Group(),housing=mirror.housing.clone(),glass=mirror.glass.clone();
-  housing.visible=true;glass.visible=true;housing.position.set(0,0,0);glass.position.set(0,0,-.055);
+  housing.visible=true;glass.visible=true;housing.position.set(0,0,0);glass.position.set(0,0,.076);
   stolen.add(housing,glass);stolen.position.set(q.side*.42,1.18,.42);
   stolen.scale.setScalar(1.25);q.g.add(stolen);q.g.userData.stolenMirror=stolen;
   hint.textContent='👵 GRANDMA SPEED TORE OFF A SIDE MIRROR!';
