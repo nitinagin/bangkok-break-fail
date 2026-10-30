@@ -1137,6 +1137,68 @@ const yaowaratRainPipe=new THREE.MeshStandardMaterial({color:0x566368,metalness:
 const yaowaratBalconySteel=new THREE.MeshStandardMaterial({color:0x687277,metalness:.58,roughness:.67});
 const yaowaratBalconyBarGeometry=new THREE.BoxGeometry(.055,.68,.07);
 const yaowaratBalconyBarMatrix=new THREE.Matrix4();
+// Distant Yaowarat shophouses use three shared baked PBR facade atlases.
+ // Close buildings keep every balcony, shutter, AC unit and neon sign; distant
+ // buildings retain their solid silhouettes and one richly detailed facade.
+ // This reduces hundreds of off-screen/fogged draw calls on mobile without
+ // changing street geometry, spawn logic, collision or steering.
+const yaowaratDistantFacadeGeometry=new THREE.PlaneGeometry(4.05,1);
+const yaowaratDistantFacades=Array.from({length:3},(_,variant)=>{
+ const canvas=document.createElement('canvas');canvas.width=256;canvas.height=512;
+ const ctx=canvas.getContext('2d'),base=['#8b7568','#756e71','#9b8771'][variant];
+ ctx.fillStyle=base;ctx.fillRect(0,0,256,512);
+ // Weathered plaster, rain streaks and uneven window recesses.
+ for(let i=0;i<280;i++){
+  const x=(i*83+variant*47)%256,y=(i*113+variant*29)%512;
+  ctx.fillStyle=i%3===0?'rgba(21,24,29,.13)':'rgba(236,218,183,.11)';
+  ctx.fillRect(x,y,1+i%3,4+i%29);
+ }
+ for(const level of [66,184]){
+  ctx.fillStyle='#4c4a46';ctx.fillRect(0,level+102,256,7);
+  for(const x of [29,139]){
+   ctx.fillStyle='#343b3e';ctx.fillRect(x-5,level-5,94,101);
+   const glow=ctx.createLinearGradient(x,level,x+85,level+90);
+   glow.addColorStop(0,'#334b51');glow.addColorStop(.6,'#1d3038');
+   glow.addColorStop(1,variant===1?'#766046':'#3c4240');
+   ctx.fillStyle=glow;ctx.fillRect(x,level,84,91);
+   ctx.fillStyle='rgba(198,216,213,.19)';
+   ctx.beginPath();ctx.moveTo(x+8,level+3);ctx.lineTo(x+21,level+3);
+   ctx.lineTo(x+58,level+90);ctx.lineTo(x+48,level+90);ctx.fill();
+   ctx.fillStyle='#777b74';ctx.fillRect(x+40,level,4,91);
+   ctx.fillRect(x,level+43,84,3);
+  }
+  ctx.fillStyle='#343d40';ctx.fillRect(10,level+88,236,7);
+  for(let bar=0;bar<17;bar++)ctx.fillRect(12+bar*14,level+65,3,27);
+ }
+ // Street-level storefront with recessed display and aged enamel sign.
+ ctx.fillStyle='#262d30';ctx.fillRect(13,336,230,157);
+ const interior=ctx.createLinearGradient(0,345,0,493);
+ interior.addColorStop(0,'#7e6651');interior.addColorStop(.35,'#35434a');
+ interior.addColorStop(1,'#131d22');
+ ctx.fillStyle=interior;ctx.fillRect(20,351,216,132);
+ for(let row=0;row<3;row++){
+  const y=386+row*31;
+  ctx.fillStyle='#141d21';ctx.fillRect(24,y+17,208,5);
+  for(let col=0;col<10;col++){
+   ctx.fillStyle=['#a3875d','#69776c','#806b58'][(col+row+variant)%3];
+   ctx.fillRect(28+col*20,y-3-(col%3)*5,13,18+(col%3)*5);
+  }
+ }
+ ctx.fillStyle=['#8d3535','#265c56','#735334'][variant];
+ ctx.fillRect(8,314,240,33);
+ ctx.fillStyle='#f5dfaf';ctx.font='bold 21px sans-serif';
+ ctx.textAlign='center';ctx.fillText(['ร้านทอง เยาวราช','อาหารจีน เยาวราช','ตลาดเก่า กรุงเทพ'][variant],128,338,228);
+ ctx.fillStyle='rgba(10,13,17,.36)';ctx.fillRect(8,347,240,5);
+ // Fabric awning stripe and its shaded hem.
+ for(let panel=0;panel<12;panel++){
+  ctx.fillStyle=panel%2?'#cfb89a':['#783b42','#366d67','#8e643e'][variant];
+  ctx.fillRect(panel*22,354,22,18);
+ }
+ ctx.fillStyle='rgba(15,17,20,.32)';ctx.fillRect(0,371,256,5);
+ const map=new THREE.CanvasTexture(canvas);map.colorSpace=THREE.SRGBColorSpace;
+ map.anisotropy=mobile?1:2;
+ return new THREE.MeshStandardMaterial({map,metalness:.04,roughness:.88,side:THREE.DoubleSide});
+});
 function building(x,z,i){
  const g=new THREE.Group(),h=7.9+(i%7)*1.1,paint=facadeMaterials[i%facadeMaterials.length];
  g.add(cube(3.9,h,5,paint,0,h/2,0));for(const edge of [-1,1])g.add(cube(.16,h,5.15,brickTrim,edge*1.94,h/2,0));for(let fy=3.1;fy<h;fy+=2.6)g.add(cube(4.05,.14,5.15,oldGold,0,fy,0));
@@ -1210,7 +1272,21 @@ function building(x,z,i){
  if(i%3===0){g.add(cube(.14,1.7,.14,shopTrim,1.6,3.7,front));g.add(cube(.95,.12,.18,awningColors[i%3],1.1,4.45,front))}
  const plaque=new THREE.Mesh(new THREE.PlaneGeometry(2.65,1.05),shopSignMaterials[i%shopSignMaterials.length]);plaque.position.set(0,3.12,front+(x<0?.21:-.21));plaque.rotation.y=x<0?0:Math.PI;g.add(plaque);
 if(i%2===0){const hanging=new THREE.Mesh(new THREE.PlaneGeometry(1.1,3.5),neonBladeMaterials[i%neonBladeMaterials.length]);hanging.position.set(x<0?1.75:-1.75,5.8,front+(x<0?-.8:.8));hanging.rotation.y=x<0?-.75:.75;g.add(hanging);g.add(cube(.09,.09,1.25,oldGold,x<0?1.75:-1.75,7.5,front));}
-if(i%3===1){const grille=cube(2.9,2.1,.09,glassDark,0,1.17,front+(x<0?.12:-.12));g.add(grille);for(let q=-2;q<=2;q++)g.add(cube(.055,2.15,.13,oldGold,q*.52,1.17,front+(x<0?.2:-.2)))}if(i%3===0){const light=ball(.19,warmNeon,0,2.37,front+(x<0?.68:-.68));g.add(light)}if(i%5===0){const lantern=ball(.24,redNeon,0,2.15,front+(x<0?1.0:-1.0));g.add(lantern);g.add(cube(.06,.24,.06,oldGold,0,2.5,front+(x<0?1.0:-1.0)));}g.rotation.y=Math.PI/2;g.position.set(x,0,z);scene.add(g);props.push(g);if(i%3!==1&&!((x<0&&i===6)||(x>0&&i===23))){const blade=new THREE.Mesh(new THREE.PlaneGeometry(i%4===0?1.9:1.35,i%4===0?4.8:3.45),neonBladeMaterials[(i*3+(x>0?2:0))%neonBladeMaterials.length]);blade.position.set(x<0?-4.85:4.85,i%4===0?5.8:6.2,z+(i%4===0?1.8:-.7));blade.userData.neonReflectionAnchor=true;blade.userData.neonReflectionColorIndex=(i*3+(x>0?2:0))%neonBladePalettes.length;scene.add(blade);props.push(blade);}
+if(i%3===1){const grille=cube(2.9,2.1,.09,glassDark,0,1.17,front+(x<0?.12:-.12));g.add(grille);for(let q=-2;q<=2;q++)g.add(cube(.055,2.15,.13,oldGold,q*.52,1.17,front+(x<0?.2:-.2)))}if(i%3===0){const light=ball(.19,warmNeon,0,2.37,front+(x<0?.68:-.68));g.add(light)}if(i%5===0){const lantern=ball(.24,redNeon,0,2.15,front+(x<0?1.0:-1.0));g.add(lantern);g.add(cube(.06,.24,.06,oldGold,0,2.5,front+(x<0?1.0:-1.0)));}// A single LOD switch per building hides dozens of detailed meshes in fog.
+ // Keep the first three shell/edge meshes and all near-field detail intact.
+ const nearFacade=new THREE.Group();
+ for(const child of g.children.slice(3))nearFacade.add(child);
+ g.add(nearFacade);
+ const distantFacade=new THREE.Mesh(yaowaratDistantFacadeGeometry,yaowaratDistantFacades[i%3]);
+ distantFacade.scale.y=h;
+ distantFacade.position.set(0,h/2,front+roadDir*.13);
+ distantFacade.rotation.y=x<0?0:Math.PI;
+ g.add(distantFacade);
+ g.userData.facadeNear=nearFacade;
+ g.userData.facadeFar=distantFacade;
+ nearFacade.visible=z>-(mobile?54:78);
+ distantFacade.visible=!nearFacade.visible;
+ g.rotation.y=Math.PI/2;g.position.set(x,0,z);scene.add(g);props.push(g);if(i%3!==1&&!((x<0&&i===6)||(x>0&&i===23))){const blade=new THREE.Mesh(new THREE.PlaneGeometry(i%4===0?1.9:1.35,i%4===0?4.8:3.45),neonBladeMaterials[(i*3+(x>0?2:0))%neonBladeMaterials.length]);blade.position.set(x<0?-4.85:4.85,i%4===0?5.8:6.2,z+(i%4===0?1.8:-.7));blade.userData.neonReflectionAnchor=true;blade.userData.neonReflectionColorIndex=(i*3+(x>0?2:0))%neonBladePalettes.length;scene.add(blade);props.push(blade);}
 }
 for(let i=0;i<(mobile?31:34);i++){building(-8.4,-i*6.0+14,i);building(8.4,-i*6.0+14,i+2)}
 // Align the existing ten rain-slick reflections with real scrolling neon shop signs.
@@ -6418,7 +6494,16 @@ if(meters+bonus>=8000)queueExpresswayBusModel();const nextDistrict=Math.floor(me
  if(stall.visible)stall.userData.merchandise.visible=stall.position.z>-43;
 }for(const tent of marketCanopies)tent.visible=inMarket&&!canalActive;marketCanopyShadows.visible=inMarket&&!canalActive;for(const bump of marketBumps)bump.visible=inMarket;for(const mesh of marketCrowdMeshes)mesh.visible=inMarket;for(const shop of roadsideShops)shop.g.visible=!inMarket&&!onExpressway&&!inPattaya&&!inDarkRoad&&shop.stage===(onRamaII?2:1);const skyTarget=inDarkRoad?darkRoadSky:inPattaya?districtSkies[1]:onExpressway?districtSkies[1]:inMarket?districtSkies[0]:districtSkies[nextDistrict];scene.background.lerp(skyTarget,Math.min(1,dt*.8));scene.fog.color.copy(scene.background);// Follow the district's PBR key-light preset. The old 1.65 daytime override
  // washed out Yaowarat and expressway neon within seconds of a stage change.
- sun.intensity+=(districtLightPresets[nextDistrict][1]-sun.intensity)*Math.min(1,dt*1.2);const control=hasMotion?tilt:(fallbackKeySteer||fallbackDragSteer);const steer=control===0?0:Math.sign(control)*Math.pow(Math.abs(control),.82);const desiredX=THREE.MathUtils.clamp(steer*4.1,-4.1,4.1);const oldX=x;x+=(desiredX-x)*(1-Math.exp(-dt*5.1));x=THREE.MathUtils.clamp(x,-4.3,4.3);if(inDarkRoad){darkHeadlight.position.x=x;darkHeadlight.target.position.x=x;}if(canalActive&&x>2.85){hint.textContent='💦 FALLEN INTO THE FLOATING MARKET CANAL!';shake=1;finish();return;}smoothed+=(THREE.MathUtils.clamp((x-oldX)/Math.max(dt,.001)/5,-1,1)-smoothed)*(1-Math.exp(-dt*9));car.position.set(x,0,3);car.rotation.z=-smoothed*.10+Math.sin(t*.01)*.015+Math.sin(flips)*Math.exp(-flips*.45)*.85;car.rotation.x=Math.sin(flips*.8)*Math.exp(-flips*.45)*.65;car.position.y=Math.abs(Math.sin(flips*1.2))*Math.exp(-flips*.32)*.6;flips=Math.max(0,flips-dt*3);const visualSpeed=60+300*(1-Math.exp(-(speed-60)/240));const advance=dt*visualSpeed*.22;if(inDarkRoad){updateDarkRoadMarkers(advance);updateDarkRoadFoliage(advance);updateDarkDust(advance,x);darkRoadTexture.offset.y-=advance*18/230;darkRoadNormalTexture.offset.y=darkRoadTexture.offset.y;darkRoadRoughnessTexture.offset.y=darkRoadTexture.offset.y;}if(onRamaII)ramaRoadTexture.offset.y-=advance*18/230;if(onExpressway){const roadScroll=advance*18/230;expresswayRoadTexture.offset.y-=roadScroll;expresswayRoughnessTexture.offset.y=expresswayRoadTexture.offset.y;}const wiresVisible=nextDistrict===1;for(const mesh of [wirePoles,wireArms,wireRuns])mesh.visible=wiresVisible;if(wiresVisible)updateYaowaratWires(advance);stripes.forEach(s=>{s.visible=!inDarkRoad;s.position.z+=advance;if(s.position.z>16)s.position.z-=230});for(const crossing of yaowaratCrosswalks){crossing.visible=nextDistrict===1;if(crossing.visible){crossing.position.z+=advance;if(crossing.position.z>18)crossing.position.z-=190;}}roadStuds.forEach(s=>{s.visible=!inDarkRoad;s.position.z+=advance;if(s.position.z>16)s.position.z-=228});props.forEach(p=>{p.position.z+=advance;if(p.position.z>22)p.position.z-=198});if(nextDistrict===1){updateYaowaratStreetlights();updateYaowaratReflections();updateYaowaratFacadeBounce();}if(onRamaII)for(const p of ramaStructures){p.position.z+=advance;if(p.position.z>45)p.position.z-=198;}for(const stall of marketStalls)if(inMarket){stall.position.z+=advance;if(stall.position.z>25)stall.position.z-=192;}if(inMarket)updateMarketCrowd(t,canalActive);if(inMarket){
+ sun.intensity+=(districtLightPresets[nextDistrict][1]-sun.intensity)*Math.min(1,dt*1.2);const control=hasMotion?tilt:(fallbackKeySteer||fallbackDragSteer);const steer=control===0?0:Math.sign(control)*Math.pow(Math.abs(control),.82);const desiredX=THREE.MathUtils.clamp(steer*4.1,-4.1,4.1);const oldX=x;x+=(desiredX-x)*(1-Math.exp(-dt*5.1));x=THREE.MathUtils.clamp(x,-4.3,4.3);if(inDarkRoad){darkHeadlight.position.x=x;darkHeadlight.target.position.x=x;}if(canalActive&&x>2.85){hint.textContent='💦 FALLEN INTO THE FLOATING MARKET CANAL!';shake=1;finish();return;}smoothed+=(THREE.MathUtils.clamp((x-oldX)/Math.max(dt,.001)/5,-1,1)-smoothed)*(1-Math.exp(-dt*9));car.position.set(x,0,3);car.rotation.z=-smoothed*.10+Math.sin(t*.01)*.015+Math.sin(flips)*Math.exp(-flips*.45)*.85;car.rotation.x=Math.sin(flips*.8)*Math.exp(-flips*.45)*.65;car.position.y=Math.abs(Math.sin(flips*1.2))*Math.exp(-flips*.32)*.6;flips=Math.max(0,flips-dt*3);const visualSpeed=60+300*(1-Math.exp(-(speed-60)/240));const advance=dt*visualSpeed*.22;if(inDarkRoad){updateDarkRoadMarkers(advance);updateDarkRoadFoliage(advance);updateDarkDust(advance,x);darkRoadTexture.offset.y-=advance*18/230;darkRoadNormalTexture.offset.y=darkRoadTexture.offset.y;darkRoadRoughnessTexture.offset.y=darkRoadTexture.offset.y;}if(onRamaII)ramaRoadTexture.offset.y-=advance*18/230;if(onExpressway){const roadScroll=advance*18/230;expresswayRoadTexture.offset.y-=roadScroll;expresswayRoughnessTexture.offset.y=expresswayRoadTexture.offset.y;}const wiresVisible=nextDistrict===1;for(const mesh of [wirePoles,wireArms,wireRuns])mesh.visible=wiresVisible;if(wiresVisible)updateYaowaratWires(advance);stripes.forEach(s=>{s.visible=!inDarkRoad;s.position.z+=advance;if(s.position.z>16)s.position.z-=230});for(const crossing of yaowaratCrosswalks){crossing.visible=nextDistrict===1;if(crossing.visible){crossing.position.z+=advance;if(crossing.position.z>18)crossing.position.z-=190;}}roadStuds.forEach(s=>{s.visible=!inDarkRoad;s.position.z+=advance;if(s.position.z>16)s.position.z-=228});props.forEach(p=>{
+ p.position.z+=advance;if(p.position.z>22)p.position.z-=198;
+ if(p.userData.facadeNear){
+  const close=p.position.z>-(mobile?54:78);
+  if(p.userData.facadeNear.visible!==close){
+   p.userData.facadeNear.visible=close;
+   p.userData.facadeFar.visible=!close;
+  }
+ }
+});if(nextDistrict===1){updateYaowaratStreetlights();updateYaowaratReflections();updateYaowaratFacadeBounce();}if(onRamaII)for(const p of ramaStructures){p.position.z+=advance;if(p.position.z>45)p.position.z-=198;}for(const stall of marketStalls)if(inMarket){stall.position.z+=advance;if(stall.position.z>25)stall.position.z-=192;}if(inMarket)updateMarketCrowd(t,canalActive);if(inMarket){
  let canopyIndex=0;
  for(const tent of marketCanopies){
   tent.position.z+=advance;
