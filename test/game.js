@@ -3217,6 +3217,31 @@ function taxiWindshieldShape(rear=false){
 }
 const taxiFrontWindshieldGeometry=taxiWindshieldShape();
 const taxiRearWindshieldGeometry=taxiWindshieldShape(true);
+// Thai taxi door markings, baked once for every near-field traffic taxi.
+// A shared 256x128 alpha decal gives the green lower doors authentic meter
+// lettering and fleet registration without extra lights or per-frame drawing.
+const taxiDoorCanvas=document.createElement('canvas');
+taxiDoorCanvas.width=256;taxiDoorCanvas.height=128;
+const taxiDoorCtx=taxiDoorCanvas.getContext('2d');
+taxiDoorCtx.textAlign='center';taxiDoorCtx.textBaseline='middle';
+taxiDoorCtx.shadowColor='rgba(0,0,0,.72)';taxiDoorCtx.shadowBlur=3;
+taxiDoorCtx.font='bold 29px system-ui,sans-serif';
+taxiDoorCtx.fillStyle='#f5f3dd';taxiDoorCtx.fillText('TAXI-METER',128,37,236);
+taxiDoorCtx.shadowBlur=0;
+taxiDoorCtx.fillStyle='rgba(255,219,111,.88)';taxiDoorCtx.fillRect(34,58,188,2);
+taxiDoorCtx.font='bold 25px Tahoma,system-ui,sans-serif';
+taxiDoorCtx.fillStyle='#f7f3e4';taxiDoorCtx.fillText('แท็กซี่มิเตอร์',128,83,236);
+taxiDoorCtx.font='bold 15px Tahoma,system-ui,sans-serif';
+taxiDoorCtx.fillStyle='#e4e3d4';taxiDoorCtx.fillText('กท 4821',128,112,210);
+const taxiDoorTexture=new THREE.CanvasTexture(taxiDoorCanvas);
+taxiDoorTexture.colorSpace=THREE.SRGBColorSpace;
+taxiDoorTexture.anisotropy=Math.min(2,renderer.capabilities.getMaxAnisotropy());
+const taxiDoorMaterial=new THREE.MeshStandardMaterial({
+ map:taxiDoorTexture,transparent:true,alphaTest:.08,depthWrite:false,
+ roughness:.78,metalness:0,side:THREE.DoubleSide,polygonOffset:true,
+ polygonOffsetFactor:-1
+});
+const taxiDoorGeometry=new THREE.PlaneGeometry(1.08,.37);
 function makeTaxi(){
  const g=new THREE.Group();
  // Extrude a sedan side profile along X; rounded bevels replace toy-like box edges.
@@ -3260,6 +3285,21 @@ function makeTaxi(){
   part(g,cube(.34,.16,.075,taxiLight,side*.71,.99,1.76));
   part(g,cube(.3,.16,.075,taxiBrakeLens,side*.73,.97,-1.75));
  }
+ // One instanced draw call for both lower-door decals; near-field LOD only.
+ // Planes face outwards on each side, with identical readable local UVs.
+ const doorDecals=new THREE.InstancedMesh(taxiDoorGeometry,taxiDoorMaterial,2);
+ const decalPose=new THREE.Object3D();
+ for(let i=0;i<2;i++){
+  const side=i===0?-1:1;
+  decalPose.position.set(side*1.016,.91,-.06);
+  decalPose.rotation.set(0,side*Math.PI/2,0);
+  decalPose.updateMatrix();
+  doorDecals.setMatrixAt(i,decalPose.matrix);
+ }
+ doorDecals.instanceMatrix.needsUpdate=true;
+ doorDecals.frustumCulled=false;
+ doorDecals.renderOrder=2;
+ g.add(doorDecals);
  // Wheel-arch lips break up the sedan's slab-like lower silhouette.
  // The four narrow rubber seams and four existing tyre atlas wheels each
  // render in one draw call instead of eight individual meshes.
