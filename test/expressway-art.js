@@ -208,6 +208,39 @@ export function createExpresswayArt(THREE){
   flyoverPierCaps.instanceMatrix.needsUpdate=true;
  }
  placeFlyovers();group.add(flyoverPiers,flyoverDecks,flyoverParapets,flyoverGirders,flyoverPierCaps);
+
+ // Elevated expressway cross-traffic: paired LED lenses, not toy-block car
+ // bodies. Two instanced draw calls for 12 moving vehicles; all >8m above
+ // the drivable road, with no new lights, collision meshes or network assets.
+ const bridgeCarCount=12,bridgeLampCount=bridgeCarCount*2;
+ const bridgeHeadMaterial=new THREE.MeshBasicMaterial({color:0xf0f4ff,toneMapped:false});
+ const bridgeTailMaterial=new THREE.MeshBasicMaterial({color:0xff2417,toneMapped:false});
+ const bridgeLensGeometry=new THREE.SphereGeometry(.13,8,6);
+ const bridgeHeadlights=new THREE.InstancedMesh(bridgeLensGeometry,bridgeHeadMaterial,bridgeLampCount);
+ const bridgeTaillights=new THREE.InstancedMesh(bridgeLensGeometry,bridgeTailMaterial,bridgeLampCount);
+ const bridgeLightDummy=new THREE.Object3D();
+ const bridgeCarProgress=Array.from({length:bridgeCarCount},(_,i)=>((i*7)%13)/13);
+ function placeBridgeTraffic(){
+  for(let i=0;i<bridgeCarCount;i++){
+   const bridge=Math.floor(i/4),direction=(i%2===0?1:-1);
+   const x=direction*(bridgeCarProgress[i]*13.2-6.6);
+   const z=flyoverZ[bridge]+(i%4<2?-.48:.48);
+   const frontX=x+direction*.52,rearX=x-direction*.52;
+   for(let side=0;side<2;side++){
+    const index=i*2+side,offset=side===0?-.28:.28;
+    bridgeLightDummy.position.set(frontX,8.63,z+offset);
+    bridgeLightDummy.scale.set(1,.72,1);bridgeLightDummy.updateMatrix();
+    bridgeHeadlights.setMatrixAt(index,bridgeLightDummy.matrix);
+    bridgeLightDummy.position.set(rearX,8.63,z+offset);
+    bridgeLightDummy.updateMatrix();
+    bridgeTaillights.setMatrixAt(index,bridgeLightDummy.matrix);
+   }
+  }
+  bridgeHeadlights.instanceMatrix.needsUpdate=true;
+  bridgeTaillights.instanceMatrix.needsUpdate=true;
+ }
+ placeBridgeTraffic();group.add(bridgeHeadlights,bridgeTaillights);
+
  // Roadside Bangkok expressway acoustic screens: weathered ribbed panels
  // and galvanized uprights. Opaque PBR prevents mobile alpha overdraw.
  // Screens stay outside lamp poles and the full drivable dodge corridor.
@@ -417,6 +450,8 @@ gantry.position.z=-75;group.add(gantry);
   const advance=dt*Math.min(95,30+speed*.12);
   for(const lamp of lampPositions){lamp.z+=advance;if(lamp.z>18)lamp.z-=168;}placeLamps();
   for(let i=0;i<flyoverZ.length;i++){flyoverZ[i]+=advance;if(flyoverZ[i]>26)flyoverZ[i]-=180;}placeFlyovers();
+   for(let i=0;i<bridgeCarCount;i++)bridgeCarProgress[i]=(bridgeCarProgress[i]+Math.min(dt,.05)*(.16+(i%4)*.035))%1;
+   placeBridgeTraffic();
   for(let i=0;i<acousticCount;i++){acousticZ[i]+=advance;if(acousticZ[i]>24)acousticZ[i]-=12*5.9;}placeAcousticScreens();
   for(let i=0;i<studCount;i++){studZ[i]+=advance;if(studZ[i]>18)studZ[i]-=36*5.35;}placeStuds();
   gantry.position.z+=advance;if(gantry.position.z>24)gantry.position.z-=195;
@@ -425,6 +460,7 @@ gantry.position.z=-75;group.add(gantry);
   group.traverse(obj=>{if(obj.geometry)obj.geometry.dispose();});
   for(const material of [towerMat,mastMaterial,steel,warm,poolMaterial,sign.material,concrete,reflective,flyoverConcrete,acousticMat])material.dispose();
   studMaterial.dispose();studMesh.geometry.dispose();
+   bridgeHeadMaterial.dispose();bridgeTailMaterial.dispose();
   windowTexture.dispose();emissiveTexture.dispose();poolTexture.dispose();signTexture.dispose();flyoverTexture.dispose();acousticTexture.dispose();barrierTexture.dispose();vmsTexture.dispose();vmsMaterial.dispose();
  }};
 }
