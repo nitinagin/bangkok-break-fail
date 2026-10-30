@@ -5718,16 +5718,22 @@ updateDarkRoadFoliage(0);
  },undefined,()=>{/* Keep the lightweight fallback if the model is unavailable. */});
  // Lightweight fallback is used until the local glTF is ready (or if it fails).
  function makeDarkRoadGhost(){
-  if(darkRoadWomanModel)return darkRoadWomanModel.clone(true);
+  if(darkRoadWomanModel){
+   const ghost=darkRoadWomanModel.clone(true);
+   // Rebind glTF nodes on each clone; do not animate the shared template.
+   ghost.userData.darkDress=ghost.getObjectByName('dress');
+   ghost.userData.darkHair=ghost.getObjectByName('hair');
+   return ghost;
+  }
   const g=new THREE.Group();
   const dress=new THREE.Mesh(new THREE.LatheGeometry([
    new THREE.Vector2(.39,0),new THREE.Vector2(.52,.17),
    new THREE.Vector2(.40,.8),new THREE.Vector2(.27,1.48),
-   new THREE.Vector2(.24,1.88)],12),ghostCloth);g.add(dress);
+   new THREE.Vector2(.24,1.88)],12),ghostCloth);dress.name='dress';g.add(dress);
   const head=new THREE.Mesh(new THREE.SphereGeometry(.27,12,10),ghostSkin);
   head.scale.set(.84,1.06,.78);head.position.set(0,2.13,.015);g.add(head);
   const hair=new THREE.Mesh(new THREE.SphereGeometry(.30,12,9),ghostHair);
-  hair.scale.set(1,.62,.9);hair.position.set(0,2.36,.045);g.add(hair);
+  hair.scale.set(1,.62,.9);hair.position.set(0,2.36,.045);hair.name='hair';g.add(hair);
   for(const side of [-1,1]){
    const lock=new THREE.Mesh(new THREE.CylinderGeometry(.07,.095,1.04,7),ghostHair);
    lock.position.set(side*.25,1.85,.09);lock.rotation.z=side*.10;g.add(lock);
@@ -5736,6 +5742,8 @@ updateDarkRoadFoliage(0);
    const eye=new THREE.Mesh(new THREE.SphereGeometry(.025,7,6),ghostEye);
    eye.position.set(side*.105,2.15,.217);g.add(eye);
   }
+  g.userData.darkDress=dress;
+  g.userData.darkHair=hair;
   return g;
  }
  function spawnDarkRoadHazard(){
@@ -6004,7 +6012,18 @@ if(!q.mirrorTaken&&q.elapsed>=1.55){
  }
 }
 if(q.g.userData.stolenMirror){const piece=q.g.userData.stolenMirror;piece.rotation.z=q.side*(.15+Math.sin(q.elapsed*10)*.08);piece.position.y=1.18+Math.sin(q.elapsed*10)*.045;}
-if(q.stepSound<=0&&q.elapsed>.5&&q.elapsed<2.8){sound(95,.055,'triangle');q.stepSound=.3}if(q.time<=0){scene.remove(q.g);grandmaChase=null}}spawnClock-=dt;if(spawnClock<=0){if(hazards.length<(inMarket?9:onExpressway?7:4))spawn();spawnClock=bossSpawned&&!bossBeaten&&hazards.some(h=>h.boss)?2.6:Math.max(.72,1.95-visualSpeed/230)}for(const h of hazards){h.g.position.z+=advance;if(!h.announced&&h.g.position.z>-47){h.announced=true;if(h.type==='flagParade')hint.textContent='🌈 PRIDE PARADE! DODGE SAFELY!';else if(h.type==='bottle')hint.textContent='🍾 DRUNK TOURIST THROWS A BOTTLE!';else if(h.type==='watermelon')hint.textContent='🍉 FRUIT VENDOR THROWS A WATERMELON!';else if(h.type==='pattayaDancer')hint.textContent='👻 HAUNTED DANCER!';else if(h.type==='whiteGhost')hint.textContent='👻 WOMAN IN WHITE! KEEP YOUR DISTANCE!';else if(h.type==='laser')hint.textContent='🛸 UFO LASER! DODGE THE RED BEAM!';else if(h.type==='sportsCar')hint.textContent='🏎️ SPORTS CAR AHEAD!';else if(h.type==='protest')hint.textContent='📢 EXPRESSWAY PROTEST!';else if(h.type==='dog')hint.textContent='🐕 CANAL-SIDE DOG CHARGING! TILT LEFT!';else if(h.type==='police')hint.textContent='👮 POLICE AHEAD!';else if(h.type==='fruitCart')hint.textContent='🍉 JJ MARKET · FRUIT CART AHEAD!';else if(h.type==='pedestrian')hint.textContent='🚶 JJ MARKET · WATCH FOR SHOPPERS!';else hint.textContent=h.boss?'👹 BOSS YAKSHA! WATCH HIS MOVE!':h.madness?({rollingDurian:'🌰 DURIAN ROLLING ACROSS!',cuttingBus:'🚌 BUS CUTTING ACROSS!',wrongWayBike:'🏍️ WRONG-WAY BIKE!'})[h.madness]:({bus:'🚌 RED BUS AHEAD!',busBlue:'🚌 ROUTE 8 BLUE BUS!',taxi:'🚕 TAXI CUTTING IN!',bike:'🏍️ MOTORBIKE!',dancer:'👻 HAUNTED THAI DANCER!',construction:'🚧 RAMA II — FALLING CONCRETE!',yaksha:'👹 GIANT YAKSHA AHEAD!',durian:'🌰 GIANT DURIAN!'})[h.type]}if(h.type==='whiteGhost'){h.g.position.y=.045+Math.sin(t*.002+h.phase)*.045;h.g.rotation.y=Math.sin(t*.001+h.phase)*.08;}if(h.type==='dog'){const charge=THREE.MathUtils.smoothstep(h.g.position.z,-36,-7);
+if(q.stepSound<=0&&q.elapsed>.5&&q.elapsed<2.8){sound(95,.055,'triangle');q.stepSound=.3}if(q.time<=0){scene.remove(q.g);grandmaChase=null}}spawnClock-=dt;if(spawnClock<=0){if(hazards.length<(inMarket?9:onExpressway?7:4))spawn();spawnClock=bossSpawned&&!bossBeaten&&hazards.some(h=>h.boss)?2.6:Math.max(.72,1.95-visualSpeed/230)}for(const h of hazards){h.g.position.z+=advance;if(!h.announced&&h.g.position.z>-47){h.announced=true;if(h.type==='flagParade')hint.textContent='🌈 PRIDE PARADE! DODGE SAFELY!';else if(h.type==='bottle')hint.textContent='🍾 DRUNK TOURIST THROWS A BOTTLE!';else if(h.type==='watermelon')hint.textContent='🍉 FRUIT VENDOR THROWS A WATERMELON!';else if(h.type==='pattayaDancer')hint.textContent='👻 HAUNTED DANCER!';else if(h.type==='whiteGhost')hint.textContent='👻 WOMAN IN WHITE! KEEP YOUR DISTANCE!';else if(h.type==='laser')hint.textContent='🛸 UFO LASER! DODGE THE RED BEAM!';else if(h.type==='sportsCar')hint.textContent='🏎️ SPORTS CAR AHEAD!';else if(h.type==='protest')hint.textContent='📢 EXPRESSWAY PROTEST!';else if(h.type==='dog')hint.textContent='🐕 CANAL-SIDE DOG CHARGING! TILT LEFT!';else if(h.type==='police')hint.textContent='👮 POLICE AHEAD!';else if(h.type==='fruitCart')hint.textContent='🍉 JJ MARKET · FRUIT CART AHEAD!';else if(h.type==='pedestrian')hint.textContent='🚶 JJ MARKET · WATCH FOR SHOPPERS!';else hint.textContent=h.boss?'👹 BOSS YAKSHA! WATCH HIS MOVE!':h.madness?({rollingDurian:'🌰 DURIAN ROLLING ACROSS!',cuttingBus:'🚌 BUS CUTTING ACROSS!',wrongWayBike:'🏍️ WRONG-WAY BIKE!'})[h.madness]:({bus:'🚌 RED BUS AHEAD!',busBlue:'🚌 ROUTE 8 BLUE BUS!',taxi:'🚕 TAXI CUTTING IN!',bike:'🏍️ MOTORBIKE!',dancer:'👻 HAUNTED THAI DANCER!',construction:'🚧 RAMA II — FALLING CONCRETE!',yaksha:'👹 GIANT YAKSHA AHEAD!',durian:'🌰 GIANT DURIAN!'})[h.type]}if(h.type==='whiteGhost'){
+ // Dark Road apparition: she slowly turns toward the moving driver while
+ // headlamp-visible fabric and hair sway subtly. This works on both the PBR
+ // glTF and procedural fallback, without new geometry, textures or draw calls.
+ const reveal=THREE.MathUtils.smoothstep(h.g.position.z,-39,-11);
+ const gaze=THREE.MathUtils.clamp((x-h.baseX)*.10,-.23,.23);
+ h.g.position.y=.035+Math.sin(t*.0016+h.phase)*.028;
+ h.g.rotation.y=gaze+Math.sin(t*.00085+h.phase)*.035;
+ const dress=h.g.userData.darkDress,hair=h.g.userData.darkHair;
+ if(dress)dress.rotation.z=Math.sin(t*.0014+h.phase)*.017*reveal;
+ if(hair)hair.rotation.z=Math.sin(t*.0021+h.phase+.7)*.025*reveal;
+}if(h.type==='dog'){const charge=THREE.MathUtils.smoothstep(h.g.position.z,-36,-7);
  h.g.position.x=THREE.MathUtils.lerp(h.baseX,Math.max(.5,x),charge*.62);
  const stride=t*.022+h.phase;
  h.g.position.y=Math.abs(Math.sin(stride))*.085*(.4+charge*.6);
