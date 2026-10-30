@@ -395,17 +395,36 @@ gantry.position.z=-75;group.add(gantry);
   barriers.instanceMatrix.needsUpdate=true;reflectors.instanceMatrix.needsUpdate=true;
  }
  placeBarriers();group.add(barriers,reflectors);
+ // Low-profile retroreflective shoulder studs: one instanced draw call for
+ // nighttime road-edge depth cues. Studs stay below 6 cm high and outside
+ // the ±3.35 m traffic-lane centres, so they cannot block a dodge lane.
+ const studCount=72,studZ=[];
+ const studMaterial=new THREE.MeshBasicMaterial({color:0xffe1a0,toneMapped:false});
+ const studMesh=new THREE.InstancedMesh(new THREE.BoxGeometry(.13,.035,.25),studMaterial,studCount);
+ const studDummy=new THREE.Object3D();
+ for(let i=0;i<studCount;i++)studZ.push(-4-Math.floor(i/2)*5.35);
+ function placeStuds(){
+  for(let i=0;i<studCount;i++){
+   const side=i%2===0?-1:1;
+   studDummy.position.set(side*4.22,.035,studZ[i]);
+   studDummy.updateMatrix();studMesh.setMatrixAt(i,studDummy.matrix);
+  }
+  studMesh.instanceMatrix.needsUpdate=true;
+ }
+ placeStuds();group.add(studMesh);
  group.visible=false;
  return {group,update(dt,speed){
   const advance=dt*Math.min(95,30+speed*.12);
   for(const lamp of lampPositions){lamp.z+=advance;if(lamp.z>18)lamp.z-=168;}placeLamps();
   for(let i=0;i<flyoverZ.length;i++){flyoverZ[i]+=advance;if(flyoverZ[i]>26)flyoverZ[i]-=180;}placeFlyovers();
   for(let i=0;i<acousticCount;i++){acousticZ[i]+=advance;if(acousticZ[i]>24)acousticZ[i]-=12*5.9;}placeAcousticScreens();
+  for(let i=0;i<studCount;i++){studZ[i]+=advance;if(studZ[i]>18)studZ[i]-=36*5.35;}placeStuds();
   gantry.position.z+=advance;if(gantry.position.z>24)gantry.position.z-=195;
   for(let i=0;i<barrierCount;i++){barrierZ[i]+=advance;if(barrierZ[i]>20)barrierZ[i]-=22*barrierLength*1.15;}placeBarriers();
  },dispose(){
   group.traverse(obj=>{if(obj.geometry)obj.geometry.dispose();});
   for(const material of [towerMat,mastMaterial,steel,warm,poolMaterial,sign.material,concrete,reflective,flyoverConcrete,acousticMat])material.dispose();
+  studMaterial.dispose();studMesh.geometry.dispose();
   windowTexture.dispose();emissiveTexture.dispose();poolTexture.dispose();signTexture.dispose();flyoverTexture.dispose();acousticTexture.dispose();barrierTexture.dispose();vmsTexture.dispose();vmsMaterial.dispose();
  }};
 }
