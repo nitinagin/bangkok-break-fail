@@ -359,8 +359,66 @@ darkRoadTexture.colorSpace=THREE.SRGBColorSpace;
 darkRoadTexture.wrapS=darkRoadTexture.wrapT=THREE.RepeatWrapping;
 darkRoadTexture.repeat.set(1,18);
 darkRoadTexture.anisotropy=Math.min(2,renderer.capabilities.getMaxAnisotropy());
+// Dark Road: tileable 128px PBR surface response to the moving headlamp.
+// A single baked normal map gives gravel and tire-worn ruts depth; a matching
+// roughness map adds a few shallow damp patches without meshes, lights or draw calls.
+// Periodic height fields and wrapped derivatives avoid seams on the long road.
+const darkRoadPbrSize=128,darkRoadPbrHeight=new Float32Array(darkRoadPbrSize*darkRoadPbrSize);
+const darkRoadPbrNormalCanvas=document.createElement('canvas');
+const darkRoadPbrRoughCanvas=document.createElement('canvas');
+darkRoadPbrNormalCanvas.width=darkRoadPbrNormalCanvas.height=darkRoadPbrSize;
+darkRoadPbrRoughCanvas.width=darkRoadPbrRoughCanvas.height=darkRoadPbrSize;
+const darkRoadPbrNormalCtx=darkRoadPbrNormalCanvas.getContext('2d');
+const darkRoadPbrRoughCtx=darkRoadPbrRoughCanvas.getContext('2d');
+const darkRoadPbrNormalPixels=darkRoadPbrNormalCtx.createImageData(darkRoadPbrSize,darkRoadPbrSize);
+const darkRoadPbrRoughPixels=darkRoadPbrRoughCtx.createImageData(darkRoadPbrSize,darkRoadPbrSize);
+const darkRoadPbrWet=new Float32Array(darkRoadPbrSize*darkRoadPbrSize);
+for(let py=0;py<darkRoadPbrSize;py++)for(let px=0;px<darkRoadPbrSize;px++){
+ const u=px/darkRoadPbrSize,v=py/darkRoadPbrSize,tau=Math.PI*2;
+ const gravel=.17*Math.sin(tau*19*u)*Math.cos(tau*23*v)
+  +.09*Math.sin(tau*(37*u+11*v))+.035*Math.cos(tau*(47*u-31*v));
+ const rut=.075*Math.cos(tau*2*u);
+ let wet=0;
+ for(const [cx,cy,rx,ry] of [[.23,.28,.12,.08],[.74,.63,.16,.055],[.47,.88,.09,.09]]){
+  const dx=Math.min(Math.abs(u-cx),1-Math.abs(u-cx))/rx;
+  const dy=Math.min(Math.abs(v-cy),1-Math.abs(v-cy))/ry;
+  wet=Math.max(wet,Math.max(0,1-dx*dx-dy*dy));
+ }
+ const at=py*darkRoadPbrSize+px;
+ darkRoadPbrWet[at]=wet;
+ darkRoadPbrHeight[at]=(gravel+rut)*(1-.92*wet)-.10*wet;
+}
+for(let py=0;py<darkRoadPbrSize;py++)for(let px=0;px<darkRoadPbrSize;px++){
+ const at=py*darkRoadPbrSize+px,k=at*4;
+ const left=darkRoadPbrHeight[py*darkRoadPbrSize+((px+127)&127)];
+ const right=darkRoadPbrHeight[py*darkRoadPbrSize+((px+1)&127)];
+ const up=darkRoadPbrHeight[((py+127)&127)*darkRoadPbrSize+px];
+ const down=darkRoadPbrHeight[((py+1)&127)*darkRoadPbrSize+px];
+ const nx=(left-right)*.95,ny=(up-down)*.95;
+ const inverse=1/Math.sqrt(nx*nx+ny*ny+1);
+ darkRoadPbrNormalPixels.data[k]=Math.round(128+127*nx*inverse);
+ darkRoadPbrNormalPixels.data[k+1]=Math.round(128+127*ny*inverse);
+ darkRoadPbrNormalPixels.data[k+2]=Math.round(128+127*inverse);
+ darkRoadPbrNormalPixels.data[k+3]=255;
+ const rough=Math.round(224-158*darkRoadPbrWet[at]);
+ darkRoadPbrRoughPixels.data[k]=rough;
+ darkRoadPbrRoughPixels.data[k+1]=rough;
+ darkRoadPbrRoughPixels.data[k+2]=rough;
+ darkRoadPbrRoughPixels.data[k+3]=255;
+}
+darkRoadPbrNormalCtx.putImageData(darkRoadPbrNormalPixels,0,0);
+darkRoadPbrRoughCtx.putImageData(darkRoadPbrRoughPixels,0,0);
+const darkRoadNormalTexture=new THREE.CanvasTexture(darkRoadPbrNormalCanvas);
+const darkRoadRoughnessTexture=new THREE.CanvasTexture(darkRoadPbrRoughCanvas);
+for(const texture of [darkRoadNormalTexture,darkRoadRoughnessTexture]){
+ texture.wrapS=texture.wrapT=THREE.RepeatWrapping;
+ texture.repeat.copy(darkRoadTexture.repeat);
+ texture.anisotropy=2;
+}
 const darkRoadAsphalt=new THREE.MeshStandardMaterial({
- color:0xbfc2c4,map:darkRoadTexture,roughness:.94,metalness:.01
+ color:0xbfc2c4,map:darkRoadTexture,roughnessMap:darkRoadRoughnessTexture,
+ normalMap:darkRoadNormalTexture,normalScale:new THREE.Vector2(.48,.48),
+ roughness:.94,metalness:.01
 });
 const road=cube(11,.12,230,wetAsphalt,0,0,-60);scene.add(road);
 const shoulderPaint=mat(0x4b4b4d),curbPaint=mat(0x8b776b);for(const side of [-1,1]){scene.add(cube(1.25,.11,230,shoulderPaint,side*6.2,-.015,-60));scene.add(cube(.22,.09,230,curbPaint,side*5.58,.08,-60));scene.add(cube(.1,.045,230,M.gold,side*5.37,.10,-60))}
@@ -4143,7 +4201,7 @@ g.userData.detailedTukTuk=!!useDetailedTukTuk;g.userData.detailedYaksha=type==='
 hazards.push({g,type,madness,boss,durianSide,passed:false,hit:false,phase:Math.random()*6.28,baseX:lane,announced:false,nearAwarded:false,swerve:jamFormation?0:madness==='cuttingBus'?(lane===3.35?-1:lane===-3.35?1:(Math.random()<.5?-1:1)):Math.random()<.6?(Math.random()<.5?-1:1):0,swerveStart:madness==='cuttingBus'?-40:-23-Math.random()*15})}
 let fallbackKeySteer=0,fallbackDragSteer=0,fallbackLeft=false,fallbackRight=false;
 let paused=false,challengeStage=0,challengeDisplay='',comboTime=0,active=false,meters=0,bonus=0,speed=120,x=0,tilt=0,neutral=null,lastGamma=null,hasMotion=false,smoothed=0,spawnClock=0,inv=0,flips=0,combo=0,misses=0,crashes=0,best=0,last=performance.now(),shake=0,missionDone=false,soundOn=true,audio=null;try{best=Number(localStorage.getItem('bbf-best3d')||0)}catch(e){}
-function reset(){updateYaowaratWires(0,true);nightCount=0;expresswayArt.group.visible=false;pattayaStreet.visible=false;darkRoadMarkers.visible=false;darkRoadFoliage.visible=false;darkHeadlight.visible=false;darkRoadWave=0;for(let i=0;i<darkMarkerZ.length;i++)darkMarkerZ[i]=9-i*8;updateDarkRoadMarkers(0);for(let i=0;i<darkRoadFoliageZ.length;i++)darkRoadFoliageZ[i]=10-i*7.5;updateDarkRoadFoliage(0);darkRoadTexture.offset.y=0;pattayaWave=0;for(let i=0;i<pattayaShops.length;i++)pattayaShops[i].position.z=-8-i*9.6;updatePattayaReflections();grandmaTriggeredNight=0;nextDarkGrandmaScore=24000;for(const mirror of cockpitSideMirrors){mirror.housing.visible=true;mirror.glass.visible=true}if(grandmaChase){scene.remove(grandmaChase.g);grandmaChase=null}storyProps.forEach(p=>scene.remove(p.g));storyProps.length=0;visualRush=0;camera.fov=76;camera.updateProjectionMatrix();cockpit.position.y=-.22;paused=false;$('pauseBtn').textContent='⏸';bossSpawned=false;bossBeaten=false;for(const p of props)p.visible=true;neonReflections.visible=true;for(const mesh of streetLampMeshes)mesh.visible=true;updateYaowaratStreetlights();updateYaowaratReflections();for(const p of ramaStructures){p.visible=false;p.position.z=p.userData.startZ;}for(const shop of roadsideShops){shop.g.visible=shop.stage===1;shop.g.position.z=shop.startZ;}for(const stall of marketStalls){stall.visible=false;stall.position.z=stall.userData.startZ;}for(const tent of marketCanopies){tent.visible=false;tent.position.z=tent.userData.startZ;}for(const bump of marketBumps){bump.visible=false;bump.position.z=bump.userData.startZ;}for(const mesh of marketCrowdMeshes)mesh.visible=false;canalGroup.visible=false;districtIndex=-1;applyDistrict(1);scene.background.copy(districtSkies[1]);scene.fog.color.copy(districtSkies[1]);spawnIndex=0;eventCount=0;lastEventMeters=-250;active=true;queueOptionalModels();meters=0;bonus=0;missionDone=false;shake=0;speed=120;x=0;tilt=0;fallbackKeySteer=0;fallbackDragSteer=0;fallbackLeft=false;fallbackRight=false;fallbackPointer=null;neutral=lastGamma;smoothed=0;spawnClock=.45;inv=0;flips=0;combo=0;comboTime=0;challengeStage=0;challengeDisplay='';challenge.textContent='🎯 SURVIVE 500m · +250';misses=0;crashes=0;hazards.forEach(h=>scene.remove(h.g));hazards.length=0;trafficContactShadows.count=0;overlay.style.display='none';hint.textContent='📱 SMALL TILTS TO STEER · 🎯 RECENTER'}
+function reset(){updateYaowaratWires(0,true);nightCount=0;expresswayArt.group.visible=false;pattayaStreet.visible=false;darkRoadMarkers.visible=false;darkRoadFoliage.visible=false;darkHeadlight.visible=false;darkRoadWave=0;for(let i=0;i<darkMarkerZ.length;i++)darkMarkerZ[i]=9-i*8;updateDarkRoadMarkers(0);for(let i=0;i<darkRoadFoliageZ.length;i++)darkRoadFoliageZ[i]=10-i*7.5;updateDarkRoadFoliage(0);darkRoadTexture.offset.y=0;darkRoadNormalTexture.offset.y=0;darkRoadRoughnessTexture.offset.y=0;pattayaWave=0;for(let i=0;i<pattayaShops.length;i++)pattayaShops[i].position.z=-8-i*9.6;updatePattayaReflections();grandmaTriggeredNight=0;nextDarkGrandmaScore=24000;for(const mirror of cockpitSideMirrors){mirror.housing.visible=true;mirror.glass.visible=true}if(grandmaChase){scene.remove(grandmaChase.g);grandmaChase=null}storyProps.forEach(p=>scene.remove(p.g));storyProps.length=0;visualRush=0;camera.fov=76;camera.updateProjectionMatrix();cockpit.position.y=-.22;paused=false;$('pauseBtn').textContent='⏸';bossSpawned=false;bossBeaten=false;for(const p of props)p.visible=true;neonReflections.visible=true;for(const mesh of streetLampMeshes)mesh.visible=true;updateYaowaratStreetlights();updateYaowaratReflections();for(const p of ramaStructures){p.visible=false;p.position.z=p.userData.startZ;}for(const shop of roadsideShops){shop.g.visible=shop.stage===1;shop.g.position.z=shop.startZ;}for(const stall of marketStalls){stall.visible=false;stall.position.z=stall.userData.startZ;}for(const tent of marketCanopies){tent.visible=false;tent.position.z=tent.userData.startZ;}for(const bump of marketBumps){bump.visible=false;bump.position.z=bump.userData.startZ;}for(const mesh of marketCrowdMeshes)mesh.visible=false;canalGroup.visible=false;districtIndex=-1;applyDistrict(1);scene.background.copy(districtSkies[1]);scene.fog.color.copy(districtSkies[1]);spawnIndex=0;eventCount=0;lastEventMeters=-250;active=true;queueOptionalModels();meters=0;bonus=0;missionDone=false;shake=0;speed=120;x=0;tilt=0;fallbackKeySteer=0;fallbackDragSteer=0;fallbackLeft=false;fallbackRight=false;fallbackPointer=null;neutral=lastGamma;smoothed=0;spawnClock=.45;inv=0;flips=0;combo=0;comboTime=0;challengeStage=0;challengeDisplay='';challenge.textContent='🎯 SURVIVE 500m · +250';misses=0;crashes=0;hazards.forEach(h=>scene.remove(h.g));hazards.length=0;trafficContactShadows.count=0;overlay.style.display='none';hint.textContent='📱 SMALL TILTS TO STEER · 🎯 RECENTER'}
 function finish(){active=false;const points=Math.floor(meters+bonus);if(points>best){best=points;try{localStorage.setItem('bbf-best3d',String(best))}catch(e){}}panel.innerHTML='<h1>💥 GAME OVER!</h1><p>SCORE '+points+' · BEST '+best+'</p><p>Near misses '+misses+' · Crashes '+crashes+'</p><p>'+(missionDone?'🏆 1000m mission complete!':'🎯 Reach 1000m for +500 points')+'</p><button id="again">TRY AGAIN</button><small>No brakes. No rules. Just Bangkok.</small>';overlay.style.display='grid';$('again').onclick=reset}
 function sound(freq=240,duration=.12,type='square'){if(!soundOn)return;try{audio=audio||new (window.AudioContext||window.webkitAudioContext)();if(audio.state==='suspended')audio.resume();const o=audio.createOscillator(),gain=audio.createGain();o.type=type;o.frequency.setValueAtTime(freq,audio.currentTime);o.frequency.exponentialRampToValueAtTime(Math.max(55,freq*.55),audio.currentTime+duration);gain.gain.setValueAtTime(.075,audio.currentTime);gain.gain.exponentialRampToValueAtTime(.001,audio.currentTime+duration);o.connect(gain);gain.connect(audio.destination);o.start();o.stop(audio.currentTime+duration)}catch(e){}}
 // 8000-point stage: Chatuchak (JJ Market) craft, vintage and plant stalls.
@@ -5901,7 +5959,7 @@ if(meters+bonus>=8000)queueExpresswayBusModel();const nextDistrict=Math.floor(me
  if(stall.visible)stall.userData.merchandise.visible=stall.position.z>-43;
 }for(const tent of marketCanopies)tent.visible=inMarket&&!canalActive;marketCanopyShadows.visible=inMarket&&!canalActive;for(const bump of marketBumps)bump.visible=inMarket;for(const mesh of marketCrowdMeshes)mesh.visible=inMarket;for(const shop of roadsideShops)shop.g.visible=!inMarket&&!onExpressway&&!inPattaya&&!inDarkRoad&&shop.stage===(onRamaII?2:1);const skyTarget=inDarkRoad?darkRoadSky:inPattaya?districtSkies[1]:onExpressway?districtSkies[1]:inMarket?districtSkies[0]:districtSkies[nextDistrict];scene.background.lerp(skyTarget,Math.min(1,dt*.8));scene.fog.color.copy(scene.background);// Follow the district's PBR key-light preset. The old 1.65 daytime override
  // washed out Yaowarat and expressway neon within seconds of a stage change.
- sun.intensity+=(districtLightPresets[nextDistrict][1]-sun.intensity)*Math.min(1,dt*1.2);const control=hasMotion?tilt:(fallbackKeySteer||fallbackDragSteer);const steer=control===0?0:Math.sign(control)*Math.pow(Math.abs(control),.82);const desiredX=THREE.MathUtils.clamp(steer*4.1,-4.1,4.1);const oldX=x;x+=(desiredX-x)*(1-Math.exp(-dt*5.1));x=THREE.MathUtils.clamp(x,-4.3,4.3);if(inDarkRoad){darkHeadlight.position.x=x;darkHeadlight.target.position.x=x;}if(canalActive&&x>2.85){hint.textContent='💦 FALLEN INTO THE FLOATING MARKET CANAL!';shake=1;finish();return;}smoothed+=(THREE.MathUtils.clamp((x-oldX)/Math.max(dt,.001)/5,-1,1)-smoothed)*(1-Math.exp(-dt*9));car.position.set(x,0,3);car.rotation.z=-smoothed*.10+Math.sin(t*.01)*.015+Math.sin(flips)*Math.exp(-flips*.45)*.85;car.rotation.x=Math.sin(flips*.8)*Math.exp(-flips*.45)*.65;car.position.y=Math.abs(Math.sin(flips*1.2))*Math.exp(-flips*.32)*.6;flips=Math.max(0,flips-dt*3);const visualSpeed=60+300*(1-Math.exp(-(speed-60)/240));const advance=dt*visualSpeed*.22;if(inDarkRoad){updateDarkRoadMarkers(advance);updateDarkRoadFoliage(advance);updateDarkDust(advance,x);darkRoadTexture.offset.y-=advance*18/230;}if(onRamaII)ramaRoadTexture.offset.y-=advance*18/230;if(onExpressway){const roadScroll=advance*18/230;expresswayRoadTexture.offset.y-=roadScroll;expresswayRoughnessTexture.offset.y=expresswayRoadTexture.offset.y;}const wiresVisible=nextDistrict===1;for(const mesh of [wirePoles,wireArms,wireRuns])mesh.visible=wiresVisible;if(wiresVisible)updateYaowaratWires(advance);stripes.forEach(s=>{s.position.z+=advance;if(s.position.z>16)s.position.z-=230});roadStuds.forEach(s=>{s.position.z+=advance;if(s.position.z>16)s.position.z-=228});props.forEach(p=>{p.position.z+=advance;if(p.position.z>22)p.position.z-=198});if(nextDistrict===1){updateYaowaratStreetlights();updateYaowaratReflections();updateYaowaratFacadeBounce();}if(onRamaII)for(const p of ramaStructures){p.position.z+=advance;if(p.position.z>45)p.position.z-=198;}for(const stall of marketStalls)if(inMarket){stall.position.z+=advance;if(stall.position.z>25)stall.position.z-=192;}if(inMarket)updateMarketCrowd(t,canalActive);if(inMarket){
+ sun.intensity+=(districtLightPresets[nextDistrict][1]-sun.intensity)*Math.min(1,dt*1.2);const control=hasMotion?tilt:(fallbackKeySteer||fallbackDragSteer);const steer=control===0?0:Math.sign(control)*Math.pow(Math.abs(control),.82);const desiredX=THREE.MathUtils.clamp(steer*4.1,-4.1,4.1);const oldX=x;x+=(desiredX-x)*(1-Math.exp(-dt*5.1));x=THREE.MathUtils.clamp(x,-4.3,4.3);if(inDarkRoad){darkHeadlight.position.x=x;darkHeadlight.target.position.x=x;}if(canalActive&&x>2.85){hint.textContent='💦 FALLEN INTO THE FLOATING MARKET CANAL!';shake=1;finish();return;}smoothed+=(THREE.MathUtils.clamp((x-oldX)/Math.max(dt,.001)/5,-1,1)-smoothed)*(1-Math.exp(-dt*9));car.position.set(x,0,3);car.rotation.z=-smoothed*.10+Math.sin(t*.01)*.015+Math.sin(flips)*Math.exp(-flips*.45)*.85;car.rotation.x=Math.sin(flips*.8)*Math.exp(-flips*.45)*.65;car.position.y=Math.abs(Math.sin(flips*1.2))*Math.exp(-flips*.32)*.6;flips=Math.max(0,flips-dt*3);const visualSpeed=60+300*(1-Math.exp(-(speed-60)/240));const advance=dt*visualSpeed*.22;if(inDarkRoad){updateDarkRoadMarkers(advance);updateDarkRoadFoliage(advance);updateDarkDust(advance,x);darkRoadTexture.offset.y-=advance*18/230;darkRoadNormalTexture.offset.y=darkRoadTexture.offset.y;darkRoadRoughnessTexture.offset.y=darkRoadTexture.offset.y;}if(onRamaII)ramaRoadTexture.offset.y-=advance*18/230;if(onExpressway){const roadScroll=advance*18/230;expresswayRoadTexture.offset.y-=roadScroll;expresswayRoughnessTexture.offset.y=expresswayRoadTexture.offset.y;}const wiresVisible=nextDistrict===1;for(const mesh of [wirePoles,wireArms,wireRuns])mesh.visible=wiresVisible;if(wiresVisible)updateYaowaratWires(advance);stripes.forEach(s=>{s.position.z+=advance;if(s.position.z>16)s.position.z-=230});roadStuds.forEach(s=>{s.position.z+=advance;if(s.position.z>16)s.position.z-=228});props.forEach(p=>{p.position.z+=advance;if(p.position.z>22)p.position.z-=198});if(nextDistrict===1){updateYaowaratStreetlights();updateYaowaratReflections();updateYaowaratFacadeBounce();}if(onRamaII)for(const p of ramaStructures){p.position.z+=advance;if(p.position.z>45)p.position.z-=198;}for(const stall of marketStalls)if(inMarket){stall.position.z+=advance;if(stall.position.z>25)stall.position.z-=192;}if(inMarket)updateMarketCrowd(t,canalActive);if(inMarket){
  let canopyIndex=0;
  for(const tent of marketCanopies){
   tent.position.z+=advance;
