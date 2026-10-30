@@ -4588,7 +4588,7 @@ function cachedObstacle(type){
  }
  return copy;
 }
-let bossSpawned=false,bossBeaten=false,eventCount=0,lastEventMeters=-250;let spawnIndex=0;const intro=['tuktuk','taxi','bus','bike','tuktuk','taxi','bus','bike','durian'];function spawn(){if(meters+bonus>=23000){spawnDarkRoadHazard();return;}if(meters+bonus>=16000){spawnPattayaHazard();return;}if(meters+bonus>=12000){spawnExpresswayHazard();return;}if(meters+bonus>=8000){spawnMarketPedestrians();return;}const boss=nightCount>=1&&meters>=3200&&!bossSpawned;if(boss)bossSpawned=true;const chance=Math.random();const eventEligible=!boss&&spawnIndex>=intro.length&&meters>160&&meters-lastEventMeters>85&&Math.random()<.38;const madness=eventEligible?['rollingDurian','cuttingBus','wrongWayBike'][Math.floor(Math.random()*3)]:null;if(madness){eventCount++;lastEventMeters=meters}let type=boss?'yaksha':madness==='rollingDurian'?'durian':madness==='cuttingBus'?'bus':madness==='wrongWayBike'?'bike':spawnIndex<intro.length?intro[spawnIndex]:chance<.10?'construction':chance<.18?'durian':chance<.34?'bus':chance<.47?'yaksha':chance<.59?'dancer':chance<.78?'taxi':chance<.9?'tuktuk':'bike';if(nightCount===0&&(type==='yaksha'||type==='dancer'))type='taxi';if(nightCount>=1&&spawnIndex%9===0)type='yaksha';if(nightCount>=1&&spawnIndex%7===0)type='dancer';if(Math.floor(meters+bonus)<3000&&type==='construction')type='taxi';if(Math.floor(meters+bonus)>=3000&&spawnIndex%3===0)type='construction';if(Math.floor(meters+bonus)>=3000&&spawnIndex%13===5)type='checkpoint';if(Math.floor(meters+bonus)>=3000&&Math.floor(meters+bonus)<8000&&spawnIndex%7===4)type='whiteGhost';if(Math.floor(meters+bonus)>=3000&&spawnIndex%8===3)type='truck';if(type==='bus'&&spawnIndex%2===0)type='busBlue';spawnIndex++;const jamFormation=!boss&&!madness&&spawnIndex>intro.length&&spawnIndex%5===0&&(type==='taxi'||type==='tuktuk');const jamLanes=[-3.35,0,3.35];const jamOpenLane=jamFormation?jamLanes[Math.floor(Math.random()*3)]:null;const jamOccupied=jamFormation?jamLanes.filter(v=>v!==jamOpenLane):null;let durianSide=0;if(type==='durian'){durianSide=Math.random()<.5?-1:1;if(storyProps.filter(p=>p.kind==='vendor').length<2)makeRoadsideStory('vendor',durianSide,-65)}// A skinned GLB needs its own correctly rebound bones. Object3D.clone(true)
+let bossSpawned=false,bossBeaten=false,eventCount=0,lastEventMeters=-250;let spawnIndex=0;const intro=['tuktuk','taxi','bus','bike','tuktuk','taxi','bus','bike','durian'];function spawn(){if(meters+bonus>=23000){spawnDarkRoadHazard();return;}if(meters+bonus>=16000){spawnPattayaHazard();return;}if(meters+bonus>=12000){spawnExpresswayHazard();return;}if(meters+bonus>=8000){spawnMarketPedestrians();return;}const boss=nightCount>=1&&meters>=3200&&!bossSpawned;if(boss)bossSpawned=true;const chance=Math.random();const eventEligible=!boss&&spawnIndex>=intro.length&&meters>160&&meters-lastEventMeters>85&&Math.random()<.38;const madness=eventEligible?['rollingDurian','cuttingBus','wrongWayBike'][Math.floor(Math.random()*3)]:null;if(madness){eventCount++;lastEventMeters=meters}let type=boss?'yaksha':madness==='rollingDurian'?'durian':madness==='cuttingBus'?'bus':madness==='wrongWayBike'?'bike':spawnIndex<intro.length?intro[spawnIndex]:chance<.10?'construction':chance<.18?'durian':chance<.34?'bus':chance<.47?'yaksha':chance<.59?'dancer':chance<.78?'taxi':chance<.9?'tuktuk':'bike';if(nightCount===0&&(type==='yaksha'||type==='dancer'))type='taxi';if(nightCount>=1&&spawnIndex%9===0)type='yaksha';if(nightCount>=1&&spawnIndex%7===0)type='dancer';if(Math.floor(meters+bonus)<3000&&type==='construction')type='taxi';if(Math.floor(meters+bonus)>=3000&&spawnIndex%3===0)type='construction';if(Math.floor(meters+bonus)>=3000&&spawnIndex%13===5)type='checkpoint';if(Math.floor(meters+bonus)>=3000&&Math.floor(meters+bonus)<8000&&spawnIndex%7===4)type='whiteGhost';if(Math.floor(meters+bonus)>=3000&&Math.floor(meters+bonus)<8000&&spawnIndex%11===6)type='krasue';if(Math.floor(meters+bonus)>=3000&&spawnIndex%8===3)type='truck';if(type==='bus'&&spawnIndex%2===0)type='busBlue';spawnIndex++;const jamFormation=!boss&&!madness&&spawnIndex>intro.length&&spawnIndex%5===0&&(type==='taxi'||type==='tuktuk');const jamLanes=[-3.35,0,3.35];const jamOpenLane=jamFormation?jamLanes[Math.floor(Math.random()*3)]:null;const jamOccupied=jamFormation?jamLanes.filter(v=>v!==jamOpenLane):null;let durianSide=0;if(type==='durian'){durianSide=Math.random()<.5?-1:1;if(storyProps.filter(p=>p.kind==='vendor').length<2)makeRoadsideStory('vendor',durianSide,-65)}// A skinned GLB needs its own correctly rebound bones. Object3D.clone(true)
 // copies the skinned mesh without reliably remapping its skeleton to cloned bones.
 // Static GLBs keep the cheaper standard clone; either path shares GPU geometry.
 function cloneDancerWithRig(){
@@ -4650,7 +4650,7 @@ function bindDancerGestureRig(dancer){
 const useDetailedDancer=type==='dancer'&&!!dancerTemplate&&!hazards.some(h=>h.type==='dancer'&&h.g.userData.detailedDancer);
 const useDetailedTukTuk=type==='tuktuk'&&!jamFormation&&!!realTukTuk&&!hazards.some(h=>h.type==='tuktuk'&&h.g.userData.detailedTukTuk);
 const detailedDancer=useDetailedDancer?cloneDancerWithRig():null;
-const g=type==='whiteGhost'?makeDarkRoadGhost():detailedDancer|| (useDetailedTukTuk?realTukTuk.clone(true):cachedObstacle(type));
+const g=type==='whiteGhost'?makeDarkRoadGhost():type==='krasue'?makeKrasue():detailedDancer|| (useDetailedTukTuk?realTukTuk.clone(true):cachedObstacle(type));
 g.userData.detailedDancer=!!detailedDancer;
 if(detailedDancer){
  // Animate the real upper-arm/head bones if the GLB supplies them.
@@ -6295,10 +6295,35 @@ updateDarkRoadFoliage(0);
   g.userData.darkHair=hair;
   return g;
  }
- function spawnDarkRoadHazard(){
-  const wave=++darkRoadWave,type=wave%4===1?'whiteGhost':'durian';
+ function makeKrasue(){
+ const g=new THREE.Group();
+ const skin=new THREE.MeshStandardMaterial({color:0x8fae82,roughness:.88});
+ const hairMat=new THREE.MeshStandardMaterial({color:0x101317,roughness:.94,side:THREE.DoubleSide});
+ const red=new THREE.MeshStandardMaterial({color:0x9c1428,emissive:0x4a0712,emissiveIntensity:.45,roughness:.8});
+ const glow=new THREE.PointLight(0xff3146,1.15,5,2);glow.position.y=1.35;g.add(glow);
+ const head=new THREE.Mesh(new THREE.SphereGeometry(.36,16,12),skin);
+ head.scale.set(.88,1.08,.86);head.position.y=2.75;g.add(head);
+ const hair=new THREE.Mesh(new THREE.SphereGeometry(.42,16,12),hairMat);
+ hair.scale.set(1,.82,.92);hair.position.set(0,2.96,-.09);g.add(hair);
+ const face=new THREE.Mesh(new THREE.SphereGeometry(.30,14,10),skin);
+ face.scale.set(.95,.95,.28);face.position.set(0,2.70,.26);g.add(face);
+ for(const side of [-1,1]){
+  const eye=new THREE.Mesh(new THREE.SphereGeometry(.055,8,6),new THREE.MeshBasicMaterial({color:0xffe1a6}));
+  eye.position.set(side*.13,2.78,.345);g.add(eye);
+  const strand=new THREE.Mesh(new THREE.CylinderGeometry(.075,.035,1.18,7),hairMat);
+  strand.position.set(side*.34,2.38,-.08);strand.rotation.z=side*.16;g.add(strand);
+  const trail=new THREE.Mesh(new THREE.CylinderGeometry(.105,.055,1.35,8),red);
+  trail.position.set(side*.13,1.48,0);trail.rotation.z=side*.12;g.add(trail);
+ }
+ const core=new THREE.Mesh(new THREE.SphereGeometry(.21,10,8),red);
+ core.scale.set(.9,1.6,.8);core.position.y=1.72;g.add(core);
+ g.userData.krasueGlow=glow;
+ return g;
+}
+function spawnDarkRoadHazard(){
+  const wave=++darkRoadWave,type=wave%5===1?'krasue':wave%4===1?'whiteGhost':'durian';
   const lane=(wave%2?1:-1)*2.05;
-  const g=type==='durian'?cachedObstacle('durian'):makeDarkRoadGhost();
+  const g=type==='durian'?cachedObstacle('durian'):type==='krasue'?makeKrasue():makeDarkRoadGhost();
   g.position.set(lane,0,-42);scene.add(g);
   hazards.push({g,type,madness:null,boss:false,durianSide:0,passed:false,hit:false,
    phase:wave,baseX:lane,announced:false,nearAwarded:false,swerve:0,swerveStart:-100});
@@ -6572,7 +6597,13 @@ if(!q.mirrorTaken&&q.elapsed>=1.55){
  }
 }
 if(q.g.userData.stolenMirror){const piece=q.g.userData.stolenMirror;piece.rotation.z=q.side*(.15+Math.sin(q.elapsed*10)*.08);piece.position.y=1.18+Math.sin(q.elapsed*10)*.045;}
-if(q.stepSound<=0&&q.elapsed>.5&&q.elapsed<2.8){sound(95,.055,'triangle');q.stepSound=.3}if(q.time<=0){scene.remove(q.g);grandmaChase=null}}spawnClock-=dt;if(spawnClock<=0){if(hazards.length<(inMarket?11:onExpressway?9:inPattaya?8:inDarkRoad?8:7))spawn();spawnClock=bossSpawned&&!bossBeaten&&hazards.some(h=>h.boss)?2.2:Math.max(.56,1.48-visualSpeed/300)}for(const h of hazards){h.g.position.z+=advance;if(!h.announced&&h.g.position.z>-47){h.announced=true;if(h.type==='flagParade')hint.textContent='🌈 PRIDE PARADE! DODGE SAFELY!';else if(h.type==='bottle')hint.textContent='🍾 DRUNK TOURIST THROWS A BOTTLE!';else if(h.type==='watermelon')hint.textContent='🍉 FRUIT VENDOR THROWS A WATERMELON!';else if(h.type==='pattayaDancer')hint.textContent='👻 HAUNTED DANCER!';else if(h.type==='whiteGhost')hint.textContent='👻 WOMAN IN WHITE! KEEP YOUR DISTANCE!';else if(h.type==='laser')hint.textContent='🛸 UFO LASER! DODGE THE RED BEAM!';else if(h.type==='sportsCar')hint.textContent='🏎️ SPORTS CAR AHEAD!';else if(h.type==='protest')hint.textContent='📢 EXPRESSWAY PROTEST!';else if(h.type==='dog')hint.textContent='🐕 CANAL-SIDE DOG CHARGING! TILT LEFT!';else if(h.type==='police')hint.textContent='👮 POLICE AHEAD!';else if(h.type==='fruitCart')hint.textContent='🍉 JJ MARKET · FRUIT CART AHEAD!';else if(h.type==='pedestrian')hint.textContent='🚶 JJ MARKET · WATCH FOR SHOPPERS!';else hint.textContent=h.boss?'👹 BOSS YAKSHA! WATCH HIS MOVE!':h.madness?({rollingDurian:'🌰 DURIAN ROLLING ACROSS!',cuttingBus:'🚌 BUS CUTTING ACROSS!',wrongWayBike:'🏍️ WRONG-WAY BIKE!'})[h.madness]:({bus:'🚌 RED BUS AHEAD!',busBlue:'🚌 ROUTE 8 BLUE BUS!',taxi:'🚕 TAXI CUTTING IN!',bike:'🏍️ MOTORBIKE!',dancer:'👻 HAUNTED THAI DANCER!',construction:'🚧 RAMA II — FALLING CONCRETE!',yaksha:'👹 GIANT YAKSHA AHEAD!',durian:'🌰 GIANT DURIAN!'})[h.type]}if(h.type==='whiteGhost'){
+if(q.stepSound<=0&&q.elapsed>.5&&q.elapsed<2.8){sound(95,.055,'triangle');q.stepSound=.3}if(q.time<=0){scene.remove(q.g);grandmaChase=null}}spawnClock-=dt;if(spawnClock<=0){if(hazards.length<(inMarket?11:onExpressway?9:inPattaya?8:inDarkRoad?8:7))spawn();spawnClock=bossSpawned&&!bossBeaten&&hazards.some(h=>h.boss)?2.2:Math.max(.56,1.48-visualSpeed/300)}for(const h of hazards){h.g.position.z+=advance;if(!h.announced&&h.g.position.z>-47){h.announced=true;if(h.type==='flagParade')hint.textContent='🌈 PRIDE PARADE! DODGE SAFELY!';else if(h.type==='bottle')hint.textContent='🍾 DRUNK TOURIST THROWS A BOTTLE!';else if(h.type==='watermelon')hint.textContent='🍉 FRUIT VENDOR THROWS A WATERMELON!';else if(h.type==='pattayaDancer')hint.textContent='👻 HAUNTED DANCER!';else if(h.type==='whiteGhost')hint.textContent='👻 WOMAN IN WHITE! KEEP YOUR DISTANCE!';else if(h.type==='krasue')hint.textContent='👻 KRASUE! FLOATING ACROSS THE ROAD!';else if(h.type==='laser')hint.textContent='🛸 UFO LASER! DODGE THE RED BEAM!';else if(h.type==='sportsCar')hint.textContent='🏎️ SPORTS CAR AHEAD!';else if(h.type==='protest')hint.textContent='📢 EXPRESSWAY PROTEST!';else if(h.type==='dog')hint.textContent='🐕 CANAL-SIDE DOG CHARGING! TILT LEFT!';else if(h.type==='police')hint.textContent='👮 POLICE AHEAD!';else if(h.type==='fruitCart')hint.textContent='🍉 JJ MARKET · FRUIT CART AHEAD!';else if(h.type==='pedestrian')hint.textContent='🚶 JJ MARKET · WATCH FOR SHOPPERS!';else hint.textContent=h.boss?'👹 BOSS YAKSHA! WATCH HIS MOVE!':h.madness?({rollingDurian:'🌰 DURIAN ROLLING ACROSS!',cuttingBus:'🚌 BUS CUTTING ACROSS!',wrongWayBike:'🏍️ WRONG-WAY BIKE!'})[h.madness]:({bus:'🚌 RED BUS AHEAD!',busBlue:'🚌 ROUTE 8 BLUE BUS!',taxi:'🚕 TAXI CUTTING IN!',bike:'🏍️ MOTORBIKE!',dancer:'👻 HAUNTED THAI DANCER!',construction:'🚧 RAMA II — FALLING CONCRETE!',yaksha:'👹 GIANT YAKSHA AHEAD!',durian:'🌰 GIANT DURIAN!'})[h.type]}if(h.type==='krasue'){
+ const floatTime=t*.0021+h.phase;
+ h.g.position.y=.4+Math.sin(floatTime)*.48;
+ h.g.position.x=h.baseX+Math.sin(floatTime*.7)*.85;
+ h.g.rotation.y=Math.sin(floatTime*.55)*.24;
+ if(h.g.userData.krasueGlow)h.g.userData.krasueGlow.intensity=1+Math.sin(floatTime*2)*.3;
+}if(h.type==='whiteGhost'){
  // Dark Road apparition: she slowly turns toward the moving driver while
  // headlamp-visible fabric and hair sway subtly. This works on both the PBR
  // glTF and procedural fallback, without new geometry, textures or draw calls.
