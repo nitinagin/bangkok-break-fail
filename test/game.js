@@ -108,6 +108,48 @@ for(let i=0;i<180;i++){
 const wetRoadRoughnessTexture=new THREE.CanvasTexture(wetRoadRoughnessCanvas);
 wetRoadRoughnessTexture.wrapS=wetRoadRoughnessTexture.wrapT=THREE.RepeatWrapping;
 wetRoadRoughnessTexture.repeat.set(2,26);
+
+ // Yaowarat rain-slick road: tileable 256px tangent-space PBR normals.
+ // Puddles use the EXACT footprints of the albedo/roughness masks above.
+ // Water is nearly flat; exposed aggregate catches the passing neon.
+ // Baked once at startup, with no additional meshes, lights or animation work.
+ const wetRoadNormalCanvas=document.createElement('canvas');
+ wetRoadNormalCanvas.width=wetRoadNormalCanvas.height=256;
+ const wetRoadNormalCtx=wetRoadNormalCanvas.getContext('2d');
+ const wetRoadHeight=new Float32Array(256*256);
+ const wetRoadTau=Math.PI*2;
+ for(let py=0;py<256;py++)for(let px=0;px<256;px++){
+  let puddle=0;
+  for(let i=0;i<6;i++){
+   const cx=37+(i*67)%181,cy=39+(i*43)%175;
+   const rx=12+(i*7)%13,ry=24+(i*11)%19;
+   const dx=(px-cx)/rx,dy=(py-cy)/ry;
+   puddle=Math.max(puddle,Math.max(0,1-dx*dx-dy*dy));
+  }
+  // Integer spatial frequencies tile without seams at UV boundaries.
+  const aggregate=.18*Math.sin(wetRoadTau*19*px/256)*Math.cos(wetRoadTau*23*py/256)
+   +.065*Math.sin(wetRoadTau*(41*px+13*py)/256);
+  wetRoadHeight[py*256+px]=aggregate*(1-puddle*.94)-puddle*.18;
+ }
+ const wetRoadNormalPixels=wetRoadNormalCtx.createImageData(256,256);
+ for(let py=0;py<256;py++)for(let px=0;px<256;px++){
+  const left=wetRoadHeight[py*256+((px+255)&255)];
+  const right=wetRoadHeight[py*256+((px+1)&255)];
+  const up=wetRoadHeight[((py+255)&255)*256+px];
+  const down=wetRoadHeight[((py+1)&255)*256+px];
+  const sx=(right-left)*1.15,sy=(down-up)*1.15;
+  const inverseLength=1/Math.hypot(sx,sy,1),at=(py*256+px)*4;
+  wetRoadNormalPixels.data[at]=Math.round(128-127*sx*inverseLength);
+  wetRoadNormalPixels.data[at+1]=Math.round(128-127*sy*inverseLength);
+  wetRoadNormalPixels.data[at+2]=Math.round(128+127*inverseLength);
+  wetRoadNormalPixels.data[at+3]=255;
+ }
+ wetRoadNormalCtx.putImageData(wetRoadNormalPixels,0,0);
+ const wetRoadNormalTexture=new THREE.CanvasTexture(wetRoadNormalCanvas);
+ wetRoadNormalTexture.wrapS=wetRoadNormalTexture.wrapT=THREE.RepeatWrapping;
+ wetRoadNormalTexture.repeat.set(2,26);
+ wetRoadNormalTexture.anisotropy=Math.min(2,renderer.capabilities.getMaxAnisotropy());
+
 const asphaltTexture=new THREE.CanvasTexture(asphaltCanvas);asphaltTexture.wrapS=asphaltTexture.wrapT=THREE.RepeatWrapping;asphaltTexture.repeat.set(2,26);M.road.map=asphaltTexture;M.road.needsUpdate=true;
 // V6.7: inexpensive wet-road neon reflections for Yaowarat night.
 // One shared gradient texture and two materials; no dynamic lights or downloads.
@@ -158,7 +200,7 @@ const neonReflectionAnchors=new Array(neonReflectionCount).fill(null);
 scene.add(neonReflections);
 const ground=cube(180,.1,230,M.grass,0,-.12,-60);scene.add(ground);// Milestone 1: physically based wet Yaowarat asphalt; dry concrete-tone Rama II.
 // Reuse the existing asphalt texture and neon overlays to avoid new draw calls.
-const wetAsphalt=new THREE.MeshStandardMaterial({color:0x777f8d,map:asphaltTexture,roughnessMap:wetRoadRoughnessTexture,roughness:.52,metalness:.12});
+const wetAsphalt=new THREE.MeshStandardMaterial({color:0x777f8d,map:asphaltTexture,roughnessMap:wetRoadRoughnessTexture,normalMap:wetRoadNormalTexture,normalScale:new THREE.Vector2(.38,.38),roughness:.52,metalness:.12});
 const dryAsphalt=new THREE.MeshStandardMaterial({color:0x777f8d,map:asphaltTexture,roughness:.94,metalness:0});
 // Rama II construction-zone asphalt: 256px baked PBR albedo, shared by the road.
 // Truck-worn tracks, dusty edges, tar seals and repairs add depth with no new draw calls.
