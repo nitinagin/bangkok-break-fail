@@ -2683,6 +2683,31 @@ function makeBusSideGlazing(blue){
   grad.addColorStop(0,'#536d7c');grad.addColorStop(.35,'#233b4b');grad.addColorStop(1,'#101e2a');
   ctx.fillStyle='#292e36';ctx.fillRect(x-4,4,94,119);
   ctx.fillStyle=grad;ctx.fillRect(x,9,86,105);
+  // Bangkok bus interior baked into the existing shared PBR window atlas:
+  // warm ceiling light, grab rails, hand straps and vinyl seat backs.
+  // No additional meshes, materials, draw calls or per-frame canvas work.
+  const interiorGlow=ctx.createLinearGradient(0,13,0,57);
+  interiorGlow.addColorStop(0,'rgba(255,221,150,.24)');
+  interiorGlow.addColorStop(1,'rgba(255,221,150,0)');
+  ctx.fillStyle=interiorGlow;ctx.fillRect(x+2,12,82,45);
+  ctx.strokeStyle='rgba(191,207,204,.53)';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(x+4,31);ctx.lineTo(x+82,31);ctx.stroke();
+  for(const railX of [x+19,x+71]){
+   ctx.strokeStyle='rgba(169,193,196,.43)';ctx.lineWidth=2;
+   ctx.beginPath();ctx.moveTo(railX,31);ctx.lineTo(railX,107);ctx.stroke();
+  }
+  for(const strapX of [x+39,x+59]){
+   ctx.strokeStyle='rgba(226,217,190,.52)';ctx.lineWidth=1.6;
+   ctx.beginPath();ctx.moveTo(strapX,31);ctx.lineTo(strapX,42);
+   ctx.ellipse(strapX,48,4,6,0,0,Math.PI*2);ctx.stroke();
+  }
+  for(const seatX of [x+5,x+49]){
+   ctx.fillStyle='rgba(81,61,54,.67)';
+   ctx.beginPath();ctx.roundRect(seatX,83,29,27,5);ctx.fill();
+   ctx.fillStyle='rgba(177,116,78,.34)';ctx.fillRect(seatX+3,85,23,3);
+   ctx.strokeStyle='rgba(28,31,33,.55)';ctx.lineWidth=1;
+   ctx.strokeRect(seatX+1,85,27,23);
+  }
   // Interior shadows and seated passenger silhouettes stay subtle at speed.
   ctx.fillStyle='rgba(10,19,26,.44)';
   ctx.beginPath();ctx.ellipse(x+30+(i%2)*24,78,14,20,0,0,Math.PI*2);ctx.fill();
