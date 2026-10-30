@@ -1987,7 +1987,18 @@ cockpitMirrorTexture.colorSpace=THREE.SRGBColorSpace;
 cockpitMirrorTexture.anisotropy=mobile?2:4;
 const cockpitMirrorMaterial=new THREE.MeshPhysicalMaterial({map:cockpitMirrorTexture,metalness:.12,roughness:.19,clearcoat:.55,clearcoatRoughness:.18});
 function cockpitTube(pts,r,m){const path=new THREE.CatmullRomCurve3(pts.map(p=>new THREE.Vector3(...p)));const o=new THREE.Mesh(new THREE.TubeGeometry(path,Math.max(8,pts.length*5),r,6,false),m);cockpit.add(o);return o}
-cockpit.add(cube(2.45,.28,.5,cockpitBlue,0,-.99,-1.35));
+// Sculpt the driver-visible bonnet from the existing single PBR panel: a
+// softly crowned, tapered metal pressing rather than a flat toy-like box.
+// Same mesh/material count, and all vertex work happens once at startup.
+const cockpitCowlGeometry=new THREE.BoxGeometry(2.45,.28,.5,12,2,3);
+const cowlPositions=cockpitCowlGeometry.attributes.position;
+for(let i=0;i<cowlPositions.count;i++){
+ const px=cowlPositions.getX(i),py=cowlPositions.getY(i),pz=cowlPositions.getZ(i);
+ if(py>0)cowlPositions.setY(i,py+.075*Math.max(0,1-(px/1.225)**2)+.022*(.5-pz));
+}
+cowlPositions.needsUpdate=true;cockpitCowlGeometry.computeVertexNormals();
+const cockpitCowl=new THREE.Mesh(cockpitCowlGeometry,cockpitBlue);
+cockpitCowl.position.set(0,-.99,-1.35);cockpit.add(cockpitCowl);
 cockpit.add(cube(1.6,.13,.36,cockpitGold,0,-.78,-1.48));
 cockpitTube([[-.75,-.70,-1.36],[-.45,-.64,-1.42],[0,-.68,-1.48],[.45,-.64,-1.42],[.75,-.70,-1.36]],.046,cockpitChrome);
 // Curved, forward-facing mirrors replace the flat box housings. Geometry and
@@ -2015,9 +2026,47 @@ for(const side of [-1,1]){
 // Remove the overhead trim from the camera view; keep the lower dashboard and side frame.
 // Upper windshield crossbar removed to expose the street.
 const speedDial=new THREE.Group();speedDial.position.set(0,-.67,-1.37);cockpit.add(speedDial);
-const dialFace=new THREE.Mesh(new THREE.CylinderGeometry(.18,.18,.045,20),cockpitMat);dialFace.rotation.x=Math.PI/2;speedDial.add(dialFace);
+// Baked 256px illuminated analog speedometer replaces the blank black dial.
+// Tick marks, numerals and subtle backlight share one PBR mesh, no new draw calls.
+const speedometerCanvas=document.createElement('canvas');
+speedometerCanvas.width=speedometerCanvas.height=256;
+const dialPaint=speedometerCanvas.getContext('2d');
+const dialGround=dialPaint.createRadialGradient(128,122,9,128,128,127);
+dialGround.addColorStop(0,'#243443');dialGround.addColorStop(.72,'#111c27');
+dialGround.addColorStop(1,'#050b13');
+dialPaint.fillStyle=dialGround;dialPaint.fillRect(0,0,256,256);
+dialPaint.strokeStyle='rgba(183,207,215,.24)';dialPaint.lineWidth=2;
+dialPaint.beginPath();dialPaint.arc(128,128,116,0,Math.PI*2);dialPaint.stroke();
+for(let kmh=0;kmh<=240;kmh+=10){
+ const a=Math.PI*.72*(1-kmh/120),dx=-Math.sin(a),dy=-Math.cos(a);
+ const major=kmh%40===0,outer=111,inner=major?94:103;
+ dialPaint.strokeStyle=major?'#e6d7ad':'#8797a0';
+ dialPaint.lineWidth=major?3:1.5;
+ dialPaint.beginPath();
+ dialPaint.moveTo(128+dx*inner,128+dy*inner);
+ dialPaint.lineTo(128+dx*outer,128+dy*outer);
+ dialPaint.stroke();
+ if(major){
+  dialPaint.font='bold 17px system-ui, sans-serif';
+  dialPaint.fillStyle='#d7e3e6';dialPaint.textAlign='center';dialPaint.textBaseline='middle';
+  dialPaint.fillText(String(kmh),128+dx*78,128+dy*78);
+ }
+}
+dialPaint.fillStyle='#7da5b6';dialPaint.textAlign='center';
+dialPaint.font='bold 15px system-ui, sans-serif';dialPaint.fillText('km/h',128,175);
+dialPaint.fillStyle='#b3b9b8';dialPaint.font='11px system-ui, sans-serif';
+dialPaint.fillText('BANGKOK',128,193);
+const speedometerTexture=new THREE.CanvasTexture(speedometerCanvas);
+speedometerTexture.colorSpace=THREE.SRGBColorSpace;
+speedometerTexture.anisotropy=mobile?2:4;
+const dialFace=new THREE.Mesh(new THREE.CircleGeometry(.166,32),
+ new THREE.MeshStandardMaterial({map:speedometerTexture,emissive:0x88aab9,
+  emissiveMap:speedometerTexture,emissiveIntensity:.2,metalness:.08,roughness:.56}));
+dialFace.position.z=.027;speedDial.add(dialFace);
 const dialRim=new THREE.Mesh(new THREE.TorusGeometry(.18,.025,6,22),cockpitGold);speedDial.add(dialRim);
-const dialNeedle=cube(.018,.13,.016,cockpitRed,0,.05,.05);speedDial.add(dialNeedle);
+const dialNeedlePivot=new THREE.Group();dialNeedlePivot.position.z=.056;
+const dialNeedle=cube(.018,.13,.016,cockpitRed,0,.054,0);
+dialNeedlePivot.add(dialNeedle);speedDial.add(dialNeedlePivot);
 // Shared physically based finishes for the always-available player tuk-tuk.
 // No extra geometry, lights or per-frame allocations: mobile-friendly GLB fallback.
 const playerPaint=new THREE.MeshPhysicalMaterial({color:0x078a9b,metalness:.42,roughness:.32,clearcoat:.65,clearcoatRoughness:.24});
@@ -4350,7 +4399,7 @@ g.userData.detailedTukTuk=!!useDetailedTukTuk;g.userData.detailedYaksha=type==='
 hazards.push({g,type,madness,boss,durianSide,passed:false,hit:false,phase:Math.random()*6.28,baseX:lane,announced:false,nearAwarded:false,swerve:jamFormation?0:madness==='cuttingBus'?(lane===3.35?-1:lane===-3.35?1:(Math.random()<.5?-1:1)):Math.random()<.6?(Math.random()<.5?-1:1):0,swerveStart:madness==='cuttingBus'?-40:-23-Math.random()*15})}
 let fallbackKeySteer=0,fallbackDragSteer=0,fallbackLeft=false,fallbackRight=false;
 let paused=false,challengeStage=0,challengeDisplay='',comboTime=0,active=false,meters=0,bonus=0,speed=120,x=0,tilt=0,neutral=null,lastGamma=null,hasMotion=false,smoothed=0,spawnClock=0,inv=0,flips=0,combo=0,misses=0,crashes=0,best=0,last=performance.now(),shake=0,missionDone=false,soundOn=true,audio=null;try{best=Number(localStorage.getItem('bbf-best3d')||0)}catch(e){}
-function reset(){updateYaowaratWires(0,true);nightCount=0;expresswayArt.group.visible=false;pattayaStreet.visible=false;darkRoadMarkers.visible=false;darkRoadReflectors.visible=false;darkRoadFoliage.visible=false;darkHeadlight.visible=false;darkRoadPaint.visible=false;darkRoadPaintTexture.offset.y=0;darkRoadWave=0;for(let i=0;i<darkMarkerZ.length;i++)darkMarkerZ[i]=9-i*8;updateDarkRoadMarkers(0);for(let i=0;i<darkRoadFoliageZ.length;i++)darkRoadFoliageZ[i]=10-i*7.5;updateDarkRoadFoliage(0);darkRoadTexture.offset.y=0;darkRoadNormalTexture.offset.y=0;darkRoadRoughnessTexture.offset.y=0;pattayaWave=0;for(let i=0;i<pattayaShops.length;i++)pattayaShops[i].position.z=-8-i*9.6;updatePattayaReflections();grandmaTriggeredNight=0;nextDarkGrandmaScore=24000;for(const mirror of cockpitSideMirrors){mirror.housing.visible=true;mirror.glass.visible=true}if(grandmaChase){scene.remove(grandmaChase.g);grandmaChase=null}storyProps.forEach(p=>scene.remove(p.g));storyProps.length=0;visualRush=0;camera.fov=76;camera.updateProjectionMatrix();cockpit.position.y=-.22;paused=false;$('pauseBtn').textContent='⏸';bossSpawned=false;bossBeaten=false;for(const p of props)p.visible=true;neonReflections.visible=true;for(const mesh of streetLampMeshes)mesh.visible=true;updateYaowaratStreetlights();updateYaowaratReflections();for(const p of ramaStructures){p.visible=false;p.position.z=p.userData.startZ;}for(const shop of roadsideShops){shop.g.visible=shop.stage===1;shop.g.position.z=shop.startZ;}for(const stall of marketStalls){stall.visible=false;stall.position.z=stall.userData.startZ;}for(const tent of marketCanopies){tent.visible=false;tent.position.z=tent.userData.startZ;}for(const bump of marketBumps){bump.visible=false;bump.position.z=bump.userData.startZ;}for(const mesh of marketCrowdMeshes)mesh.visible=false;canalGroup.visible=false;districtIndex=-1;applyDistrict(1);scene.background.copy(districtSkies[1]);scene.fog.color.copy(districtSkies[1]);spawnIndex=0;eventCount=0;lastEventMeters=-250;active=true;queueOptionalModels();meters=0;bonus=(new URLSearchParams(window.location.search).get('stage')==='dark-road'||window.location.pathname.endsWith('/dark-road.html'))?23000:0;missionDone=false;shake=0;speed=120;x=0;tilt=0;fallbackKeySteer=0;fallbackDragSteer=0;fallbackLeft=false;fallbackRight=false;fallbackPointer=null;neutral=lastGamma;smoothed=0;spawnClock=.45;inv=0;flips=0;combo=0;comboTime=0;challengeStage=0;challengeDisplay='';challenge.textContent='🎯 SURVIVE 500m · +250';misses=0;crashes=0;hazards.forEach(h=>scene.remove(h.g));hazards.length=0;trafficContactShadows.count=0;overlay.style.display='none';hint.textContent=bonus>=23000?'🌑 DARK ROAD · HEADLIGHTS ONLY · TILT TO STEER':'📱 SMALL TILTS TO STEER · 🎯 RECENTER'}
+function reset(){updateYaowaratWires(0,true);nightCount=0;expresswayArt.group.visible=false;pattayaStreet.visible=false;darkRoadMarkers.visible=false;darkRoadReflectors.visible=false;darkRoadFoliage.visible=false;darkHeadlight.visible=false;darkRoadPaint.visible=false;darkRoadPaintTexture.offset.y=0;darkRoadWave=0;for(let i=0;i<darkMarkerZ.length;i++)darkMarkerZ[i]=9-i*8;updateDarkRoadMarkers(0);for(let i=0;i<darkRoadFoliageZ.length;i++)darkRoadFoliageZ[i]=10-i*7.5;updateDarkRoadFoliage(0);darkRoadTexture.offset.y=0;darkRoadNormalTexture.offset.y=0;darkRoadRoughnessTexture.offset.y=0;pattayaWave=0;for(let i=0;i<pattayaShops.length;i++)pattayaShops[i].position.z=-8-i*9.6;updatePattayaReflections();grandmaTriggeredNight=0;nextDarkGrandmaScore=24000;for(const mirror of cockpitSideMirrors){mirror.housing.visible=true;mirror.glass.visible=true}if(grandmaChase){scene.remove(grandmaChase.g);grandmaChase=null}storyProps.forEach(p=>scene.remove(p.g));storyProps.length=0;visualRush=0;camera.fov=76;camera.updateProjectionMatrix();cockpit.position.y=-.22;paused=false;$('pauseBtn').textContent='⏸';bossSpawned=false;bossBeaten=false;for(const p of props)p.visible=true;neonReflections.visible=true;for(const mesh of streetLampMeshes)mesh.visible=true;updateYaowaratStreetlights();updateYaowaratReflections();for(const p of ramaStructures){p.visible=false;p.position.z=p.userData.startZ;}for(const shop of roadsideShops){shop.g.visible=shop.stage===1;shop.g.position.z=shop.startZ;}for(const stall of marketStalls){stall.visible=false;stall.position.z=stall.userData.startZ;}for(const tent of marketCanopies){tent.visible=false;tent.position.z=tent.userData.startZ;}for(const bump of marketBumps){bump.visible=false;bump.position.z=bump.userData.startZ;}for(const mesh of marketCrowdMeshes)mesh.visible=false;canalGroup.visible=false;districtIndex=-1;applyDistrict(1);scene.background.copy(districtSkies[1]);scene.fog.color.copy(districtSkies[1]);spawnIndex=0;eventCount=0;lastEventMeters=-250;active=true;queueOptionalModels();meters=0;bonus=(new URLSearchParams(window.location.search).get('stage')==='dark-road'||window.location.pathname.endsWith('/dark-road.html'))?23000:0;missionDone=false;shake=0;speed=120;dialNeedlePivot.rotation.z=0;x=0;tilt=0;fallbackKeySteer=0;fallbackDragSteer=0;fallbackLeft=false;fallbackRight=false;fallbackPointer=null;neutral=lastGamma;smoothed=0;spawnClock=.45;inv=0;flips=0;combo=0;comboTime=0;challengeStage=0;challengeDisplay='';challenge.textContent='🎯 SURVIVE 500m · +250';misses=0;crashes=0;hazards.forEach(h=>scene.remove(h.g));hazards.length=0;trafficContactShadows.count=0;overlay.style.display='none';hint.textContent=bonus>=23000?'🌑 DARK ROAD · HEADLIGHTS ONLY · TILT TO STEER':'📱 SMALL TILTS TO STEER · 🎯 RECENTER'}
 function finish(){active=false;const points=Math.floor(meters+bonus);if(points>best){best=points;try{localStorage.setItem('bbf-best3d',String(best))}catch(e){}}panel.innerHTML='<h1>💥 GAME OVER!</h1><p>SCORE '+points+' · BEST '+best+'</p><p>Near misses '+misses+' · Crashes '+crashes+'</p><p>'+(missionDone?'🏆 1000m mission complete!':'🎯 Reach 1000m for +500 points')+'</p><button id="again">TRY AGAIN</button><small>No brakes. No rules. Just Bangkok.</small>';overlay.style.display='grid';$('again').onclick=reset}
 function sound(freq=240,duration=.12,type='square'){if(!soundOn)return;try{audio=audio||new (window.AudioContext||window.webkitAudioContext)();if(audio.state==='suspended')audio.resume();const o=audio.createOscillator(),gain=audio.createGain();o.type=type;o.frequency.setValueAtTime(freq,audio.currentTime);o.frequency.exponentialRampToValueAtTime(Math.max(55,freq*.55),audio.currentTime+duration);gain.gain.setValueAtTime(.075,audio.currentTime);gain.gain.exponentialRampToValueAtTime(.001,audio.currentTime+duration);o.connect(gain);gain.connect(audio.destination);o.start();o.stop(audio.currentTime+duration)}catch(e){}}
 // 8000-point stage: Chatuchak (JJ Market) craft, vintage and plant stalls.
@@ -6124,6 +6173,8 @@ function spawnMarketPedestrians(){
  hazards.push({g,type:kind,madness:null,boss:false,durianSide:0,passed:false,hit:false,phase:wave,baseX:lane,announced:false,nearAwarded:false,swerve:0,swerveStart:-100});
 }
 function update(dt,t){if(!active||paused)return;speed+=dt*(3+Math.sqrt(Math.max(0,speed-60))*.16);meters+=dt*speed/3.6;
+// Needle follows actual speed; clamp only its display, never the game speed.
+dialNeedlePivot.rotation.z=Math.PI*.72*(1-2*Math.min(speed,240)/240);
 // Defer the optional detailed guardian on mobile until the player has progressed.
 // Respect data-saving / very slow connections and retain the procedural guardian.
 if(mobile&&meters+bonus>=1000&&!yakshaAttempted&&!navigator.connection?.saveData&&!['slow-2g','2g'].includes(navigator.connection?.effectiveType))loadYakshaAsset();
