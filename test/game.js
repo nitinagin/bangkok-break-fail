@@ -5576,13 +5576,65 @@ function updateMarketCrowd(t,canalActive){
  }
  for(const mesh of marketCrowdMeshes)mesh.instanceMatrix.needsUpdate=true;
 }
-function makeMarketWalker(style){const g=new THREE.Group(),shirt=pedestrianClothes[style%5];
- g.add(ball(.27,pedestrianSkin,0,1.78,0));g.add(cube(.58,.75,.32,shirt,0,1.22,0));
- for(const side of [-1,1]){g.add(cube(.18,.67,.19,pedestrianPants,side*.17,.5,0));g.add(cube(.15,.66,.15,pedestrianSkin,side*.4,1.18,0));}
- if(style===2){g.add(cube(.76,.35,.1,mat(0xe2c4a2),0,1.42,.2));g.add(ball(.3,mat(0x4b273e),0,2.04,0));}
- if(style===3){g.add(cube(.95,.52,.56,mat(0x977450),.52,1.02,0));}
- if(style===4){g.add(cube(.55,.7,.5,mat(0xb98a4f),-.48,1.0,0));}
- return g;}
+// JJ Market hazard walkers share all rounded geometry and PBR materials.
+// Tapered clothing, articulated limbs, hair, shoes and bags replace toy cubes.
+// Each spawn creates only Object3D transforms; geometry and materials stay cached.
+const walkerTorsoGeometry=makeMarketCrowdTorsoGeometry();
+const walkerHeadGeometry=new THREE.SphereGeometry(.245,12,9);
+const walkerHairGeometry=new THREE.SphereGeometry(.253,12,9,0,Math.PI*2,0,Math.PI*.57);
+const walkerNeckGeometry=new THREE.CylinderGeometry(.075,.085,.15,9);
+const walkerArmGeometry=new THREE.CylinderGeometry(.093,.066,.6,9);
+const walkerLegGeometry=new THREE.CylinderGeometry(.115,.083,.67,9);
+const walkerHandGeometry=new THREE.SphereGeometry(.086,9,7);
+const walkerShoeGeometry=new THREE.SphereGeometry(1,10,8);
+const walkerBagGeometry=new THREE.SphereGeometry(1,10,8);
+const walkerHatGeometry=new THREE.SphereGeometry(.263,12,8,0,Math.PI*2,0,Math.PI*.48);
+const walkerBrimGeometry=new THREE.CylinderGeometry(.31,.31,.025,12);
+const walkerSkinMaterials=marketCrowdSkinTones.map(color=>new THREE.MeshStandardMaterial({color,roughness:.87,metalness:0}));
+const walkerHairMaterials=marketCrowdHairTones.map(color=>new THREE.MeshStandardMaterial({color,roughness:.95,metalness:0,side:THREE.DoubleSide}));
+const walkerShoeMaterial=new THREE.MeshStandardMaterial({color:0x26292b,roughness:.92,metalness:0});
+const walkerBagMaterials=[0x77634b,0x484d46,0x95664a].map(color=>new THREE.MeshStandardMaterial({color,roughness:.91,metalness:0}));
+const walkerHatMaterial=new THREE.MeshStandardMaterial({color:0xaaa184,roughness:.94,metalness:0});
+function makeMarketWalker(style){
+ const g=new THREE.Group(),variant=style%5;
+ const skin=walkerSkinMaterials[(variant*3+1)%walkerSkinMaterials.length];
+ const hair=walkerHairMaterials[(variant*2+1)%walkerHairMaterials.length];
+ const torso=new THREE.Mesh(walkerTorsoGeometry,pedestrianClothes[variant]);
+ torso.position.y=1.3;g.add(torso);
+ const neck=new THREE.Mesh(walkerNeckGeometry,skin);neck.position.y=1.69;g.add(neck);
+ const head=new THREE.Mesh(walkerHeadGeometry,skin);head.position.y=1.88;g.add(head);
+ const hairCap=new THREE.Mesh(walkerHairGeometry,hair);hairCap.position.y=1.88;g.add(hairCap);
+ const legs=[],arms=[];
+ for(const side of [-1,1]){
+  // Hip and shoulder pivots animate without creating or disposing geometry.
+  const leg=new THREE.Group();leg.position.set(side*.15,.95,0);
+  const trouser=new THREE.Mesh(walkerLegGeometry,pedestrianPants);
+  trouser.position.y=-.335;leg.add(trouser);
+  const shoe=new THREE.Mesh(walkerShoeGeometry,walkerShoeMaterial);
+  shoe.position.set(0,-.735,.09);shoe.scale.set(.135,.105,.235);leg.add(shoe);
+  g.add(leg);legs.push(leg);
+  const arm=new THREE.Group();arm.position.set(side*.31,1.54,0);
+  const sleeve=new THREE.Mesh(walkerArmGeometry,pedestrianClothes[variant]);
+  sleeve.position.set(side*.025,-.3,0);arm.add(sleeve);
+  const hand=new THREE.Mesh(walkerHandGeometry,skin);
+  hand.position.set(side*.035,-.63,0);arm.add(hand);
+  g.add(arm);arms.push(arm);
+ }
+ // A market cap or practical shopping bag gives each silhouette a distinct profile.
+ if(variant===2){
+  const cap=new THREE.Mesh(walkerHatGeometry,walkerHatMaterial);
+  cap.position.y=1.945;g.add(cap);
+  const brim=new THREE.Mesh(walkerBrimGeometry,walkerHatMaterial);
+  brim.position.set(0,2.035,.14);g.add(brim);
+ }
+ if(variant===3||variant===4){
+  const bag=new THREE.Mesh(walkerBagGeometry,walkerBagMaterials[variant===3?0:2]);
+  bag.position.set(variant===3?.46:-.45,1.01,.06);
+  bag.scale.set(.24,.32,.18);g.add(bag);
+ }
+ g.userData.walkLegs=legs;g.userData.walkArms=arms;
+ return g;
+}
 // Reusable Chatuchak fruit cart: curved striped canvas, open metal frame,
 // tyre/hub instancing and real fruit silhouettes replace the toy-block cart.
 let fruitCartTemplate=null;
@@ -6430,7 +6482,17 @@ if(q.stepSound<=0&&q.elapsed>.5&&q.elapsed<2.8){sound(95,.055,'triangle');q.step
  const legs=h.g.userData.runningLegs;
  if(legs)for(let k=0;k<legs.length;k++)legs[k].rotation.x=Math.sin(stride+(k===0||k===3?0:Math.PI))*.55;
  if(h.g.userData.runningTail)h.g.userData.runningTail.rotation.y=Math.sin(stride*.65)*.35;
-}if(h.type==='police'){h.g.position.x=THREE.MathUtils.clamp(h.baseX+Math.sin(t*.0014+h.phase)*.55,-2.9,2.9);}if(h.type==='pedestrian'){h.g.position.x=THREE.MathUtils.clamp(h.baseX+Math.sin(t*.0011+h.phase)*.45,-3.1,3.1);h.g.rotation.z=Math.sin(t*.006+h.phase)*.07;}if(h.type==='construction'){const fall=THREE.MathUtils.smoothstep(h.g.position.z,-48,-20);h.g.position.y=6*(1-fall);h.g.rotation.z=(1-fall)*.18;}if((h.type==='bottle'||h.type==='watermelon')&&h.g.userData.pattayaProjectile){const flight=THREE.MathUtils.smoothstep(h.g.position.z,-54,-13),p=h.g.userData.pattayaProjectile,a=h.g.userData.pattayaActor,arm=h.g.userData.pattayaArm;p.position.x=THREE.MathUtils.lerp(a.position.x,0,flight);p.position.y=(h.type==='watermelon'?.72:.4)+1.5*Math.sin(Math.PI*flight);p.rotation.z+=dt*6;if(arm)arm.rotation.z=-.5-1.25*Math.sin(Math.PI*flight);a.rotation.z=Math.sin(t*.004+h.phase)*(h.type==='bottle'?.11:.035);}if(h.type==='pattayaDancer'){h.g.rotation.y=Math.sin(t*.002+h.phase)*.32;}if(h.type==='durian'){
+}if(h.type==='police'){h.g.position.x=THREE.MathUtils.clamp(h.baseX+Math.sin(t*.0014+h.phase)*.55,-2.9,2.9);}if(h.type==='pedestrian'){
+ h.g.position.x=THREE.MathUtils.clamp(h.baseX+Math.sin(t*.0011+h.phase)*.45,-3.1,3.1);
+ const step=t*.009+h.phase;
+ h.g.rotation.z=Math.sin(t*.006+h.phase)*.045;
+ h.g.position.y=Math.abs(Math.sin(step))*.028;
+ const legs=h.g.userData.walkLegs,arms=h.g.userData.walkArms;
+ if(legs&&arms)for(let k=0;k<2;k++){
+  legs[k].rotation.x=Math.sin(step+k*Math.PI)*.42;
+  arms[k].rotation.x=-Math.sin(step+k*Math.PI)*.29;
+ }
+}if(h.type==='construction'){const fall=THREE.MathUtils.smoothstep(h.g.position.z,-48,-20);h.g.position.y=6*(1-fall);h.g.rotation.z=(1-fall)*.18;}if((h.type==='bottle'||h.type==='watermelon')&&h.g.userData.pattayaProjectile){const flight=THREE.MathUtils.smoothstep(h.g.position.z,-54,-13),p=h.g.userData.pattayaProjectile,a=h.g.userData.pattayaActor,arm=h.g.userData.pattayaArm;p.position.x=THREE.MathUtils.lerp(a.position.x,0,flight);p.position.y=(h.type==='watermelon'?.72:.4)+1.5*Math.sin(Math.PI*flight);p.rotation.z+=dt*6;if(arm)arm.rotation.z=-.5-1.25*Math.sin(Math.PI*flight);a.rotation.z=Math.sin(t*.004+h.phase)*(h.type==='bottle'?.11:.035);}if(h.type==='pattayaDancer'){h.g.rotation.y=Math.sin(t*.002+h.phase)*.32;}if(h.type==='durian'){
  const previousX=h.g.position.x;
  if(h.g.position.z>-48){
   const f=THREE.MathUtils.smoothstep(h.g.position.z,-48,-5);
