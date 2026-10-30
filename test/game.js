@@ -4358,6 +4358,30 @@ function makeConstructionDebris(){
  const slabGeometry=new THREE.ExtrudeGeometry(outline,{depth:.68,steps:1,bevelEnabled:true,bevelThickness:.035,bevelSize:.035,bevelSegments:1,curveSegments:1});
  slabGeometry.rotateX(-Math.PI/2);
  const slab=new THREE.Mesh(slabGeometry,ramaDebrisConcrete);slab.position.y=.09;g.add(slab);
+ // Low-profile reflective survey markings make broken concrete readable in
+ // headlight-only stages. One shared PBR draw per debris clone, no new assets.
+ // Keep the markings within the slab footprint: collision geometry is unchanged.
+ const tapePositions=[],tapeColors=[],tapeIndices=[];
+ const tapeAmber=new THREE.Color(0xe6b44e),tapeWhite=new THREE.Color(0xd8dee2);
+ for(let i=0;i<perimeter.length;i++){
+  const a=perimeter[i],b=perimeter[(i+1)%perimeter.length];
+  const color=i%2?tapeWhite:tapeAmber,base=tapePositions.length/3;
+  for(const [point,scale] of [[a,.96],[b,.96],[b,.84],[a,.84]]){
+   tapePositions.push(point[0]*scale,.805,-point[1]*scale);
+   tapeColors.push(color.r,color.g,color.b);
+  }
+  tapeIndices.push(base,base+1,base+2,base,base+2,base+3);
+ }
+ const tapeGeometry=new THREE.BufferGeometry();
+ tapeGeometry.setAttribute('position',new THREE.Float32BufferAttribute(tapePositions,3));
+ tapeGeometry.setAttribute('color',new THREE.Float32BufferAttribute(tapeColors,3));
+ tapeGeometry.setIndex(tapeIndices);
+ tapeGeometry.computeVertexNormals();
+ const tapeMaterial=new THREE.MeshStandardMaterial({
+  vertexColors:true,roughness:.32,metalness:.03,
+  emissive:0x16140f,emissiveIntensity:.24,side:THREE.DoubleSide
+ });
+ g.add(new THREE.Mesh(tapeGeometry,tapeMaterial));
  // Bent reinforcement protrudes through the shattered edge; one instanced draw.
  const rebar=new THREE.InstancedMesh(new THREE.CylinderGeometry(.033,.033,.8,6),ramaDebrisRebar,6);
  const dummy=new THREE.Object3D();
