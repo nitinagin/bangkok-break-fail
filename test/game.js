@@ -3305,6 +3305,44 @@ const tukTail=new THREE.MeshPhysicalMaterial({
 });
 const tukEngineSteel=new THREE.MeshStandardMaterial({color:0x51565a,metalness:.66,roughness:.72});
 const tukEngineUnitBox=new THREE.BoxGeometry(1,1,1);
+// Baked pressed-steel engine service hatch for both tuk-tuk flanks. One
+// shared 128px PBR decal and a single two-instance mesh per cached vehicle:
+// stamped louvers, retaining bolts and oily wear replace plain toy-box sides.
+const tukServiceCanvas=document.createElement('canvas');
+tukServiceCanvas.width=tukServiceCanvas.height=128;
+const tukServiceCtx=tukServiceCanvas.getContext('2d');
+const serviceBase=tukServiceCtx.createLinearGradient(0,0,128,128);
+serviceBase.addColorStop(0,'#496a79');serviceBase.addColorStop(.55,'#304a58');
+serviceBase.addColorStop(1,'#182e39');
+tukServiceCtx.fillStyle=serviceBase;tukServiceCtx.fillRect(0,0,128,128);
+tukServiceCtx.fillStyle='#13242b';tukServiceCtx.fillRect(7,9,114,110);
+tukServiceCtx.strokeStyle='rgba(189,210,211,.72)';
+tukServiceCtx.lineWidth=2;tukServiceCtx.strokeRect(9,11,110,106);
+for(let row=0;row<5;row++){
+ const y=27+row*17;
+ tukServiceCtx.fillStyle='#09151b';tukServiceCtx.fillRect(22,y,84,10);
+ tukServiceCtx.fillStyle='#73909b';tukServiceCtx.fillRect(23,y,82,2);
+ tukServiceCtx.fillStyle='#283e48';tukServiceCtx.fillRect(23,y+6,82,2);
+ tukServiceCtx.fillStyle='rgba(9,13,17,.3)';tukServiceCtx.fillRect(22,y+10,84,2);
+}
+for(const px of [15,113])for(const py of [17,111]){
+ tukServiceCtx.fillStyle='#a7b6b5';
+ tukServiceCtx.beginPath();tukServiceCtx.arc(px,py,3,0,Math.PI*2);tukServiceCtx.fill();
+ tukServiceCtx.strokeStyle='#253039';tukServiceCtx.lineWidth=1;
+ tukServiceCtx.beginPath();tukServiceCtx.moveTo(px-2,py);tukServiceCtx.lineTo(px+2,py);tukServiceCtx.stroke();
+}
+for(let i=0;i<140;i++){
+ const px=(i*47+19)%128,py=(i*71+23)%128;
+ tukServiceCtx.fillStyle=i%3?'rgba(6,12,16,.11)':'rgba(208,197,169,.09)';
+ tukServiceCtx.fillRect(px,py,1+(i%3),1+(i%2));
+}
+const tukServiceTexture=new THREE.CanvasTexture(tukServiceCanvas);
+tukServiceTexture.colorSpace=THREE.SRGBColorSpace;
+tukServiceTexture.anisotropy=2;
+const tukServiceMaterial=new THREE.MeshStandardMaterial({
+ map:tukServiceTexture,metalness:.38,roughness:.58,side:THREE.DoubleSide
+});
+const tukServiceGeometry=new THREE.PlaneGeometry(.55,.30);
 // One shared six-sided steel tube for every traffic tuk-tuk canopy support.
 // The frame is assembled once per cached model, not in the render loop.
 const tukCanopyFrameGeometry=new THREE.CylinderGeometry(.026,.026,1,6);
@@ -3411,6 +3449,19 @@ function makeTukTuk(){
   const mirror=cube(.29,.19,.07,tukWindow,side*.91,1.98,1.04);mirror.rotation.y=side*.12;g.add(mirror);
   g.add(ball(.12,tukTail,side*.57,.84,-1.36));
  }
+ // Recessed stamped engine inspection hatches on both exterior side skirts.
+ // One instanced draw call, shared texture, and no change to obstacle bounds.
+ const serviceHatches=new THREE.InstancedMesh(tukServiceGeometry,tukServiceMaterial,2);
+ const hatchPose=new THREE.Object3D();
+ for(const [i,side] of [-1,1].entries()){
+  hatchPose.position.set(side*.774,1.025,-.76);
+  hatchPose.rotation.set(0,side*Math.PI/2,0);
+  hatchPose.updateMatrix();
+  serviceHatches.setMatrixAt(i,hatchPose.matrix);
+ }
+ serviceHatches.instanceMatrix.needsUpdate=true;
+ serviceHatches.computeBoundingSphere();
+ g.add(serviceHatches);
  // Single front wheel shares the same PBR tyre/rim atlas as both rear wheels.
  const frontWheel=new THREE.Mesh(busWheelGeometry,busWheelMaterial);
  frontWheel.rotation.z=Math.PI/2;
