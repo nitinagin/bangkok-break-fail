@@ -5535,8 +5535,16 @@ function expresswayVehicle(type){
  const ghostSkin=new THREE.MeshStandardMaterial({color:0xc2c6c1,roughness:.94});
  const ghostHair=new THREE.MeshStandardMaterial({color:0x101319,roughness:.96});
  const ghostEye=new THREE.MeshStandardMaterial({color:0x111419,roughness:.98});
- // Lightweight PBR fallback; replace with a mobile-budget realistic GLB later.
+ // A local, compact PBR glTF character replaces the sphere/cylinder ghost once loaded.
+ // Async loading is optional: the original procedural woman remains playable offline.
+ let darkRoadWomanModel=null;
+ new GLTFLoader().load('./assets/dark-road-woman.gltf',({scene:model})=>{
+  model.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;}});
+  darkRoadWomanModel=model;
+ },undefined,()=>{/* Keep the lightweight fallback if the model is unavailable. */});
+ // Lightweight fallback is used until the local glTF is ready (or if it fails).
  function makeDarkRoadGhost(){
+  if(darkRoadWomanModel)return darkRoadWomanModel.clone(true);
   const g=new THREE.Group();
   const dress=new THREE.Mesh(new THREE.LatheGeometry([
    new THREE.Vector2(.39,0),new THREE.Vector2(.52,.17),
