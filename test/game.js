@@ -3670,16 +3670,29 @@ function makeTukTuk(){
  });
  engineMesh.instanceMatrix.needsUpdate=true;
  g.add(engineMesh);
- // Tapered, lightly reflective windscreen with a baked seal and parked wiper.
- // Custom four-vertex pane follows the cab uprights without additional draw calls.
+ // The fallback traffic tuk-tuk now has a gently bowed, tapered glass pane
+ // instead of a flat toy-like quad. Preserve the existing weathered PBR glass
+ // atlas, rubber seal and wiper, with exactly one windshield draw call.
+ // Nine columns keep the curvature visible in headlight glints without the
+ // tessellation cost of a dense surface (36 vertices / 48 triangles).
  const windscreenGeometry=new THREE.BufferGeometry();
- windscreenGeometry.setAttribute('position',new THREE.Float32BufferAttribute([
-  -.71,-.335,0, .71,-.335,0, -.65,.335,0, .65,.335,0
- ],3));
- windscreenGeometry.setAttribute('uv',new THREE.Float32BufferAttribute([
-  0,0, 1,0, 0,1, 1,1
- ],2));
- windscreenGeometry.setIndex([0,1,2,1,3,2]);
+ const paneColumns=8,paneRows=3,paneVertices=[],paneUvs=[],paneIndices=[];
+ for(let row=0;row<=paneRows;row++){
+  const v=row/paneRows,halfWidth=.71-.06*v;
+  for(let col=0;col<=paneColumns;col++){
+   const u=col/paneColumns,nx=2*u-1;
+   const bow=.072*(1-nx*nx)*Math.sin(Math.PI*(.12+.76*v));
+   paneVertices.push(nx*halfWidth,-.335+.67*v,bow);
+   paneUvs.push(u,v);
+  }
+ }
+ for(let row=0;row<paneRows;row++)for(let col=0;col<paneColumns;col++){
+  const a=row*(paneColumns+1)+col,b=a+1,c=a+paneColumns+1,d=c+1;
+  paneIndices.push(a,b,c,b,d,c);
+ }
+ windscreenGeometry.setAttribute('position',new THREE.Float32BufferAttribute(paneVertices,3));
+ windscreenGeometry.setAttribute('uv',new THREE.Float32BufferAttribute(paneUvs,2));
+ windscreenGeometry.setIndex(paneIndices);
  windscreenGeometry.computeVertexNormals();
  const glass=new THREE.Mesh(windscreenGeometry,tukWindscreen);
  glass.position.set(0,1.88,.79);glass.rotation.x=-.15;g.add(glass);
