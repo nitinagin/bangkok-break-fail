@@ -4153,6 +4153,52 @@ function makeBike(){
  sideShell([[-.96,1.04],[-.61,1.29],[.17,1.32],[.38,1.18]],.58,seat);
  const footwell=part(g,cube(.55,.08,.86,dark,0,.73,.03));
  footwell.rotation.x=-.06;
+ // Instanced street-scooter road kit: curved mudguards, stalk mirrors,
+ // reflective glass, amber indicators and a visible engine casing.
+ // Created once per cached obstacle template; no frame-loop work.
+ const pose=new THREE.Object3D();
+ const fenders=new THREE.InstancedMesh(new THREE.TorusGeometry(.455,.066,6,20,Math.PI),orange,2);
+ for(let i=0;i<2;i++){
+  pose.position.set(0,.43,i===0?-.84:.88);
+  pose.rotation.set(0,Math.PI/2,0);pose.scale.set(1,1,1);
+  pose.updateMatrix();fenders.setMatrixAt(i,pose.matrix);
+ }
+ fenders.instanceMatrix.needsUpdate=true;fenders.computeBoundingSphere();g.add(fenders);
+ const stalks=new THREE.InstancedMesh(new THREE.CylinderGeometry(.018,.022,1,6),bikeMetal,2);
+ const shells=new THREE.InstancedMesh(new THREE.SphereGeometry(1,10,8),dark,2);
+ const mirrorFinish=new THREE.MeshPhysicalMaterial({color:0x8babb9,metalness:.72,roughness:.13,clearcoat:.9,clearcoatRoughness:.12});
+ const glasses=new THREE.InstancedMesh(new THREE.SphereGeometry(1,10,8),mirrorFinish,2);
+ for(let i=0;i<2;i++){
+  const side=i===0?-1:1;
+  const base=new THREE.Vector3(side*.26,1.46,.85),tip=new THREE.Vector3(side*.51,1.76,.95);
+  const delta=tip.clone().sub(base);
+  pose.position.copy(base).add(tip).multiplyScalar(.5);
+  pose.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),delta.clone().normalize());
+  pose.scale.set(1,delta.length(),1);
+  pose.updateMatrix();stalks.setMatrixAt(i,pose.matrix);
+  pose.quaternion.identity();pose.position.set(side*.52,1.78,.96);
+  pose.scale.set(.185,.115,.055);pose.updateMatrix();shells.setMatrixAt(i,pose.matrix);
+  pose.position.z+=.044;pose.scale.set(.151,.089,.014);
+  pose.updateMatrix();glasses.setMatrixAt(i,pose.matrix);
+ }
+ for(const mesh of [stalks,shells,glasses]){
+  mesh.instanceMatrix.needsUpdate=true;mesh.computeBoundingSphere();g.add(mesh);
+ }
+ const amber=new THREE.MeshStandardMaterial({color:0xf2a336,emissive:0x9a4706,emissiveIntensity:.36,roughness:.35});
+ const blinkers=new THREE.InstancedMesh(new THREE.SphereGeometry(1,10,8),amber,4);
+ for(let i=0;i<4;i++){
+  const side=i%2===0?-1:1,front=i<2;
+  pose.quaternion.identity();
+  pose.position.set(side*(front?.32:.30),front?1.23:1.05,front?1.11:-1.11);
+  pose.scale.set(.12,.065,.055);pose.updateMatrix();blinkers.setMatrixAt(i,pose.matrix);
+ }
+ blinkers.instanceMatrix.needsUpdate=true;blinkers.computeBoundingSphere();g.add(blinkers);
+ const engineCovers=new THREE.InstancedMesh(new THREE.SphereGeometry(1,12,8),hubMat,2);
+ for(let i=0;i<2;i++){
+  pose.quaternion.identity();pose.position.set(i===0?-.35:.35,.76,-.58);
+  pose.scale.set(.075,.22,.36);pose.updateMatrix();engineCovers.setMatrixAt(i,pose.matrix);
+ }
+ engineCovers.instanceMatrix.needsUpdate=true;engineCovers.computeBoundingSphere();g.add(engineCovers);
  // Forks, front brake and handlebar use slim PBR metal rather than square slabs.
  for(const side of [-1,1]){
   rod(g,[side*.16,.52,.87],[side*.24,1.47,.84],.035,bikeMetal);
