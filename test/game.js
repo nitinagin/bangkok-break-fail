@@ -1906,6 +1906,21 @@ function addRamaExcavator(g,side){
  // Tinted glazing on the traffic-facing side and front of the cab.
  box(glass,x-side*.93,2.34,z+.25,.045,.67,1.05);
  box(glass,x-side*.42,2.34,z-.39,.89,.67,.045);
+ // Cab window frames, windscreen mullion, wiper and road-facing mirror:
+ // reuse the existing instanced steel batch (no extra materials/draw calls).
+ // These pieces are part of the parked excavator behind the barriers.
+ for(const y of [2.00,2.68]){
+  box(steel,x-side*.955,y,z+.25,.085,.055,1.12);
+  box(steel,x-side*.42,y,z-.425,.98,.055,.085);
+ }
+ for(const zz of [z-.32,z+.82])
+  box(steel,x-side*.955,2.34,zz,.085,.70,.055);
+ for(const xx of [x-side*.90,x+side*.06])
+  box(steel,xx,2.34,z-.425,.06,.70,.08);
+ box(steel,x-side*.43,2.34,z-.435,.045,.70,.07);
+ beam(steel,x-side*.82,2.04,z-.46,x-side*.18,2.37,z-.46,.035,.035);
+ beam(steel,x-side*1.0,2.52,z-.14,x-side*1.20,2.52,z-.14,.045,.045);
+ box(steel,x-side*1.21,2.52,z-.14,.07,.24,.20);
  // Main boom and dipper stick form an unmistakable raised excavator profile.
  beam(painted,x,2.05,z-.68,x,5.0,z-2.72,.37,.43);
  beam(painted,x,5.0,z-2.72,x,1.85,z-5.28,.27,.31);
