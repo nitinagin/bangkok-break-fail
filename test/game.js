@@ -1816,7 +1816,45 @@ function addRamaLatticeCrane(g,side){
 // no animation, external assets, dynamic lights or road-lane collision geometry.
 const ramaExcavatorUnit=new THREE.BoxGeometry(1,1,1);
 const ramaExcavatorTrackGeo=new THREE.CapsuleGeometry(.45,2.05,4,8);
-const ramaExcavatorPaint=new THREE.MeshStandardMaterial({color:0xc99a2d,metalness:.32,roughness:.58});
+// Mobile-budget PBR weathering for the Rama II excavators: one 128px shared
+// paint/roughness atlas, baked once. The existing instanced parts retain their
+// draw-call count and stay safely behind the construction barriers.
+const excavatorPaintCanvas=document.createElement('canvas');
+const excavatorRoughCanvas=document.createElement('canvas');
+excavatorPaintCanvas.width=excavatorPaintCanvas.height=128;
+excavatorRoughCanvas.width=excavatorRoughCanvas.height=128;
+const excavatorPaintCtx=excavatorPaintCanvas.getContext('2d');
+const excavatorRoughCtx=excavatorRoughCanvas.getContext('2d');
+excavatorPaintCtx.fillStyle='#c79a36';excavatorPaintCtx.fillRect(0,0,128,128);
+excavatorRoughCtx.fillStyle='rgb(174,188,174)';excavatorRoughCtx.fillRect(0,0,128,128);
+// Thin pressed-metal seams, dusty lower edges and small rubbed steel chips.
+for(let x=7;x<128;x+=40){
+ excavatorPaintCtx.fillStyle='rgba(60,50,32,.33)';
+ excavatorPaintCtx.fillRect(x,0,2,128);
+ excavatorPaintCtx.fillStyle='rgba(255,224,139,.25)';
+ excavatorPaintCtx.fillRect(x+3,0,1,128);
+}
+const excavatorDust=excavatorPaintCtx.createLinearGradient(0,0,0,128);
+excavatorDust.addColorStop(0,'rgba(48,45,37,.10)');
+excavatorDust.addColorStop(.56,'rgba(48,45,37,0)');
+excavatorDust.addColorStop(1,'rgba(57,49,36,.46)');
+excavatorPaintCtx.fillStyle=excavatorDust;excavatorPaintCtx.fillRect(0,0,128,128);
+for(let i=0;i<92;i++){
+ const px=(i*73+19*i*i)%126,py=(i*47+11*i*i)%126;
+ const len=2+i%8;
+ excavatorPaintCtx.fillStyle=i%4===0?'rgba(53,58,59,.57)':'rgba(239,216,159,.24)';
+ excavatorPaintCtx.fillRect(px,py,len,1);
+ excavatorRoughCtx.fillStyle=i%4===0?'rgb(113,113,113)':'rgb(214,214,214)';
+ excavatorRoughCtx.fillRect(px,py,len,1+i%2);
+}
+const excavatorPaintMap=new THREE.CanvasTexture(excavatorPaintCanvas);
+excavatorPaintMap.colorSpace=THREE.SRGBColorSpace;
+const excavatorRoughMap=new THREE.CanvasTexture(excavatorRoughCanvas);
+excavatorPaintMap.anisotropy=excavatorRoughMap.anisotropy=2;
+const ramaExcavatorPaint=new THREE.MeshStandardMaterial({
+ color:0xffffff,map:excavatorPaintMap,roughnessMap:excavatorRoughMap,
+ metalness:.28,roughness:.86
+});
 const ramaExcavatorRubber=new THREE.MeshStandardMaterial({color:0x282b2b,metalness:.18,roughness:.91});
 const ramaExcavatorGlass=new THREE.MeshStandardMaterial({color:0x253b43,metalness:.18,roughness:.22});
 const ramaExcavatorSteel=new THREE.MeshStandardMaterial({color:0x555a5b,metalness:.66,roughness:.72});
