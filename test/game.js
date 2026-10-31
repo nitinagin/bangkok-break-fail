@@ -4711,21 +4711,76 @@ function makeConstructionDebris(){
  return g;
 }
 // Rama II police checkpoint: cones, wheeled red barricades and traffic officers.
+// Reflective Rama II diversion panel: Thai lettering and high-vis chevrons are
+// baked into one shared 512x160 atlas, avoiding dozens of separate sign meshes.
+const checkpointWarningCanvas=document.createElement('canvas');
+checkpointWarningCanvas.width=512;checkpointWarningCanvas.height=160;
+const checkpointWarningCtx=checkpointWarningCanvas.getContext('2d');
+const warningPaint=checkpointWarningCtx.createLinearGradient(0,0,0,160);
+warningPaint.addColorStop(0,'#f8b548');warningPaint.addColorStop(.5,'#ed8b23');warningPaint.addColorStop(1,'#a9561b');
+checkpointWarningCtx.fillStyle=warningPaint;checkpointWarningCtx.fillRect(0,0,512,160);
+checkpointWarningCtx.fillStyle='#161b20';
+for(const side of [0,1]){
+ const offset=side?432:0;
+ checkpointWarningCtx.save();checkpointWarningCtx.beginPath();
+ checkpointWarningCtx.rect(offset,0,80,160);checkpointWarningCtx.clip();
+ for(let x=-150;x<200;x+=42){
+  checkpointWarningCtx.beginPath();
+  checkpointWarningCtx.moveTo(offset+x,0);
+  checkpointWarningCtx.lineTo(offset+x+24,0);
+  checkpointWarningCtx.lineTo(offset+x+112,160);
+  checkpointWarningCtx.lineTo(offset+x+88,160);
+  checkpointWarningCtx.closePath();checkpointWarningCtx.fill();
+ }
+ checkpointWarningCtx.restore();
+}
+checkpointWarningCtx.fillStyle='#24282b';checkpointWarningCtx.fillRect(83,12,346,136);
+checkpointWarningCtx.strokeStyle='#f8db81';checkpointWarningCtx.lineWidth=4;
+checkpointWarningCtx.strokeRect(89,18,334,124);
+checkpointWarningCtx.textAlign='center';checkpointWarningCtx.textBaseline='middle';
+checkpointWarningCtx.fillStyle='#fff1c4';
+checkpointWarningCtx.font='bold 57px sans-serif';
+checkpointWarningCtx.fillText('ทางเบี่ยง',256,69,312);
+checkpointWarningCtx.fillStyle='#ffbf63';
+checkpointWarningCtx.font='bold 29px sans-serif';
+checkpointWarningCtx.fillText('ลดความเร็ว',256,117,300);
+const checkpointWarningTexture=new THREE.CanvasTexture(checkpointWarningCanvas);
+checkpointWarningTexture.colorSpace=THREE.SRGBColorSpace;
+checkpointWarningTexture.anisotropy=mobile?2:4;
+const checkpointWarningMaterial=new THREE.MeshStandardMaterial({
+ map:checkpointWarningTexture,metalness:.04,roughness:.43,
+ emissive:0x4b2c0b,emissiveIntensity:.22,side:THREE.DoubleSide
+});
+const checkpointWarningGeometry=new THREE.PlaneGeometry(2.45,.76);
+const checkpointConeReflectorMaterial=new THREE.MeshStandardMaterial({
+ color:0xf6f2da,metalness:.04,roughness:.33,
+ emissive:0x37372b,emissiveIntensity:.22,side:THREE.DoubleSide
+});
+const checkpointConeReflectorGeometry=new THREE.CylinderGeometry(.16,.19,.14,10,1,true);
 function makeCheckpoint(){
  const g=new THREE.Group();
  const red=mat(0xd62828),white=mat(0xf0eee7),orange=mat(0xff681e),uniform=mat(0xa48b6a),vest=mat(0xd2ed45),black=mat(0x222b32);
  for(const x of [-1.65,1.65]){
   const cone=part(g,new THREE.Mesh(new THREE.ConeGeometry(.27,.95,8),orange));cone.position.set(x,.5,.1);
   part(g,cube(.38,.1,.38,white,x,.2,.1));
-  part(g,cube(.46,.1,.14,white,x,.6,.1));
  }
- // Barrier leaves room to steer around either side.
+ // Two reflective collars on each cone share one geometry and one draw call.
+ const collars=new THREE.InstancedMesh(checkpointConeReflectorGeometry,checkpointConeReflectorMaterial,4);
+ const collarPose=new THREE.Object3D();
+ let collarIndex=0;
+ for(const x of [-1.65,1.65])for(const [height,scale] of [[.42,1],[.65,.61]]){
+  collarPose.position.set(x,height,.1);collarPose.rotation.set(0,0,0);
+  collarPose.scale.set(scale,scale,scale);collarPose.updateMatrix();
+  collars.setMatrixAt(collarIndex++,collarPose.matrix);
+ }
+ collars.instanceMatrix.needsUpdate=true;collars.computeBoundingSphere();g.add(collars);
+ // Keep the existing physical barrier footprint and dodge space unchanged.
  for(const z of [-.25,.25])part(g,cube(2.55,.09,.08,red,0,.9,z));
  for(const x of [-1.25,1.25])part(g,cube(.09,1.25,.1,red,x,.64,0));
- part(g,cube(.68,.68,.05,white,0,1.04,.31));
- const sign=part(g,new THREE.Mesh(new THREE.TorusGeometry(.31,.065,6,16),red));sign.position.set(0,1.04,.35);
+ const warningPanel=new THREE.Mesh(checkpointWarningGeometry,checkpointWarningMaterial);
+ warningPanel.position.set(0,1.04,.345);g.add(warningPanel);
  for(const x of [-1.16,1.16])for(const z of [-.28,.28])part(g,ball(.14,black,x,.16,z));
- // Two police silhouettes beside the barrier.
+ // Officers remain off the road centre, so steering and collision are unaffected.
  for(const x of [-2.15,2.15]){
   part(g,cube(.37,.65,.25,uniform,x,1.32,-.6));
   part(g,cube(.39,.2,.27,vest,x,1.53,-.6));
