@@ -220,12 +220,59 @@ export function createExpresswayArt(THREE){
  const bridgeTaillights=new THREE.InstancedMesh(bridgeLensGeometry,bridgeTailMaterial,bridgeLampCount);
  const bridgeLightDummy=new THREE.Object3D();
  const bridgeCarProgress=Array.from({length:bridgeCarCount},(_,i)=>((i*7)%13)/13);
+ // Real shaded sedan silhouettes accompany the elevated traffic lights.
+ // One extruded streamlined shell, side glass and wheel mesh shared by all
+ // 12 cars: three instanced draw calls, no GLB fetches or shadow casters.
+ // Geometry stays on the crossover deck above 8.5m, not in the dodge lanes.
+ const carOutline=new THREE.Shape();
+ carOutline.moveTo(-.68,.11);
+ carOutline.lineTo(-.64,.28);carOutline.lineTo(-.42,.32);
+ carOutline.lineTo(-.25,.55);carOutline.quadraticCurveTo(-.17,.61,-.06,.61);
+ carOutline.lineTo(.20,.59);carOutline.lineTo(.42,.32);
+ carOutline.lineTo(.64,.29);carOutline.lineTo(.70,.13);
+ carOutline.quadraticCurveTo(.70,.09,.62,.09);
+ carOutline.lineTo(-.61,.09);carOutline.closePath();
+ const carShellGeometry=new THREE.ExtrudeGeometry(carOutline,{
+  depth:.92,steps:1,bevelEnabled:true,bevelSegments:1,
+  bevelThickness:.025,bevelSize:.025,curveSegments:2
+ });
+ carShellGeometry.translate(0,0,-.46);
+ const carPaint=new THREE.MeshStandardMaterial({color:0xffffff,metalness:.53,roughness:.31});
+ const bridgeCarBodies=new THREE.InstancedMesh(carShellGeometry,carPaint,bridgeCarCount);
+ const carColors=[0xcbd0d3,0x282e36,0xeee5d3,0x8a1824,0x2b516a,0x696e73];
+ for(let i=0;i<bridgeCarCount;i++)bridgeCarBodies.setColorAt(i,new THREE.Color(carColors[i%carColors.length]));
+ if(bridgeCarBodies.instanceColor)bridgeCarBodies.instanceColor.needsUpdate=true;
+ const glassShape=new THREE.Shape();
+ glassShape.moveTo(-.33,.33);glassShape.lineTo(-.20,.52);
+ glassShape.lineTo(.16,.51);glassShape.lineTo(.34,.33);glassShape.closePath();
+ const glassGeometry=new THREE.ShapeGeometry(glassShape);
+ const carGlass=new THREE.MeshStandardMaterial({color:0x172c3a,metalness:.32,roughness:.19,side:THREE.DoubleSide});
+ const bridgeCarWindows=new THREE.InstancedMesh(glassGeometry,carGlass,bridgeCarCount*2);
+ const tyreGeometry=new THREE.CylinderGeometry(.105,.105,.08,8);
+ tyreGeometry.rotateX(Math.PI/2);
+ const tyreMaterial=new THREE.MeshStandardMaterial({color:0x101215,roughness:.95});
+ const bridgeCarWheels=new THREE.InstancedMesh(tyreGeometry,tyreMaterial,bridgeCarCount*4);
+ const carDummy=new THREE.Object3D();
  function placeBridgeTraffic(){
   for(let i=0;i<bridgeCarCount;i++){
    const bridge=Math.floor(i/4),direction=(i%2===0?1:-1);
    const x=direction*(bridgeCarProgress[i]*13.2-6.6);
    const z=flyoverZ[bridge]+(i%4<2?-.48:.48);
    const frontX=x+direction*.52,rearX=x-direction*.52;
+   carDummy.position.set(x,8.54,z);carDummy.rotation.set(0,0,0);
+   carDummy.scale.set(1,1,1);carDummy.updateMatrix();
+   bridgeCarBodies.setMatrixAt(i,carDummy.matrix);
+   for(let side=0;side<2;side++){
+    const sign=side===0?-1:1;
+    carDummy.position.set(x,8.54,z+sign*.468);
+    carDummy.updateMatrix();
+    bridgeCarWindows.setMatrixAt(i*2+side,carDummy.matrix);
+    for(let axle=0;axle<2;axle++){
+     carDummy.position.set(x+(axle===0?-.44:.44),8.62,z+sign*.49);
+     carDummy.updateMatrix();
+     bridgeCarWheels.setMatrixAt(i*4+side*2+axle,carDummy.matrix);
+    }
+   }
    for(let side=0;side<2;side++){
     const index=i*2+side,offset=side===0?-.28:.28;
     bridgeLightDummy.position.set(frontX,8.63,z+offset);
@@ -238,8 +285,12 @@ export function createExpresswayArt(THREE){
   }
   bridgeHeadlights.instanceMatrix.needsUpdate=true;
   bridgeTaillights.instanceMatrix.needsUpdate=true;
+  bridgeCarBodies.instanceMatrix.needsUpdate=true;
+  bridgeCarWindows.instanceMatrix.needsUpdate=true;
+  bridgeCarWheels.instanceMatrix.needsUpdate=true;
  }
- placeBridgeTraffic();group.add(bridgeHeadlights,bridgeTaillights);
+ placeBridgeTraffic();
+ group.add(bridgeCarBodies,bridgeCarWindows,bridgeCarWheels,bridgeHeadlights,bridgeTaillights);
 
  // Roadside Bangkok expressway acoustic screens: weathered ribbed panels
  // and galvanized uprights. Opaque PBR prevents mobile alpha overdraw.
@@ -461,6 +512,7 @@ gantry.position.z=-75;group.add(gantry);
   for(const material of [towerMat,mastMaterial,steel,warm,poolMaterial,sign.material,concrete,reflective,flyoverConcrete,acousticMat])material.dispose();
   studMaterial.dispose();studMesh.geometry.dispose();
    bridgeHeadMaterial.dispose();bridgeTailMaterial.dispose();
+   carPaint.dispose();carGlass.dispose();tyreMaterial.dispose();
   windowTexture.dispose();emissiveTexture.dispose();poolTexture.dispose();signTexture.dispose();flyoverTexture.dispose();acousticTexture.dispose();barrierTexture.dispose();vmsTexture.dispose();vmsMaterial.dispose();
  }};
 }
