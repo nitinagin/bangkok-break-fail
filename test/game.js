@@ -2399,7 +2399,33 @@ const playerTaillight=new THREE.MeshStandardMaterial({color:0x9b2427,emissive:0x
 const chrome=playerChrome,seat=playerSeat,dark=playerDark;
 function tube(points,r,m){const path=new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(...p)));const mesh=new THREE.Mesh(new THREE.TubeGeometry(path,Math.max(8,points.length*5),r,7,false),m);car.add(mesh);return mesh}
 function ellipsoid(x,y,z,sx,sy,sz,m){const o=ball(1,m,x,y,z);o.scale.set(sx,sy,sz);car.add(o);return o}
-function cyl(r1,r2,h,m,x,y,z,rot=0){const o=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,h,14),m);o.position.set(x,y,z);o.rotation.z=rot;car.add(o);return o}
+// Player tuk-tuk: shared rounded tyre and recessed pressed-steel hub profiles.
+// Six wheel meshes retain their existing draw calls and positions, while 24
+// radial segments and shallow circumferential tread grooves replace toy cylinders.
+// Geometry is allocated once, before the optional GLB; the fallback stays playable.
+const playerTyreProfile=[
+ [.54,-.50],[.72,-.50],[.85,-.47],[.96,-.39],
+ [1,-.31],[.974,-.24],[1,-.18],[1,-.08],
+ [.986,0],[1,.08],[1,.18],[.974,.24],
+ [1,.31],[.96,.39],[.85,.47],[.72,.50],[.54,.50]
+];
+const playerHubProfile=[
+ [0,-.39],[.34,-.39],[.60,-.46],[.84,-.50],
+ [1,-.37],[.93,-.22],[.76,0],[.93,.22],
+ [1,.37],[.84,.50],[.60,.46],[.34,.39],[0,.39]
+];
+const playerTyreGeometry=new THREE.LatheGeometry(
+ playerTyreProfile.map(([r,y])=>new THREE.Vector2(r,y)),24);
+const playerHubGeometry=new THREE.LatheGeometry(
+ playerHubProfile.map(([r,y])=>new THREE.Vector2(r,y)),24);
+function cyl(r1,r2,h,m,x,y,z,rot=0){
+ // This helper only builds the three player wheels; retain a cylinder fallback
+ // for any future non-wheel call that requires unequal end radii.
+ const wheelProfile=r1===r2?(m===playerRubber?playerTyreGeometry:m===chrome?playerHubGeometry:null):null;
+ const o=new THREE.Mesh(wheelProfile||new THREE.CylinderGeometry(r1,r2,h,14),m);
+ if(wheelProfile)o.scale.set(r1,h,r1);
+ o.position.set(x,y,z);o.rotation.z=rot;car.add(o);return o;
+}
 // Three-wheel chassis, rounded bonnet, passenger compartment and front mudguard
 car.add(cube(1.65,.24,2.75,dark,0,.64,0));
 ellipsoid(0,.91,-.78,.87,.42,.86,playerPaint);
