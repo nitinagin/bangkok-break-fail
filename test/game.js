@@ -4526,7 +4526,21 @@ function makeTruck(){
  }
  const cargoMap=new THREE.CanvasTexture(canvas);cargoMap.colorSpace=THREE.SRGBColorSpace;
  cargoMap.anisotropy=Math.min(2,renderer.capabilities.getMaxAnisotropy());
- const cargoPaint=new THREE.MeshStandardMaterial({map:cargoMap,color:0xd7d9d5,metalness:.35,roughness:.73,emissive:0x141719,emissiveIntensity:.22});
+ // Baked tangent-space corrugation normals give the aluminium box ribbed
+ // highlights under headlights. One tiny texture shared by the cached truck,
+ // no new meshes, lights, draw calls or animation-loop work.
+ const ribNormalCanvas=document.createElement('canvas');ribNormalCanvas.width=ribNormalCanvas.height=256;
+ const ribNormalCtx=ribNormalCanvas.getContext('2d');
+ for(let x=0;x<256;x++){
+  const slope=Math.cos((x%15)/15*Math.PI*2)*.34;
+  const nx=Math.max(-1,Math.min(1,slope));
+  const nz=Math.sqrt(1-nx*nx);
+  ribNormalCtx.fillStyle='rgb('+Math.round(128+127*nx)+',128,'+Math.round(128+127*nz)+')';
+  ribNormalCtx.fillRect(x,0,1,256);
+ }
+ const ribNormalMap=new THREE.CanvasTexture(ribNormalCanvas);
+ ribNormalMap.anisotropy=Math.min(2,renderer.capabilities.getMaxAnisotropy());
+ const cargoPaint=new THREE.MeshStandardMaterial({map:cargoMap,normalMap:ribNormalMap,normalScale:new THREE.Vector2(.45,.45),color:0xd7d9d5,metalness:.35,roughness:.73,emissive:0x141719,emissiveIntensity:.22});
  g.add(cube(2.55,.26,6.25,chassis,0,.92,-.05));
  // Freight compartment ends at z=-3.05; the front cab extends to z=3.08.
  g.add(cube(2.5,2.45,3.8,cargoPaint,0,2.32,-1.15));
