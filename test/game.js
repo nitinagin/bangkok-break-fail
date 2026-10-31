@@ -3542,6 +3542,34 @@ function makeTaxi(){
  }
  const frontGlass=new THREE.Mesh(taxiFrontWindshieldGeometry,taxiWindshieldMaterial);
  frontGlass.position.set(0,1.55,.67);frontGlass.rotation.x=-.62;g.add(frontGlass);
+ // Two parked windscreen wipers, fitted to the sloped glass rather than
+ // floating in world space. Two instanced draws, shared across near-field
+ // Bangkok taxi clones; distant traffic LOD omits them entirely.
+ const wiperPose=new THREE.Object3D(),wiperUp=new THREE.Vector3(0,1,0);
+ const wiperArmGeometry=new THREE.CylinderGeometry(.012,.015,1,6);
+ const wiperBladeGeometry=new THREE.CylinderGeometry(.018,.018,1,6);
+ const wiperArms=new THREE.InstancedMesh(wiperArmGeometry,taxiRubber,2);
+ const wiperBlades=new THREE.InstancedMesh(wiperBladeGeometry,taxiRubber,2);
+ for(let i=0;i<2;i++){
+  const side=i===0?-1:1;
+  const pivot=new THREE.Vector3(side*.47,-.235,.025);
+  const tip=new THREE.Vector3(side*.15,.035,.025);
+  const arm=tip.clone().sub(pivot);
+  wiperPose.position.copy(pivot).add(tip).multiplyScalar(.5);
+  wiperPose.quaternion.setFromUnitVectors(wiperUp,arm.clone().normalize());
+  wiperPose.scale.set(1,arm.length(),1);wiperPose.updateMatrix();
+  wiperArms.setMatrixAt(i,wiperPose.matrix);
+  const bladeVector=new THREE.Vector3(side*.19,.18,0);
+  wiperPose.position.copy(tip);
+  wiperPose.quaternion.setFromUnitVectors(wiperUp,bladeVector.clone().normalize());
+  wiperPose.scale.set(1,bladeVector.length(),1);wiperPose.updateMatrix();
+  wiperBlades.setMatrixAt(i,wiperPose.matrix);
+ }
+ for(const wiper of [wiperArms,wiperBlades]){
+  wiper.instanceMatrix.needsUpdate=true;
+  wiper.computeBoundingSphere();
+  frontGlass.add(wiper);
+ }
  const rearGlass=new THREE.Mesh(taxiRearWindshieldGeometry,taxiWindshieldMaterial);
  rearGlass.position.set(0,1.55,-.83);rearGlass.rotation.x=.62;g.add(rearGlass);
  // Distinct Bangkok TAXI-METER roof sign, painted once for all traffic clones.
