@@ -4207,11 +4207,13 @@ function makeBike(){
 // All geometry is constructed once in obstacleTemplates and shared by spawned clones.
 function makeYaksha(){
  const g=new THREE.Group();
- const enamel=new THREE.MeshStandardMaterial({color:0x176e62,metalness:.36,roughness:.42});
- const armor=new THREE.MeshStandardMaterial({color:0x263c55,metalness:.32,roughness:.56});
- const darkGold=new THREE.MeshStandardMaterial({color:0x876126,metalness:.76,roughness:.36});
+ // Aged-gold temple guardian turned skeletal apparition: no toy-green skin.
+ const enamel=new THREE.MeshStandardMaterial({color:0x745735,metalness:.24,roughness:.78});
+ const armor=new THREE.MeshStandardMaterial({color:0x3e3026,metalness:.38,roughness:.72});
+ const darkGold=new THREE.MeshStandardMaterial({color:0x876126,metalness:.63,roughness:.49});
+ const skullGold=new THREE.MeshStandardMaterial({color:0xb49462,metalness:.16,roughness:.83});
  const porcelain=new THREE.MeshStandardMaterial({color:0xe7d9b5,roughness:.54});
- const pupil=new THREE.MeshStandardMaterial({color:0x171d1d,roughness:.3});
+ const socket=new THREE.MeshStandardMaterial({color:0x100e0d,roughness:.97,metalness:0});
  const add=(mesh,x=0,y=0,z=0)=>{mesh.position.set(x,y,z);g.add(mesh);return mesh};
  const lathe=(profile,material,x=0,y=0,z=0)=>add(new THREE.Mesh(
   new THREE.LatheGeometry(profile.map(p=>new THREE.Vector2(p[0],p[1])),16),material),x,y,z);
@@ -4245,16 +4247,27 @@ function makeYaksha(){
   // Thai guardian's curled ear ornaments and angular, dark brow ridges.
   orb(.25,gold2,side*.68,3.58,.05,.42,1.35,.75);
   limb([side*.13,3.76,.59],[side*.44,3.72,.51],.065,.09,darkGold);
-  orb(.17,porcelain,side*.3,3.55,.59,1,.58,.45);
-  orb(.075,pupil,side*.3,3.55,.665,1,.75,.6);
+  // Recessed black eye sockets, not friendly round cartoon eyes.
+  orb(.19,socket,side*.3,3.55,.655,1.25,1.17,.48);
   const fang=add(new THREE.Mesh(new THREE.ConeGeometry(.11,.43,9),porcelain),side*.31,3.14,.64);
   fang.rotation.z=side*.19;
  }
  // Cheekbones, broad jaw, long nose and a non-cartoon mouth.
- orb(.76,enamel,0,3.51,.03,.86,1.04,.79);
- orb(.39,enamel,0,3.19,.4,1.2,.48,.85);
- orb(.19,enamel,0,3.43,.66,.65,1.6,.8);
- orb(.36,maroon,0,3.09,.59,1,.16,.42);
+ orb(.76,skullGold,0,3.51,.03,.86,1.04,.79);
+ orb(.39,skullGold,0,3.19,.4,1.2,.48,.85);
+ orb(.19,skullGold,0,3.43,.66,.65,1.6,.8);
+ // Hollow nose and open dark jaw; one instanced row of sharp teeth adds one draw.
+ orb(.12,socket,0,3.31,.804,.74,.78,.22);
+ orb(.34,socket,0,3.08,.683,1,.2,.27);
+ const teeth=new THREE.InstancedMesh(new THREE.ConeGeometry(.067,.20,7),porcelain,8);
+ const toothPose=new THREE.Object3D();
+ for(let i=0;i<8;i++){
+  toothPose.position.set((i-3.5)*.085,3.055+(i%2)*.012,.763);
+  toothPose.rotation.z=Math.PI;
+  toothPose.scale.set(1,i===1||i===6?1.3:.85,1);
+  toothPose.updateMatrix();teeth.setMatrixAt(i,toothPose.matrix);
+ }
+ teeth.instanceMatrix.needsUpdate=true;teeth.computeBoundingSphere();g.add(teeth);
  // Layered, pointed chada crown and embossed gold forehead band.
  lathe([[0,0],[.68,0],[.73,.12],[.58,.27],[.52,.49],[.35,.65],[.28,.94],[.16,1.23],[0,1.56]],gold2,0,4.09);
  const rim=add(new THREE.Mesh(new THREE.TorusGeometry(.65,.075,8,24),darkGold),0,4.11,0);
