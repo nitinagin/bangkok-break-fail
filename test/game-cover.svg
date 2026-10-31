@@ -98,14 +98,20 @@
  <circle cx="579" cy="1400" r="25" fill="#fff8ce"/>
  <circle cx="286" cy="1399" r="23" fill="#ffe3a0" stroke="#bd8c3d" stroke-width="8"/>
  <path d="M645 1390L684 1383 695 1428 656 1440Z" fill="#b71e27" stroke="#fda15e" stroke-width="6"/>
- <path d="M344 1100L353 1055 507 1052 527 1100" fill="#0a1017" stroke="#9da8a2" stroke-width="8"/>
- <rect x="367" y="1058" width="131" height="42" rx="7" fill="#b18a25" stroke="#e8cd79" stroke-width="4"/>
- <text x="433" y="1087" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="900" fill="#19171c">TAXI</text>
+ <!-- Tuk-tuks have a curved canopy frame, not a taxi roof light. -->
+ <path d="M257 1164Q277 1081 365 1077L559 1080Q632 1089 657 1170" fill="none" stroke="#0b141b" stroke-width="24" stroke-linecap="round"/>
+ <path d="M257 1164Q277 1081 365 1077L559 1080Q632 1089 657 1170" fill="none" stroke="#789198" stroke-width="6" opacity=".86"/>
+ <path d="M298 1115Q456 1062 604 1118" fill="none" stroke="#c4c4a7" stroke-width="3" opacity=".58"/>
+ <path d="M290 1140L301 1114M607 1125L618 1147" stroke="#111d25" stroke-width="12"/>
  <path d="M340 1260L352 1280 393 1274" stroke="#cbd3d3" stroke-width="7" fill="none"/>
  <path d="M646 1257L675 1250 688 1265" stroke="#d3e2dc" stroke-width="7" fill="none"/>
  <ellipse cx="578" cy="1402" rx="100" ry="112" fill="url(#headLamp)" opacity=".23"/>
  <path d="M370 1670L275 1795M607 1670L725 1795" stroke="#edaa48" stroke-width="15" opacity=".28"/>
  <path d="M420 1690L392 1790M540 1690L566 1790" stroke="#fff3ac" stroke-width="5" opacity=".32"/>
+ <!-- Broken neon and headlight reflections across wet, uneven asphalt. -->
+ <path d="M48 1742l174 21m-117-49 88 8m508 28 143-23m-113-24 75-16" stroke="#ec3d54" stroke-width="4" opacity=".27"/>
+ <path d="M331 1747l-19 38m49-30-8 24m291-45 24 44m-48-36 12 29" stroke="#a5d9ed" stroke-width="3" opacity=".33"/>
+ <path d="M390 1718l-24 77m30-49-11 48m176-78 27 76m-7-44 12 44" stroke="#ffdba0" stroke-width="2" opacity=".4"/>
  <rect x="0" y="1715" width="900" height="85" fill="url(#road)"/>
 </g>
 <g opacity=".9">
@@ -113,11 +119,12 @@
  <g stroke="#ff245b" stroke-width="7" opacity=".7"><path d="M55 612v-130M166 600v-130M742 594v-134"/></g>
  <g stroke="#3bbfff" stroke-width="6" opacity=".65"><path d="M320 612v-122M602 604v-120M842 610v-128"/></g>
 </g>
-<g font-family="Arial,sans-serif" font-weight="900" text-anchor="middle">
- <rect x="32" y="735" width="245" height="74" rx="9" fill="#600016" stroke="#ff4765" stroke-width="5"/>
- <text x="155" y="784" font-size="44" fill="#ffeaa2">เยาวราช</text>
- <rect x="639" y="842" width="230" height="70" rx="8" fill="#003e52" stroke="#45d9ff" stroke-width="5"/>
- <text x="753" y="890" font-size="39" fill="#fff2bf">พระราม 2</text>
+<!-- One readable sign per destination: remove the doubled oversized floating billboards. -->
+<g fill="none" stroke-linecap="round" opacity=".48">
+ <path d="M0 802Q420 858 900 786" stroke="#252e36" stroke-width="6"/>
+ <path d="M0 810Q420 866 900 794" stroke="#84939b" stroke-width="1.5"/>
+ <path d="M0 945Q430 978 900 930" stroke="#252e36" stroke-width="4"/>
+ <path d="M0 952Q430 985 900 937" stroke="#84939b" stroke-width="1"/>
 </g>
 <g stroke-linecap="round" opacity=".7">
  <path d="M60 1290L275 1790" stroke="#ff1b4c" stroke-width="8" filter="url(#glow)"/>
