@@ -1816,6 +1816,10 @@ function addRamaLatticeCrane(g,side){
 // no animation, external assets, dynamic lights or road-lane collision geometry.
 const ramaExcavatorUnit=new THREE.BoxGeometry(1,1,1);
 const ramaExcavatorTrackGeo=new THREE.CapsuleGeometry(.45,2.05,4,8);
+// Recessed idler/sprocket and lower bogie wheels make the tracked chassis read
+// as heavy construction machinery. Shared low-poly geometry, one instanced draw
+// per parked excavator, no moving parts, lights or external model downloads.
+const ramaExcavatorWheelGeo=new THREE.CylinderGeometry(.32,.32,.13,12);
 // Mobile-budget PBR weathering for the Rama II excavators: one 128px shared
 // paint/roughness atlas, baked once. The existing instanced parts retain their
 // draw-call count and stay safely behind the construction barriers.
@@ -1897,7 +1901,28 @@ function addRamaExcavator(g,side){
   tracks.setMatrixAt(i,pose.matrix);
  }
  tracks.instanceMatrix.needsUpdate=true;tracks.computeBoundingSphere();g.add(tracks);
+ // Steel idler/sprocket discs and three lower bogie rollers per rubber track.
+ // Cylinder axes point outward; wheel faces just peek through the track sides.
+ // All ten wheels share one draw call and stay behind the roadwork barriers.
+ const trackWheels=new THREE.InstancedMesh(ramaExcavatorWheelGeo,ramaExcavatorSteel,10);
+ let trackWheelIndex=0;
+ for(const trackSide of [-1,1]){
+  for(const wheel of [
+   [-1.00,.55,.31],[1.00,.55,.31],
+   [-.52,.43,.20],[0,.43,.20],[.52,.43,.20]
+  ]){
+   pose.position.set(x+trackSide*1.16,wheel[1],z+wheel[0]);
+   pose.rotation.set(0,0,Math.PI/2);
+   pose.scale.set(wheel[2]/.32,1,wheel[2]/.32);
+   pose.updateMatrix();
+   trackWheels.setMatrixAt(trackWheelIndex++,pose.matrix);
+  }
+ }
+ if(trackWheelIndex!==10)throw Error('Rama II excavator wheel count mismatch');
+ trackWheels.instanceMatrix.needsUpdate=true;
+ trackWheels.computeBoundingSphere();g.add(trackWheels);
  // Painted turntable, rear counterweight, offset operator cab and roof.
+ box(steel,x,.83,z,1.15,.24,1.95); // undercarriage frame between the tracks
  box(painted,x,1.2,z,1.88,.5,2.25);
  box(painted,x,1.67,z+.8,1.95,.65,.9);
  box(painted,x-side*.42,2.15,z+.25,.96,1.05,1.25);
