@@ -4492,16 +4492,19 @@ function makeCheckpoint(){
 // Rama II cargo truck: large Thai-style six-wheeler with cargo box and rear safety stripes.
 function makeTruck(){
  const g=new THREE.Group();
- // Rama II six-wheeler: sloped stamped-metal cab, corrugated freight box and
+ // Rama II six-wheeler: PBR tail/marker lamps and reflective strips retain
+ // a small night-time glow, while the cargo box stays mostly unlit.
+ // Reuse existing meshes/materials: zero additional lights or draw calls.
+ // Sloped stamped-metal cab, corrugated freight box and
  // rear safety fittings. This is the local, playable fallback (no GLB download).
  // cachedObstacle('truck') builds it once; clones share geometry and PBR maps.
  const cabPaint=new THREE.MeshPhysicalMaterial({color:0xe7e3d7,metalness:.24,roughness:.55,clearcoat:.3,clearcoatRoughness:.38});
  const chassis=new THREE.MeshStandardMaterial({color:0x252b30,metalness:.48,roughness:.77});
  const rubber=new THREE.MeshStandardMaterial({color:0x1d2328,metalness:0,roughness:.95});
  const glass=new THREE.MeshPhysicalMaterial({color:0x34566b,metalness:.18,roughness:.24,clearcoat:.72,clearcoatRoughness:.17,side:THREE.DoubleSide});
- const red=new THREE.MeshStandardMaterial({color:0xa92524,metalness:.1,roughness:.48});
- const amber=new THREE.MeshStandardMaterial({color:0xd99a32,metalness:.08,roughness:.43});
- const reflector=new THREE.MeshStandardMaterial({color:0xe4dfca,metalness:.05,roughness:.38});
+ const red=new THREE.MeshStandardMaterial({color:0xa92524,metalness:.1,roughness:.48,emissive:0x690a07,emissiveIntensity:.68});
+ const amber=new THREE.MeshStandardMaterial({color:0xd99a32,metalness:.08,roughness:.43,emissive:0x693006,emissiveIntensity:.52});
+ const reflector=new THREE.MeshStandardMaterial({color:0xe4dfca,metalness:.05,roughness:.38,emissive:0x5e4d30,emissiveIntensity:.65});
  // One 256px atlas for ribbed aluminium, grime and worn paint. No per-frame work.
  const canvas=document.createElement('canvas');canvas.width=canvas.height=256;
  const ctx=canvas.getContext('2d');
@@ -4523,7 +4526,7 @@ function makeTruck(){
  }
  const cargoMap=new THREE.CanvasTexture(canvas);cargoMap.colorSpace=THREE.SRGBColorSpace;
  cargoMap.anisotropy=Math.min(2,renderer.capabilities.getMaxAnisotropy());
- const cargoPaint=new THREE.MeshStandardMaterial({map:cargoMap,color:0xd7d9d5,metalness:.35,roughness:.73});
+ const cargoPaint=new THREE.MeshStandardMaterial({map:cargoMap,color:0xd7d9d5,metalness:.35,roughness:.73,emissive:0x141719,emissiveIntensity:.22});
  g.add(cube(2.55,.26,6.25,chassis,0,.92,-.05));
  // Freight compartment ends at z=-3.05; the front cab extends to z=3.08.
  g.add(cube(2.5,2.45,3.8,cargoPaint,0,2.32,-1.15));
