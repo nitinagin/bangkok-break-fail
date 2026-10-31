@@ -4738,7 +4738,35 @@ hazards.push({g,type,madness,boss,durianSide,passed:false,hit:false,phase:Math.r
 let fallbackKeySteer=0,fallbackDragSteer=0,fallbackLeft=false,fallbackRight=false;
 let paused=false,challengeStage=0,challengeDisplay='',comboTime=0,active=false,meters=0,bonus=0,speed=120,x=0,tilt=0,neutral=null,lastGamma=null,hasMotion=false,smoothed=0,spawnClock=0,inv=0,flips=0,combo=0,misses=0,crashes=0,best=0,last=performance.now(),shake=0,missionDone=false,soundOn=true,audio=null;try{best=Number(localStorage.getItem('bbf-best3d')||0)}catch(e){}
 function reset(){for(const crossing of yaowaratCrosswalks){crossing.position.z=crossing.userData.startZ;crossing.visible=true;}updateYaowaratWires(0,true);nightCount=0;expresswayArt.group.visible=false;pattayaStreet.visible=false;darkRoadMarkers.visible=false;darkRoadReflectors.visible=false;darkRoadFoliage.visible=false;darkHeadlight.visible=false;darkRoadPaint.visible=false;darkRoadLowBeam.visible=false;darkRoadPaintTexture.offset.y=0;darkRoadWave=0;for(let i=0;i<darkMarkerZ.length;i++)darkMarkerZ[i]=9-i*8;updateDarkRoadMarkers(0);for(let i=0;i<darkRoadFoliageZ.length;i++)darkRoadFoliageZ[i]=10-i*7.5;updateDarkRoadFoliage(0);darkRoadTexture.offset.y=0;darkRoadNormalTexture.offset.y=0;darkRoadRoughnessTexture.offset.y=0;pattayaWave=0;for(let i=0;i<pattayaShops.length;i++)pattayaShops[i].position.z=-8-i*9.6;updatePattayaReflections();grandmaTriggeredNight=0;nextDarkGrandmaScore=24000;for(const mirror of cockpitSideMirrors){mirror.housing.visible=true;mirror.glass.visible=true}if(grandmaChase){scene.remove(grandmaChase.g);grandmaChase=null}storyProps.forEach(p=>scene.remove(p.g));storyProps.length=0;visualRush=0;camera.fov=76;camera.updateProjectionMatrix();cockpit.position.y=-.22;paused=false;$('pauseBtn').textContent='⏸';bossSpawned=false;bossBeaten=false;for(const p of props)p.visible=true;neonReflections.visible=true;for(const mesh of streetLampMeshes)mesh.visible=true;updateYaowaratStreetlights();updateYaowaratReflections();ramaBeaconPhase=-1;for(const p of ramaStructures){p.visible=false;p.position.z=p.userData.startZ;}for(const shop of roadsideShops){shop.g.visible=shop.stage===1;shop.g.position.z=shop.startZ;}for(const stall of marketStalls){stall.visible=false;stall.position.z=stall.userData.startZ;}for(const tent of marketCanopies){tent.visible=false;tent.position.z=tent.userData.startZ;}for(const bump of marketBumps){bump.visible=false;bump.position.z=bump.userData.startZ;}for(const mesh of marketCrowdMeshes)mesh.visible=false;canalGroup.visible=false;districtIndex=-1;applyDistrict(1);scene.background.copy(districtSkies[1]);scene.fog.color.copy(districtSkies[1]);spawnIndex=0;eventCount=0;lastEventMeters=-250;active=true;queueOptionalModels();meters=0;bonus=(new URLSearchParams(window.location.search).get('stage')==='dark-road'||window.location.pathname.endsWith('/dark-road.html'))?23000:0;missionDone=false;shake=0;speed=120;dialNeedlePivot.rotation.z=0;x=0;tilt=0;fallbackKeySteer=0;fallbackDragSteer=0;fallbackLeft=false;fallbackRight=false;fallbackPointer=null;neutral=lastGamma;smoothed=0;spawnClock=.45;inv=0;flips=0;combo=0;comboTime=0;challengeStage=0;challengeDisplay='';challenge.textContent='🎯 SURVIVE 500m · +250';misses=0;crashes=0;hazards.forEach(h=>scene.remove(h.g));hazards.length=0;trafficContactShadows.count=0;overlay.style.display='none';hint.textContent=bonus>=23000?'🌑 DARK ROAD · HEADLIGHTS ONLY · TILT TO STEER':'📱 SMALL TILTS TO STEER · 🎯 RECENTER'}
-function finish(){active=false;const points=Math.floor(meters+bonus);if(points>best){best=points;try{localStorage.setItem('bbf-best3d',String(best))}catch(e){}}panel.innerHTML='<h1>💥 GAME OVER!</h1><p>SCORE '+points+' · BEST '+best+'</p><p>Near misses '+misses+' · Crashes '+crashes+'</p><p>'+(missionDone?'🏆 1000m mission complete!':'🎯 Reach 1000m for +500 points')+'</p><button id="again">TRY AGAIN</button><small>No brakes. No rules. Just Bangkok.</small>';overlay.style.display='grid';$('again').onclick=reset}
+function finish(){
+ active=false;
+ const points=Math.floor(meters+bonus);
+ if(points>best){best=points;try{localStorage.setItem('bbf-best3d',String(best))}catch(e){}}
+ // Stage boundaries match the live score-based stage transitions.
+ const stages=[
+  {at:0,name:'YAOWARAT'},{at:3000,name:'RAMA II'},
+  {at:8000,name:'JJ MARKET'},{at:10000,name:'FLOATING MARKET'},
+  {at:12000,name:'EXPRESSWAY'},{at:16000,name:'PATTAYA'},
+  {at:23000,name:'DARK ROAD'}
+ ];
+ let stageIndex=0;
+ for(let i=1;i<stages.length;i++)if(points>=stages[i].at)stageIndex=i;
+ const stage=stages[stageIndex],next=stages[stageIndex+1];
+ const percent=next?Math.max(0,Math.min(100,Math.round((points-stage.at)/(next.at-stage.at)*100))):100;
+ const nextLabel=next?(next.at-points).toLocaleString('en-US')+' PTS TO '+next.name:'ALL STAGES UNLOCKED';
+ panel.innerHTML='<h1>💥 GAME OVER</h1>'+
+  '<div class="result-score">'+points.toLocaleString('en-US')+'</div>'+
+  '<div class="result-caption">YOUR SCORE</div>'+
+  '<div class="result-best">🏆 PERSONAL BEST '+best.toLocaleString('en-US')+'</div>'+
+  '<div class="result-stage">📍 '+stage.name+'</div>'+
+  '<div class="result-progress" role="progressbar" aria-label="Progress to next stage" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+percent+'"><span style="width:'+percent+'%"></span></div>'+
+  '<div class="result-next">'+nextLabel+'</div>'+
+  '<div class="result-stats">NEAR MISSES <strong>'+misses+'</strong><span>·</span> CRASHES <strong>'+crashes+'</strong></div>'+
+  '<p class="result-mission">'+(missionDone?'🏆 1000m MISSION COMPLETE':'🎯 SURVIVE 1000m FOR +500')+'</p>'+
+  '<button id="again">TRY AGAIN</button><small>No brakes. No rules. Just Bangkok.</small>';
+ overlay.style.display='grid';
+ $('again').onclick=reset;
+}
 function sound(freq=240,duration=.12,type='square'){if(!soundOn)return;try{audio=audio||new (window.AudioContext||window.webkitAudioContext)();if(audio.state==='suspended')audio.resume();const o=audio.createOscillator(),gain=audio.createGain();o.type=type;o.frequency.setValueAtTime(freq,audio.currentTime);o.frequency.exponentialRampToValueAtTime(Math.max(55,freq*.55),audio.currentTime+duration);gain.gain.setValueAtTime(.075,audio.currentTime);gain.gain.exponentialRampToValueAtTime(.001,audio.currentTime+duration);o.connect(gain);gain.connect(audio.destination);o.start();o.stop(audio.currentTime+duration)}catch(e){}}
 // 8000-point stage: Chatuchak (JJ Market) craft, vintage and plant stalls.
 // Lightweight geometry keeps the center road playable for tilt steering.
