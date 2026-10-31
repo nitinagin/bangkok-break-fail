@@ -1899,6 +1899,41 @@ function updateRamaBeacons(now){
   lamps.instanceColor.needsUpdate=true;
  }
 }
+// Rama II night construction: retroreflective Thai/English warning boards.
+// One baked 512x256 PBR atlas, three instanced signs per work zone.
+// Signs are at x=+/-7.35, entirely behind the x=+/-6.05 barriers.
+const ramaWarningCanvas=document.createElement('canvas');
+ramaWarningCanvas.width=512;ramaWarningCanvas.height=256;
+const ramaWarningCtx=ramaWarningCanvas.getContext('2d');
+ramaWarningCtx.fillStyle='#e9a42e';ramaWarningCtx.fillRect(0,0,512,256);
+ramaWarningCtx.fillStyle='#191c20';ramaWarningCtx.fillRect(0,0,512,24);
+ramaWarningCtx.fillRect(0,232,512,24);
+for(let i=0;i<10;i++){
+ ramaWarningCtx.fillStyle=i%2?'#e9a42e':'#191c20';
+ ramaWarningCtx.beginPath();ramaWarningCtx.moveTo(i*56-15,0);
+ ramaWarningCtx.lineTo(i*56+13,0);ramaWarningCtx.lineTo(i*56+35,24);
+ ramaWarningCtx.lineTo(i*56+7,24);ramaWarningCtx.closePath();ramaWarningCtx.fill();
+}
+ramaWarningCtx.strokeStyle='#202024';ramaWarningCtx.lineWidth=9;
+ramaWarningCtx.strokeRect(8,31,496,194);
+ramaWarningCtx.textAlign='center';ramaWarningCtx.textBaseline='middle';
+ramaWarningCtx.fillStyle='#101317';
+ramaWarningCtx.font='bold 49px sans-serif';
+ramaWarningCtx.fillText('ระวังเขตก่อสร้าง',256,93,470);
+ramaWarningCtx.font='bold 40px Arial,sans-serif';
+ramaWarningCtx.fillText('ROAD WORK AHEAD',256,166,480);
+ramaWarningCtx.font='bold 21px Arial,sans-serif';
+ramaWarningCtx.fillText('RAMA II  •  SLOW DOWN',256,208,480);
+const ramaWarningTexture=new THREE.CanvasTexture(ramaWarningCanvas);
+ramaWarningTexture.colorSpace=THREE.SRGBColorSpace;
+ramaWarningTexture.anisotropy=2;
+const ramaWarningMaterial=new THREE.MeshStandardMaterial({
+ map:ramaWarningTexture,roughness:.63,metalness:.03,
+ emissive:0xffaa44,emissiveMap:ramaWarningTexture,emissiveIntensity:.20,
+ side:THREE.DoubleSide
+});
+const ramaWarningGeometry=new THREE.PlaneGeometry(2.35,1.18);
+const ramaWarningPostGeometry=new THREE.BoxGeometry(.075,.85,.075);
 function ramaWorkZone(side,z){
  const g=new THREE.Group();
  // Fourteen weathered precast barriers and inward-facing hazard chevrons.
@@ -1920,6 +1955,20 @@ function ramaWorkZone(side,z){
  beacons.instanceMatrix.needsUpdate=true;
  beacons.computeBoundingSphere();
  g.add(beacons);ramaBeaconMeshes.push(beacons);
+ // Three roadside Thai/English roadwork boards use one instanced draw call.
+ // Mounting posts stay entirely behind the concrete barriers, never in a dodge lane.
+ const warningBoards=new THREE.InstancedMesh(ramaWarningGeometry,ramaWarningMaterial,3);
+ const warningPosts=new THREE.InstancedMesh(ramaWarningPostGeometry,siteSteel,6);
+ for(let i=0;i<3;i++){
+  const signZ=-20+i*20,signX=side*7.35;
+  warningBoards.setMatrixAt(i,new THREE.Matrix4().makeTranslation(signX,2.20,signZ));
+  for(let p=0;p<2;p++)warningPosts.setMatrixAt(i*2+p,
+   new THREE.Matrix4().makeTranslation(signX+(p?-.69:.69),1.33,signZ-.045));
+ }
+ for(const mesh of [warningBoards,warningPosts]){
+  mesh.instanceMatrix.needsUpdate=true;mesh.computeBoundingSphere();g.add(mesh);
+ }
+
  // A separate unfinished pier, behind the barriers and clear of the roadway.
  g.add(cube(2.4,.7,2.4,siteConcrete,side*10,.35,-6));
  g.add(cube(1.7,10,1.7,siteConcrete,side*10,5.35,-6));
