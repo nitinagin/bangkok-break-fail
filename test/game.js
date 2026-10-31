@@ -7,7 +7,17 @@ import {makeExpresswayVehicle} from "./expressway-vehicle-models.js";
 const $=id=>document.getElementById(id),hud=$('score'),status=$('status'),hint=$('hint'),challenge=$('challenge'),districtLabel=$('district'),overlay=$('overlay'),panel=$('panel');
 let renderer;try{renderer=new THREE.WebGLRenderer({antialias:false,powerPreference:'high-performance'});}catch(e){$('error').style.display='block';throw e}
 const mobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);let mobilePixelRatio=Math.min(devicePixelRatio||1,mobile?1.05:1.25);renderer.setPixelRatio(mobilePixelRatio);renderer.setSize(innerWidth,innerHeight);renderer.setClearColor(0x20104e);document.body.insertBefore(renderer.domElement,document.body.firstChild);
-const scene=new THREE.Scene();scene.background=new THREE.Color(0x20104e);scene.fog=new THREE.Fog(0x20104e,48,145);const districtSkies=[new THREE.Color(0x56cfff),new THREE.Color(0x131d30),new THREE.Color(0x8797a3)];const darkRoadSky=new THREE.Color(0x010308);let districtIndex=-1;
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x20104e);scene.fog=new THREE.Fog(0x20104e,48,145);const districtSkies=[new THREE.Color(0x56cfff),new THREE.Color(0x131d30),new THREE.Color(0x8797a3)];const darkRoadSky=new THREE.Color(0x010308);
+// District-specific nocturnal atmosphere: urban light pollution remains visible
+// above Yaowarat, JJ and the expressway; Rama II and Dark Road stay unlit.
+// Colors are reused; no new textures, lights, meshes or draw calls.
+const districtNightSkies=[
+ new THREE.Color(0x131d30),new THREE.Color(0x101b2b),
+ new THREE.Color(0x03060c),new THREE.Color(0x1a2230),
+ new THREE.Color(0x0b1a2d),new THREE.Color(0x1b112b),darkRoadSky
+];
+const districtFogRanges=[[7,52],[10,78],[7,52],[12,86],[16,138],[12,90],[7,52]];
+let districtIndex=-1;
 const camera=new THREE.PerspectiveCamera(76,innerWidth/innerHeight,.1,180);camera.position.set(0,2.15,3.15);
 // Keep a single hemisphere + directional light and grade them per district.
 // Night scenes previously inherited full midday sun, washing out neon and PBR depth.
@@ -64,13 +74,13 @@ function updateDarkDust(advance,driverX){
 // [hemisphere intensity, sun intensity, sky fill, ground bounce, key light]
 // Reusing these two lights adds zero lights/draw calls/textures and avoids per-frame work.
 const districtLightPresets=[
- [.10,.045,0x657386,0x080a0d,0x8c98a4], // blackout daytime
- [.10,.045,0x657386,0x080a0d,0x8c98a4], // Yaowarat blackout, neon accents
- [.075,.035,0x657386,0x080a0d,0x8c98a4], // Rama II unlit construction night
- [.10,.045,0x657386,0x080a0d,0x8c98a4], // JJ Market blackout
- [.10,.045,0x657386,0x080a0d,0x8c98a4], // expressway blackout
- [.10,.045,0x657386,0x080a0d,0x8c98a4], // Pattaya blackout, neon accents
- [.075,.035,0x657386,0x080a0d,0x8c98a4] // Dark Road
+ [.10,.045,0x657386,0x080a0d,0x8c98a4], // fallback
+ [.23,.085,0x7387a0,0x1a1118,0xe7b2a0], // Yaowarat: neon and shopfront bounce
+ [.075,.035,0x536173,0x080a0d,0x8c98a4], // Rama II: blackout construction
+ [.25,.105,0x8b9eaf,0x1b1918,0xe8c9a7], // JJ Market: warm stalls
+ [.20,.085,0x7488a0,0x15171d,0xffc68b], // expressway: sodium-vapor spill
+ [.22,.080,0x88769e,0x1b1022,0xffb3d6], // Pattaya: colored nightlife bounce
+ [.075,.035,0x536173,0x080a0d,0x8c98a4] // Dark Road: headlight only
 ];
 const mat=(c)=>new THREE.MeshLambertMaterial({color:c,flatShading:true});const M={road:mat(0x484b52),stripe:mat(0xe2c579),grass:mat(0x34333b),blue:mat(0x18c5d2),gold:mat(0xffd64b),pink:mat(0xf56d85),black:mat(0x252333),glass:mat(0x4d91b9),wheel:mat(0x22212b),durian:mat(0x70b525),spike:mat(0xffe157),skin:mat(0xffcb95),white:mat(0xffffff),red:mat(0xe65a4e),green:mat(0x42ad76),purple:mat(0x8869b6)};
 function cube(w,h,d,m,x=0,y=0,z=0){const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);return o}
@@ -677,7 +687,7 @@ const yaowaratAwningRibMatrix=new THREE.Matrix4();
 const signMaterials=[mat(0xff267a),mat(0x086bd8),mat(0x1cbf7a)];const neonSigns=[new THREE.MeshBasicMaterial({color:0xff3d96}),new THREE.MeshBasicMaterial({color:0x22ffe0}),new THREE.MeshBasicMaterial({color:0xffd64d})];const daySigns=signMaterials.slice();function applyDistrict(i){if(i===districtIndex)return;districtIndex=i;
  const light=districtLightPresets[i]||districtLightPresets[0];
  skyFill.intensity=light[0];sun.intensity=light[1];
- skyFill.color.setHex(light[2]);skyFill.groundColor.setHex(light[3]);sun.color.setHex(light[4]);scene.fog.near=7;scene.fog.far=52;districtLabel.textContent=['☀️ BANGKOK DAYTIME','🌃 YAOWARAT NIGHT · TEST 6.9','🌑 RAMA II · BLACKOUT CONSTRUCTION','🛍️ JJ MARKET · CHATUCHAK · 8000+','🛣️ BANGKOK EXPRESSWAY · 12000+','🌈 PATTAYA WALKING STREET · 16000+','🌑 DARK ROAD · 23000+'][i];for(let k=0;k<3;k++)signMaterials[k]=i===1?neonSigns[k]:daySigns[k];for(const b of props){if(b.userData.sign)b.userData.sign.material=signMaterials[b.userData.signIndex%3]}const rama=i===2;M.grass.color.setHex(rama?0x78746d:0x34333b);M.road.color.setHex(rama?0x777b81:0x56535c);M.stripe.color.setHex(rama?0xe5e1d3:0xe2c579);shoulderPaint.color.setHex(rama?0x77736e:0x444148);curbPaint.color.setHex(rama?0x9d968b:0x756866);hint.textContent=['🛺 WELCOME TO BANGKOK!','🏮 WELCOME TO YAOWARAT!','🌇 SUNSET DRIVE!','🌿 JJ MARKET! WATCH THE TRAFFIC!','🛸 EXPRESSWAY! UFO LASERS INCOMING!','🌈 PATTAYA WALKING STREET!','🔦 DARK ROAD! HEADLIGHTS ONLY!'][i]}
+ skyFill.color.setHex(light[2]);skyFill.groundColor.setHex(light[3]);sun.color.setHex(light[4]);const fogRange=districtFogRanges[i]||districtFogRanges[0];scene.fog.near=fogRange[0];scene.fog.far=fogRange[1];districtLabel.textContent=['☀️ BANGKOK DAYTIME','🌃 YAOWARAT NIGHT · TEST 6.9','🌑 RAMA II · BLACKOUT CONSTRUCTION','🛍️ JJ MARKET · CHATUCHAK · 8000+','🛣️ BANGKOK EXPRESSWAY · 12000+','🌈 PATTAYA WALKING STREET · 16000+','🌑 DARK ROAD · 23000+'][i];for(let k=0;k<3;k++)signMaterials[k]=i===1?neonSigns[k]:daySigns[k];for(const b of props){if(b.userData.sign)b.userData.sign.material=signMaterials[b.userData.signIndex%3]}const rama=i===2;M.grass.color.setHex(rama?0x78746d:0x34333b);M.road.color.setHex(rama?0x777b81:0x56535c);M.stripe.color.setHex(rama?0xe5e1d3:0xe2c579);shoulderPaint.color.setHex(rama?0x77736e:0x444148);curbPaint.color.setHex(rama?0x9d968b:0x756866);hint.textContent=['🛺 WELCOME TO BANGKOK!','🏮 WELCOME TO YAOWARAT!','🌇 SUNSET DRIVE!','🌿 JJ MARKET! WATCH THE TRAFFIC!','🛸 EXPRESSWAY! UFO LASERS INCOMING!','🌈 PATTAYA WALKING STREET!','🔦 DARK ROAD! HEADLIGHTS ONLY!'][i]}
 function makeRoadsideStory(kind,side,z){const g=new THREE.Group();if(kind==='shrine'){g.add(cube(1.5,.25,1.3,storyMat.wood,0,.55,0));for(const sx of [-.53,.53])for(const sz of [-.42,.42])g.add(cube(.12,1.55,.12,storyMat.gold,sx,1.4,sz));g.add(cube(1.9,.3,1.65,storyMat.roof,0,2.25,0));g.add(cube(.55,.8,.52,storyMat.gold,0,1.4,0))}else{g.add(cube(2.4,.95,1.45,storyMat.wood,0,.7,0));g.add(cube(2.65,.15,1.8,storyMat.cloth,0,1.65,0));for(let i=0;i<5;i++){const d=new THREE.Mesh(new THREE.IcosahedronGeometry(.24,0),M.durian);d.position.set((i-2)*.38,1.3,(i%2)*.34-.2);g.add(d)}const vendor=new THREE.Group();vendor.add(cube(.45,.8,.34,storyMat.cloth,0,1.48,0));vendor.add(ball(.34,M.skin,0,2.07,0));vendor.add(ball(.37,M.black,0,2.36,.02));vendor.add(ball(.08,M.white,-.13,2.1,-.29));vendor.add(ball(.08,M.white,.13,2.1,-.29));const arm=cube(.13,.63,.14,M.skin,-.37,1.55,0);vendor.add(arm);vendor.position.x=-.85;g.add(vendor);g.userData.vendorArm=arm;g.userData.vendorFruit=ball(.29,M.durian,-.35,1.65,-.4);g.add(g.userData.vendorFruit)}g.position.set(side*7.35,0,z);scene.add(g);storyProps.push({g,kind,side,triggered:false,dropTime:0});return g}
 // Mobile-budget PBR Speed Grandma: curved silhouette and human-scale features,
  // not the previous flat-shaded box character. No external assets or skinning.
@@ -6541,7 +6551,7 @@ if(meters+bonus>=8000)queueExpresswayBusModel();const nextDistrict=Math.floor(me
  // Cull only small display goods beyond ~43 m; retain silhouettes and signs.
  // This avoids rendering up to 192 tiny meshes in the distant JJ market.
  if(stall.visible)stall.userData.merchandise.visible=stall.position.z>-43;
-}for(const tent of marketCanopies)tent.visible=inMarket&&!canalActive;marketCanopyShadows.visible=inMarket&&!canalActive;for(const bump of marketBumps)bump.visible=inMarket;for(const mesh of marketCrowdMeshes)mesh.visible=inMarket;for(const shop of roadsideShops)shop.g.visible=!inMarket&&!onExpressway&&!inPattaya&&!inDarkRoad&&shop.stage===(onRamaII?2:1);const skyTarget=darkRoadSky;scene.background.lerp(skyTarget,Math.min(1,dt*.8));scene.fog.color.copy(scene.background);// Follow the district's PBR key-light preset. The old 1.65 daytime override
+}for(const tent of marketCanopies)tent.visible=inMarket&&!canalActive;marketCanopyShadows.visible=inMarket&&!canalActive;for(const bump of marketBumps)bump.visible=inMarket;for(const mesh of marketCrowdMeshes)mesh.visible=inMarket;for(const shop of roadsideShops)shop.g.visible=!inMarket&&!onExpressway&&!inPattaya&&!inDarkRoad&&shop.stage===(onRamaII?2:1);const skyTarget=districtNightSkies[nextDistrict]||darkRoadSky;scene.background.lerp(skyTarget,Math.min(1,dt*.8));scene.fog.color.copy(scene.background);// Follow the district's PBR key-light preset. The old 1.65 daytime override
  // washed out Yaowarat and expressway neon within seconds of a stage change.
  sun.intensity+=(districtLightPresets[nextDistrict][1]-sun.intensity)*Math.min(1,dt*1.2);const control=hasMotion?tilt:(fallbackKeySteer||fallbackDragSteer);const steer=control===0?0:Math.sign(control)*Math.pow(Math.abs(control),.82);const desiredX=THREE.MathUtils.clamp(steer*4.1,-4.1,4.1);const oldX=x;x+=(desiredX-x)*(1-Math.exp(-dt*5.1));x=THREE.MathUtils.clamp(x,-4.3,4.3);if(inDarkRoad){darkHeadlight.position.x=x;darkHeadlight.target.position.x=x;}if(canalActive&&x>2.85){hint.textContent='💦 FALLEN INTO THE FLOATING MARKET CANAL!';shake=1;finish();return;}smoothed+=(THREE.MathUtils.clamp((x-oldX)/Math.max(dt,.001)/5,-1,1)-smoothed)*(1-Math.exp(-dt*9));car.position.set(x,0,3);car.rotation.z=-smoothed*.10+Math.sin(t*.01)*.015+Math.sin(flips)*Math.exp(-flips*.45)*.85;car.rotation.x=Math.sin(flips*.8)*Math.exp(-flips*.45)*.65;car.position.y=Math.abs(Math.sin(flips*1.2))*Math.exp(-flips*.32)*.6;flips=Math.max(0,flips-dt*3);const visualSpeed=60+300*(1-Math.exp(-(speed-60)/240));const advance=dt*visualSpeed*.22;if(inDarkRoad){updateDarkRoadMarkers(advance);updateDarkRoadFoliage(advance);updateDarkDust(advance,x);darkRoadTexture.offset.y-=advance*18/230;darkRoadNormalTexture.offset.y=darkRoadTexture.offset.y;darkRoadRoughnessTexture.offset.y=darkRoadTexture.offset.y;}if(onRamaII)ramaRoadTexture.offset.y-=advance*18/230;if(onExpressway){const roadScroll=advance*18/230;expresswayRoadTexture.offset.y-=roadScroll;expresswayRoughnessTexture.offset.y=expresswayRoadTexture.offset.y;}const wiresVisible=nextDistrict===1;for(const mesh of [wirePoles,wireArms,wireRuns])mesh.visible=wiresVisible;if(wiresVisible)updateYaowaratWires(advance);stripes.forEach(s=>{s.visible=!inDarkRoad;s.position.z+=advance;if(s.position.z>16)s.position.z-=230});for(const crossing of yaowaratCrosswalks){crossing.visible=nextDistrict===1;if(crossing.visible){crossing.position.z+=advance;if(crossing.position.z>18)crossing.position.z-=190;}}roadStuds.forEach(s=>{s.visible=!inDarkRoad;s.position.z+=advance;if(s.position.z>16)s.position.z-=228});props.forEach(p=>{
  p.position.z+=advance;if(p.position.z>22)p.position.z-=198;
