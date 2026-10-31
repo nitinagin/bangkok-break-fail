@@ -1738,9 +1738,12 @@ for(let i=0;i<64;i++){
 const barrierStripeTexture=new THREE.CanvasTexture(barrierStripeCanvas);
 barrierStripeTexture.colorSpace=THREE.SRGBColorSpace;
 barrierStripeTexture.anisotropy=mobile?2:4;
+// Headlamp-readable retroreflective chevrons: preserve the PBR concrete and
+// blackout while lifting only the red/white safety tape (zero extra draw calls).
 const siteStripeMaterial=new THREE.MeshStandardMaterial({
- map:barrierStripeTexture,metalness:.04,roughness:.48,
- emissive:0x35130b,emissiveIntensity:.14,side:THREE.DoubleSide
+ map:barrierStripeTexture,metalness:.04,roughness:.38,
+ emissive:0xffffff,emissiveMap:barrierStripeTexture,emissiveIntensity:.62,
+ side:THREE.DoubleSide
 });
 const siteStripeGeo=new THREE.PlaneGeometry(2.75,.36);
 // Exposed reinforcement at the unfinished pier: rusted PBR steel and one
@@ -1929,7 +1932,7 @@ ramaWarningTexture.colorSpace=THREE.SRGBColorSpace;
 ramaWarningTexture.anisotropy=2;
 const ramaWarningMaterial=new THREE.MeshStandardMaterial({
  map:ramaWarningTexture,roughness:.63,metalness:.03,
- emissive:0xffaa44,emissiveMap:ramaWarningTexture,emissiveIntensity:.20,
+ emissive:0xffffff,emissiveMap:ramaWarningTexture,emissiveIntensity:.42,
  side:THREE.DoubleSide
 });
 const ramaWarningGeometry=new THREE.PlaneGeometry(2.35,1.18);
