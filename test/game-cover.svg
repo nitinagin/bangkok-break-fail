@@ -10,14 +10,91 @@
 <filter id="shadow" x="-25%" y="-30%" width="150%" height="175%"><feDropShadow dx="5" dy="9" stdDeviation="6" flood-color="#000" flood-opacity=".9"/></filter>
 <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="13"/></filter>
 <clipPath id="scene"><rect x="0" y="665" width="900" height="1135"/></clipPath>
-</defs>
-<rect width="900" height="1800" fill="url(#sky)"/>
-<ellipse cx="115" cy="560" rx="490" ry="450" fill="url(#redGlow)"/>
-<ellipse cx="850" cy="760" rx="430" ry="580" fill="url(#blueGlow)"/>
-<!-- Original tiny photo retained only as atmospheric scenery, not as title lettering. -->
+
+<linearGradient id="citySky" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#181b2d"/><stop offset=".5" stop-color="#17101b"/><stop offset="1" stop-color="#06080d"/></linearGradient>
+<linearGradie<!-- Crisp, resolution-independent Bangkok night scene. No embedded low-resolution bitmap. -->
 <g clip-path="url(#scene)">
- <svg x="-80" y="650" width="1060" height="1110" viewBox="0 49 180 71" preserveAspectRatio="xMidYMid slice"><image width="180" height="120" href="data:image/jpeg;base64,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"/></svg>
- <rect x="0" y="665" width="900" height="1135" fill="url(#fog)"/>
+ <rect x="0" y="665" width="900" height="1135" fill="url(#citySky)"/>
+ <path d="M0 690H900V1390H0Z" fill="url(#neonHaze)"/>
+ <path d="M0 820L110 825 155 1050 0 1280Z" fill="#080e1a"/>
+ <path d="M900 825L800 840 743 1055 900 1300Z" fill="#080f1b"/>
+ <path d="M0 885L165 900 220 1100 0 1380Z" fill="#151523" stroke="#462538" stroke-width="6"/>
+ <path d="M900 900L735 910 683 1110 900 1400Z" fill="#101726" stroke="#284a63" stroke-width="6"/>
+ <path d="M0 1050L240 1100 300 1260 0 1570Z" fill="#090e16"/>
+ <path d="M900 1050L665 1100 610 1260 900 1570Z" fill="#090d16"/>
+ <path d="M0 1800L355 1050H545L900 1800Z" fill="url(#wetAsphalt)"/>
+ <path d="M0 1790L360 1050" stroke="#f44b5e" stroke-width="10" opacity=".7"/>
+ <path d="M900 1790L540 1050" stroke="#5ed2ff" stroke-width="9" opacity=".6"/>
+ <path d="M450 1090L450 1800" stroke="#e1c99b" stroke-width="6" stroke-dasharray="18 80 42 130" opacity=".36"/>
+ <path d="M290 1800L414 1120M630 1800L486 1120" stroke="#f5c47c" stroke-width="3" opacity=".22"/>
+ <g stroke-linecap="round" opacity=".3">
+  <path d="M5 1570L290 1700M60 1480L300 1600M620 1580L885 1440M590 1710L900 1540" stroke="#e22d59" stroke-width="10"/>
+  <path d="M30 1720L285 1770M610 1660L900 1720M650 1430L900 1320" stroke="#30c3e8" stroke-width="7"/>
+ </g>
+ <!-- Receding storefronts, awnings, steel shutters, and Thai street signage. -->
+ <path d="M0 990L208 1035 226 1130 0 1180Z" fill="#25101c" stroke="#e8454c" stroke-width="5"/>
+ <path d="M900 995L698 1035 678 1130 900 1190Z" fill="#12263a" stroke="#48a7c9" stroke-width="5"/>
+ <path d="M0 1200L258 1140 270 1220 0 1400Z" fill="#1c1c25"/>
+ <path d="M900 1210L640 1140 625 1240 900 1430Z" fill="#171c26"/>
+ <path d="M0 1055L225 1080 225 1110 0 1110Z" fill="#b3212f"/>
+ <path d="M900 1055L690 1080 690 1110 900 1110Z" fill="#236783"/>
+ <g fill="#d1a66b" opacity=".42"><path d="M0 1190L250 1145V1165L0 1230Z"/><path d="M900 1190L660 1145V1165L900 1230Z"/></g>
+ <g stroke="#ff4b6b" stroke-width="4" opacity=".8"><path d="M32 950V1120M104 958V1090M166 969V1074"/></g>
+ <g stroke="#3ad6fa" stroke-width="4" opacity=".75"><path d="M864 950V1130M792 959V1092M728 970V1070"/></g>
+ <g font-family="Arial,sans-serif" font-weight="900" text-anchor="middle">
+  <rect x="14" y="870" width="236" height="85" rx="5" fill="#420718" stroke="#ff5164" stroke-width="5"/>
+  <text x="132" y="930" font-size="49" fill="#ffe9a1">เยาวราช</text>
+  <rect x="675" y="900" width="211" height="80" rx="5" fill="#073347" stroke="#48d7ff" stroke-width="5"/>
+  <text x="780" y="954" font-size="41" fill="#fff0b7">พระราม 2</text>
+  <rect x="30" y="1205" width="135" height="54" fill="#51101b" stroke="#ff8a4a" stroke-width="3"/>
+  <text x="97" y="1241" font-size="24" fill="#ffdb7d">อาหาร</text>
+  <rect x="737" y="1180" width="139" height="54" fill="#0c384b" stroke="#42d6eb" stroke-width="3"/>
+  <text x="806" y="1216" font-size="25" fill="#d2faff">ตลาด</text>
+ </g>
+ <!-- Three-wheel Bangkok tuk-tuk, three-quarter perspective, with layered bodywork and glass. -->
+ <ellipse cx="462" cy="1622" rx="296" ry="80" fill="#02050a" opacity=".85"/>
+ <path d="M218 1322L259 1148Q276 1089 358 1080L563 1082Q636 1089 655 1158L687 1400 625 1500 255 1506 205 1430Z" fill="#080e15" stroke="#8a9a9a" stroke-width="9"/>
+ <path d="M235 1200L272 1120Q302 1084 382 1082L563 1087Q612 1092 645 1150L666 1200Z" fill="url(#cabRoof)" stroke="#59747e" stroke-width="8"/>
+ <path d="M260 1202L305 1136 420 1130 410 1315 245 1360Z" fill="#0a1a26" stroke="#a5b3ac" stroke-width="7"/>
+ <path d="M287 1197L319 1150 392 1146 388 1305 269 1325Z" fill="url(#glass)"/>
+ <path d="M301 1190L350 1155 363 1155 290 1300Z" fill="#d1edec" opacity=".18"/>
+ <path d="M412 1129L561 1124Q599 1132 619 1180L650 1338 413 1324Z" fill="url(#glass)" stroke="#a8b2a3" stroke-width="9"/>
+ <path d="M429 1148L465 1140 438 1300 417 1300Z" fill="#a9d8d9" opacity=".19"/>
+ <path d="M560 1144L584 1150 636 1302 606 1300Z" fill="#f8d9a2" opacity=".13"/>
+ <path d="M408 1135L412 1330M560 1133L605 1330" stroke="#172831" stroke-width="13"/>
+ <path d="M250 1328L410 1300 648 1322 688 1410 642 1514 300 1520 213 1442Z" fill="url(#bodyPaint)" stroke="#2d271b" stroke-width="12"/>
+ <path d="M254 1345L402 1322 390 1454 269 1470 227 1423Z" fill="#0d2d3a" stroke="#d2b04e" stroke-width="6"/>
+ <path d="M270 1363L374 1344 362 1432 286 1444Z" fill="#0b1722" stroke="#315c68" stroke-width="5"/>
+ <path d="M410 1337L627 1343 656 1400 626 1465 405 1456Z" fill="url(#metal)" stroke="#d9ae50" stroke-width="8"/>
+ <path d="M424 1355L606 1358 628 1410 598 1441 419 1438Z" fill="#121e24" stroke="#617b79" stroke-width="5"/>
+ <path d="M433 1375H599M432 1397H607M428 1418H600" stroke="#9cb3b3" stroke-width="4" opacity=".7"/>
+ <path d="M254 1470L400 1456 642 1464 619 1510 296 1523Z" fill="#b26e15" stroke="#e5bd60" stroke-width="5"/>
+ <path d="M291 1514L641 1504" stroke="#c5d5d4" stroke-width="13"/>
+ <path d="M292 1525L643 1517" stroke="#161b21" stroke-width="8"/>
+ <path d="M257 1456Q209 1480 221 1535L263 1570 317 1558 321 1503Z" fill="#0a0d13" stroke="#686f71" stroke-width="8"/>
+ <ellipse cx="266" cy="1546" rx="57" ry="81" fill="#06080c" stroke="#434b52" stroke-width="13"/>
+ <ellipse cx="266" cy="1546" rx="27" ry="46" fill="#606f76" stroke="#161e27" stroke-width="12"/>
+ <ellipse cx="266" cy="1546" rx="9" ry="18" fill="#c6c6b5"/>
+ <path d="M427 1470Q490 1452 533 1480L565 1594 531 1665 446 1660 412 1584Z" fill="#0a0d13" stroke="#6b6861" stroke-width="10"/>
+ <ellipse cx="491" cy="1594" rx="63" ry="95" fill="#06090e" stroke="#39444a" stroke-width="17"/>
+ <ellipse cx="491" cy="1594" rx="32" ry="62" fill="#899397" stroke="#0d1920" stroke-width="13"/>
+ <ellipse cx="491" cy="1594" rx="12" ry="26" fill="#f0d8a7"/>
+ <path d="M406 1465Q478 1442 563 1470" stroke="#d8e5d9" stroke-width="11" fill="none"/>
+ <path d="M442 1478L537 1479" stroke="#161f25" stroke-width="12"/>
+ <circle cx="580" cy="1401" r="64" fill="url(#headLamp)" opacity=".8"/>
+ <circle cx="579" cy="1400" r="35" fill="#d9c78f" stroke="#e5e0c6" stroke-width="10"/>
+ <circle cx="579" cy="1400" r="25" fill="#fff8ce"/>
+ <circle cx="286" cy="1399" r="23" fill="#ffe3a0" stroke="#bd8c3d" stroke-width="8"/>
+ <path d="M645 1390L684 1383 695 1428 656 1440Z" fill="#b71e27" stroke="#fda15e" stroke-width="6"/>
+ <path d="M344 1100L353 1055 507 1052 527 1100" fill="#0a1017" stroke="#9da8a2" stroke-width="8"/>
+ <rect x="367" y="1058" width="131" height="42" rx="7" fill="#b18a25" stroke="#e8cd79" stroke-width="4"/>
+ <text x="433" y="1087" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="900" fill="#19171c">TAXI</text>
+ <path d="M340 1260L352 1280 393 1274" stroke="#cbd3d3" stroke-width="7" fill="none"/>
+ <path d="M646 1257L675 1250 688 1265" stroke="#d3e2dc" stroke-width="7" fill="none"/>
+ <ellipse cx="578" cy="1402" rx="100" ry="112" fill="url(#headLamp)" opacity=".23"/>
+ <path d="M370 1670L275 1795M607 1670L725 1795" stroke="#edaa48" stroke-width="15" opacity=".28"/>
+ <path d="M420 1690L392 1790M540 1690L566 1790" stroke="#fff3ac" stroke-width="5" opacity=".32"/>
+ <rect x="0" y="1715" width="900" height="85" fill="url(#road)"/>
 </g>
 <g opacity=".9">
  <path d="M0 670V570h40v-92h45v90h40V440h62v112h43v-92h50v110h46v-126h56v130h60v-96h46v93h55v-145h61v143h44V468h65v108h53V425h52v150h50V485h55v130h55v55Z" fill="#060b16" opacity=".75"/>
