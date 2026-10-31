@@ -4204,14 +4204,69 @@ function makeBike(){
 }
 // Sculpted, PBR-lit Yaksha fallback for when the optional remote GLB is unavailable.
 // Tapered armor, articulated limbs and layered Thai guardian crown replace toy-box cubes.
+// A tiny, deterministic two-map PBR atlas for the offline Yaksha fallback.
+// Generate once (not per spawn), share across cloned meshes and avoid network fetches.
+let yakshaPatinaCache=null;
+function getYakshaPatina(){
+ if(yakshaPatinaCache)return yakshaPatinaCache;
+ const size=mobile?128:256;
+ const colorCanvas=document.createElement('canvas'),heightCanvas=document.createElement('canvas');
+ colorCanvas.width=colorCanvas.height=heightCanvas.width=heightCanvas.height=size;
+ const colorCtx=colorCanvas.getContext('2d'),heightCtx=heightCanvas.getContext('2d');
+ const colorPixels=colorCtx.createImageData(size,size),heightPixels=heightCtx.createImageData(size,size);
+ let seed=0x71acb35;
+ const rand=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296};
+ for(let y=0;y<size;y++)for(let x=0;x<size;x++){
+  const i=(y*size+x)*4;
+  const broad=Math.sin(x*.087)*Math.cos(y*.113)*12+Math.sin((x+y)*.038)*9;
+  const grain=(rand()-.5)*22,pit=rand()<.035?-(24+rand()*39):0;
+  const shade=broad+grain+pit;
+  colorPixels.data[i]=Math.max(0,Math.min(255,214+shade));
+  colorPixels.data[i+1]=Math.max(0,Math.min(255,201+shade*.93));
+  colorPixels.data[i+2]=Math.max(0,Math.min(255,175+shade*.85));
+  colorPixels.data[i+3]=255;
+  const height=Math.max(0,Math.min(255,128+broad*.8+grain+pit*1.4));
+  heightPixels.data[i]=heightPixels.data[i+1]=heightPixels.data[i+2]=height;
+  heightPixels.data[i+3]=255;
+ }
+ colorCtx.putImageData(colorPixels,0,0);
+ heightCtx.putImageData(heightPixels,0,0);
+ // Broad oxidation and thin age cracks break up smooth, toy-like geometry.
+ for(let i=0;i<19;i++){
+  const x=rand()*size,y=rand()*size,r=(.02+rand()*.085)*size;
+  colorCtx.fillStyle=i%3===0?'rgba(48,72,56,.22)':'rgba(62,39,21,.19)';
+  colorCtx.beginPath();colorCtx.ellipse(x,y,r,r*(.3+rand()*.8),rand()*Math.PI,0,Math.PI*2);colorCtx.fill();
+ }
+ for(let i=0;i<12;i++){
+  const x=rand()*size,y=rand()*size;
+  colorCtx.strokeStyle='rgba(49,31,19,.28)';colorCtx.lineWidth=.6+rand()*.6;
+  colorCtx.beginPath();colorCtx.moveTo(x,y);
+  colorCtx.bezierCurveTo(x+size*.018,y+size*.015,x-size*.01,y+size*.05,x+size*.027,y+size*.08);
+  colorCtx.stroke();
+ }
+ const map=new THREE.CanvasTexture(colorCanvas),bump=new THREE.CanvasTexture(heightCanvas);
+ map.colorSpace=THREE.SRGBColorSpace;
+ for(const texture of [map,bump]){
+  texture.wrapS=texture.wrapT=THREE.RepeatWrapping;
+  texture.repeat.set(2,2);
+  texture.anisotropy=2;
+ }
+ yakshaPatinaCache={map,bump};
+ return yakshaPatinaCache;
+}
 // All geometry is constructed once in obstacleTemplates and shared by spawned clones.
 function makeYaksha(){
  const g=new THREE.Group();
  // Aged-gold temple guardian turned skeletal apparition: no toy-green skin.
- const enamel=new THREE.MeshStandardMaterial({color:0x745735,metalness:.24,roughness:.78});
- const armor=new THREE.MeshStandardMaterial({color:0x3e3026,metalness:.38,roughness:.72});
- const darkGold=new THREE.MeshStandardMaterial({color:0x876126,metalness:.63,roughness:.49});
- const skullGold=new THREE.MeshStandardMaterial({color:0xb49462,metalness:.16,roughness:.83});
+ const patina=getYakshaPatina();
+ const worn=(color,metalness,roughness,bumpScale)=>new THREE.MeshStandardMaterial({
+  color,metalness,roughness,map:patina.map,bumpMap:patina.bump,bumpScale
+ });
+ const enamel=worn(0x806947,.23,.79,.045);
+ const armor=worn(0x4a3b30,.35,.74,.06);
+ const darkGold=worn(0x9a753d,.56,.57,.04);
+ const skullGold=worn(0xd8b37d,.18,.86,.055);
+ const crownGold=worn(0xbba06a,.61,.53,.025);
  const porcelain=new THREE.MeshStandardMaterial({color:0xe7d9b5,roughness:.54});
  const socket=new THREE.MeshStandardMaterial({color:0x100e0d,roughness:.97,metalness:0});
  const add=(mesh,x=0,y=0,z=0)=>{mesh.position.set(x,y,z);g.add(mesh);return mesh};
@@ -4232,20 +4287,20 @@ function makeYaksha(){
  // A human-shaped silhouette, with tapered waist, flared armored shoulders and a cloth skirt.
  lathe([[0,0],[.48,0],[.69,.18],[.73,.52],[.6,.84],[.57,1.2],[.78,1.55],[.88,1.75],[.65,1.9],[0,1.94]],enamel,0,1.32);
  lathe([[0,0],[.62,0],[.78,.15],[.67,.7],[.47,1.05],[0,1.09]],armor,0,.55);
- const waist=add(new THREE.Mesh(new THREE.TorusGeometry(.62,.075,8,24),gold2),0,1.49,0);
+ const waist=add(new THREE.Mesh(new THREE.TorusGeometry(.62,.075,8,24),crownGold),0,1.49,0);
  waist.rotation.x=Math.PI/2;
  const chestBand=add(new THREE.Mesh(new THREE.TorusGeometry(.72,.048,8,24),darkGold),0,2.45,0);
  chestBand.rotation.x=Math.PI/2;
  for(const side of [-1,1]){
   limb([side*.43,.27,0],[side*.48,1.38,0],.28,.34,armor);
   orb(.27,darkGold,side*.48,.3,.08,1,.45,1.5);
-  orb(.47,gold2,side*.86,2.86,0,1.25,.48,1.1);
+  orb(.47,crownGold,side*.86,2.86,0,1.25,.48,1.1);
   limb([side*.9,2.8,0],[side*1.18,2.14,.05],.27,.34,enamel);
   limb([side*1.18,2.14,.05],[side*1.06,1.65,.32],.21,.25,enamel);
   orb(.26,darkGold,side*1.18,2.13,.05,1,.8,1);
   orb(.21,enamel,side*1.06,1.57,.34,.9,1.3,.72);
   // Thai guardian's curled ear ornaments and angular, dark brow ridges.
-  orb(.25,gold2,side*.68,3.58,.05,.42,1.35,.75);
+  orb(.25,crownGold,side*.68,3.58,.05,.42,1.35,.75);
   limb([side*.13,3.76,.59],[side*.44,3.72,.51],.065,.09,darkGold);
   // Recessed black eye sockets, not friendly round cartoon eyes.
   orb(.19,socket,side*.3,3.55,.655,1.25,1.17,.48);
@@ -4269,7 +4324,7 @@ function makeYaksha(){
  }
  teeth.instanceMatrix.needsUpdate=true;teeth.computeBoundingSphere();g.add(teeth);
  // Layered, pointed chada crown and embossed gold forehead band.
- lathe([[0,0],[.68,0],[.73,.12],[.58,.27],[.52,.49],[.35,.65],[.28,.94],[.16,1.23],[0,1.56]],gold2,0,4.09);
+ lathe([[0,0],[.68,0],[.73,.12],[.58,.27],[.52,.49],[.35,.65],[.28,.94],[.16,1.23],[0,1.56]],crownGold,0,4.09);
  const rim=add(new THREE.Mesh(new THREE.TorusGeometry(.65,.075,8,24),darkGold),0,4.11,0);
  rim.rotation.x=Math.PI/2;
  const studs=new THREE.InstancedMesh(new THREE.SphereGeometry(.09,8,6),darkGold,8);
