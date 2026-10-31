@@ -12,7 +12,19 @@
 <clipPath id="scene"><rect x="0" y="665" width="900" height="1135"/></clipPath>
 
 <linearGradient id="citySky" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#181b2d"/><stop offset=".5" stop-color="#17101b"/><stop offset="1" stop-color="#06080d"/></linearGradient>
-<linearGradie<!-- Crisp, resolution-independent Bangkok night scene. No embedded low-resolution bitmap. -->
+<linearGradient id="wetAsphalt" x1="0" y1="0" x2=".9" y2="1"><stop stop-color="#111e29"/><stop offset=".55" stop-color="#080e18"/><stop offset="1" stop-color="#17111b"/></linearGradient>
+<linearGradient id="metal" x1="0" y1="0" x2="1" y2=".2"><stop stop-color="#0b1d24"/><stop offset=".18" stop-color="#497584"/><stop offset=".34" stop-color="#10252d"/><stop offset=".65" stop-color="#213e4c"/><stop offset="1" stop-color="#08121b"/></linearGradient>
+<linearGradient id="bodyPaint" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f6ca3b"/><stop offset=".25" stop-color="#d69719"/><stop offset=".55" stop-color="#775112"/><stop offset=".77" stop-color="#e3a72d"/><stop offset="1" stop-color="#422914"/></linearGradient>
+<linearGradient id="glass" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#64899a" stop-opacity=".78"/><stop offset=".35" stop-color="#0b2536" stop-opacity=".95"/><stop offset=".75" stop-color="#06101e"/><stop offset="1" stop-color="#35526b" stop-opacity=".9"/></linearGradient>
+<radialGradient id="headLamp"><stop stop-color="#fffce4"/><stop offset=".18" stop-color="#fff1b2"/><stop offset=".45" stop-color="#f7b849" stop-opacity=".72"/><stop offset="1" stop-color="#ffd45d" stop-opacity="0"/></radialGradient>
+<linearGradient id="cabRoof" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#142b3b"/><stop offset=".35" stop-color="#0b111b"/><stop offset=".7" stop-color="#253c45"/><stop offset="1" stop-color="#050810"/></linearGradient>
+<linearGradient id="neonHaze" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#b80a38" stop-opacity=".45"/><stop offset=".5" stop-color="#d52835" stop-opacity="0"/><stop offset="1" stop-color="#1781c2" stop-opacity=".45"/></linearGradient>
+</defs>
+<rect width="900" height="1800" fill="url(#sky)"/>
+<ellipse cx="115" cy="560" rx="490" ry="450" fill="url(#redGlow)"/>
+<ellipse cx="850" cy="760" rx="430" ry="580" fill="url(#blueGlow)"/>
+<!-- Original tiny photo retained only as atmospheric scenery, not as title lettering. -->
+<!-- Crisp, resolution-independent Bangkok night scene. No embedded low-resolution bitmap. -->
 <g clip-path="url(#scene)">
  <rect x="0" y="665" width="900" height="1135" fill="url(#citySky)"/>
  <path d="M0 690H900V1390H0Z" fill="url(#neonHaze)"/>
