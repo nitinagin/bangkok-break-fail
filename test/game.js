@@ -4780,14 +4780,50 @@ function makeCheckpoint(){
  const warningPanel=new THREE.Mesh(checkpointWarningGeometry,checkpointWarningMaterial);
  warningPanel.position.set(0,1.04,.345);g.add(warningPanel);
  for(const x of [-1.16,1.16])for(const z of [-.28,.28])part(g,ball(.14,black,x,.16,z));
- // Officers remain off the road centre, so steering and collision are unaffected.
+ // Two human-proportioned roadside officers replace box-figure silhouettes.
+ // Rounded uniforms, tapered limbs, skin, boots and retroreflective vest bands
+ // share five instanced draws for both officers; no per-frame animation or GLB.
+ // Keep all parts outside the centre barricade's original collision footprint.
+ const officerCylinder=new THREE.CylinderGeometry(.5,.5,1,10);
+ const officerSphere=new THREE.SphereGeometry(.5,10,8);
+ const officerStripe=new THREE.BoxGeometry(1,1,1);
+ const officerSkin=new THREE.MeshStandardMaterial({color:0xb78d73,roughness:.94,metalness:0});
+ const officerReflector=new THREE.MeshStandardMaterial({
+  color:0xf2eee0,roughness:.32,metalness:.03,
+  emissive:0x4c4831,emissiveIntensity:.35
+ });
+ const uniforms=[],vests=[],darkParts=[],skinParts=[],stripes=[];
  for(const x of [-2.15,2.15]){
-  part(g,cube(.37,.65,.25,uniform,x,1.32,-.6));
-  part(g,cube(.39,.2,.27,vest,x,1.53,-.6));
-  part(g,ball(.23,uniform,x,1.86,-.6));
-  part(g,cube(.46,.12,.35,uniform,x,2.12,-.6));
-  for(const dx of [-.12,.12])part(g,cube(.12,.63,.12,black,x+dx,.69,-.6));
+  // Body and sleeves slope naturally from the shoulders.
+  uniforms.push([x,1.35,-.6,.39,.68,.29,0]);
+  vests.push([x,1.48,-.6,.43,.38,.33,0]);
+  skinParts.push([x,1.9,-.6,.42,.45,.41,0]);
+  for(const side of [-1,1]){
+   uniforms.push([x+side*.31,1.32,-.6,.16,.57,.17,side*.15]);
+   skinParts.push([x+side*.38,1.015,-.6,.15,.19,.15,0]);
+   darkParts.push([x+side*.13,.69,-.6,.17,.73,.19,side*.035]);
+   darkParts.push([x+side*.13,.28,-.47,.19,.16,.34,0]);
+  }
+  // Low-profile police cap and brim; no floating cube above the head.
+  darkParts.push([x,2.15,-.6,.44,.12,.37,0]);
+  darkParts.push([x,2.195,-.6,.34,.18,.32,0]);
+  // Horizontal retroreflective bands are visible under Rama II headlights.
+  for(const y of [1.40,1.58])stripes.push([x,y,-.773,.77,.045,.018,0]);
  }
+ const addOfficerInstances=(geometry,material,parts)=>{
+  const mesh=new THREE.InstancedMesh(geometry,material,parts.length);
+  const pose=new THREE.Object3D();
+  parts.forEach(([px,py,pz,sx,sy,sz,angle],index)=>{
+   pose.position.set(px,py,pz);pose.rotation.set(0,0,angle);
+   pose.scale.set(sx,sy,sz);pose.updateMatrix();mesh.setMatrixAt(index,pose.matrix);
+  });
+  mesh.instanceMatrix.needsUpdate=true;mesh.computeBoundingSphere();g.add(mesh);
+ };
+ addOfficerInstances(officerCylinder,uniform,uniforms);
+ addOfficerInstances(officerCylinder,vest,vests);
+ addOfficerInstances(officerCylinder,black,darkParts);
+ addOfficerInstances(officerSphere,officerSkin,skinParts);
+ addOfficerInstances(officerStripe,officerReflector,stripes);
  return g
 }
 // Rama II cargo truck: large Thai-style six-wheeler with cargo box and rear safety stripes.
