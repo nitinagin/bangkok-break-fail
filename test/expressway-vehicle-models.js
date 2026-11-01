@@ -539,6 +539,78 @@ function makeSportsCarLaminatedGlass(THREE){
   transparent:true,opacity:.53,depthWrite:false,side:THREE.DoubleSide
  });
 }
+// Rear-facing bus fascia: rain-streaked glass, Thai route, brake lamps and
+// registration are baked into one 256px PBR atlas. The matching emissive mask
+// lights only the lamps and route, not the cream bodywork. No dynamic lights.
+function makeBusRearFascia(THREE){
+ const canvas=document.createElement('canvas'),emission=document.createElement('canvas');
+ canvas.width=emission.width=256;canvas.height=emission.height=256;
+ const ctx=canvas.getContext('2d'),ec=emission.getContext('2d');
+ ctx.fillStyle='#d8d2c2';ctx.fillRect(0,0,256,256);
+ ec.fillStyle='#000';ec.fillRect(0,0,256,256);
+ // Pressed steel seams and a weathered rear window with an interior silhouette.
+ ctx.fillStyle='#303d46';ctx.fillRect(11,30,234,111);
+ const glass=ctx.createLinearGradient(0,30,0,140);
+ glass.addColorStop(0,'#506978');glass.addColorStop(.44,'#263f4c');
+ glass.addColorStop(1,'#111e28');ctx.fillStyle=glass;ctx.fillRect(17,35,222,100);
+ ctx.fillStyle='rgba(7,13,19,.58)';
+ for(const x of [65,126,187]){
+  ctx.beginPath();ctx.ellipse(x,106,12,16,0,0,Math.PI*2);ctx.fill();
+  ctx.fillRect(x-14,117,28,17);
+ }
+ ctx.fillStyle='rgba(212,226,221,.15)';
+ ctx.beginPath();ctx.moveTo(30,35);ctx.lineTo(52,35);ctx.lineTo(110,135);
+ ctx.lineTo(91,135);ctx.closePath();ctx.fill();
+ ctx.strokeStyle='rgba(199,215,211,.32)';ctx.lineWidth=2;
+ ctx.beginPath();ctx.moveTo(32,129);ctx.lineTo(124,106);ctx.stroke();
+ ctx.fillStyle='#19272f';ctx.fillRect(124,35,5,100);
+ // Route board and illuminated destination.
+ ctx.fillStyle='#07151b';ctx.fillRect(72,6,112,25);
+ ctx.fillStyle='#f3c878';ctx.font='bold 21px Tahoma,sans-serif';
+ ctx.textAlign='center';ctx.fillText('8  กรุงเทพฯ',128,25);
+ ec.fillStyle='#bd8b39';ec.fillRect(72,6,112,25);
+ ec.fillStyle='#ffdc8a';ec.font='bold 21px Tahoma,sans-serif';
+ ec.textAlign='center';ec.fillText('8  กรุงเทพฯ',128,25);
+ // Faded cream/red livery, inspection hatch, engine ventilation and seams.
+ ctx.fillStyle='#a92d36';ctx.fillRect(8,144,240,37);
+ ctx.fillStyle='#c9c0ad';ctx.fillRect(8,181,240,57);
+ ctx.strokeStyle='#807f79';ctx.lineWidth=2;ctx.strokeRect(9,181,238,57);
+ ctx.fillStyle='#4d5558';ctx.fillRect(73,186,110,16);
+ ctx.fillStyle='#161e23';
+ for(let i=0;i<14;i++)ctx.fillRect(79+i*7,189,3,10);
+ ctx.fillStyle='#242e34';ctx.fillRect(9,239,238,11);
+ // Two wide, three-section red/amber rear clusters.
+ for(const x of [17,205]){
+  ctx.fillStyle='#1b2026';ctx.fillRect(x-3,151,37,55);
+  ctx.fillStyle='#9f111d';ctx.fillRect(x,154,31,20);
+  ctx.fillStyle='#e8a02f';ctx.fillRect(x,176,31,10);
+  ctx.fillStyle='#7e1019';ctx.fillRect(x,188,31,15);
+  ctx.fillStyle='rgba(255,228,202,.38)';ctx.fillRect(x+3,156,4,15);
+  ec.fillStyle='#ee1822';ec.fillRect(x+1,155,29,18);
+  ec.fillStyle='#422016';ec.fillRect(x+1,177,29,8);
+ }
+ ctx.fillStyle='#eee9d8';ctx.fillRect(86,208,84,29);
+ ctx.strokeStyle='#353d3e';ctx.lineWidth=2;ctx.strokeRect(86,208,84,29);
+ ctx.fillStyle='#1a282d';ctx.font='bold 15px Tahoma,sans-serif';
+ ctx.fillText('10-4821',128,226);
+ ctx.font='9px Tahoma,sans-serif';ctx.fillText('กรุงเทพมหานคร',128,235);
+ // Deterministic grime at the lower tailgate; no per-frame texture uploads.
+ for(let i=0;i<90;i++){
+  const x=(i*53+17)%256,y=178+(i*31)%62;
+  ctx.fillStyle=i%3===0?'rgba(27,27,26,.13)':'rgba(84,74,61,.10)';
+  ctx.fillRect(x,y,1+i%3,2+i%8);
+ }
+ const map=new THREE.CanvasTexture(canvas),glow=new THREE.CanvasTexture(emission);
+ map.colorSpace=THREE.SRGBColorSpace;glow.colorSpace=THREE.SRGBColorSpace;
+ map.anisotropy=glow.anisotropy=2;
+ const material=new THREE.MeshStandardMaterial({
+  map,roughness:.65,metalness:.13,emissive:0xffffff,
+  emissiveMap:glow,emissiveIntensity:.65,side:THREE.DoubleSide
+ });
+ const mesh=new THREE.Mesh(new THREE.PlaneGeometry(1.90,2.14),material);
+ mesh.rotation.y=Math.PI;mesh.name='bangkok-bus-weathered-rear-fascia';
+ return mesh;
+}
 export function makeExpresswayVehicle(THREE,type='sportsCar'){
  const isBus=type==='bus',group=new THREE.Group(),w=isBus?2.05:1.8,length=isBus?4.45:3.55;
  const paint=isBus?new THREE.MeshStandardMaterial({color:0xf0e6d4,metalness:.15,roughness:.65}):new THREE.MeshPhysicalMaterial({color:0xb12438,metalness:.62,roughness:.26,clearcoat:.75,clearcoatRoughness:.22});
@@ -572,6 +644,11 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
    pane.position.set(side*1.082,2.17,0);
    group.add(pane);
   }
+  // The rear faces approaching drivers; keep the fascia within the existing
+  // bus silhouette and away from collision logic.
+  const rearFascia=makeBusRearFascia(THREE);
+  rearFascia.position.set(0,1.65,-length/2-.09);
+  group.add(rearFascia);
  }else{
   // Dark transparent glazing reveals a seated driver instead of an empty car.
   const windshield=makeSportsCarLaminatedGlass(THREE);
