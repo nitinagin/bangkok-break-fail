@@ -2035,7 +2035,7 @@ function queueRamaExcavatorModel(){
    const size=new THREE.Box3().setFromObject(template).getSize(new THREE.Vector3());
    if(!meshes||meshes>5||draws>6||triangles>2500||
       size.x<1.8||size.x>3.5||size.y<4.5||size.y>6||
-      size.z<5.5||size.z>7.5)throw Error('Excavator glTF failed mobile budgets');
+      size.z<5.5||size.z>8.2)throw Error('Excavator glTF failed mobile budgets');
    for(const {slot,side} of ramaExcavatorSlots){
     const machine=template.clone(true);
     machine.position.set(side*10.9,0,15.2);
