@@ -281,15 +281,82 @@ export function createExpresswayArt(THREE){
  tyreGeometry.rotateX(Math.PI/2);
  const tyreMaterial=new THREE.MeshStandardMaterial({color:0x101215,roughness:.95});
  const bridgeCarWheels=new THREE.InstancedMesh(tyreGeometry,tyreMaterial,bridgeCarCount*4);
+ // Three realistic Bangkok cream/red city buses cross on the flyovers,
+ // replacing every fourth tiny sedan rather than overlapping it. A single
+ // PBR shell, shared baked window atlas and instanced tyres cost three draw
+ // calls for all buses. They stay on the elevated decks, not the dodge lanes.
+ const bridgeBusIndices=[3,7,11];
+ const busSideProfile=new THREE.Shape();
+ busSideProfile.moveTo(-1.24,.15);
+ busSideProfile.lineTo(-1.24,1.02);
+ busSideProfile.quadraticCurveTo(-1.24,1.16,-1.09,1.18);
+ busSideProfile.lineTo(1.08,1.18);
+ busSideProfile.quadraticCurveTo(1.25,1.16,1.25,1.01);
+ busSideProfile.lineTo(1.25,.15);
+ busSideProfile.closePath();
+ const busShellGeometry=new THREE.ExtrudeGeometry(busSideProfile,{
+  depth:.98,steps:1,bevelEnabled:true,bevelThickness:.025,
+  bevelSize:.025,bevelSegments:1,curveSegments:3
+ });
+ busShellGeometry.translate(0,0,-.49);
+ const busShellMaterial=new THREE.MeshStandardMaterial({
+  color:0xe2d7b9,metalness:.14,roughness:.69
+ });
+ const bridgeBuses=new THREE.InstancedMesh(busShellGeometry,busShellMaterial,bridgeBusIndices.length);
+ bridgeBuses.frustumCulled=false;
+ bridgeBuses.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+ const busWindowCanvas=document.createElement('canvas');
+ busWindowCanvas.width=256;busWindowCanvas.height=96;
+ const bw=busWindowCanvas.getContext('2d');
+ bw.fillStyle='#ad3a30';bw.fillRect(0,0,256,96);
+ bw.fillStyle='#e5d7bb';bw.fillRect(0,5,256,10);
+ for(let panel=0;panel<6;panel++){
+  const x=8+panel*41;
+  const tint=bw.createLinearGradient(x,17,x+34,76);
+  tint.addColorStop(0,'#58717a');tint.addColorStop(.5,'#293d48');
+  tint.addColorStop(1,'#152630');
+  bw.fillStyle='#222e32';bw.fillRect(x-2,15,39,65);
+  bw.fillStyle=tint;bw.fillRect(x,18,35,57);
+  bw.fillStyle='rgba(246,223,174,.12)';bw.fillRect(x+2,19,31,9);
+  bw.fillStyle='rgba(8,17,23,.48)';
+  bw.beginPath();bw.arc(x+19,53,6,0,Math.PI*2);bw.fill();
+  bw.fillRect(x+12,60,16,14);
+  bw.fillStyle='rgba(197,228,231,.18)';
+  bw.beginPath();bw.moveTo(x+7,19);bw.lineTo(x+15,19);
+  bw.lineTo(x+7,74);bw.lineTo(x+3,74);bw.closePath();bw.fill();
+ }
+ bw.fillStyle='#e0c18c';bw.fillRect(0,81,256,4);
+ const busWindowTexture=new THREE.CanvasTexture(busWindowCanvas);
+ busWindowTexture.colorSpace=THREE.SRGBColorSpace;
+ busWindowTexture.anisotropy=2;
+ const busWindowMaterial=new THREE.MeshStandardMaterial({
+  map:busWindowTexture,roughness:.38,metalness:.12,side:THREE.DoubleSide
+ });
+ const bridgeBusWindows=new THREE.InstancedMesh(
+  new THREE.PlaneGeometry(2.36,.55),busWindowMaterial,bridgeBusIndices.length*2
+ );
+ bridgeBusWindows.frustumCulled=false;
+ bridgeBusWindows.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+ const busTyreGeometry=new THREE.CylinderGeometry(.18,.18,.09,10);
+ busTyreGeometry.rotateX(Math.PI/2);
+ const busTyreMaterial=new THREE.MeshStandardMaterial({color:0x171b1d,roughness:.94});
+ const bridgeBusTyres=new THREE.InstancedMesh(
+  busTyreGeometry,busTyreMaterial,bridgeBusIndices.length*4
+ );
+ bridgeBusTyres.frustumCulled=false;
+ bridgeBusTyres.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+ const busPose=new THREE.Object3D();
  const carDummy=new THREE.Object3D();
  function placeBridgeTraffic(){
   for(let i=0;i<bridgeCarCount;i++){
    const bridge=Math.floor(i/4),direction=(i%2===0?1:-1);
    const x=direction*(bridgeCarProgress[i]*13.2-6.6);
    const z=flyoverZ[bridge]+(i%4<2?-.48:.48);
-   const frontX=x+direction*.52,rearX=x-direction*.52;
+   const vehicleHalfLength=i%4===3?1.16:.52;
+   const frontX=x+direction*vehicleHalfLength,rearX=x-direction*vehicleHalfLength;
    carDummy.position.set(x,8.54,z);carDummy.rotation.set(0,0,0);
-   carDummy.scale.set(1,1,1);carDummy.updateMatrix();
+   const isBus=i%4===3;
+   carDummy.scale.setScalar(isBus?0:1);carDummy.updateMatrix();
    bridgeCarBodies.setMatrixAt(i,carDummy.matrix);
    if(i%2===0){
     const taxiIndex=i/2;
@@ -315,12 +382,29 @@ export function createExpresswayArt(THREE){
      bridgeCarWheels.setMatrixAt(i*4+side*2+axle,carDummy.matrix);
     }
    }
+   if(isBus){
+    const busIndex=(i-3)/4;
+    busPose.rotation.set(0,0,0);busPose.scale.set(1,1,1);
+    busPose.position.set(x,8.54,z);busPose.updateMatrix();
+    bridgeBuses.setMatrixAt(busIndex,busPose.matrix);
+    for(let side=0;side<2;side++){
+     const sign=side===0?-1:1;
+     busPose.position.set(x,9.39,z+sign*.515);
+     busPose.updateMatrix();
+     bridgeBusWindows.setMatrixAt(busIndex*2+side,busPose.matrix);
+     for(let axle=0;axle<2;axle++){
+      busPose.position.set(x+(axle===0?-.91:.91),8.76,z+sign*.50);
+      busPose.updateMatrix();
+      bridgeBusTyres.setMatrixAt(busIndex*4+side*2+axle,busPose.matrix);
+     }
+    }
+   }
    for(let side=0;side<2;side++){
     const index=i*2+side,offset=side===0?-.28:.28;
-    bridgeLightDummy.position.set(frontX,8.63,z+offset);
+    bridgeLightDummy.position.set(frontX,isBus?8.82:8.63,z+offset);
     bridgeLightDummy.scale.set(1,.72,1);bridgeLightDummy.updateMatrix();
     bridgeHeadlights.setMatrixAt(index,bridgeLightDummy.matrix);
-    bridgeLightDummy.position.set(rearX,8.63,z+offset);
+    bridgeLightDummy.position.set(rearX,isBus?8.82:8.63,z+offset);
     bridgeLightDummy.updateMatrix();
     bridgeTaillights.setMatrixAt(index,bridgeLightDummy.matrix);
    }
@@ -332,9 +416,12 @@ export function createExpresswayArt(THREE){
   bridgeCarWheels.instanceMatrix.needsUpdate=true;
   bridgeTaxiRoofSigns.instanceMatrix.needsUpdate=true;
   bridgeTaxiDoorSigns.instanceMatrix.needsUpdate=true;
+  bridgeBuses.instanceMatrix.needsUpdate=true;
+  bridgeBusWindows.instanceMatrix.needsUpdate=true;
+  bridgeBusTyres.instanceMatrix.needsUpdate=true;
  }
  placeBridgeTraffic();
- group.add(bridgeCarBodies,bridgeCarWindows,bridgeCarWheels,bridgeHeadlights,bridgeTaillights,bridgeTaxiRoofSigns,bridgeTaxiDoorSigns);
+ group.add(bridgeCarBodies,bridgeCarWindows,bridgeCarWheels,bridgeHeadlights,bridgeTaillights,bridgeTaxiRoofSigns,bridgeTaxiDoorSigns,bridgeBuses,bridgeBusWindows,bridgeBusTyres);
 
  // Roadside Bangkok expressway acoustic screens: weathered ribbed panels
  // and galvanized uprights. Opaque PBR prevents mobile alpha overdraw.
@@ -676,6 +763,7 @@ gantry.position.z=-75;group.add(gantry);
    bridgeHeadMaterial.dispose();bridgeTailMaterial.dispose();
    carPaint.dispose();carGlass.dispose();tyreMaterial.dispose();
    taxiLiveryMaterial.dispose();taxiTexture.dispose();
+   busShellMaterial.dispose();busWindowMaterial.dispose();busWindowTexture.dispose();busTyreMaterial.dispose();
   windowTexture.dispose();emissiveTexture.dispose();poolTexture.dispose();signTexture.dispose();flyoverTexture.dispose();acousticTexture.dispose();barrierTexture.dispose();reflectorTexture.dispose();vmsTexture.dispose();vmsMaterial.dispose();
  }};
 }
