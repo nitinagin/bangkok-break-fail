@@ -458,13 +458,47 @@ gantry.position.z=-75;group.add(gantry);
  const concrete=new THREE.MeshStandardMaterial({
   color:0xd5d5d2,map:barrierTexture,roughness:.94,metalness:0
  });
- const reflective=new THREE.MeshBasicMaterial({color:0xf4cb60});
+ // Weathered retroreflective hazard chevrons replace flat yellow blocks.
+ // One shared 128px baked atlas for all 44 existing instanced shoulder markers:
+ // no extra draw calls, lights, network fetches or per-frame texture updates.
+ const reflectorCanvas=document.createElement('canvas');
+ reflectorCanvas.width=reflectorCanvas.height=128;
+ const rc=reflectorCanvas.getContext('2d');
+ rc.fillStyle='#11191c';rc.fillRect(0,0,128,128);
+ rc.fillStyle='#3b4445';rc.fillRect(5,5,118,118);
+ rc.fillStyle='#d9d5c4';rc.fillRect(10,10,108,108);
+ rc.save();rc.beginPath();rc.rect(10,10,108,108);rc.clip();
+ for(let stripe=-128;stripe<256;stripe+=38){
+  rc.fillStyle='#efac32';rc.beginPath();
+  rc.moveTo(stripe,10);rc.lineTo(stripe+20,10);
+  rc.lineTo(stripe+96,118);rc.lineTo(stripe+76,118);
+  rc.closePath();rc.fill();
+  rc.fillStyle='rgba(255,244,202,.26)';
+  rc.fillRect(stripe+21,10,2,108);
+ }
+ rc.restore();
+ // Riveted steel surround and rain/tyre grime stay in the same texture.
+ rc.fillStyle='#222a2b';rc.fillRect(0,0,128,5);rc.fillRect(0,123,128,5);
+ rc.fillRect(0,0,5,128);rc.fillRect(123,0,5,128);
+ for(const x of [12,116])for(const y of [12,116]){
+  rc.fillStyle='#343d3d';rc.beginPath();rc.arc(x,y,3,0,Math.PI*2);rc.fill();
+  rc.fillStyle='#a9ada4';rc.fillRect(x-1,y-2,2,2);
+ }
+ for(let k=0;k<95;k++){
+  const x=(k*53+17)%108+10,y=(k*71+29)%108+10;
+  rc.fillStyle=k%3?'rgba(35,44,42,.10)':'rgba(250,248,228,.15)';
+  rc.fillRect(x,y,1+(k%3),1+(k%5));
+ }
+ const reflectorTexture=new THREE.CanvasTexture(reflectorCanvas);
+ reflectorTexture.colorSpace=THREE.SRGBColorSpace;
+ const reflective=new THREE.MeshBasicMaterial({map:reflectorTexture,toneMapped:false});
  const profile=new THREE.Shape();
  profile.moveTo(-.42,0);profile.lineTo(.42,0);profile.lineTo(.42,.22);
  profile.lineTo(.24,1.04);profile.lineTo(-.24,1.04);profile.lineTo(-.42,.22);profile.closePath();
  const barrierGeometry=new THREE.ExtrudeGeometry(profile,{depth:barrierLength,bevelEnabled:false});
  const barriers=new THREE.InstancedMesh(barrierGeometry,concrete,barrierCount);
- const reflectorGeometry=new THREE.BoxGeometry(.48,.13,.2);
+ // Upright flush plates face passing drivers on both inner barrier walls.
+ const reflectorGeometry=new THREE.BoxGeometry(.055,.38,.64);
  const reflectors=new THREE.InstancedMesh(reflectorGeometry,reflective,barrierCount);
  const barrierDummy=new THREE.Object3D(),barrierZ=[];
  for(let i=0;i<barrierCount;i++)barrierZ.push(-5-Math.floor(i/2)*barrierLength*1.15);
@@ -473,7 +507,7 @@ gantry.position.z=-75;group.add(gantry);
    const side=i%2===0?-1:1,z=barrierZ[i];
    barrierDummy.position.set(side*4.85,0,z);barrierDummy.rotation.set(0,0,0);barrierDummy.scale.set(1,1,1);
    barrierDummy.updateMatrix();barriers.setMatrixAt(i,barrierDummy.matrix);
-   barrierDummy.position.set(side*4.55,.78,z+barrierLength*.5);
+   barrierDummy.position.set(side*4.55,.73,z+barrierLength*.5);
    barrierDummy.updateMatrix();reflectors.setMatrixAt(i,barrierDummy.matrix);
   }
   barriers.instanceMatrix.needsUpdate=true;reflectors.instanceMatrix.needsUpdate=true;
@@ -513,6 +547,6 @@ gantry.position.z=-75;group.add(gantry);
   studMaterial.dispose();studMesh.geometry.dispose();
    bridgeHeadMaterial.dispose();bridgeTailMaterial.dispose();
    carPaint.dispose();carGlass.dispose();tyreMaterial.dispose();
-  windowTexture.dispose();emissiveTexture.dispose();poolTexture.dispose();signTexture.dispose();flyoverTexture.dispose();acousticTexture.dispose();barrierTexture.dispose();vmsTexture.dispose();vmsMaterial.dispose();
+  windowTexture.dispose();emissiveTexture.dispose();poolTexture.dispose();signTexture.dispose();flyoverTexture.dispose();acousticTexture.dispose();barrierTexture.dispose();reflectorTexture.dispose();vmsTexture.dispose();vmsMaterial.dispose();
  }};
 }
