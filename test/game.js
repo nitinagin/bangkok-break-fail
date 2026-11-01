@@ -1859,7 +1859,29 @@ const ramaExcavatorPaint=new THREE.MeshStandardMaterial({
  color:0xffffff,map:excavatorPaintMap,roughnessMap:excavatorRoughMap,
  metalness:.28,roughness:.86
 });
-const ramaExcavatorRubber=new THREE.MeshStandardMaterial({color:0x282b2b,metalness:.18,roughness:.91});
+// Shared 128px PBR tread atlas gives the Rama II excavator tracks
+// rubber ribs and construction dust without new meshes or draw calls.
+const ramaTrackCanvas=document.createElement('canvas');
+ramaTrackCanvas.width=ramaTrackCanvas.height=128;
+const rtc=ramaTrackCanvas.getContext('2d');
+rtc.fillStyle='#282d2c';rtc.fillRect(0,0,128,128);
+for(let y=0;y<128;y+=16){
+ rtc.fillStyle='#141a1b';rtc.fillRect(0,y,128,4);
+ rtc.fillStyle='#454b47';rtc.fillRect(0,y+5,128,2);
+ rtc.fillStyle='rgba(157,139,109,.25)';rtc.fillRect(0,y+11,128,3);
+}
+for(let n=0;n<170;n++){
+ const px=(n*59+17)%128,py=(n*43+Math.floor(n/9)*13)%128;
+ rtc.fillStyle=n%3?'rgba(163,143,111,.15)':'rgba(12,16,17,.31)';
+ rtc.fillRect(px,py,1+n%3,1+n%2);
+}
+const ramaTrackMap=new THREE.CanvasTexture(ramaTrackCanvas);
+ramaTrackMap.colorSpace=THREE.SRGBColorSpace;
+ramaTrackMap.wrapS=ramaTrackMap.wrapT=THREE.RepeatWrapping;
+ramaTrackMap.repeat.set(2,3);ramaTrackMap.anisotropy=2;
+const ramaExcavatorRubber=new THREE.MeshStandardMaterial({
+ color:0xffffff,map:ramaTrackMap,metalness:.12,roughness:.93
+});
 const ramaExcavatorGlass=new THREE.MeshStandardMaterial({color:0x253b43,metalness:.18,roughness:.22});
 const ramaExcavatorSteel=new THREE.MeshStandardMaterial({color:0x555a5b,metalness:.66,roughness:.72});
 const ramaExcavatorBucketProfile=new THREE.Shape();
@@ -1952,8 +1974,20 @@ function addRamaExcavator(g,side){
  // Silver hydraulic rams, pinned boom joints and dark steel track grousers.
  beam(steel,x+side*.29,2.15,z-.8,x+side*.29,4.18,z-2.18,.095,.095);
  beam(steel,x+side*.22,4.57,z-2.82,x+side*.22,2.98,z-4.31,.075,.075);
- for(let i=0;i<12;i++)for(const dx of [-.73,.73])
-  box(steel,x+dx,.94,z-1.27+i*.23,.51,.075,.10);
+ // Sixty-four steel track shoes follow the upper, lower and curved end
+ // runs. All are batched into the existing steel InstancedMesh draw call.
+ for(let i=0;i<12;i++)for(const dx of [-.73,.73]){
+  const zz=z-1.27+i*.23;
+  box(steel,x+dx,.99,zz,.54,.065,.115);
+  box(steel,x+dx,.11,zz,.54,.065,.115);
+ }
+ for(const dx of [-.73,.73])for(const end of [-1,1])for(let k=0;k<4;k++){
+  const angle=(k-1.5)*Math.PI/5;
+  pose.position.set(x+dx,.55+.45*Math.sin(angle),z+end*(1.025+.45*Math.cos(angle)));
+  pose.rotation.set(-Math.PI/2-end*angle,0,0);
+  pose.scale.set(.54,.065,.115);pose.updateMatrix();
+  steel.push(pose.matrix.clone());
+ }
  for(let i=0;i<4;i++)
   box(steel,x-.47+i*.31,1.03,z-6.03,.105,.19,.38);
  batch(ramaExcavatorUnit,ramaExcavatorPaint,painted);
