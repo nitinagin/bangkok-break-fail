@@ -553,6 +553,65 @@ gantry.position.z=-75;group.add(gantry);
   studMesh.instanceMatrix.needsUpdate=true;
  }
  placeStuds();group.add(studMesh);
+ // Expressway-only lane-direction arrows: weathered retroreflective paint on
+ // the asphalt, not hovering signs or solid obstacles. Twelve arrows share
+ // ONE instanced draw call and one 128px PBR atlas; no runtime allocations.
+ // Every arrow stays inside its lane (±0.48m) and below 8cm above the road.
+ const arrowPaintCanvas=document.createElement('canvas');
+ arrowPaintCanvas.width=arrowPaintCanvas.height=128;
+ const apc=arrowPaintCanvas.getContext('2d');
+ const paintShade=apc.createLinearGradient(0,0,128,128);
+ paintShade.addColorStop(0,'#f0eee4');paintShade.addColorStop(.55,'#deddd3');
+ paintShade.addColorStop(1,'#c7c8bf');
+ apc.fillStyle=paintShade;apc.fillRect(0,0,128,128);
+ // Deterministic tyre-scuffed gaps reveal asphalt without alpha blending.
+ apc.globalCompositeOperation='destination-out';
+ for(let i=0;i<120;i++){
+  const px=(i*47+Math.floor(i/11)*13+17)%128;
+  const py=(i*71+Math.floor(i/7)*19+31)%128;
+  apc.fillStyle=i%5===0?'rgba(0,0,0,.8)':'rgba(0,0,0,.43)';
+  apc.fillRect(px,py,1+i%4,1+i%3);
+ }
+ apc.globalCompositeOperation='source-over';
+ const arrowPaintTexture=new THREE.CanvasTexture(arrowPaintCanvas);
+ arrowPaintTexture.colorSpace=THREE.SRGBColorSpace;
+ arrowPaintTexture.anisotropy=2;
+ const arrowPaintMaterial=new THREE.MeshStandardMaterial({
+  map:arrowPaintTexture,roughness:.87,metalness:0,alphaTest:.4,
+  polygonOffset:true,polygonOffsetFactor:-1,side:THREE.DoubleSide
+ });
+ const arrowOutline=new THREE.Shape();
+ arrowOutline.moveTo(-.13,-1.05);arrowOutline.lineTo(.13,-1.05);
+ arrowOutline.lineTo(.13,.12);arrowOutline.lineTo(.48,.12);
+ arrowOutline.lineTo(0,1.05);arrowOutline.lineTo(-.48,.12);
+ arrowOutline.lineTo(-.13,.12);arrowOutline.closePath();
+ const arrowGeometry=new THREE.ShapeGeometry(arrowOutline);
+ const arrowUV=arrowGeometry.getAttribute('uv');
+ for(let i=0;i<arrowUV.count;i++){
+  arrowUV.setXY(i,(arrowUV.getX(i)+.5),(.5+arrowUV.getY(i)/2.1));
+ }
+ arrowUV.needsUpdate=true;
+ // Three.js ShapeGeometry faces +Z; rotate onto asphalt so +Y points forward (-Z).
+ arrowGeometry.rotateX(-Math.PI/2);
+ const arrowCount=12,arrowZ=[],arrowX=[-3.35,0,3.35];
+ const laneArrows=new THREE.InstancedMesh(arrowGeometry,arrowPaintMaterial,arrowCount);
+ laneArrows.name='bangkok-expressway-weathered-lane-arrows';
+ laneArrows.frustumCulled=false;
+ const arrowPose=new THREE.Object3D();
+ const arrowTints=[0xf0eee6,0xd8d8d1,0xe3e2d9];
+ for(let i=0;i<arrowCount;i++){
+  arrowZ.push(-22-Math.floor(i/3)*42);
+  laneArrows.setColorAt(i,new THREE.Color(arrowTints[i%3]));
+ }
+ function placeLaneArrows(){
+  for(let i=0;i<arrowCount;i++){
+   arrowPose.position.set(arrowX[i%3],.078,arrowZ[i]);
+   arrowPose.updateMatrix();
+   laneArrows.setMatrixAt(i,arrowPose.matrix);
+  }
+  laneArrows.instanceMatrix.needsUpdate=true;
+ }
+ placeLaneArrows();group.add(laneArrows);
  group.visible=false;
  return {group,update(dt,speed){
   const advance=dt*Math.min(95,30+speed*.12);
@@ -562,12 +621,14 @@ gantry.position.z=-75;group.add(gantry);
    placeBridgeTraffic();
   for(let i=0;i<acousticCount;i++){acousticZ[i]+=advance;if(acousticZ[i]>24)acousticZ[i]-=12*5.9;}placeAcousticScreens();
   for(let i=0;i<studCount;i++){studZ[i]+=advance;if(studZ[i]>18)studZ[i]-=36*5.35;}placeStuds();
+  for(let i=0;i<arrowCount;i++){arrowZ[i]+=advance;if(arrowZ[i]>22)arrowZ[i]-=168;}placeLaneArrows();
   gantry.position.z+=advance;if(gantry.position.z>24)gantry.position.z-=195;
   for(let i=0;i<barrierCount;i++){barrierZ[i]+=advance;if(barrierZ[i]>20)barrierZ[i]-=22*barrierLength*1.15;}placeBarriers();
  },dispose(){
   group.traverse(obj=>{if(obj.geometry)obj.geometry.dispose();});
   for(const material of [towerMat,mastMaterial,steel,warm,poolMaterial,sign.material,concrete,reflective,flyoverConcrete,acousticMat])material.dispose();
   studMaterial.dispose();studMesh.geometry.dispose();
+  arrowPaintMaterial.dispose();arrowPaintTexture.dispose();
    bridgeHeadMaterial.dispose();bridgeTailMaterial.dispose();
    carPaint.dispose();carGlass.dispose();tyreMaterial.dispose();
   windowTexture.dispose();emissiveTexture.dispose();poolTexture.dispose();signTexture.dispose();flyoverTexture.dispose();acousticTexture.dispose();barrierTexture.dispose();reflectorTexture.dispose();vmsTexture.dispose();vmsMaterial.dispose();
