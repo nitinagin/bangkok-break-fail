@@ -1884,6 +1884,9 @@ const ramaExcavatorRubber=new THREE.MeshStandardMaterial({
 });
 const ramaExcavatorGlass=new THREE.MeshStandardMaterial({color:0x253b43,metalness:.18,roughness:.22});
 const ramaExcavatorSteel=new THREE.MeshStandardMaterial({color:0x555a5b,metalness:.66,roughness:.72});
+// Separate polished piston rods from the dusty steel cylinder housings.
+// One shared PBR material and one extra instanced draw per parked excavator.
+const ramaExcavatorChrome=new THREE.MeshStandardMaterial({color:0xc5d1d5,metalness:.88,roughness:.27});
 const ramaExcavatorBucketProfile=new THREE.Shape();
 ramaExcavatorBucketProfile.moveTo(-.65,.36);
 ramaExcavatorBucketProfile.lineTo(.48,.29);
@@ -1898,7 +1901,7 @@ ramaExcavatorBucketGeo.rotateY(Math.PI/2);
 const ramaExcavatorUp=new THREE.Vector3(0,1,0);
 function addRamaExcavator(g,side){
  const x=side*10.9,z=15.2,pose=new THREE.Object3D();
- const painted=[],steel=[],glass=[];
+ const painted=[],steel=[],glass=[],chrome=[];
  function box(list,px,py,pz,w,h,d){
   pose.position.set(px,py,pz);pose.quaternion.identity();pose.scale.set(w,h,d);
   pose.updateMatrix();list.push(pose.matrix.clone());
@@ -1950,30 +1953,41 @@ function addRamaExcavator(g,side){
  box(painted,x-side*.42,2.15,z+.25,.96,1.05,1.25);
  box(painted,x-side*.42,2.82,z+.25,1.1,.13,1.38);
  box(painted,x+side*.37,1.83,z-.3,.75,.52,1.0);
- // Tinted glazing on the traffic-facing side and front of the cab.
- box(glass,x-side*.93,2.34,z+.25,.045,.67,1.05);
- box(glass,x-side*.42,2.34,z-.39,.89,.67,.045);
- // Cab window frames, windscreen mullion, wiper and road-facing mirror:
- // reuse the existing instanced steel batch (no extra materials/draw calls).
- // These pieces are part of the parked excavator behind the barriers.
- for(const y of [2.00,2.68]){
-  box(steel,x-side*.955,y,z+.25,.085,.055,1.12);
-  box(steel,x-side*.42,y,z-.425,.98,.055,.085);
- }
+ // Raked windscreen and sloping roadside door glass replace the cuboid cab.
+ // Both panes use the existing instanced glass batch; frames stay aligned with
+ // the slope and make the operator compartment legible from the road.
+ beam(glass,x-side*.92,2.04,z+.25,x-side*.82,2.68,z+.25,.055,1.04);
+ beam(glass,x-side*.42,2.03,z-.49,x-side*.42,2.68,z-.27,.88,.055);
+ // Lower/upper sill rails and the angled A-pillars share the steel batch.
+ box(steel,x-side*.955,2.00,z+.25,.085,.055,1.12);
+ box(steel,x-side*.82,2.70,z+.25,.085,.055,1.12);
+ box(steel,x-side*.42,2.00,z-.49,.98,.055,.085);
+ box(steel,x-side*.42,2.70,z-.27,.98,.055,.085);
  for(const zz of [z-.32,z+.82])
-  box(steel,x-side*.955,2.34,zz,.085,.70,.055);
- for(const xx of [x-side*.90,x+side*.06])
-  box(steel,xx,2.34,z-.425,.06,.70,.08);
- box(steel,x-side*.43,2.34,z-.435,.045,.70,.07);
- beam(steel,x-side*.82,2.04,z-.46,x-side*.18,2.37,z-.46,.035,.035);
- beam(steel,x-side*1.0,2.52,z-.14,x-side*1.20,2.52,z-.14,.045,.045);
- box(steel,x-side*1.21,2.52,z-.14,.07,.24,.20);
+  beam(steel,x-side*.955,2.04,zz,x-side*.82,2.68,zz,.07,.07);
+ for(const xx of [x-side*.9,x+side*.06])
+  beam(steel,xx,2.04,z-.49,xx,2.68,z-.27,.07,.07);
+ // Door seam, centre windscreen mullion and parked wiper.
+ beam(steel,x-side*.955,2.04,z+.18,x-side*.82,2.68,z+.18,.045,.045);
+ beam(steel,x-side*.42,2.04,z-.49,x-side*.42,2.68,z-.27,.045,.045);
+ beam(steel,x-side*.80,2.07,z-.50,x-side*.22,2.30,z-.42,.035,.035);
+ // Roadside mirror, engine ventilation grille and vertical exhaust stack.
+ beam(steel,x-side*.97,2.53,z-.12,x-side*1.17,2.53,z-.12,.045,.045);
+ box(steel,x-side*1.17,2.53,z-.12,.07,.24,.18);
+ box(steel,x+side*.76,1.83,z-.30,.03,.46,.84);
+ for(let i=0;i<9;i++)
+  box(chrome,x+side*.785,1.65+i*.045,z-.30,.025,.012,.76);
+ box(steel,x+side*.64,2.34,z+.71,.12,.92,.12);
+ box(steel,x+side*.64,2.82,z+.71,.18,.07,.18);
  // Main boom and dipper stick form an unmistakable raised excavator profile.
  beam(painted,x,2.05,z-.68,x,5.0,z-2.72,.37,.43);
  beam(painted,x,5.0,z-2.72,x,1.85,z-5.28,.27,.31);
- // Silver hydraulic rams, pinned boom joints and dark steel track grousers.
- beam(steel,x+side*.29,2.15,z-.8,x+side*.29,4.18,z-2.18,.095,.095);
- beam(steel,x+side*.22,4.57,z-2.82,x+side*.22,2.98,z-4.31,.075,.075);
+ // Two-stage hydraulic actuators: broad steel barrels plus narrow reflective
+ // exposed piston rods, following both articulated boom sections.
+ beam(steel,x+side*.29,2.15,z-.8,x+side*.29,3.34,z-1.62,.135,.135);
+ beam(chrome,x+side*.29,3.30,z-1.59,x+side*.29,4.18,z-2.18,.07,.07);
+ beam(steel,x+side*.22,4.57,z-2.82,x+side*.22,3.74,z-3.61,.115,.115);
+ beam(chrome,x+side*.22,3.77,z-3.58,x+side*.22,2.98,z-4.31,.065,.065);
  // Sixty-four steel track shoes follow the upper, lower and curved end
  // runs. All are batched into the existing steel InstancedMesh draw call.
  for(let i=0;i<12;i++)for(const dx of [-.73,.73]){
@@ -1993,6 +2007,7 @@ function addRamaExcavator(g,side){
  batch(ramaExcavatorUnit,ramaExcavatorPaint,painted);
  batch(ramaExcavatorUnit,ramaExcavatorGlass,glass);
  batch(ramaExcavatorUnit,ramaExcavatorSteel,steel);
+ batch(ramaExcavatorUnit,ramaExcavatorChrome,chrome);
  const bucket=new THREE.Mesh(ramaExcavatorBucketGeo,ramaExcavatorSteel);
  bucket.position.set(x,1.25,z-5.4);g.add(bucket);
  // Nearest body edge remains beyond x=+/-9.9, behind barriers at +/-6.05.
