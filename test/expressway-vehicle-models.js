@@ -476,6 +476,69 @@ function makeBusCurvedRoofHVAC(THREE){
  mesh.name='bangkok-bus-curved-roof-hvac';
  return mesh;
 }
+// Shared 256px night-glass atlas: front windscreen in the upper half,
+// rear heated glass in the lower half. Baked neon/rain reflections and seals
+// replace featureless transparent quads without lights or extra draw calls.
+function makeSportsCarLaminatedGlass(THREE){
+ const canvas=document.createElement('canvas');
+ canvas.width=canvas.height=256;
+ const ctx=canvas.getContext('2d');
+ for(const rear of [false,true]){
+  const y0=rear?128:0;
+  ctx.save();ctx.translate(0,y0);
+  const tint=ctx.createLinearGradient(0,0,256,128);
+  tint.addColorStop(0,rear?'#253946':'#405e6c');
+  tint.addColorStop(.46,'#19313e');
+  tint.addColorStop(1,'#0a1b28');
+  ctx.fillStyle=tint;ctx.fillRect(0,0,256,128);
+  // Restrained Bangkok neon reflections are part of the glass, not lamps.
+  ctx.fillStyle='rgba(95,177,202,.19)';
+  ctx.beginPath();ctx.moveTo(25,4);ctx.lineTo(46,4);
+  ctx.lineTo(114,123);ctx.lineTo(98,123);ctx.closePath();ctx.fill();
+  ctx.fillStyle='rgba(244,160,105,.13)';
+  ctx.beginPath();ctx.moveTo(193,4);ctx.lineTo(207,4);
+  ctx.lineTo(159,124);ctx.lineTo(148,124);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='rgba(10,17,23,.88)';ctx.lineWidth=7;
+  ctx.strokeRect(4,4,248,120);
+  ctx.strokeStyle='rgba(186,210,211,.25)';ctx.lineWidth=1;
+  ctx.strokeRect(9,9,238,110);
+  if(rear){
+   // Thin rear defogger wires: no implausible front wipers on the back glass.
+   ctx.strokeStyle='rgba(194,162,119,.29)';ctx.lineWidth=.8;
+   for(let y=27;y<113;y+=11){
+    ctx.beginPath();ctx.moveTo(12,y);ctx.lineTo(244,y);ctx.stroke();
+   }
+   ctx.fillStyle='rgba(198,176,135,.21)';
+   ctx.fillRect(15,22,2,91);ctx.fillRect(239,22,2,91);
+  }else{
+   // Parked wipers and faint wiped arcs are baked into the existing pane.
+   ctx.lineCap='round';
+   for(const side of [-1,1]){
+    const pivot=side<0?40:216,tip=side<0?121:135;
+    ctx.strokeStyle='rgba(8,15,20,.89)';ctx.lineWidth=4;
+    ctx.beginPath();ctx.moveTo(pivot,112);ctx.lineTo(tip,85);ctx.stroke();
+    ctx.strokeStyle='rgba(206,222,220,.29)';ctx.lineWidth=.8;
+    ctx.beginPath();ctx.moveTo(pivot,109);ctx.lineTo(tip,82);ctx.stroke();
+    ctx.strokeStyle='rgba(191,211,215,.12)';ctx.lineWidth=1;
+    ctx.beginPath();ctx.arc(pivot,112,91,Math.PI*1.18,Math.PI*1.88);ctx.stroke();
+   }
+  }
+  // Sparse fixed rain tracks; deterministic, no frame-time texture updates.
+  for(let i=0;i<30;i++){
+   const x=15+(i*73+11)%226,y=15+(i*43+7)%91;
+   ctx.fillStyle=i%3===0?'rgba(224,232,227,.19)':'rgba(150,188,200,.12)';
+   ctx.fillRect(x,y,1,3+i%8);
+  }
+  ctx.restore();
+ }
+ const map=new THREE.CanvasTexture(canvas);
+ map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=2;
+ return new THREE.MeshPhysicalMaterial({
+  map,color:0xe0ecf1,metalness:0,roughness:.21,
+  clearcoat:.62,clearcoatRoughness:.14,
+  transparent:true,opacity:.53,depthWrite:false,side:THREE.DoubleSide
+ });
+}
 export function makeExpresswayVehicle(THREE,type='sportsCar'){
  const isBus=type==='bus',group=new THREE.Group(),w=isBus?2.05:1.8,length=isBus?4.45:3.55;
  const paint=isBus?new THREE.MeshStandardMaterial({color:0xf0e6d4,metalness:.15,roughness:.65}):new THREE.MeshPhysicalMaterial({color:0xb12438,metalness:.62,roughness:.26,clearcoat:.75,clearcoatRoughness:.22});
@@ -511,7 +574,7 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   }
  }else{
   // Dark transparent glazing reveals a seated driver instead of an empty car.
-  const windshield=new THREE.MeshStandardMaterial({color:0x244451,metalness:.05,roughness:.16,transparent:true,opacity:.34,depthWrite:false,side:THREE.DoubleSide});
+  const windshield=makeSportsCarLaminatedGlass(THREE);
   const seatMat=new THREE.MeshStandardMaterial({color:0x171b23,roughness:.88});
   const jacket=new THREE.MeshStandardMaterial({color:0x293746,roughness:.9});
   const skin=new THREE.MeshStandardMaterial({color:0xc38a65,roughness:.92});
@@ -529,17 +592,31 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   // Follow the hood/roof and roof/deck slopes instead of laying glass flat.
   // Two lightweight trapezoids replace the two horizontal box panes (4 triangles total).
   // Slightly offset from the painted body so the tinted PBR glass remains visible.
-  function slopedGlass(lowerZ,upperZ){
+  function slopedGlass(lowerZ,upperZ,rear=false){
+   const positions=[],uvs=[],indices=[],cols=8,rows=3;
+   for(let row=0;row<=rows;row++){
+    const v=row/rows,halfWidth=.73-.12*v;
+    for(let col=0;col<=cols;col++){
+     const u=col/cols,nx=2*u-1;
+     // A subtle outward bow catches the baked street-light glints.
+     const bow=(rear?-1:1)*.026*(1-nx*nx)*Math.sin(Math.PI*v);
+     positions.push(nx*halfWidth,.83+.395*v,
+      lowerZ+(upperZ-lowerZ)*v+bow);
+     uvs.push(u,(rear?0:.5)+v*.5);
+    }
+   }
+   for(let row=0;row<rows;row++)for(let col=0;col<cols;col++){
+    const a=row*(cols+1)+col,b=a+cols+1;
+    indices.push(a,a+1,b,a+1,b+1,b);
+   }
    const geometry=new THREE.BufferGeometry();
-   geometry.setAttribute('position',new THREE.Float32BufferAttribute([
-    -.73,.83,lowerZ, .73,.83,lowerZ, -.61,1.225,upperZ,
-     .73,.83,lowerZ, .61,1.225,upperZ, -.61,1.225,upperZ
-   ],3));
-   geometry.computeVertexNormals();
+   geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+   geometry.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));
+   geometry.setIndex(indices);geometry.computeVertexNormals();
    group.add(new THREE.Mesh(geometry,windshield));
   }
-  slopedGlass(1.00,.30);    // front: hood to roof
-  slopedGlass(-1.055,-.585); // rear: deck to roof
+  slopedGlass(1.00,.30);        // front: hood to roof
+  slopedGlass(-1.055,-.585,true); // rear: deck to roof
 
   // Four flush side panes (two per flank) replace the solid, toy-like cabin.
   // Bake reflections once and draw all eight triangles in a single PBR mesh.
