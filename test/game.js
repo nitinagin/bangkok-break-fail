@@ -687,7 +687,7 @@ const yaowaratAwningRibMatrix=new THREE.Matrix4();
 const signMaterials=[mat(0xff267a),mat(0x086bd8),mat(0x1cbf7a)];const neonSigns=[new THREE.MeshBasicMaterial({color:0xff3d96}),new THREE.MeshBasicMaterial({color:0x22ffe0}),new THREE.MeshBasicMaterial({color:0xffd64d})];const daySigns=signMaterials.slice();function applyDistrict(i){if(i===districtIndex)return;districtIndex=i;
  const light=districtLightPresets[i]||districtLightPresets[0];
  skyFill.intensity=light[0];sun.intensity=light[1];
- skyFill.color.setHex(light[2]);skyFill.groundColor.setHex(light[3]);sun.color.setHex(light[4]);const fogRange=districtFogRanges[i]||districtFogRanges[0];scene.fog.near=fogRange[0];scene.fog.far=fogRange[1];districtLabel.textContent=['☀️ BANGKOK DAYTIME','🌃 YAOWARAT NIGHT · TEST 6.9','🌑 RAMA II · BLACKOUT CONSTRUCTION','🛍️ JJ MARKET · CHATUCHAK · 8000+','🛣️ BANGKOK EXPRESSWAY · 12000+','🌈 PATTAYA WALKING STREET · 16000+','🌑 DARK ROAD · 23000+'][i];for(let k=0;k<3;k++)signMaterials[k]=i===1?neonSigns[k]:daySigns[k];for(const b of props){if(b.userData.sign)b.userData.sign.material=signMaterials[b.userData.signIndex%3]}const rama=i===2;M.grass.color.setHex(rama?0x78746d:0x34333b);M.road.color.setHex(rama?0x777b81:0x56535c);M.stripe.color.setHex(rama?0xe5e1d3:0xe2c579);shoulderPaint.color.setHex(rama?0x77736e:0x444148);curbPaint.color.setHex(rama?0x9d968b:0x756866);hint.textContent=['🛺 WELCOME TO BANGKOK!','🏮 WELCOME TO YAOWARAT!','🌇 SUNSET DRIVE!','🌿 JJ MARKET! WATCH THE TRAFFIC!','🛸 EXPRESSWAY! UFO LASERS INCOMING!','🌈 PATTAYA WALKING STREET!','🔦 DARK ROAD! HEADLIGHTS ONLY!'][i]}
+ skyFill.color.setHex(light[2]);skyFill.groundColor.setHex(light[3]);sun.color.setHex(light[4]);const fogRange=districtFogRanges[i]||districtFogRanges[0];scene.fog.near=fogRange[0];scene.fog.far=fogRange[1];districtLabel.textContent=['☀️ BANGKOK DAYTIME','🌃 YAOWARAT NIGHT · TEST 6.9','🌑 RAMA II · BLACKOUT CONSTRUCTION','🛍️ JJ MARKET · CHATUCHAK · 8000+','🛣️ BANGKOK EXPRESSWAY · 12000+','🌈 PATTAYA WALKING STREET · 16000+','🌑 DARK ROAD · 23000+'][i];for(let k=0;k<3;k++)signMaterials[k]=i===1?neonSigns[k]:daySigns[k];for(const b of props){if(b.userData.sign)b.userData.sign.material=signMaterials[b.userData.signIndex%3]}if(i===2)queueRamaExcavatorModel();const rama=i===2;M.grass.color.setHex(rama?0x78746d:0x34333b);M.road.color.setHex(rama?0x777b81:0x56535c);M.stripe.color.setHex(rama?0xe5e1d3:0xe2c579);shoulderPaint.color.setHex(rama?0x77736e:0x444148);curbPaint.color.setHex(rama?0x9d968b:0x756866);hint.textContent=['🛺 WELCOME TO BANGKOK!','🏮 WELCOME TO YAOWARAT!','🌇 SUNSET DRIVE!','🌿 JJ MARKET! WATCH THE TRAFFIC!','🛸 EXPRESSWAY! UFO LASERS INCOMING!','🌈 PATTAYA WALKING STREET!','🔦 DARK ROAD! HEADLIGHTS ONLY!'][i]}
 function makeRoadsideStory(kind,side,z){const g=new THREE.Group();if(kind==='shrine'){g.add(cube(1.5,.25,1.3,storyMat.wood,0,.55,0));for(const sx of [-.53,.53])for(const sz of [-.42,.42])g.add(cube(.12,1.55,.12,storyMat.gold,sx,1.4,sz));g.add(cube(1.9,.3,1.65,storyMat.roof,0,2.25,0));g.add(cube(.55,.8,.52,storyMat.gold,0,1.4,0))}else{g.add(cube(2.4,.95,1.45,storyMat.wood,0,.7,0));g.add(cube(2.65,.15,1.8,storyMat.cloth,0,1.65,0));for(let i=0;i<5;i++){const d=new THREE.Mesh(new THREE.IcosahedronGeometry(.24,0),M.durian);d.position.set((i-2)*.38,1.3,(i%2)*.34-.2);g.add(d)}const vendor=new THREE.Group();vendor.add(cube(.45,.8,.34,storyMat.cloth,0,1.48,0));vendor.add(ball(.34,M.skin,0,2.07,0));vendor.add(ball(.37,M.black,0,2.36,.02));vendor.add(ball(.08,M.white,-.13,2.1,-.29));vendor.add(ball(.08,M.white,.13,2.1,-.29));const arm=cube(.13,.63,.14,M.skin,-.37,1.55,0);vendor.add(arm);vendor.position.x=-.85;g.add(vendor);g.userData.vendorArm=arm;g.userData.vendorFruit=ball(.29,M.durian,-.35,1.65,-.4);g.add(g.userData.vendorFruit)}g.position.set(side*7.35,0,z);scene.add(g);storyProps.push({g,kind,side,triggered:false,dropTime:0});return g}
 // Mobile-budget PBR Speed Grandma: curved silhouette and human-scale features,
  // not the previous flat-shaded box character. No external assets or skinning.
@@ -2012,6 +2012,40 @@ function addRamaExcavator(g,side){
  bucket.position.set(x,1.25,z-5.4);g.add(bucket);
  // Nearest body edge remains beyond x=+/-9.9, behind barriers at +/-6.05.
 }
+// Optional local glTF excavator: five merged PBR primitives and a low triangle
+// budget. Lazy-load only when Rama II begins; keep the complete procedural
+// fallback if loading, validation or mobile data-saver checks fail.
+const ramaExcavatorSlots=[];
+let ramaExcavatorRequested=false;
+function queueRamaExcavatorModel(){
+ if(ramaExcavatorRequested||navigator.connection?.saveData)return;
+ ramaExcavatorRequested=true;
+ new GLTFLoader().load('./assets/rama2-excavator.gltf',({scene:template})=>{
+  try{
+   let meshes=0,draws=0,triangles=0;
+   template.traverse(o=>{
+    if(!o.isMesh)return;
+    meshes++;
+    const parts=Array.isArray(o.material)?o.material:[o.material];
+    draws+=parts.length;
+    const geom=o.geometry;
+    if(!geom?.attributes?.position)throw Error('Excavator glTF has no geometry');
+    triangles+=(geom.index?.count||geom.attributes.position.count)/3;
+   });
+   const size=new THREE.Box3().setFromObject(template).getSize(new THREE.Vector3());
+   if(!meshes||meshes>5||draws>6||triangles>2500||
+      size.x<1.8||size.x>3.5||size.y<4.5||size.y>6||
+      size.z<5.5||size.z>7.5)throw Error('Excavator glTF failed mobile budgets');
+   for(const {slot,side} of ramaExcavatorSlots){
+    const machine=template.clone(true);
+    machine.position.set(side*10.9,0,15.2);
+    machine.scale.x=side;
+    machine.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;}});
+    slot.clear();slot.add(machine);
+   }
+  }catch(error){console.warn('Rama II excavator glTF rejected; retaining fallback',error);}
+ },undefined,error=>console.warn('Rama II excavator glTF unavailable; retaining fallback',error));
+}
 // Rama II: alternating amber construction beacons sit on the concrete barrier crowns.
 // One shared low-poly cylinder + one instanced draw per work zone; no extra lights,
 // network assets, shadows or objects in the player's dodge lane.
@@ -2182,8 +2216,11 @@ function ramaWorkZone(side,z){
  // Shared-geometry lattice crane: open tower, triangulated jib and counter-jib.
  // It stays at x=+/-14, behind the x=+/-6.05 barriers; one yellow draw call.
  addRamaLatticeCrane(g,side);
- // Parked tracked excavator and raised boom remain behind roadside barriers.
- addRamaExcavator(g,side);
+ // Parked excavator: local glTF swaps in only after it passes geometry budgets.
+ // The procedural machine remains visible and playable on slow/offline devices.
+ const excavatorSlot=new THREE.Group();g.add(excavatorSlot);
+ addRamaExcavator(excavatorSlot,side);
+ ramaExcavatorSlots.push({slot:excavatorSlot,side});
  // Weathered green construction safety mesh encloses the unfinished pier.
  // Perforated alpha-test fabric (no alpha blending) is baked once and instanced;
  // all scaffolding remains beyond x=+/-8.7, well outside the drivable lanes.
