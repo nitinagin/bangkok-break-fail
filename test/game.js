@@ -840,7 +840,7 @@ const awningColors=Array.from({length:3},(_,i)=>makeYaowaratAwning(i));
 const yaowaratAwningRibGeometry=new THREE.BoxGeometry(.042,.045,1.06);
 const yaowaratAwningRibMetal=new THREE.MeshStandardMaterial({color:0x66645e,metalness:.52,roughness:.77});
 const yaowaratAwningRibMatrix=new THREE.Matrix4();
-const signMaterials=[mat(0xff267a),mat(0x086bd8),mat(0x1cbf7a)];const neonSigns=[new THREE.MeshBasicMaterial({color:0xff3d96}),new THREE.MeshBasicMaterial({color:0x22ffe0}),new THREE.MeshBasicMaterial({color:0xffd64d})];const daySigns=signMaterials.slice();function applyDistrict(i){if(i===districtIndex)return;districtIndex=i;
+const signMaterials=[mat(0xff267a),mat(0x086bd8),mat(0x1cbf7a)];const neonSigns=[new THREE.MeshBasicMaterial({color:0xff3d96}),new THREE.MeshBasicMaterial({color:0x22ffe0}),new THREE.MeshBasicMaterial({color:0xffd64d})];const daySigns=signMaterials.slice();function applyDistrict(i){if(i===districtIndex)return;districtIndex=i;paintCockpitMirrorDistrict(i);cockpitMirrorTexture.needsUpdate=true;
  const light=districtLightPresets[i]||districtLightPresets[0];
  skyFill.intensity=light[0];sun.intensity=light[1];
  skyFill.color.setHex(light[2]);skyFill.groundColor.setHex(light[3]);sun.color.setHex(light[4]);const fogRange=districtFogRanges[i]||districtFogRanges[0];scene.fog.near=fogRange[0];scene.fog.far=fogRange[1];districtLabel.textContent=['☀️ BANGKOK DAYTIME','🌃 YAOWARAT NIGHT · TEST 6.9','🌑 RAMA II · BLACKOUT CONSTRUCTION','🛍️ JJ MARKET · CHATUCHAK · 8000+','🛣️ BANGKOK EXPRESSWAY · 12000+','🌈 PATTAYA WALKING STREET · 16000+','🌑 DARK ROAD · 23000+'][i];for(let k=0;k<3;k++)signMaterials[k]=i===1?neonSigns[k]:daySigns[k];for(const b of props){if(b.userData.sign)b.userData.sign.material=signMaterials[b.userData.signIndex%3]}if(i===2)queueRamaExcavatorModel();const rama=i===2;M.grass.color.setHex(rama?0x78746d:0x34333b);M.road.color.setHex(rama?0x777b81:0x56535c);M.stripe.color.setHex(rama?0xe5e1d3:0xe2c579);shoulderPaint.color.setHex(rama?0x77736e:0x444148);curbPaint.color.setHex(rama?0x9d968b:0x756866);hint.textContent=['🛺 WELCOME TO BANGKOK!','🏮 WELCOME TO YAOWARAT!','🌇 SUNSET DRIVE!','🌿 JJ MARKET! WATCH THE TRAFFIC!','🛸 EXPRESSWAY! UFO LASERS INCOMING!','🌈 PATTAYA WALKING STREET!','🔦 DARK ROAD! HEADLIGHTS ONLY!'][i]}
@@ -2568,30 +2568,80 @@ const cockpitRed=new THREE.MeshStandardMaterial({color:0xc73556,metalness:.18,ro
 const cockpitMirrorCanvas=document.createElement('canvas');
 cockpitMirrorCanvas.width=192;cockpitMirrorCanvas.height=128;
 const mirrorCtx=cockpitMirrorCanvas.getContext('2d');
-const mirrorSky=mirrorCtx.createLinearGradient(0,0,0,128);
-mirrorSky.addColorStop(0,'#293c4b');mirrorSky.addColorStop(.58,'#1a2936');mirrorSky.addColorStop(1,'#30383b');
-mirrorCtx.fillStyle=mirrorSky;mirrorCtx.fillRect(0,0,192,128);
-mirrorCtx.fillStyle='#17232b';
-for(let i=0;i<13;i++){
- const bx=i*17-8,bh=26+(i*29)%52;
- mirrorCtx.fillRect(bx,88-bh,15,bh);
- mirrorCtx.fillStyle=i%3===0?'#f26e4b':'#c5a15d';
- mirrorCtx.fillRect(bx+3,91-bh,2,Math.min(20,bh-4));
- mirrorCtx.fillStyle='#17232b';
+// Paint the SAME side-mirror atlas only when the district changes. The old
+// permanently neon-lit skyline looked wrong in the Rama II blackout and Dark
+// Road. Baked location-specific reflections cost no camera, render target,
+// draw call, per-frame canvas work or additional GPU texture.
+function paintCockpitMirrorDistrict(stage){
+ const blackout=stage===2||stage===6;
+ const yaowarat=stage===1,market=stage===3,expressway=stage===4,pattaya=stage===5;
+ const sky=mirrorCtx.createLinearGradient(0,0,0,128);
+ const top=stage===6?'#03070b':stage===2?'#0c1118':yaowarat?'#293c4b':market?'#34404a':expressway?'#243447':pattaya?'#2e2542':'#6d8292';
+ const horizon=stage===6?'#0a1013':stage===2?'#20252b':market?'#57483b':pattaya?'#39243c':'#26343d';
+ sky.addColorStop(0,top);sky.addColorStop(.68,horizon);sky.addColorStop(1,'#151d25');
+ mirrorCtx.fillStyle=sky;mirrorCtx.fillRect(0,0,192,128);
+ // Near-black treeline / temporary construction silhouettes for unlit roads;
+ // Bangkok buildings and warm street-fronts only where those actually exist.
+ mirrorCtx.fillStyle=blackout?'#080e12':'#14232d';
+ for(let i=0;i<13;i++){
+  const bx=i*17-8,bh=blackout?11+(i*17)%23:26+(i*29)%52;
+  if(stage===6){
+   mirrorCtx.beginPath();mirrorCtx.moveTo(bx,88);mirrorCtx.lineTo(bx+7,88-bh);
+   mirrorCtx.lineTo(bx+16,88);mirrorCtx.fill();
+  }else{
+   mirrorCtx.fillRect(bx,88-bh,stage===2?5:15,bh);
+  }
+ }
+ if(stage===2){
+  // Sparse construction gantries and one amber safety beacon, not shop neon.
+  mirrorCtx.strokeStyle='#424a4d';mirrorCtx.lineWidth=2;
+  for(const bx of [27,109,171]){
+   mirrorCtx.beginPath();mirrorCtx.moveTo(bx,72);mirrorCtx.lineTo(bx,37);
+   mirrorCtx.lineTo(bx+24,37);mirrorCtx.stroke();
+  }
+  mirrorCtx.fillStyle='#bd6e30';mirrorCtx.fillRect(109,34,3,3);
+ }else if(yaowarat||pattaya){
+  const lights=yaowarat?['#f25d64','#e7b454','#35bfc0']:['#e34fa4','#5ab8ed','#d1a04f'];
+  for(let i=0;i<9;i++){
+   const bx=5+i*21,by=27+(i*17)%35;
+   mirrorCtx.fillStyle=lights[i%lights.length];
+   mirrorCtx.fillRect(bx,by,3+(i%3)*2,13+(i%4)*3);
+   mirrorCtx.fillStyle='rgba(255,238,199,.45)';
+   mirrorCtx.fillRect(bx+1,by+2,1,4);
+  }
+ }else if(market){
+  for(let i=0;i<7;i++){
+   const bx=i*31-6;
+   mirrorCtx.fillStyle=i%2?'#6d5141':'#a68a58';
+   mirrorCtx.beginPath();mirrorCtx.moveTo(bx,76);
+   mirrorCtx.lineTo(bx+16,63);mirrorCtx.lineTo(bx+32,76);mirrorCtx.fill();
+   mirrorCtx.fillStyle='#d2a866';mirrorCtx.fillRect(bx+12,77,5,4);
+  }
+ }else if(expressway){
+  for(let i=0;i<6;i++){
+   const bx=8+i*34;
+   mirrorCtx.fillStyle='#d2a46d';mirrorCtx.fillRect(bx,60,2,20);
+   mirrorCtx.fillStyle='rgba(255,218,149,.70)';mirrorCtx.fillRect(bx-2,58,6,2);
+  }
+ }
+ const road=mirrorCtx.createLinearGradient(0,84,0,128);
+ road.addColorStop(0,blackout?'#262a2b':'#4a5050');
+ road.addColorStop(1,'#101820');
+ mirrorCtx.fillStyle=road;mirrorCtx.fillRect(0,85,192,43);
+ // Headlight/taillight streaks remain subdued in the blackout stages.
+ for(let i=0;i<(blackout?5:19);i++){
+  const px=(i*43+13)%192,py=89+(i*17)%35;
+  mirrorCtx.fillStyle=blackout?'rgba(207,195,159,.11)':
+   i%3===0?'rgba(244,69,82,.48)':'rgba(244,177,93,.28)';
+  mirrorCtx.fillRect(px,py,2+(i%3),4+(i%9));
+ }
+ const haze=mirrorCtx.createLinearGradient(0,0,192,0);
+ haze.addColorStop(0,blackout?'rgba(161,177,183,.08)':'rgba(205,223,224,.29)');
+ haze.addColorStop(.4,'rgba(205,223,224,0)');
+ haze.addColorStop(1,blackout?'rgba(161,177,183,.04)':'rgba(205,223,224,.16)');
+ mirrorCtx.fillStyle=haze;mirrorCtx.fillRect(0,0,192,128);
 }
-const mirrorRoad=mirrorCtx.createLinearGradient(0,85,0,128);
-mirrorRoad.addColorStop(0,'#4a5050');mirrorRoad.addColorStop(1,'#151e26');
-mirrorCtx.fillStyle=mirrorRoad;mirrorCtx.fillRect(0,85,192,43);
-for(let i=0;i<19;i++){
- const x=(i*43+13)%192,y=89+(i*17)%35;
- mirrorCtx.fillStyle=i%3===0?'rgba(244,69,82,.48)':'rgba(244,177,93,.28)';
- mirrorCtx.fillRect(x,y,2+(i%3),4+(i%9));
-}
-const mirrorHaze=mirrorCtx.createLinearGradient(0,0,192,0);
-mirrorHaze.addColorStop(0,'rgba(205,223,224,.29)');
-mirrorHaze.addColorStop(.4,'rgba(205,223,224,0)');
-mirrorHaze.addColorStop(1,'rgba(205,223,224,.16)');
-mirrorCtx.fillStyle=mirrorHaze;mirrorCtx.fillRect(0,0,192,128);
+paintCockpitMirrorDistrict(1);
 const cockpitMirrorTexture=new THREE.CanvasTexture(cockpitMirrorCanvas);
 cockpitMirrorTexture.colorSpace=THREE.SRGBColorSpace;
 cockpitMirrorTexture.anisotropy=mobile?2:4;
