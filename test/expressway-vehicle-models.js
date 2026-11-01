@@ -419,6 +419,63 @@ function makeSportsCarProjectorHeadlights(THREE){
  mesh.name='sports-car-swept-projector-headlamps';
  return mesh;
 }
+// Curved sheet-metal bus roof and low-profile rooftop HVAC: one indexed PBR
+// mesh/draw call, no textures or runtime allocations. Kept above the original
+// body so collision footprint and side-window visibility remain unchanged.
+function makeBusCurvedRoofHVAC(THREE){
+ const positions=[],colors=[],indices=[];
+ const palette={
+  roof:new THREE.Color(0xd9d6ca),ridge:new THREE.Color(0xe5e1d4),
+  shell:new THREE.Color(0xb7b9b3),edge:new THREE.Color(0x78858a),
+  grille:new THREE.Color(0x29353b)
+ };
+ function vertex(x,y,z,c){
+  positions.push(x,y,z);colors.push(c.r,c.g,c.b);
+  return positions.length/3-1;
+ }
+ function quad(a,b,c,d,color){
+  const i=vertex(...a,color),j=vertex(...b,color);
+  const k=vertex(...c,color),l=vertex(...d,color);
+  indices.push(i,j,k,i,k,l);
+ }
+ function box(x0,x1,y0,y1,z0,z1,top,side){
+  quad([x0,y1,z0],[x1,y1,z0],[x1,y1,z1],[x0,y1,z1],top);
+  quad([x0,y0,z0],[x0,y1,z0],[x0,y1,z1],[x0,y0,z1],side);
+  quad([x1,y0,z0],[x1,y0,z1],[x1,y1,z1],[x1,y1,z0],side);
+  quad([x0,y0,z0],[x1,y0,z0],[x1,y1,z0],[x0,y1,z0],side);
+  quad([x0,y0,z1],[x0,y1,z1],[x1,y1,z1],[x1,y0,z1],side);
+ }
+ const across=[-1,-.82,-.48,0,.48,.82,1],stations=[-2.01,-1.52,-1,0,1,1.52,2.01];
+ const roofIds=[];
+ for(const z of stations){
+  for(const nx of across){
+   const y=2.875+.068*(1-nx*nx);
+   roofIds.push(vertex(nx,y,z,Math.abs(nx)<.5?palette.ridge:palette.roof));
+  }
+ }
+ for(let row=0;row<stations.length-1;row++)
+  for(let col=0;col<across.length-1;col++){
+   const a=roofIds[row*across.length+col],b=roofIds[(row+1)*across.length+col];
+   indices.push(a,b,a+1,a+1,b,b+1);
+  }
+ // Air-conditioning enclosure and recessed ventilation grille. No rooftop
+ // projections extend beyond the bus width or the existing front/rear ends.
+ box(-.64,.64,2.93,3.16,-.88,.64,palette.shell,palette.edge);
+ for(let n=0;n<7;n++){
+  const z=-.74+n*.19;
+  quad([-.48,3.165,z], [.48,3.165,z],
+       [.48,3.165,z+.078],[-.48,3.165,z+.078],palette.grille);
+ }
+ const geo=new THREE.BufferGeometry();
+ geo.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+ geo.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));
+ geo.setIndex(indices);geo.computeVertexNormals();
+ const mesh=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({
+  vertexColors:true,metalness:.24,roughness:.71,side:THREE.DoubleSide
+ }));
+ mesh.name='bangkok-bus-curved-roof-hvac';
+ return mesh;
+}
 export function makeExpresswayVehicle(THREE,type='sportsCar'){
  const isBus=type==='bus',group=new THREE.Group(),w=isBus?2.05:1.8,length=isBus?4.45:3.55;
  const paint=isBus?new THREE.MeshStandardMaterial({color:0xf0e6d4,metalness:.15,roughness:.65}):new THREE.MeshPhysicalMaterial({color:0xb12438,metalness:.62,roughness:.26,clearcoat:.75,clearcoatRoughness:.22});
@@ -437,6 +494,7 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   const busGlazing=makeBusGlazing(THREE),destination=makeBusDestination(THREE);
   box(0,1.07,0,2.07,.25,4.4,stripe);
   group.add(makeBusSideLivery(THREE));
+  group.add(makeBusCurvedRoofHVAC(THREE));
   group.add(makeBusFrontFascia(THREE));
   // Front-facing route sign and curved glass replace texture-stretched boxes.
   // Vehicle footprint, collision and stage behavior are unchanged.
