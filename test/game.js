@@ -2711,11 +2711,59 @@ ellipsoid(0,.69,-1.43,.45,.13,.5,playerBrass);
 for(const side of [-1,1]){
   ellipsoid(side*.58,1.02,-1.5,.22,.22,.12,chrome);
   ellipsoid(side*.58,1.02,-1.61,.15,.15,.045,playerHeadlight);
-  ellipsoid(side*.73,1.05,1.4,.14,.14,.08,playerTaillight);
+  ellipsoid(side*.73,1.05,1.56,.14,.14,.08,playerTaillight);
 }
 tube([[-.82,.57,-1.48],[-.66,.5,-1.7],[.66,.5,-1.7],[.82,.57,-1.48]],.065,chrome);
-car.add(cube(.62,.22,.08,playerBrass,0,.93,1.49));
-car.add(cube(.4,.12,.09,playerDark,0,.93,1.55));
+// One baked rear engine cover with pressed louvers and a fictional Thai plate.
+// Replaces two blank cubes with one PBR panel; no frame-time canvas work.
+const playerRearCanvas=document.createElement('canvas');
+playerRearCanvas.width=512;playerRearCanvas.height=192;
+const playerRearCtx=playerRearCanvas.getContext('2d');
+const rearEnamel=playerRearCtx.createLinearGradient(0,0,0,192);
+rearEnamel.addColorStop(0,'#167a88');
+rearEnamel.addColorStop(.48,'#0b6170');
+rearEnamel.addColorStop(1,'#193f4c');
+playerRearCtx.fillStyle=rearEnamel;playerRearCtx.fillRect(0,0,512,192);
+playerRearCtx.fillStyle='#172d34';playerRearCtx.fillRect(0,10,512,8);
+playerRearCtx.fillStyle='#9ba9a6';playerRearCtx.fillRect(0,20,512,3);
+playerRearCtx.fillStyle='#24333b';playerRearCtx.fillRect(0,164,512,13);
+playerRearCtx.fillStyle='#9ca7a1';playerRearCtx.fillRect(0,178,512,5);
+playerRearCtx.fillStyle='rgba(232,224,194,.25)';playerRearCtx.fillRect(10,31,492,2);
+for(let i=0;i<6;i++){
+ const y=42+i*13;
+ playerRearCtx.fillStyle='#102a33';playerRearCtx.fillRect(173,y,166,8);
+ playerRearCtx.fillStyle='rgba(175,206,204,.56)';playerRearCtx.fillRect(175,y,162,2);
+ playerRearCtx.fillStyle='rgba(4,14,19,.42)';playerRearCtx.fillRect(175,y+7,162,2);
+}
+playerRearCtx.fillStyle='#14252a';playerRearCtx.fillRect(173,114,166,50);
+playerRearCtx.fillStyle='#e7d9aa';playerRearCtx.fillRect(178,118,156,41);
+playerRearCtx.strokeStyle='#6e684d';playerRearCtx.lineWidth=2;
+playerRearCtx.strokeRect(181,121,150,35);
+playerRearCtx.textAlign='center';playerRearCtx.textBaseline='middle';
+playerRearCtx.fillStyle='#283334';playerRearCtx.font='bold 14px sans-serif';
+playerRearCtx.fillText('กรุงเทพมหานคร',256,131);
+playerRearCtx.font='bold 23px sans-serif';playerRearCtx.fillText('1 กข 2549',256,149);
+for(const x of [25,487])for(const y of [37,154]){
+ playerRearCtx.fillStyle='#111c23';playerRearCtx.beginPath();
+ playerRearCtx.arc(x,y,6,0,Math.PI*2);playerRearCtx.fill();
+ playerRearCtx.fillStyle='#a4b2ae';playerRearCtx.fillRect(x-2,y-1,4,2);
+}
+for(let i=0;i<210;i++){
+ const px=(i*89+17)%512,py=(i*47+29)%192;
+ playerRearCtx.fillStyle=i%4?'rgba(9,17,20,.13)':'rgba(223,205,163,.10)';
+ playerRearCtx.fillRect(px,py,1+i%3,1+i%2);
+}
+const playerRearTexture=new THREE.CanvasTexture(playerRearCanvas);
+playerRearTexture.colorSpace=THREE.SRGBColorSpace;
+playerRearTexture.anisotropy=mobile?2:4;
+const playerRearPanel=new THREE.Mesh(
+ new THREE.PlaneGeometry(1.62,.42),
+ new THREE.MeshPhysicalMaterial({map:playerRearTexture,metalness:.28,roughness:.49,
+  clearcoat:.34,clearcoatRoughness:.42,side:THREE.DoubleSide})
+);
+playerRearPanel.name='player-tuktuk-weathered-rear-fascia';
+playerRearPanel.position.set(0,.97,1.54);
+car.add(playerRearPanel);
 scene.add(car);
 // V0.9 AI generated vehicle, using the procedural car until the GLB is ready.
 // Fixed orientation verified from iPhone screenshot: rear of vehicle faces the camera.
