@@ -2049,6 +2049,30 @@ const ramaWarningMaterial=new THREE.MeshStandardMaterial({
 });
 const ramaWarningGeometry=new THREE.PlaneGeometry(2.35,1.18);
 const ramaWarningPostGeometry=new THREE.BoxGeometry(.075,.85,.075);
+// Three portable floodlight masts per work zone. Amber ground spill is baked,
+// not a real-time light: the entire effect uses four shared instanced draws per
+// zone, one 64px texture, and no animation or shadows on mobile.
+const ramaFloodPoleGeo=new THREE.BoxGeometry(.10,4.55,.10);
+const ramaFloodHeadGeo=new THREE.BoxGeometry(.62,.36,.20);
+const ramaFloodLensGeo=new THREE.PlaneGeometry(.52,.28);
+const ramaFloodPoolGeo=new THREE.PlaneGeometry(3.0,4.4);
+const ramaFloodHeadMat=new THREE.MeshStandardMaterial({color:0x575c60,metalness:.62,roughness:.48});
+const ramaFloodLensMat=new THREE.MeshBasicMaterial({color:0xffe4aa,side:THREE.DoubleSide});
+const ramaFloodCanvas=document.createElement('canvas');
+ramaFloodCanvas.width=ramaFloodCanvas.height=64;
+const ramaFloodCtx=ramaFloodCanvas.getContext('2d');
+const ramaFloodGradient=ramaFloodCtx.createRadialGradient(32,32,2,32,32,32);
+ramaFloodGradient.addColorStop(0,'rgba(255,211,128,.46)');
+ramaFloodGradient.addColorStop(.45,'rgba(255,186,96,.20)');
+ramaFloodGradient.addColorStop(1,'rgba(255,168,70,0)');
+ramaFloodCtx.fillStyle=ramaFloodGradient;
+ramaFloodCtx.fillRect(0,0,64,64);
+const ramaFloodTexture=new THREE.CanvasTexture(ramaFloodCanvas);
+ramaFloodTexture.colorSpace=THREE.SRGBColorSpace;
+const ramaFloodPoolMat=new THREE.MeshBasicMaterial({
+ map:ramaFloodTexture,transparent:true,depthWrite:false,
+ blending:THREE.AdditiveBlending,polygonOffset:true,polygonOffsetFactor:-1
+});
 function ramaWorkZone(side,z){
  const g=new THREE.Group();
  // Fourteen weathered precast barriers and inward-facing hazard chevrons.
@@ -2070,6 +2094,33 @@ function ramaWorkZone(side,z){
  beacons.instanceMatrix.needsUpdate=true;
  beacons.computeBoundingSphere();
  g.add(beacons);ramaBeaconMeshes.push(beacons);
+ // Portable amber construction floodlights illuminate the parked machinery
+ // without adding shadow-casting lights or spilling into the player's dodge lane.
+ const floodPoles=new THREE.InstancedMesh(ramaFloodPoleGeo,siteSteel,3);
+ const floodHeads=new THREE.InstancedMesh(ramaFloodHeadGeo,ramaFloodHeadMat,3);
+ const floodLenses=new THREE.InstancedMesh(ramaFloodLensGeo,ramaFloodLensMat,3);
+ const floodPools=new THREE.InstancedMesh(ramaFloodPoolGeo,ramaFloodPoolMat,3);
+ const floodPose=new THREE.Object3D();
+ for(let i=0;i<3;i++){
+  const zz=-17+i*17,xx=side*8.15;
+  floodPose.rotation.set(0,0,0);
+  floodPose.position.set(xx,2.275,zz);
+  floodPose.updateMatrix();floodPoles.setMatrixAt(i,floodPose.matrix);
+  floodPose.rotation.set(0,-side*Math.PI/2,0);
+  floodPose.position.set(xx,4.56,zz);
+  floodPose.updateMatrix();floodHeads.setMatrixAt(i,floodPose.matrix);
+  // The lens faces inward toward the road, but stays behind x=+/-6.05.
+  floodPose.position.set(xx-side*.115,4.56,zz);
+  floodPose.updateMatrix();floodLenses.setMatrixAt(i,floodPose.matrix);
+  floodPose.rotation.set(-Math.PI/2,0,0);
+  floodPose.position.set(side*7.85,.075,zz);
+  floodPose.updateMatrix();floodPools.setMatrixAt(i,floodPose.matrix);
+ }
+ for(const mesh of [floodPoles,floodHeads,floodLenses,floodPools]){
+  mesh.instanceMatrix.needsUpdate=true;
+  mesh.computeBoundingSphere();
+  g.add(mesh);
+ }
  // Three roadside Thai/English roadwork boards use one instanced draw call.
  // Mounting posts stay entirely behind the concrete barriers, never in a dodge lane.
  const warningBoards=new THREE.InstancedMesh(ramaWarningGeometry,ramaWarningMaterial,3);
