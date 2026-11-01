@@ -2500,6 +2500,21 @@ dialGround.addColorStop(1,'#050b13');
 dialPaint.fillStyle=dialGround;dialPaint.fillRect(0,0,256,256);
 dialPaint.strokeStyle='rgba(183,207,215,.24)';dialPaint.lineWidth=2;
 dialPaint.beginPath();dialPaint.arc(128,128,116,0,Math.PI*2);dialPaint.stroke();
+ // Redline is a baked instrument marking, not a second mesh or animated texture.
+ // It follows the same 0–240 km/h sweep as the live needle.
+ dialPaint.strokeStyle='#cb493d';dialPaint.lineWidth=5;dialPaint.lineCap='round';
+ dialPaint.beginPath();
+ for(let kmh=180;kmh<=240;kmh+=4){
+  const angle=Math.PI*.72*(1-kmh/120);
+  const px=128-Math.sin(angle)*117,py=128-Math.cos(angle)*117;
+  if(kmh===180)dialPaint.moveTo(px,py);else dialPaint.lineTo(px,py);
+ }
+ dialPaint.stroke();dialPaint.lineCap='butt';
+ // Two restrained satin-metal concentric rings provide depth at no draw-call cost.
+ dialPaint.strokeStyle='rgba(190,205,209,.13)';dialPaint.lineWidth=1;
+ for(const radius of [88,92]){
+  dialPaint.beginPath();dialPaint.arc(128,128,radius,0,Math.PI*2);dialPaint.stroke();
+ }
 for(let kmh=0;kmh<=240;kmh+=10){
  const a=Math.PI*.72*(1-kmh/120),dx=-Math.sin(a),dy=-Math.cos(a);
  const major=kmh%40===0,outer=111,inner=major?94:103;
@@ -2519,6 +2534,19 @@ dialPaint.fillStyle='#7da5b6';dialPaint.textAlign='center';
 dialPaint.font='bold 15px system-ui, sans-serif';dialPaint.fillText('km/h',128,175);
 dialPaint.fillStyle='#b3b9b8';dialPaint.font='11px system-ui, sans-serif';
 dialPaint.fillText('BANGKOK',128,193);
+ // Bake subtle curved instrument-glass reflections into the existing 256px map.
+ // Keep numerals readable, especially on dim iPhone screens.
+ dialPaint.save();
+ dialPaint.beginPath();dialPaint.arc(128,128,112,0,Math.PI*2);dialPaint.clip();
+ const dialGlare=dialPaint.createLinearGradient(28,23,204,216);
+ dialGlare.addColorStop(0,'rgba(230,247,255,.13)');
+ dialGlare.addColorStop(.34,'rgba(220,243,255,.025)');
+ dialGlare.addColorStop(.60,'rgba(210,234,255,0)');
+ dialGlare.addColorStop(1,'rgba(158,185,199,.06)');
+ dialPaint.fillStyle=dialGlare;dialPaint.fillRect(0,0,256,256);
+ dialPaint.strokeStyle='rgba(237,246,252,.10)';dialPaint.lineWidth=9;
+ dialPaint.beginPath();dialPaint.ellipse(94,67,68,16,-.42,Math.PI*.98,Math.PI*1.96);dialPaint.stroke();
+ dialPaint.restore();
 const speedometerTexture=new THREE.CanvasTexture(speedometerCanvas);
 speedometerTexture.colorSpace=THREE.SRGBColorSpace;
 speedometerTexture.anisotropy=mobile?2:4;
