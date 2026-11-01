@@ -3985,6 +3985,47 @@ function makeTaxi(){
  }
  profile([[-1.72,.58],[1.72,.58],[1.75,.93],[1.52,1.17],[.93,1.23],[-1.36,1.23],[-1.7,1.13]],1.98,taxiPaintGreen);
  profile([[-1.12,1.2],[-.8,1.78],[-.52,1.92],[.43,1.92],[.87,1.2]],1.59,taxiPaintYellow);
+ // Sculpted bonnet and boot replace the flat sedan silhouette seen from the
+ // driver's lane. Both pressed-metal skins are batched into ONE shared mesh,
+ // using the taxi's existing weathered green PBR paint and 128px maps.
+ // This is purely visual: no hitbox, speed, steering or spawning changes.
+ const taxiPanelPositions=[],taxiPanelUvs=[],taxiPanelIndices=[];
+ const taxiPanelAcross=[-.94,-.78,-.5,-.22,0,.22,.5,.78,.94];
+ function pressedTaxiPanel(stations){
+  const start=taxiPanelPositions.length/3;
+  for(let row=0;row<stations.length;row++){
+   const [z,baseY]=stations[row];
+   for(let col=0;col<taxiPanelAcross.length;col++){
+    const across=taxiPanelAcross[col],edge=Math.abs(across)/.94;
+    // Crown, twin pressed shoulder lines and a shallow center crease
+    // catch shopfront reflections without extra lights or textures.
+    const shoulder=.008*Math.exp(-Math.pow((Math.abs(across)-.62)/.11,2));
+    const crown=.019*(1-edge*edge)+shoulder-.004*Math.exp(-Math.pow(across/.12,2));
+    taxiPanelPositions.push(across*.98,baseY+crown,z);
+    taxiPanelUvs.push((across/.94+1)*.5,row/(stations.length-1));
+   }
+  }
+  for(let row=0;row<stations.length-1;row++){
+   for(let col=0;col<taxiPanelAcross.length-1;col++){
+    const a=start+row*taxiPanelAcross.length+col;
+    const b=a+taxiPanelAcross.length;
+    taxiPanelIndices.push(a,b,a+1,a+1,b,b+1);
+   }
+  }
+ }
+ // +Z is the approaching taxi's nose; the boot is behind the passenger cabin.
+ // All vertices sit above the existing extruded body surface to avoid z-fighting.
+ pressedTaxiPanel([[.89,1.255],[1.05,1.252],[1.25,1.244],[1.45,1.215],[1.62,1.187],[1.72,1.159]]);
+ pressedTaxiPanel([[-1.68,1.165],[-1.56,1.206],[-1.42,1.246],[-1.28,1.254],[-1.13,1.256]]);
+ const taxiPanelGeometry=new THREE.BufferGeometry();
+ taxiPanelGeometry.setAttribute('position',new THREE.Float32BufferAttribute(taxiPanelPositions,3));
+ taxiPanelGeometry.setAttribute('uv',new THREE.Float32BufferAttribute(taxiPanelUvs,2));
+ taxiPanelGeometry.setIndex(taxiPanelIndices);
+ taxiPanelGeometry.computeVertexNormals();
+ const taxiPressedPanels=new THREE.Mesh(taxiPanelGeometry,taxiPaintGreen);
+ taxiPressedPanels.name='bangkok-taxi-pressed-hood-and-boot';
+ g.add(taxiPressedPanels);
+
  // Four side panes follow the actual sloped roofline, not rectangular stickers.
  function sideWindow(points,side){
   const shape=new THREE.Shape();
