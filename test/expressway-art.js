@@ -239,9 +239,38 @@ export function createExpresswayArt(THREE){
  carShellGeometry.translate(0,0,-.46);
  const carPaint=new THREE.MeshStandardMaterial({color:0xffffff,metalness:.53,roughness:.31});
  const bridgeCarBodies=new THREE.InstancedMesh(carShellGeometry,carPaint,bridgeCarCount);
- const carColors=[0xcbd0d3,0x282e36,0xeee5d3,0x8a1824,0x2b516a,0x696e73];
+ const carColors=[0x32b65a,0x282e36,0xf1d353,0x8a1824,0x3dbe6b,0x696e73]; // green/yellow Bangkok taxis
  for(let i=0;i<bridgeCarCount;i++)bridgeCarBodies.setColorAt(i,new THREE.Color(carColors[i%carColors.length]));
  if(bridgeCarBodies.instanceColor)bridgeCarBodies.instanceColor.needsUpdate=true;
+ // Bangkok-specific elevated taxi fleet: six of the twelve crossing cars
+ // now carry a lit TAXI-METER roof box and matching door livery. Both are
+ // instanced (two draw calls total) and reuse one tiny baked atlas. The signs
+ // follow the existing cars, stay above the 8m crossover, and never collide
+ // with the drivable road or request external assets.
+ const taxiCount=bridgeCarCount/2;
+ const taxiCanvas=document.createElement('canvas');
+ taxiCanvas.width=256;taxiCanvas.height=128;
+ const tx=taxiCanvas.getContext('2d');
+ tx.fillStyle='#e8e9d8';tx.fillRect(0,0,256,128);
+ tx.fillStyle='#1b5b40';tx.fillRect(5,5,246,118);
+ tx.fillStyle='#f4f1df';tx.fillRect(10,10,236,108);
+ tx.fillStyle='#17613c';tx.fillRect(13,13,230,7);
+ tx.fillStyle='#163f34';tx.font='bold 54px Arial,sans-serif';
+ tx.textAlign='center';tx.textBaseline='middle';tx.fillText('TAXI',128,55);
+ tx.fillStyle='#286d4b';tx.font='bold 22px Arial,sans-serif';
+ tx.fillText('METER  BANGKOK',128,96);
+ const taxiTexture=new THREE.CanvasTexture(taxiCanvas);
+ taxiTexture.colorSpace=THREE.SRGBColorSpace;taxiTexture.anisotropy=2;
+ const taxiLiveryMaterial=new THREE.MeshBasicMaterial({
+  map:taxiTexture,side:THREE.DoubleSide,toneMapped:false
+ });
+ const bridgeTaxiRoofSigns=new THREE.InstancedMesh(
+  new THREE.BoxGeometry(.45,.18,.20),taxiLiveryMaterial,taxiCount
+ );
+ const bridgeTaxiDoorSigns=new THREE.InstancedMesh(
+  new THREE.PlaneGeometry(.42,.22),taxiLiveryMaterial,taxiCount*2
+ );
+ const taxiPose=new THREE.Object3D();
  const glassShape=new THREE.Shape();
  glassShape.moveTo(-.33,.33);glassShape.lineTo(-.20,.52);
  glassShape.lineTo(.16,.51);glassShape.lineTo(.34,.33);glassShape.closePath();
@@ -262,6 +291,19 @@ export function createExpresswayArt(THREE){
    carDummy.position.set(x,8.54,z);carDummy.rotation.set(0,0,0);
    carDummy.scale.set(1,1,1);carDummy.updateMatrix();
    bridgeCarBodies.setMatrixAt(i,carDummy.matrix);
+   if(i%2===0){
+    const taxiIndex=i/2;
+    taxiPose.position.set(x,9.26,z);
+    taxiPose.rotation.set(0,0,0);
+    taxiPose.scale.set(1,1,1);
+    taxiPose.updateMatrix();
+    bridgeTaxiRoofSigns.setMatrixAt(taxiIndex,taxiPose.matrix);
+    for(let flank=0;flank<2;flank++){
+     taxiPose.position.set(x,8.79,z+(flank===0?-.483:.483));
+     taxiPose.updateMatrix();
+     bridgeTaxiDoorSigns.setMatrixAt(taxiIndex*2+flank,taxiPose.matrix);
+    }
+   }
    for(let side=0;side<2;side++){
     const sign=side===0?-1:1;
     carDummy.position.set(x,8.54,z+sign*.468);
@@ -288,9 +330,11 @@ export function createExpresswayArt(THREE){
   bridgeCarBodies.instanceMatrix.needsUpdate=true;
   bridgeCarWindows.instanceMatrix.needsUpdate=true;
   bridgeCarWheels.instanceMatrix.needsUpdate=true;
+  bridgeTaxiRoofSigns.instanceMatrix.needsUpdate=true;
+  bridgeTaxiDoorSigns.instanceMatrix.needsUpdate=true;
  }
  placeBridgeTraffic();
- group.add(bridgeCarBodies,bridgeCarWindows,bridgeCarWheels,bridgeHeadlights,bridgeTaillights);
+ group.add(bridgeCarBodies,bridgeCarWindows,bridgeCarWheels,bridgeHeadlights,bridgeTaillights,bridgeTaxiRoofSigns,bridgeTaxiDoorSigns);
 
  // Roadside Bangkok expressway acoustic screens: weathered ribbed panels
  // and galvanized uprights. Opaque PBR prevents mobile alpha overdraw.
@@ -631,6 +675,7 @@ gantry.position.z=-75;group.add(gantry);
   arrowPaintMaterial.dispose();arrowPaintTexture.dispose();
    bridgeHeadMaterial.dispose();bridgeTailMaterial.dispose();
    carPaint.dispose();carGlass.dispose();tyreMaterial.dispose();
+   taxiLiveryMaterial.dispose();taxiTexture.dispose();
   windowTexture.dispose();emissiveTexture.dispose();poolTexture.dispose();signTexture.dispose();flyoverTexture.dispose();acousticTexture.dispose();barrierTexture.dispose();reflectorTexture.dispose();vmsTexture.dispose();vmsMaterial.dispose();
  }};
 }
