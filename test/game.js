@@ -522,13 +522,22 @@ lowBeamCanvas.width=192;lowBeamCanvas.height=256;
 const lowBeamCtx=lowBeamCanvas.getContext('2d');
 const lowBeamPixels=lowBeamCtx.createImageData(192,256);
 for(let py=0;py<256;py++)for(let px=0;px<192;px++){
- const t=1-py/255; // Canvas top = distant road; texture UV top = distant road.
+ // Soft dual headlamp cones plus narrow wet-asphalt highlights. All work
+ // is baked into the existing 192x256 atlas once, not calculated per frame.
+ const distance=1-py/255; // Canvas top = far road; bottom = near road.
  const lateral=(px-95.5)/95.5;
- const spread=.13+.33*t,offset=.09+.12*t;
- const left=Math.exp(-Math.pow((lateral+offset)/spread,4));
- const right=Math.exp(-Math.pow((lateral-offset)/spread,4));
- const longitudinal=Math.pow(Math.max(0,Math.sin(Math.PI*t)),1.15);
- const alpha=Math.round(94*longitudinal*Math.min(1,(left+right)*.73));
+ const beamWidth=.11+.35*distance,beamOffset=.08+.13*distance;
+ const left=Math.exp(-Math.pow((lateral+beamOffset)/beamWidth,2));
+ const right=Math.exp(-Math.pow((lateral-beamOffset)/beamWidth,2));
+ const streakWidth=.038+.06*distance;
+ const wetLeft=Math.exp(-Math.pow((lateral+beamOffset)/streakWidth,2));
+ const wetRight=Math.exp(-Math.pow((lateral-beamOffset)/streakWidth,2));
+ const distanceFade=Math.pow(Math.max(0,Math.sin(Math.PI*distance)),.82);
+ const nearBounce=.20*Math.exp(-Math.pow((distance-.17)/.13,2));
+ // Low-contrast asphalt grain breaks up a synthetic-looking solid light blob.
+ const grain=.94+.06*Math.sin(distance*113+lateral*27)*Math.sin(distance*57-lateral*11);
+ const alpha=Math.round(Math.min(155,Math.max(0,
+  125*(distanceFade+nearBounce)*(.58*(left+right)+.28*(wetLeft+wetRight))*grain)));
  const k=(py*192+px)*4;
  lowBeamPixels.data[k]=255;lowBeamPixels.data[k+1]=232;
  lowBeamPixels.data[k+2]=190;lowBeamPixels.data[k+3]=alpha;
