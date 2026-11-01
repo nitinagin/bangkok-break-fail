@@ -235,6 +235,46 @@ function makeSportsCarRearFascia(THREE){
  map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=2;
  return new THREE.MeshBasicMaterial({map,toneMapped:false});
 }
+// Bangkok city bus: pressed-steel wheel with inset vent slots, eight lug nuts,
+// brake dust and subtle oxidized edges. One 128px PBR albedo is shared by all
+// four existing instanced hubs; no additional meshes, draw calls or downloads.
+function makeBusStampedSteelWheel(THREE){
+ const canvas=document.createElement('canvas');canvas.width=canvas.height=128;
+ const ctx=canvas.getContext('2d');ctx.translate(64,64);
+ const disc=(radius,fill)=>{ctx.fillStyle=fill;ctx.beginPath();ctx.arc(0,0,radius,0,Math.PI*2);ctx.fill();};
+ const rim=ctx.createRadialGradient(-14,-18,4,0,0,63);
+ rim.addColorStop(0,'#d5d7d1');rim.addColorStop(.43,'#a5adb0');
+ rim.addColorStop(.79,'#5a666d');rim.addColorStop(1,'#222b31');
+ disc(63,'#13191d');disc(58,rim);
+ ctx.strokeStyle='#c8d0cd';ctx.lineWidth=2;
+ ctx.beginPath();ctx.arc(0,0,54,0,Math.PI*2);ctx.stroke();
+ disc(48,'#465057');disc(43,'#8f999b');disc(37,'#68757b');
+ // Dark oval cooling vents in the pressed steel; each gets a metal lip.
+ for(let i=0;i<10;i++){
+  const a=i*Math.PI/5;
+  ctx.save();ctx.rotate(a);ctx.translate(0,-29);
+  ctx.fillStyle='#b7bebb';ctx.beginPath();ctx.ellipse(0,0,7.3,11,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#19252b';ctx.beginPath();ctx.ellipse(0,-1,5.2,8.6,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='rgba(221,225,219,.30)';ctx.fillRect(-4,-8,1.2,10);
+  ctx.restore();
+ }
+ // Brake dust stays close to the recessed rim, not a uniform cartoon outline.
+ for(let i=0;i<76;i++){
+  const a=i*2.39996,r=40+(i*17%15);
+  ctx.fillStyle=i%4===0?'rgba(69,43,30,.16)':'rgba(17,27,32,.12)';
+  ctx.beginPath();ctx.arc(Math.cos(a)*r,Math.sin(a)*r,.6+i%3*.3,0,Math.PI*2);ctx.fill();
+ }
+ disc(18,'#313d44');disc(15,'#b9c2c0');disc(9,'#64737b');
+ for(let i=0;i<8;i++){
+  const a=i*Math.PI/4,x=Math.cos(a)*13,y=Math.sin(a)*13;
+  ctx.fillStyle='#253139';ctx.beginPath();ctx.arc(x,y,3.1,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#d9ded7';ctx.beginPath();ctx.arc(x-.6,y-.6,1.55,0,Math.PI*2);ctx.fill();
+ }
+ disc(4,'#252e34');
+ const map=new THREE.CanvasTexture(canvas);
+ map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=2;
+ return new THREE.MeshStandardMaterial({map,metalness:.72,roughness:.43});
+}
 // Five twin-spoke cast alloy wheels, baked once per sports-car template.
 // All four instanced hubs share one 128px PBR atlas: zero extra draw calls.
 function makeSportsCarAlloyWheel(THREE){
@@ -707,7 +747,7 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
  // Instanced tires and machined hubs add exterior detail without extra wheel draw calls.
  const tireGeo=new THREE.CylinderGeometry(isBus?.43:.37,isBus?.43:.37,.18,12);tireGeo.rotateZ(Math.PI/2);
  const hubGeo=new THREE.CylinderGeometry(isBus?.26:.22,isBus?.26:.22,.025,12);hubGeo.rotateZ(Math.PI/2);
- const hubMetal=isBus?new THREE.MeshStandardMaterial({color:0x9da9b1,metalness:.8,roughness:.3}):makeSportsCarAlloyWheel(THREE);
+ const hubMetal=isBus?makeBusStampedSteelWheel(THREE):makeSportsCarAlloyWheel(THREE);
  const mirrorShell=new THREE.MeshStandardMaterial({color:0x20272d,metalness:.2,roughness:.48});
  const mirrorGlass=new THREE.MeshStandardMaterial({color:0x8aabb8,metalness:.65,roughness:.16});
  const tires=new THREE.InstancedMesh(tireGeo,rubber,4);
