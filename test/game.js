@@ -4354,6 +4354,34 @@ function makeTukTuk(){
  for(let iz=0;iz<nz;iz++)for(let ix=0;ix<nx;ix++){
   const a=iz*(nx+1)+ix,b=a+nx+1;indices.push(a,b,a+1,b,b+1,a+1);
  }
+ // Real Bangkok tuk-tuks have a tensioned canvas valance, not a bare roof edge.
+ // Add scalloped side skirts and shallow front/rear hems to the EXISTING
+ // indexed roof mesh: one shared weathered PBR atlas, one draw call, no lights.
+ // The open passenger sides, windshield clearance and obstacle bounds remain.
+ for(const side of [-1,1]){
+  const base=vertices.length/3,segments=12;
+  for(let iz=0;iz<=segments;iz++){
+   const v=iz/segments,z=-1.38+2.16*v;
+   const scallop=.018*(1-Math.cos(6*Math.PI*v))*.5;
+   vertices.push(side*.86,2.34,z,side*.86,2.17+scallop,z);
+   uvs.push(side<0?.09:.91,v,side<0?.02:.98,v);
+  }
+  for(let iz=0;iz<segments;iz++){
+   const a=base+2*iz;indices.push(a,a+2,a+1,a+2,a+3,a+1);
+  }
+ }
+ for(const end of [-1,1]){
+  const base=vertices.length/3,z=end<0?-1.38:.78,segments=8;
+  for(let ix=0;ix<=segments;ix++){
+   const u=ix/segments,x=-.86+1.72*u;
+   const roofY=2.34+.16*(1-(x/.86)**2);
+   vertices.push(x,roofY,z,x,roofY-.11,z);
+   uvs.push(u,end<0?.07:.93,u,end<0?.01:.99);
+  }
+  for(let ix=0;ix<segments;ix++){
+   const a=base+2*ix;indices.push(a,a+2,a+1,a+2,a+3,a+1);
+  }
+ }
  const roofGeometry=new THREE.BufferGeometry();
  roofGeometry.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));
  roofGeometry.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));
