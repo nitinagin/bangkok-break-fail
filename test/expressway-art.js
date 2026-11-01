@@ -375,9 +375,32 @@ export function createExpresswayArt(THREE){
  }
  const signTexture=new THREE.CanvasTexture(signCanvas);
  signTexture.colorSpace=THREE.SRGBColorSpace;signTexture.anisotropy=2;
+ // Steel lattice sign gantry: the original short posts left the amber VMS
+ // floating above the support beam. Extend the roadside uprights and brace
+ // the two horizontal chords with 16 batched diagonals behind the signs.
+ // One additional draw call, no shadows, and all members >=7m above the road
+ // or beyond x=+/-4.7m, so the playable dodge corridor stays unobstructed.
  const gantry=new THREE.Group();
- for(const side of [-1,1])gantry.add(box(.19,7,.19,steel,side*4.7,3.5,0));
- gantry.add(box(9.5,.18,.2,steel,0,7,0));
+ gantry.name='bangkok-expressway-steel-truss-gantry';
+ for(const side of [-1,1])gantry.add(box(.24,9.1,.24,steel,side*4.7,4.55,-.24));
+ gantry.add(box(9.5,.18,.2,steel,0,7,-.24));
+ gantry.add(box(9.5,.2,.2,steel,0,9,-.24));
+ const trussBraceCount=16,trussSpan=9.2,trussStep=trussSpan/trussBraceCount;
+ const trussBraces=new THREE.InstancedMesh(
+  new THREE.CylinderGeometry(.045,.045,1,6),steel,trussBraceCount
+ );
+ const trussDummy=new THREE.Object3D();
+ for(let i=0;i<trussBraceCount;i++){
+  const x0=-trussSpan*.5+i*trussStep,x1=x0+trussStep;
+  const y0=i%2===0?7.12:8.88,y1=i%2===0?8.88:7.12;
+  const dx=x1-x0,dy=y1-y0;
+  trussDummy.position.set((x0+x1)*.5,(y0+y1)*.5,-.30);
+  trussDummy.rotation.set(0,0,-Math.atan2(dx,dy));
+  trussDummy.scale.set(1,Math.hypot(dx,dy),1);
+  trussDummy.updateMatrix();trussBraces.setMatrixAt(i,trussDummy.matrix);
+ }
+ trussBraces.instanceMatrix.needsUpdate=true;
+ gantry.add(trussBraces);
  const sign=new THREE.Mesh(new THREE.PlaneGeometry(6.8,2.13),new THREE.MeshBasicMaterial({map:signTexture,side:THREE.DoubleSide}));
  sign.position.set(0,5.7,.12);gantry.add(sign);// Bangkok-style overhead variable-message sign: one 512x128 baked LED atlas,
 // one additional draw call, no realtime lights. Mounted above the existing
