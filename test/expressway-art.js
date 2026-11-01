@@ -378,7 +378,7 @@ export function createExpresswayArt(THREE){
  // Steel lattice sign gantry: the original short posts left the amber VMS
  // floating above the support beam. Extend the roadside uprights and brace
  // the two horizontal chords with 16 batched diagonals behind the signs.
- // One additional draw call, no shadows, and all members >=7m above the road
+ // Two additional draw calls, no shadows, and all members >=7m above the road
  // or beyond x=+/-4.7m, so the playable dodge corridor stays unobstructed.
  const gantry=new THREE.Group();
  gantry.name='bangkok-expressway-steel-truss-gantry';
