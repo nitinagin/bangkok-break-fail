@@ -2638,9 +2638,32 @@ canopyGeometry.setAttribute('uv',new THREE.Float32BufferAttribute(canopyUVs,2));
 canopyGeometry.setIndex(canopyIndices);canopyGeometry.computeVertexNormals();
 car.add(new THREE.Mesh(canopyGeometry,canopyFabric));
 for(const z of [-1.3,1.6])tube([[-1.1,2.28,z],[-.75,2.49,z],[0,2.57,z],[.75,2.49,z],[1.1,2.28,z]],.055,playerBrass);
-// windshield and framing
-const windshield=cube(1.57,.68,.065,playerGlass,0,1.76,-.91);windshield.rotation.x=-.18;car.add(windshield);
-tube([[-.84,1.38,-.95],[-.85,2.1,-.88],[.85,2.1,-.88],[.84,1.38,-.95]],.042,chrome);
+// A gently curved, tapered windscreen replaces the toy-box glass slab.
+// One double-sided 8x4 PBR pane (64 triangles) keeps the original glass draw
+// call; the frame follows its narrower top edge. No external asset dependency.
+const windshieldPositions=[],windshieldUVs=[],windshieldIndices=[];
+const windCols=8,windRows=4;
+for(let j=0;j<=windRows;j++){
+ const v=j/windRows,halfWidth=.82-.06*v;
+ for(let i=0;i<=windCols;i++){
+  const u=i/windCols,side=2*u-1;
+  windshieldPositions.push(side*halfWidth,1.42+.68*v,-.95+.07*v-.035*(1-side*side));
+  windshieldUVs.push(u,v);
+ }
+}
+for(let j=0;j<windRows;j++)for(let i=0;i<windCols;i++){
+ const a=j*(windCols+1)+i,b=a+windCols+1;
+ windshieldIndices.push(a,a+1,b,a+1,b+1,b);
+}
+const windshieldGeometry=new THREE.BufferGeometry();
+windshieldGeometry.setAttribute('position',new THREE.Float32BufferAttribute(windshieldPositions,3));
+windshieldGeometry.setAttribute('uv',new THREE.Float32BufferAttribute(windshieldUVs,2));
+windshieldGeometry.setIndex(windshieldIndices);
+windshieldGeometry.computeVertexNormals();
+car.add(new THREE.Mesh(windshieldGeometry,playerGlass));
+tube([[-.84,1.38,-.95],[-.76,2.1,-.88],[0,2.1,-.915],[.76,2.1,-.88],[.84,1.38,-.95]],.042,chrome);
+// Single parked rubber wiper, low against the glass, not across the sightline.
+tube([[.08,1.43,-1.025],[.05,1.51,-1.02],[-.52,1.58,-1.01]],.018,playerDark);
 car.add(cube(1.05,.08,.08,chrome,0,1.43,-1.04));
 car.add(cube(.5,.12,.07,dark,0,1.51,-.99));
 // front single wheel and rounded fender
