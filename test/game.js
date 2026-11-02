@@ -2908,8 +2908,68 @@ ellipsoid(0,.69,-1.43,.45,.13,.5,playerBrass);
 for(const side of [-1,1]){
   ellipsoid(side*.58,1.02,-1.5,.22,.22,.12,chrome);
   ellipsoid(side*.58,1.02,-1.61,.15,.15,.045,playerHeadlight);
-  ellipsoid(side*.73,1.05,1.56,.14,.14,.08,playerTaillight);
+
 }
+// Baked three-chamber rear lamps for the always-playable player tuk-tuk.
+// A shared PBR atlas gives amber turn indicators, fluted red brake lenses and
+// a pale reversing segment. Two lamps use ONE instanced draw call, no lights,
+// no external assets, and no animation allocations on mobile.
+const playerLampCanvas=document.createElement('canvas');
+playerLampCanvas.width=128;playerLampCanvas.height=256;
+const playerLampCtx=playerLampCanvas.getContext('2d');
+playerLampCtx.fillStyle='#11171b';playerLampCtx.fillRect(0,0,128,256);
+const playerLampChambers=[
+ {top:8,bottom:70,light:'#f8bd5b',mid:'#bb6426',dark:'#713d24'},
+ {top:77,bottom:191,light:'#f76550',mid:'#9e211f',dark:'#54151a'},
+ {top:198,bottom:248,light:'#d7e6e6',mid:'#879ea5',dark:'#465860'}
+];
+for(const chamber of playerLampChambers){
+ const lens=playerLampCtx.createLinearGradient(8,chamber.top,120,chamber.bottom);
+ lens.addColorStop(0,chamber.dark);lens.addColorStop(.22,chamber.mid);
+ lens.addColorStop(.49,chamber.light);lens.addColorStop(.7,chamber.mid);
+ lens.addColorStop(1,chamber.dark);
+ playerLampCtx.fillStyle=lens;
+ playerLampCtx.fillRect(9,chamber.top,110,chamber.bottom-chamber.top);
+ playerLampCtx.fillStyle='rgba(255,247,220,.16)';
+ for(let y=chamber.top+3;y<chamber.bottom-2;y+=6)playerLampCtx.fillRect(11,y,106,1);
+ playerLampCtx.fillStyle='rgba(13,16,19,.25)';
+ playerLampCtx.fillRect(9,chamber.bottom-3,110,3);
+ playerLampCtx.strokeStyle='rgba(228,226,206,.40)';
+ playerLampCtx.lineWidth=2;playerLampCtx.strokeRect(10,chamber.top+1,108,chamber.bottom-chamber.top-3);
+}
+playerLampCtx.strokeStyle='#59646a';playerLampCtx.lineWidth=5;
+playerLampCtx.strokeRect(4,4,120,248);
+playerLampCtx.fillStyle='rgba(255,255,255,.20)';
+playerLampCtx.beginPath();playerLampCtx.moveTo(20,15);playerLampCtx.lineTo(41,15);
+playerLampCtx.lineTo(99,237);playerLampCtx.lineTo(88,237);playerLampCtx.closePath();
+playerLampCtx.fill();
+const playerLampTexture=new THREE.CanvasTexture(playerLampCanvas);
+playerLampTexture.colorSpace=THREE.SRGBColorSpace;
+playerLampTexture.anisotropy=mobile?2:4;
+const playerLampGeometry=new THREE.PlaneGeometry(.28,.40,4,6);
+const playerLampPositions=playerLampGeometry.attributes.position;
+for(let i=0;i<playerLampPositions.count;i++){
+ const x=playerLampPositions.getX(i);
+ playerLampPositions.setZ(i,.018*(1-(x/.14)**2));
+}
+playerLampPositions.needsUpdate=true;
+playerLampGeometry.computeVertexNormals();
+const playerLampMaterial=new THREE.MeshPhysicalMaterial({
+ map:playerLampTexture,emissiveMap:playerLampTexture,emissive:0x925d51,
+ emissiveIntensity:.28,metalness:.08,roughness:.28,clearcoat:.42,
+ clearcoatRoughness:.22,side:THREE.DoubleSide
+});
+const playerRearLamps=new THREE.InstancedMesh(playerLampGeometry,playerLampMaterial,2);
+const playerLampPose=new THREE.Object3D();
+for(let i=0;i<2;i++){
+ playerLampPose.position.set(i===0?-.74:.74,1.055,1.67);
+ playerLampPose.updateMatrix();
+ playerRearLamps.setMatrixAt(i,playerLampPose.matrix);
+}
+playerRearLamps.instanceMatrix.needsUpdate=true;
+playerRearLamps.computeBoundingSphere();
+playerRearLamps.name='player-tuktuk-pbr-three-chamber-rear-lamps';
+car.add(playerRearLamps);
 tube([[-.82,.57,-1.48],[-.66,.5,-1.7],[.66,.5,-1.7],[.82,.57,-1.48]],.065,chrome);
 // One baked rear engine cover with pressed louvers and a fictional Thai plate.
 // Replaces two blank cubes with one PBR panel; no frame-time canvas work.
