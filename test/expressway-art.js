@@ -84,6 +84,75 @@ export function createExpresswayArt(THREE){
  towers.instanceMatrix.needsUpdate=true;
  if(towers.instanceColor)towers.instanceColor.needsUpdate=true;
  towers.frustumCulled=false;group.add(towers);
+ // Six Thai/English illuminated high-rise fascia panels. All 12 triangles
+ // are batched into ONE PBR mesh; two small shared atlases are baked once.
+ // No dynamic lights, shadow maps, external assets or per-frame updates.
+ const neonCanvas=document.createElement('canvas'),neonEmission=document.createElement('canvas');
+ neonCanvas.width=neonEmission.width=512;neonCanvas.height=neonEmission.height=256;
+ const nc=neonCanvas.getContext('2d'),ne=neonEmission.getContext('2d');
+ const neonRows=[
+  ['สุขุมวิท','SUKHUMVIT','#77e0d9','#d2faf1'],
+  ['โรงแรม','HOTEL','#f091a4','#ffe1e5'],
+  ['กรุงเทพฯ','BANGKOK','#edc578','#fff0c8']
+ ];
+ ne.fillStyle='#000';ne.fillRect(0,0,512,256);
+ for(let row=0;row<3;row++){
+  const y=row*85,[thai,english,ink,light]=neonRows[row];
+  const base=nc.createLinearGradient(0,y,0,y+85);
+  base.addColorStop(0,'#354047');base.addColorStop(.25,'#121c23');
+  base.addColorStop(1,'#26313a');
+  nc.fillStyle=base;nc.fillRect(0,y,512,85);
+  nc.fillStyle='#0b161d';nc.fillRect(12,y+8,488,69);
+  nc.strokeStyle='#758185';nc.lineWidth=3;nc.strokeRect(12,y+8,488,69);
+  nc.strokeStyle=ne.strokeStyle=ink;
+  nc.lineWidth=ne.lineWidth=2;
+  nc.strokeRect(19,y+14,474,57);ne.strokeRect(19,y+14,474,57);
+  for(const x of [18,494])for(const dy of [17,65]){
+   nc.fillStyle='#879399';nc.fillRect(x-2,y+dy,4,4);
+  }
+  nc.textAlign=ne.textAlign='center';
+  nc.textBaseline=ne.textBaseline='middle';
+  nc.font=ne.font='bold 36px "Noto Sans Thai", Tahoma, sans-serif';
+  nc.fillStyle=ne.fillStyle=light;
+  nc.fillText(thai,256,y+37,455);ne.fillText(thai,256,y+37,455);
+  nc.font=ne.font='bold 15px Arial,sans-serif';
+  nc.fillStyle=ne.fillStyle=ink;
+  nc.fillText(english,256,y+64,450);ne.fillText(english,256,y+64,450);
+  for(let k=0;k<28;k++){
+   nc.fillStyle='rgba(184,199,200,.09)';
+   nc.fillRect((k*71+row*29)%486+13,y+9+(k*23)%65,1,2+k%6);
+  }
+ }
+ const neonMap=new THREE.CanvasTexture(neonCanvas);
+ const neonGlowMap=new THREE.CanvasTexture(neonEmission);
+ neonMap.colorSpace=neonGlowMap.colorSpace=THREE.SRGBColorSpace;
+ neonMap.anisotropy=neonGlowMap.anisotropy=2;
+ const billboardPositions=[],billboardUV=[],billboardIndices=[];
+ const billboardTowerIds=[0,1,4,5,8,9];
+ for(let n=0;n<billboardTowerIds.length;n++){
+  const i=billboardTowerIds[n],row=Math.floor(i/2);
+  const side=i%2===0?-1:1,height=10+(i*13%19);
+  const width=4+(i*5%7),depth=5+(i*3%7);
+  const x=side*(12+(i*7%17)),y=height-3.25;
+  const z=-15-row*9+depth*.5+.075,half=Math.min(4.8,width*.86)*.5;
+  const start=billboardPositions.length/3;
+  billboardPositions.push(x-half,y-.69,z,x+half,y-.69,z,
+   x+half,y+.69,z,x-half,y+.69,z);
+  const atlasRow=n%3,vBottom=1-(atlasRow+1)*85/256,vTop=1-atlasRow*85/256;
+  billboardUV.push(0,vBottom,1,vBottom,1,vTop,0,vTop);
+  billboardIndices.push(start,start+1,start+2,start,start+2,start+3);
+ }
+ const billboardGeometry=new THREE.BufferGeometry();
+ billboardGeometry.setAttribute('position',new THREE.Float32BufferAttribute(billboardPositions,3));
+ billboardGeometry.setAttribute('uv',new THREE.Float32BufferAttribute(billboardUV,2));
+ billboardGeometry.setIndex(billboardIndices);billboardGeometry.computeVertexNormals();
+ const billboardMaterial=new THREE.MeshStandardMaterial({
+  map:neonMap,emissive:0xffffff,emissiveMap:neonGlowMap,
+  emissiveIntensity:.88,metalness:.22,roughness:.53,side:THREE.DoubleSide
+ });
+ const skylineBillboards=new THREE.Mesh(billboardGeometry,billboardMaterial);
+ skylineBillboards.name='bangkok-skyline-batched-thai-neon-fascia';
+ group.add(skylineBillboards);
  // Eight slender antennas are batched into one additional draw call,
  // all outside the drivable road; no shadows or dynamic lights.
  const mastMaterial=new THREE.MeshStandardMaterial({color:0x9ba9b3,metalness:.74,roughness:.44});
@@ -901,5 +970,6 @@ gantry.position.z=-75;group.add(gantry);
    taxiLiveryMaterial.dispose();taxiTexture.dispose();
    busShellMaterial.dispose();busWindowMaterial.dispose();busWindowTexture.dispose();busTyreMaterial.dispose();
   windowTexture.dispose();emissiveTexture.dispose();poolTexture.dispose();signTexture.dispose();flyoverTexture.dispose();acousticTexture.dispose();barrierTexture.dispose();reflectorTexture.dispose();vmsTexture.dispose();vmsMaterial.dispose();
+  billboardMaterial.dispose();neonMap.dispose();neonGlowMap.dispose();
  }};
 }
