@@ -218,6 +218,34 @@ export function createExpresswayArt(THREE){
  const bridgeLensGeometry=new THREE.SphereGeometry(.13,8,6);
  const bridgeHeadlights=new THREE.InstancedMesh(bridgeLensGeometry,bridgeHeadMaterial,bridgeLampCount);
  const bridgeTaillights=new THREE.InstancedMesh(bridgeLensGeometry,bridgeTailMaterial,bridgeLampCount);
+ // Moving cool headlamp / red taillamp reflections on the flyover deck.
+ // 24 batched planes, one shared 128px texture, one draw call, zero real lights.
+ const bridgeGlowCanvas=document.createElement('canvas');
+ bridgeGlowCanvas.width=bridgeGlowCanvas.height=128;
+ const bgc=bridgeGlowCanvas.getContext('2d');
+ const bridgeGlowGradient=bgc.createRadialGradient(64,64,2,64,64,64);
+ bridgeGlowGradient.addColorStop(0,'rgba(255,255,255,.85)');
+ bridgeGlowGradient.addColorStop(.32,'rgba(255,255,255,.32)');
+ bridgeGlowGradient.addColorStop(1,'rgba(255,255,255,0)');
+ bgc.fillStyle=bridgeGlowGradient;bgc.fillRect(0,0,128,128);
+ const bridgeGlowTexture=new THREE.CanvasTexture(bridgeGlowCanvas);
+ const bridgeGlowMaterial=new THREE.MeshBasicMaterial({
+  map:bridgeGlowTexture,transparent:true,opacity:.43,
+  blending:THREE.AdditiveBlending,depthWrite:false,
+  polygonOffset:true,polygonOffsetFactor:-1,side:THREE.DoubleSide,
+  toneMapped:false
+ });
+ const bridgeGlowGeometry=new THREE.PlaneGeometry(1.4,.84);
+ bridgeGlowGeometry.rotateX(-Math.PI/2);
+ const bridgeRoadGlows=new THREE.InstancedMesh(bridgeGlowGeometry,bridgeGlowMaterial,bridgeCarCount*2);
+ bridgeRoadGlows.name='bangkok-flyover-moving-headlight-reflections';
+ bridgeRoadGlows.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+ bridgeRoadGlows.frustumCulled=false;
+ const bridgeGlowDummy=new THREE.Object3D();
+ for(let i=0;i<bridgeCarCount;i++){
+  bridgeRoadGlows.setColorAt(i*2,new THREE.Color(0xb9dcff));
+  bridgeRoadGlows.setColorAt(i*2+1,new THREE.Color(0xff3620));
+ }
  const bridgeLightDummy=new THREE.Object3D();
  const bridgeCarProgress=Array.from({length:bridgeCarCount},(_,i)=>((i*7)%13)/13);
  // Real shaded sedan silhouettes accompany the elevated traffic lights.
@@ -408,7 +436,20 @@ export function createExpresswayArt(THREE){
     bridgeLightDummy.updateMatrix();
     bridgeTaillights.setMatrixAt(index,bridgeLightDummy.matrix);
    }
+   // Deck top = 8.15 + .75/2 = 8.525m. 1cm offset avoids z-fighting.
+   // Pools move with the cars and buses but never affect collisions.
+   for(let lamp=0;lamp<2;lamp++){
+    const front=lamp===0;
+    bridgeGlowDummy.position.set(
+     (front?frontX:rearX)+(front?direction*.22:-direction*.12),
+     8.535,z
+    );
+    bridgeGlowDummy.scale.set(isBus?1.35:1,1,1);
+    bridgeGlowDummy.updateMatrix();
+    bridgeRoadGlows.setMatrixAt(i*2+lamp,bridgeGlowDummy.matrix);
+   }
   }
+  bridgeRoadGlows.instanceMatrix.needsUpdate=true;
   bridgeHeadlights.instanceMatrix.needsUpdate=true;
   bridgeTaillights.instanceMatrix.needsUpdate=true;
   bridgeCarBodies.instanceMatrix.needsUpdate=true;
@@ -421,7 +462,7 @@ export function createExpresswayArt(THREE){
   bridgeBusTyres.instanceMatrix.needsUpdate=true;
  }
  placeBridgeTraffic();
- group.add(bridgeCarBodies,bridgeCarWindows,bridgeCarWheels,bridgeHeadlights,bridgeTaillights,bridgeTaxiRoofSigns,bridgeTaxiDoorSigns,bridgeBuses,bridgeBusWindows,bridgeBusTyres);
+ group.add(bridgeCarBodies,bridgeCarWindows,bridgeCarWheels,bridgeHeadlights,bridgeTaillights,bridgeRoadGlows,bridgeTaxiRoofSigns,bridgeTaxiDoorSigns,bridgeBuses,bridgeBusWindows,bridgeBusTyres);
 
  // Roadside Bangkok expressway acoustic screens: weathered ribbed panels
  // and galvanized uprights. Opaque PBR prevents mobile alpha overdraw.
@@ -760,7 +801,7 @@ gantry.position.z=-75;group.add(gantry);
   for(const material of [towerMat,mastMaterial,steel,warm,poolMaterial,sign.material,concrete,reflective,flyoverConcrete,acousticMat])material.dispose();
   studMaterial.dispose();studMesh.geometry.dispose();
   arrowPaintMaterial.dispose();arrowPaintTexture.dispose();
-   bridgeHeadMaterial.dispose();bridgeTailMaterial.dispose();
+   bridgeHeadMaterial.dispose();bridgeTailMaterial.dispose();bridgeGlowMaterial.dispose();bridgeGlowTexture.dispose();
    carPaint.dispose();carGlass.dispose();tyreMaterial.dispose();
    taxiLiveryMaterial.dispose();taxiTexture.dispose();
    busShellMaterial.dispose();busWindowMaterial.dispose();busWindowTexture.dispose();busTyreMaterial.dispose();
