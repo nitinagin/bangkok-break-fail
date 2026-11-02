@@ -2749,6 +2749,38 @@ cockpitRainGlints.renderOrder=3;cockpit.add(cockpitRainGlints);
 
 
 cockpitTube([[-.75,-.70,-1.36],[-.45,-.64,-1.42],[0,-.68,-1.48],[.45,-.64,-1.42],[.75,-.70,-1.36]],.046,cockpitChrome);
+
+// Driver-visible motorcycle-style tuk-tuk steering bar, not a car steering wheel.
+// A curved chrome bar and two instanced textured-rubber grips stay below the
+// road sightline. All geometry is created once; only the group rotates per frame.
+const cockpitSteering=new THREE.Group();
+cockpitSteering.position.set(0,-.94,-1.25);
+cockpit.add(cockpitSteering);
+const cockpitBarCurve=new THREE.CatmullRomCurve3([
+ [-.46,.11,0],[-.31,.13,-.025],[-.12,.035,-.04],
+ [.12,.035,-.04],[.31,.13,-.025],[.46,.11,0]
+].map(p=>new THREE.Vector3(...p)));
+cockpitSteering.add(new THREE.Mesh(
+ new THREE.TubeGeometry(cockpitBarCurve,32,.024,7,false),cockpitChrome));
+const cockpitGripRubber=new THREE.MeshStandardMaterial({
+ color:0x191d20,metalness:0,roughness:.94
+});
+const cockpitGripGeometry=new THREE.CylinderGeometry(.043,.043,.22,12);
+const cockpitGrips=new THREE.InstancedMesh(cockpitGripGeometry,cockpitGripRubber,2);
+const cockpitGripPose=new THREE.Object3D();
+for(let i=0;i<2;i++){
+ cockpitGripPose.position.set((i===0?-1:1)*.53,.11,0);
+ cockpitGripPose.rotation.set(0,0,Math.PI/2);
+ cockpitGripPose.updateMatrix();
+ cockpitGrips.setMatrixAt(i,cockpitGripPose.matrix);
+}
+cockpitGrips.instanceMatrix.needsUpdate=true;
+cockpitGrips.computeBoundingSphere();
+cockpitSteering.add(cockpitGrips);
+const cockpitBarClamp=cube(.15,.09,.13,cockpitChrome,0,.035,-.045);
+const cockpitThrottleHousing=cube(.12,.10,.11,cockpitMat,.37,.11,-.015);
+cockpitSteering.add(cockpitBarClamp,cockpitThrottleHousing);
+
 // Curved, forward-facing mirrors replace the flat box housings. Geometry and
 // materials are shared across both sides; the lens faces the driver's camera
 // (+Z), so the existing baked night-street reflection is actually visible.
@@ -8094,7 +8126,7 @@ renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();g
 renderer.domElement.addEventListener('webglcontextrestored',()=>{graphicsLost=false;recoveryScreen('Graphics restored. Tap to restart safely.')},false);
 addEventListener('error',e=>{if(active)recoveryScreen('Game error: '+String(e.message||'unknown').slice(0,100))});
 addEventListener('unhandledrejection',e=>{console.warn('Optional asset failed:',e.reason);hint.textContent='🛺 USING LIGHTWEIGHT GRAPHICS'});
-function frame(t){requestAnimationFrame(frame);if(graphicsLost)return;if(mobile&&t-lastRender<32)return;lastRender=t;try{const dt=Math.min((t-last)/1000,.07);last=t;update(dt,t);camera.position.x+=(x-camera.position.x)*(1-Math.exp(-dt*11));const rushTarget=active&&!paused?Math.min(1,Math.log1p(Math.max(0,speed-90)/250)):0;visualRush+=(rushTarget-visualRush)*(1-Math.exp(-dt*2.4));const newFov=76+visualRush*7;if(Math.abs(newFov-camera.fov)>.07){camera.fov=newFov;camera.updateProjectionMatrix()}cockpit.position.y=-.22+(active&&!paused?Math.sin(t*.018)*visualRush*.018:0);camera.position.y=2.42+(shake>0?(Math.random()-.5)*shake*.16:0)+(active&&!paused?Math.sin(t*.024)*visualRush*.016:0);camera.position.z=3.15-visualRush*.12;dialNeedle.rotation.z=-.9+(Math.log1p(speed/60)/Math.log1p(2000/60))*1.8;camera.lookAt(camera.position.x+smoothed*.26,1.72,-18);
+function frame(t){requestAnimationFrame(frame);if(graphicsLost)return;if(mobile&&t-lastRender<32)return;lastRender=t;try{const dt=Math.min((t-last)/1000,.07);last=t;update(dt,t);camera.position.x+=(x-camera.position.x)*(1-Math.exp(-dt*11));const rushTarget=active&&!paused?Math.min(1,Math.log1p(Math.max(0,speed-90)/250)):0;visualRush+=(rushTarget-visualRush)*(1-Math.exp(-dt*2.4));const newFov=76+visualRush*7;if(Math.abs(newFov-camera.fov)>.07){camera.fov=newFov;camera.updateProjectionMatrix()}cockpit.position.y=-.22+(active&&!paused?Math.sin(t*.018)*visualRush*.018:0);camera.position.y=2.42+(shake>0?(Math.random()-.5)*shake*.16:0)+(active&&!paused?Math.sin(t*.024)*visualRush*.016:0);camera.position.z=3.15-visualRush*.12;dialNeedle.rotation.z=-.9+(Math.log1p(speed/60)/Math.log1p(2000/60))*1.8;cockpitSteering.rotation.y=THREE.MathUtils.clamp(smoothed,-1,1)*.22;camera.lookAt(camera.position.x+smoothed*.26,1.72,-18);
 // Dark Road low beam must travel with the driver's cockpit, not stay fixed at
 // world X=0. Follow the smoothed camera to avoid a jittering light pool while
 // steering, and gently sweep its aim into the turn. Reuse the existing single
