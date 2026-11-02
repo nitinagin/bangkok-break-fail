@@ -6140,8 +6140,45 @@ function makeMarketBoatHull(){
 const boatHullGeometry=makeMarketBoatHull();
 // Real tapered fruit boats replace box silhouettes without per-frame allocations.
 const canalBoats=[];
-// Shared translucent wake material adds moving V-trails without heavy particle effects.
-const boatWakeMat=new THREE.MeshBasicMaterial({color:0xc8fff0,transparent:true,opacity:.63,depthWrite:false});
+// Broken, translucent V-shaped foam trails replace two opaque box wakes per boat.
+// One shared 128x256 texture and 40 triangles; one draw call instead of two.
+const boatWakeCanvas=document.createElement('canvas');
+boatWakeCanvas.width=128;boatWakeCanvas.height=256;
+const boatWakeCtx=boatWakeCanvas.getContext('2d');
+for(let streak=0;streak<9;streak++){
+ const sx=9+streak*14,w=streak%3-1;
+ boatWakeCtx.beginPath();boatWakeCtx.moveTo(sx,8);
+ boatWakeCtx.bezierCurveTo(sx+w*8,70,sx-w*10,155,sx+w*6,246);
+ boatWakeCtx.strokeStyle=streak%3===0?'rgba(222,234,209,.68)':'rgba(173,205,186,.35)';
+ boatWakeCtx.lineWidth=streak%3===0?3:1.5;boatWakeCtx.stroke();
+}
+const wakeFade=boatWakeCtx.createLinearGradient(0,0,0,256);
+wakeFade.addColorStop(0,'rgba(255,255,255,0)');
+wakeFade.addColorStop(.12,'rgba(255,255,255,1)');
+wakeFade.addColorStop(.73,'rgba(255,255,255,.8)');
+wakeFade.addColorStop(1,'rgba(255,255,255,0)');
+boatWakeCtx.globalCompositeOperation='destination-in';
+boatWakeCtx.fillStyle=wakeFade;boatWakeCtx.fillRect(0,0,128,256);
+const boatWakeTexture=new THREE.CanvasTexture(boatWakeCanvas);
+boatWakeTexture.colorSpace=THREE.SRGBColorSpace;
+boatWakeTexture.anisotropy=Math.min(2,renderer.capabilities.getMaxAnisotropy());
+const boatWakeMaterial=new THREE.MeshBasicMaterial({
+ map:boatWakeTexture,transparent:true,opacity:.68,depthWrite:false,
+ side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-1
+});
+const boatWakePositions=[],boatWakeUVs=[];
+for(const side of [-1,1])for(let segment=0;segment<10;segment++){
+ const t0=segment/10,t1=(segment+1)/10;
+ for(const [t,u] of [[t0,0],[t0,1],[t1,0],[t0,1],[t1,1],[t1,0]]){
+  const width=.12+.18*t;
+  boatWakePositions.push(side*(.40+.72*t)+(u-.5)*width,0,-1.1-2.75*t);
+  boatWakeUVs.push(u,t);
+ }
+}
+const boatWakeGeometry=new THREE.BufferGeometry();
+boatWakeGeometry.setAttribute('position',new THREE.Float32BufferAttribute(boatWakePositions,3));
+boatWakeGeometry.setAttribute('uv',new THREE.Float32BufferAttribute(boatWakeUVs,2));
+boatWakeGeometry.computeVertexNormals();
 // Floating-market fruit boats: a shared tapered mango mesh and tiny stem mesh
 // replace six separate spherical draw calls per boat. Per-instance colours
 // suggest ripe mangoes and green produce without extra texture downloads.
@@ -6232,9 +6269,10 @@ for(let i=0;i<10;i++){
  const parasol=new THREE.Mesh(boatCanopyGeometry,boatCanopyMaterial);
  parasol.rotation.y=i*Math.PI/6;parasol.position.y=2.06;boat.add(parasol);
  boat.position.set(6.5+(i%3)*1.2,-.02,-12-i*19);
- const wakes=[];
- for(const side of [-1,1]){const wake=cube(.065,.012,1.55,boatWakeMat,side*.49,-.105,-1.95);wake.rotation.y=side*.29;boat.add(wake);wakes.push(wake);}
- boat.userData.wakes=wakes;
+ // Wake stays at the canal surface while the boat gently bobs.
+ const wake=new THREE.Mesh(boatWakeGeometry,boatWakeMaterial);
+ wake.position.y=-.085;wake.renderOrder=2;boat.add(wake);
+ boat.userData.wake=wake;
  boat.userData.homeZ=boat.position.z;boat.userData.phase=i*1.37;boat.userData.parasol=parasol;canalBoats.push(boat);
  canalGroup.add(boat);
 }
@@ -7644,7 +7682,7 @@ if(meters+bonus>=8000)queueExpresswayBusModel();const nextDistrict=Math.floor(me
  // Keep the daytime beam subtle, Rama II readable, and Dark Road atmospheric.
  // Reuses the same mesh and texture; no extra lights or geometry.
  darkRoadLowBeam.visible=true;
- darkRoadLowBeam.material.opacity=inDarkRoad?.57:onRamaII?.82:nextDistrict===1?.48:inMarket?.34:onExpressway?.42:inPattaya?.40:.18;if(inPattaya){for(let i=0;i<pattayaShops.length;i++){const g=pattayaShops[i];g.position.z+=dt*(60+300*(1-Math.exp(-(speed-60)/240)))*.22;if(g.position.z>26)g.position.z-=192;}updatePattayaReflections();}expresswaySet.visible=onExpressway;expresswayArt.group.visible=onExpressway;if(onExpressway)expresswayArt.update(dt,speed);if(onExpressway){ufo.position.x=Math.sin(t*.0012)*2.4;ufo.position.y=13+Math.sin(t*.002)*.8;ufo.rotation.y+=dt*.4;}if(inMarket&&meters+bonus>=10000&&meters+bonus-speed*dt/3.6<10000)hint.textContent='🚣 FLOATING MARKET RIGHT · DO NOT FALL INTO CANAL!';road.material=onExpressway?expresswayAsphalt:onRamaII?ramaRoadAsphalt:inDarkRoad?darkRoadAsphalt:inMarket?dryAsphalt:wetAsphalt;darkRoadPaint.visible=inDarkRoad;if(inDarkRoad)darkRoadPaintTexture.offset.y=((meters+bonus-23000)*18/230)%1;road.scale.x+=((inMarket?.65:1)-road.scale.x)*Math.min(1,dt*3);for(const p of props)p.visible=!onRamaII&&!inMarket&&!onExpressway&&!inPattaya&&!inDarkRoad;neonReflections.visible=nextDistrict===1;for(const mesh of streetLampMeshes)mesh.visible=nextDistrict===1;facadeBounce.visible=nextDistrict===1;for(const glow of roadsideNeonGlow)glow.visible=nextDistrict===1;for(const p of ramaStructures)p.visible=onRamaII;if(onRamaII)updateRamaBeacons(t);const canalVisible=inMarket&&meters+bonus>=9700;const canalActive=inMarket&&meters+bonus>=10000;canalGroup.visible=canalVisible;if(canalVisible)canalRippleTexture.offset.y=(t*.000025)%1;if(canalVisible){for(const boat of canalBoats){const phase=boat.userData.phase;boat.position.z=boat.userData.homeZ+((meters*.12+phase*3)%210);boat.position.y=-.02+Math.sin(t*.0017+phase)*.065;boat.rotation.z=Math.sin(t*.0011+phase)*.045;boat.userData.parasol.rotation.z=Math.sin(t*.0014+phase)*.035;for(let j=0;j<2;j++){const wake=boat.userData.wakes[j];wake.scale.z=.82+.18*Math.sin(t*.004+phase+j);wake.position.z=-1.95-.16*Math.sin(t*.0027+phase+j);}}}for(const stall of marketStalls){
+ darkRoadLowBeam.material.opacity=inDarkRoad?.57:onRamaII?.82:nextDistrict===1?.48:inMarket?.34:onExpressway?.42:inPattaya?.40:.18;if(inPattaya){for(let i=0;i<pattayaShops.length;i++){const g=pattayaShops[i];g.position.z+=dt*(60+300*(1-Math.exp(-(speed-60)/240)))*.22;if(g.position.z>26)g.position.z-=192;}updatePattayaReflections();}expresswaySet.visible=onExpressway;expresswayArt.group.visible=onExpressway;if(onExpressway)expresswayArt.update(dt,speed);if(onExpressway){ufo.position.x=Math.sin(t*.0012)*2.4;ufo.position.y=13+Math.sin(t*.002)*.8;ufo.rotation.y+=dt*.4;}if(inMarket&&meters+bonus>=10000&&meters+bonus-speed*dt/3.6<10000)hint.textContent='🚣 FLOATING MARKET RIGHT · DO NOT FALL INTO CANAL!';road.material=onExpressway?expresswayAsphalt:onRamaII?ramaRoadAsphalt:inDarkRoad?darkRoadAsphalt:inMarket?dryAsphalt:wetAsphalt;darkRoadPaint.visible=inDarkRoad;if(inDarkRoad)darkRoadPaintTexture.offset.y=((meters+bonus-23000)*18/230)%1;road.scale.x+=((inMarket?.65:1)-road.scale.x)*Math.min(1,dt*3);for(const p of props)p.visible=!onRamaII&&!inMarket&&!onExpressway&&!inPattaya&&!inDarkRoad;neonReflections.visible=nextDistrict===1;for(const mesh of streetLampMeshes)mesh.visible=nextDistrict===1;facadeBounce.visible=nextDistrict===1;for(const glow of roadsideNeonGlow)glow.visible=nextDistrict===1;for(const p of ramaStructures)p.visible=onRamaII;if(onRamaII)updateRamaBeacons(t);const canalVisible=inMarket&&meters+bonus>=9700;const canalActive=inMarket&&meters+bonus>=10000;canalGroup.visible=canalVisible;if(canalVisible)canalRippleTexture.offset.y=(t*.000025)%1;if(canalVisible){for(const boat of canalBoats){const phase=boat.userData.phase;boat.position.z=boat.userData.homeZ+((meters*.12+phase*3)%210);boat.position.y=-.02+Math.sin(t*.0017+phase)*.065;boat.rotation.z=Math.sin(t*.0011+phase)*.045;boat.userData.parasol.rotation.z=Math.sin(t*.0014+phase)*.035;const wake=boat.userData.wake;wake.scale.z=.91+.09*Math.sin(t*.004+phase);wake.position.z=-.12*Math.sin(t*.0027+phase);wake.position.y=-.085-(boat.position.y+.02);}}for(const stall of marketStalls){
  stall.visible=inMarket&&(!canalActive||stall.children[0].position.x<0);
  // Cull only small display goods beyond ~43 m; retain silhouettes and signs.
  // This avoids rendering up to 192 tiny meshes in the distant JJ market.
