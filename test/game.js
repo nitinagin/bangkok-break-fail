@@ -2699,6 +2699,22 @@ const cockpitRainGlints=new THREE.Mesh(rainEdgeGeometry,
   depthWrite:false,side:THREE.DoubleSide}));
 cockpitRainGlints.name='cockpit-rain-edge-glints';
 cockpitRainGlints.renderOrder=3;cockpit.add(cockpitRainGlints);
+ // Driver-visible rain wipers: two narrow articulated PBR arms sweep only the
+ // outer lower windscreen, preserving the clear central dodge-lane sightline.
+ // Reuse existing metal/rubber materials; no textures, lights or network fetches.
+ const cockpitWipers=new THREE.Group();
+ cockpitWipers.visible=false;cockpit.add(cockpitWipers);
+ const cockpitWiperPivots=[];
+ for(const side of [-1,1]){
+  const pivot=new THREE.Group();
+  pivot.position.set(side*.59,-.50,-1.675);
+  const arm=cube(.021,.31,.023,cockpitChrome,-side*.065,.14,0);
+  arm.rotation.z=side*.27;pivot.add(arm);
+  const blade=cube(.36,.024,.033,cockpitMat,-side*.16,.29,-.005);
+  blade.rotation.z=side*.08;pivot.add(blade);
+  cockpitWipers.add(pivot);cockpitWiperPivots.push({side,pivot});
+ }
+
 
 cockpitTube([[-.75,-.70,-1.36],[-.45,-.64,-1.42],[0,-.68,-1.48],[.45,-.64,-1.42],[.75,-.70,-1.36]],.046,cockpitChrome);
 // Curved, forward-facing mirrors replace the flat box housings. Geometry and
@@ -7864,6 +7880,14 @@ if(mobile&&meters+bonus>=1000&&!yakshaAttempted&&!navigator.connection?.saveData
 if(mobile&&meters+bonus>=2200&&!dancerAttempted&&!navigator.connection?.saveData&&!['slow-2g','2g'].includes(navigator.connection?.effectiveType))loadDancerAsset();
 if(meters+bonus>=8000)queueExpresswayBusModel();const nextDistrict=Math.floor(meters+bonus)>=23000?6:Math.floor(meters+bonus)>=16000?5:Math.floor(meters+bonus)>=12000?4:Math.floor(meters+bonus)>=8000?3:Math.floor(meters+bonus)>=3000?2:1;const currentNight=Math.floor(meters/1600)+(meters%1600<800?1:0);if(currentNight>nightCount){nightCount=currentNight;if(nightCount>0){hint.textContent='🌙 NIGHT '+nightCount+' — SPIRITS AWAKEN';if(nextDistrict!==6&&nightCount%2===0&&grandmaTriggeredNight!==nightCount){makeRoadsideStory('shrine',Math.random()<.5?-1:1,-70);grandmaTriggeredNight=nightCount}}}if(nextDistrict!==districtIndex){applyDistrict(nextDistrict);if(nextDistrict>=3){for(const h of hazards)scene.remove(h.g);hazards.length=0;spawnClock=.5;hint.textContent=nextDistrict===6?'🌑 DARK ROAD! ONLY YOUR HEADLIGHTS!':nextDistrict===5?'🌈 PATTAYA WALKING STREET!':nextDistrict===4?'🛣️ EXPRESSWAY! DODGE TRAFFIC AND UFO LASERS!':'🌞 JJ MARKET · TWO NARROW LANES!';}}const onRamaII=nextDistrict===2;const inMarket=nextDistrict===3;const onExpressway=nextDistrict===4,inPattaya=nextDistrict===5,inDarkRoad=nextDistrict===6;pattayaStreet.visible=inPattaya;darkRoadMarkers.visible=inDarkRoad;darkRoadReflectors.visible=inDarkRoad;darkRoadFoliage.visible=inDarkRoad;darkHeadlight.visible=true; // Vehicle headlamps illuminate the road in every playable district, including Rama II.
  darkHeadlight.intensity=inDarkRoad?36:onRamaII?28:20;darkDust.visible=inDarkRoad;cockpitRainGlints.visible=nextDistrict===1||nextDistrict===2;
+ // Wipers operate only in wet Yaowarat and Rama II. Two small pivot rotations
+ // reuse the same four meshes; no per-frame allocations or visibility flicker.
+ cockpitWipers.visible=cockpitRainGlints.visible;
+ if(cockpitWipers.visible){
+  const sweep=.08+.48*(.5+.5*Math.sin(t*.0036));
+  for(const wiper of cockpitWiperPivots)wiper.pivot.rotation.z=-wiper.side*sweep;
+ }
+
  // Reuse the baked two-lobe headlight pool on Yaowarat and Rama II too:
  // wet asphalt catches warm light, while blackout scenery stays unlit.
  // The existing low-beam road projection must follow the tuk-tuk in EVERY district.
