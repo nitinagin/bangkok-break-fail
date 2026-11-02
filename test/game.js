@@ -7590,10 +7590,46 @@ function makeExpresswayProtest(){
  const fabric=new THREE.MeshStandardMaterial({color:0xffffff,roughness:.97});
  const denim=new THREE.MeshStandardMaterial({color:0x263b51,roughness:.96});
  const poleMetal=new THREE.MeshStandardMaterial({color:0x66727a,metalness:.72,roughness:.43});
+ // Realistic tailored crowd silhouettes replace capsule-shaped bodies in the
+ // 12,000+ expressway protest. Three shared PBR geometries keep the existing
+ // six instanced draw calls; no new textures, collision or runtime allocations.
+ function crowdCloth(stations,segments=10){
+  const positions=[],uvs=[],indices=[];
+  for(let row=0;row<stations.length;row++){
+   const [y,rx,rz]=stations[row];
+   for(let side=0;side<=segments;side++){
+    const a=side*Math.PI*2/segments;
+    positions.push(Math.cos(a)*rx,y,Math.sin(a)*rz);
+    uvs.push(side/segments,row/(stations.length-1));
+   }
+  }
+  for(let row=0;row<stations.length-1;row++)for(let side=0;side<segments;side++){
+   const a=row*(segments+1)+side,b=a+segments+1;
+   indices.push(a,b,a+1,b,b+1,a+1);
+  }
+  const bottom=positions.length/3;
+  positions.push(0,stations[0][0],0);uvs.push(.5,0);
+  const top=positions.length/3;
+  positions.push(0,stations[stations.length-1][0],0);uvs.push(.5,1);
+  for(let side=0;side<segments;side++){
+   indices.push(bottom,side,side+1);
+   const row=(stations.length-1)*(segments+1);
+   indices.push(top,row+side+1,row+side);
+  }
+  const geometry=new THREE.BufferGeometry();
+  geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+  geometry.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));
+  geometry.setIndex(indices);geometry.computeVertexNormals();
+  return geometry;
+ }
+ const crowdTorso=crowdCloth([[-.55,.18,.13],[-.40,.22,.16],[-.14,.25,.16],[.20,.34,.18],[.37,.33,.17],[.52,.13,.11]]);
+ const crowdSleeve=crowdCloth([[-.36,.065,.07],[-.22,.077,.079],[.15,.10,.105],[.37,.125,.125]]);
+ const crowdTrouser=crowdCloth([[-.45,.075,.095],[-.30,.087,.11],[.04,.12,.13],[.36,.145,.145],[.47,.145,.14]]);
+
  const heads=new THREE.InstancedMesh(new THREE.SphereGeometry(.23,10,8),skin,count);
- const torsos=new THREE.InstancedMesh(new THREE.CapsuleGeometry(.24,.62,4,8),fabric,count);
- const arms=new THREE.InstancedMesh(new THREE.CapsuleGeometry(.085,.54,3,6),fabric,count*2);
- const legs=new THREE.InstancedMesh(new THREE.CapsuleGeometry(.11,.66,3,6),denim,count*2);
+ const torsos=new THREE.InstancedMesh(crowdTorso,fabric,count);
+ const arms=new THREE.InstancedMesh(crowdSleeve,fabric,count*2);
+ const legs=new THREE.InstancedMesh(crowdTrouser,denim,count*2);
  const posterCanvas=document.createElement('canvas');
  posterCanvas.width=512;posterCanvas.height=256;
  const ctx=posterCanvas.getContext('2d');
