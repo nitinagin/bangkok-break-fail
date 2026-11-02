@@ -840,7 +840,7 @@ const awningColors=Array.from({length:3},(_,i)=>makeYaowaratAwning(i));
 const yaowaratAwningRibGeometry=new THREE.BoxGeometry(.042,.045,1.06);
 const yaowaratAwningRibMetal=new THREE.MeshStandardMaterial({color:0x66645e,metalness:.52,roughness:.77});
 const yaowaratAwningRibMatrix=new THREE.Matrix4();
-const signMaterials=[mat(0xff267a),mat(0x086bd8),mat(0x1cbf7a)];const neonSigns=[new THREE.MeshBasicMaterial({color:0xff3d96}),new THREE.MeshBasicMaterial({color:0x22ffe0}),new THREE.MeshBasicMaterial({color:0xffd64d})];const daySigns=signMaterials.slice();function applyDistrict(i){if(i===districtIndex)return;districtIndex=i;paintCockpitMirrorDistrict(i);cockpitMirrorTexture.needsUpdate=true;
+const signMaterials=[mat(0xff267a),mat(0x086bd8),mat(0x1cbf7a)];const neonSigns=[new THREE.MeshBasicMaterial({color:0xff3d96}),new THREE.MeshBasicMaterial({color:0x22ffe0}),new THREE.MeshBasicMaterial({color:0xffd64d})];const daySigns=signMaterials.slice();function applyDistrict(i){if(i===districtIndex)return;districtIndex=i;paintCockpitMirrorDistrict(i);cockpitMirrorTexture.needsUpdate=true;paintCockpitFinishDistrict(i);
  const light=districtLightPresets[i]||districtLightPresets[0];
  skyFill.intensity=light[0];sun.intensity=light[1];
  skyFill.color.setHex(light[2]);skyFill.groundColor.setHex(light[3]);sun.color.setHex(light[4]);const fogRange=districtFogRanges[i]||districtFogRanges[0];scene.fog.near=fogRange[0];scene.fog.far=fogRange[1];districtLabel.textContent=['☀️ BANGKOK DAYTIME','🌃 YAOWARAT NIGHT · TEST 6.9','🌑 RAMA II · BLACKOUT CONSTRUCTION','🛍️ JJ MARKET · CHATUCHAK · 8000+','🛣️ BANGKOK EXPRESSWAY · 12000+','🌈 PATTAYA WALKING STREET · 16000+','🌑 DARK ROAD · 23000+'][i];for(let k=0;k<3;k++)signMaterials[k]=i===1?neonSigns[k]:daySigns[k];for(const b of props){if(b.userData.sign)b.userData.sign.material=signMaterials[b.userData.signIndex%3]}if(i===2)queueRamaExcavatorModel();const rama=i===2;M.grass.color.setHex(rama?0x78746d:0x34333b);M.road.color.setHex(rama?0x777b81:0x56535c);M.stripe.color.setHex(rama?0xe5e1d3:0xe2c579);shoulderPaint.color.setHex(rama?0x77736e:0x444148);curbPaint.color.setHex(rama?0x9d968b:0x756866);hint.textContent=['🛺 WELCOME TO BANGKOK!','🏮 WELCOME TO YAOWARAT!','🌇 SUNSET DRIVE!','🌿 JJ MARKET! WATCH THE TRAFFIC!','🛸 EXPRESSWAY! UFO LASERS INCOMING!','🌈 PATTAYA WALKING STREET!','🔦 DARK ROAD! HEADLIGHTS ONLY!'][i]}
@@ -2560,6 +2560,38 @@ for(const px of [13,243]){
 const cockpitFinishTexture=new THREE.CanvasTexture(cockpitFinishCanvas);
 cockpitFinishTexture.colorSpace=THREE.SRGBColorSpace;
 cockpitFinishTexture.anisotropy=mobile?2:4;
+ // Repaint the existing 256x128 PBR dashboard map only on district changes.
+ // Real Bangkok shop neon glances across the two bonnet shoulders; blackout
+ // roads restore the original brushed-metal finish. No new texture/draw call.
+ const cockpitFinishBasePixels=cockpitFinishCtx.getImageData(0,0,256,128);
+ function paintCockpitFinishDistrict(stage){
+  cockpitFinishCtx.putImageData(cockpitFinishBasePixels,0,0);
+  const colors=stage===1?['rgba(229,47,73,.36)','rgba(27,191,204,.28)','rgba(233,159,57,.23)','rgba(218,54,96,.32)']:
+   stage===2?['rgba(200,117,42,.10)','rgba(221,153,69,.09)']:
+   stage===3?['rgba(180,126,73,.14)','rgba(121,158,142,.11)']:
+   stage===4?['rgba(230,165,79,.18)','rgba(190,214,222,.11)']:
+   stage===5?['rgba(220,54,151,.30)','rgba(61,161,220,.26)','rgba(222,121,63,.17)','rgba(188,68,184,.25)']:[];
+  const shoulders=[23,57,201,233];
+  for(let i=0;i<colors.length;i++){
+   const x=shoulders[i];
+   const glow=cockpitFinishCtx.createLinearGradient(x-24,0,x+24,0);
+   glow.addColorStop(0,'rgba(0,0,0,0)');
+   glow.addColorStop(.5,colors[i]);
+   glow.addColorStop(1,'rgba(0,0,0,0)');
+   cockpitFinishCtx.fillStyle=glow;
+   cockpitFinishCtx.fillRect(x-24,8,48,106);
+  }
+  // A short soft wet highlight sits below the windscreen, not over the road.
+  if(stage===1||stage===5){
+   const edge=cockpitFinishCtx.createLinearGradient(0,0,0,18);
+   edge.addColorStop(0,'rgba(233,238,245,.21)');
+   edge.addColorStop(1,'rgba(233,238,245,0)');
+   cockpitFinishCtx.fillStyle=edge;
+   cockpitFinishCtx.fillRect(0,0,256,18);
+  }
+  cockpitFinishTexture.needsUpdate=true;
+ }
+ paintCockpitFinishDistrict(1);
 const cockpitBlue=new THREE.MeshPhysicalMaterial({color:0x1693a3,map:cockpitFinishTexture,metalness:.4,roughness:.48,clearcoat:.35,clearcoatRoughness:.36});
 const cockpitGold=new THREE.MeshStandardMaterial({color:0xe6b958,map:cockpitFinishTexture,metalness:.6,roughness:.39});
 const cockpitRed=new THREE.MeshStandardMaterial({color:0xc73556,metalness:.18,roughness:.58});
