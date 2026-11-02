@@ -1966,6 +1966,34 @@ function addRamaLatticeCrane(g,side){
  lattice.computeBoundingSphere();
  g.add(lattice);
  g.add(cube(.045,5.05,.045,siteSteel,x,13.9,tip+1.9));
+ // Suspended precast I-girder makes the tower crane a working construction
+ // machine rather than a bare silhouette. Its entire load is beyond x=+/-13,
+ // well outside the playable road; two batched meshes, no dynamic lighting.
+ const loadZ=tip+1.9;
+ const girder=new THREE.InstancedMesh(ramaCraneStrutGeometry,bridgeConcrete,3);
+ const girderParts=[
+  [x,9.25,loadZ,1.5,.18,4.5], // top flange
+  [x,8.39,loadZ,1.5,.18,4.5], // bottom flange
+  [x,8.82,loadZ,.28,.72,4.5] // recessed I-section web
+ ];
+ for(let i=0;i<girderParts.length;i++){
+  const [px,py,pz,w,h,d]=girderParts[i];
+  pose.position.set(px,py,pz);pose.quaternion.identity();pose.scale.set(w,h,d);
+  pose.updateMatrix();girder.setMatrixAt(i,pose.matrix);
+ }
+ girder.instanceMatrix.needsUpdate=true;girder.computeBoundingSphere();
+ // Two steel lifting slings converge on the existing crane hook.
+ const slings=new THREE.InstancedMesh(ramaCraneStrutGeometry,siteSteel,2);
+ for(let i=0;i<2;i++){
+  const endZ=loadZ+(i===0?-1.55:1.55);
+  const delta=new THREE.Vector3(0,9.34-10.95,endZ-loadZ);
+  pose.position.set(x,(10.95+9.34)*.5,(loadZ+endZ)*.5);
+  pose.quaternion.setFromUnitVectors(ramaCraneUp,delta.clone().normalize());
+  pose.scale.set(.035,delta.length(),.035);pose.updateMatrix();
+  slings.setMatrixAt(i,pose.matrix);
+ }
+ slings.instanceMatrix.needsUpdate=true;slings.computeBoundingSphere();
+ g.add(girder,slings);
 }
 // Static roadside tracked excavator: articulated boom, hydraulic rams, cab glass,
 // rubber tracks and a scooped bucket. Five shared-material draw calls per work zone;
