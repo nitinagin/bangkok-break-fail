@@ -2660,6 +2660,46 @@ cowlPositions.needsUpdate=true;cockpitCowlGeometry.computeVertexNormals();
 const cockpitCowl=new THREE.Mesh(cockpitCowlGeometry,cockpitBlue);
 cockpitCowl.position.set(0,-.99,-1.35);cockpit.add(cockpitCowl);
 cockpit.add(cube(1.6,.13,.36,cockpitGold,0,-.78,-1.48));
+
+ // A rain-speckled driver windscreen is visible only on wet Yaowarat/Rama II.
+ // Two narrow edge panels share one draw call and never cover the centre lane.
+ // All texture painting and geometry creation happen once, outside the frame loop.
+const cockpitRainCanvas=document.createElement('canvas');
+cockpitRainCanvas.width=128;cockpitRainCanvas.height=256;
+const rainPaint=cockpitRainCanvas.getContext('2d');
+rainPaint.clearRect(0,0,128,256);
+for(let i=0;i<76;i++){
+ const px=5+(i*47+19)%118,py=6+(i*73+31)%242,r=1+(i%4)*.55;
+ rainPaint.fillStyle=i%3===0?'rgba(218,236,244,.50)':'rgba(192,214,225,.32)';
+ rainPaint.beginPath();rainPaint.ellipse(px,py,r*.7,r,0,0,Math.PI*2);rainPaint.fill();
+ if(i%4===0){
+  rainPaint.strokeStyle='rgba(187,213,227,.20)';rainPaint.lineWidth=.8;
+  rainPaint.beginPath();rainPaint.moveTo(px,py+r);
+  rainPaint.lineTo(px-.5,py+r+7+i%11);rainPaint.stroke();
+ }
+}
+const cockpitRainTexture=new THREE.CanvasTexture(cockpitRainCanvas);
+cockpitRainTexture.colorSpace=THREE.SRGBColorSpace;
+cockpitRainTexture.anisotropy=mobile?2:4;
+const rainEdgePositions=[],rainEdgeUVs=[],rainEdgeIndices=[];
+for(const side of [-1,1]){
+ const base=rainEdgePositions.length/3;
+ const x0=side<0?-.66:.46,x1=side<0?-.46:.66;
+ rainEdgePositions.push(x0,-.46,-1.72,x1,-.46,-1.72,
+  x0*.98,.56,-1.79,x1*.98,.56,-1.79);
+ rainEdgeUVs.push(0,0,1,0,0,1,1,1);
+ rainEdgeIndices.push(base,base+1,base+2,base+1,base+3,base+2);
+}
+const rainEdgeGeometry=new THREE.BufferGeometry();
+rainEdgeGeometry.setAttribute('position',new THREE.Float32BufferAttribute(rainEdgePositions,3));
+rainEdgeGeometry.setAttribute('uv',new THREE.Float32BufferAttribute(rainEdgeUVs,2));
+rainEdgeGeometry.setIndex(rainEdgeIndices);rainEdgeGeometry.computeVertexNormals();
+const cockpitRainGlints=new THREE.Mesh(rainEdgeGeometry,
+ new THREE.MeshBasicMaterial({map:cockpitRainTexture,transparent:true,opacity:.58,
+  depthWrite:false,side:THREE.DoubleSide}));
+cockpitRainGlints.name='cockpit-rain-edge-glints';
+cockpitRainGlints.renderOrder=3;cockpit.add(cockpitRainGlints);
+
 cockpitTube([[-.75,-.70,-1.36],[-.45,-.64,-1.42],[0,-.68,-1.48],[.45,-.64,-1.42],[.75,-.70,-1.36]],.046,cockpitChrome);
 // Curved, forward-facing mirrors replace the flat box housings. Geometry and
 // materials are shared across both sides; the lens faces the driver's camera
@@ -7823,7 +7863,7 @@ if(mobile&&meters+bonus>=1000&&!yakshaAttempted&&!navigator.connection?.saveData
 // Avoid downloading both detailed character assets at the same early-game moment.
 if(mobile&&meters+bonus>=2200&&!dancerAttempted&&!navigator.connection?.saveData&&!['slow-2g','2g'].includes(navigator.connection?.effectiveType))loadDancerAsset();
 if(meters+bonus>=8000)queueExpresswayBusModel();const nextDistrict=Math.floor(meters+bonus)>=23000?6:Math.floor(meters+bonus)>=16000?5:Math.floor(meters+bonus)>=12000?4:Math.floor(meters+bonus)>=8000?3:Math.floor(meters+bonus)>=3000?2:1;const currentNight=Math.floor(meters/1600)+(meters%1600<800?1:0);if(currentNight>nightCount){nightCount=currentNight;if(nightCount>0){hint.textContent='🌙 NIGHT '+nightCount+' — SPIRITS AWAKEN';if(nextDistrict!==6&&nightCount%2===0&&grandmaTriggeredNight!==nightCount){makeRoadsideStory('shrine',Math.random()<.5?-1:1,-70);grandmaTriggeredNight=nightCount}}}if(nextDistrict!==districtIndex){applyDistrict(nextDistrict);if(nextDistrict>=3){for(const h of hazards)scene.remove(h.g);hazards.length=0;spawnClock=.5;hint.textContent=nextDistrict===6?'🌑 DARK ROAD! ONLY YOUR HEADLIGHTS!':nextDistrict===5?'🌈 PATTAYA WALKING STREET!':nextDistrict===4?'🛣️ EXPRESSWAY! DODGE TRAFFIC AND UFO LASERS!':'🌞 JJ MARKET · TWO NARROW LANES!';}}const onRamaII=nextDistrict===2;const inMarket=nextDistrict===3;const onExpressway=nextDistrict===4,inPattaya=nextDistrict===5,inDarkRoad=nextDistrict===6;pattayaStreet.visible=inPattaya;darkRoadMarkers.visible=inDarkRoad;darkRoadReflectors.visible=inDarkRoad;darkRoadFoliage.visible=inDarkRoad;darkHeadlight.visible=true; // Vehicle headlamps illuminate the road in every playable district, including Rama II.
- darkHeadlight.intensity=inDarkRoad?36:onRamaII?28:20;darkDust.visible=inDarkRoad;
+ darkHeadlight.intensity=inDarkRoad?36:onRamaII?28:20;darkDust.visible=inDarkRoad;cockpitRainGlints.visible=nextDistrict===1||nextDistrict===2;
  // Reuse the baked two-lobe headlight pool on Yaowarat and Rama II too:
  // wet asphalt catches warm light, while blackout scenery stays unlit.
  // The existing low-beam road projection must follow the tuk-tuk in EVERY district.
