@@ -4319,16 +4319,10 @@ function makeTukLampLensTexture(rear){
  return texture;
 }
 const tukHeadLensTexture=makeTukLampLensTexture(false);
-const tukTailLensTexture=makeTukLampLensTexture(true);
 const tukLamp=new THREE.MeshPhysicalMaterial({
  map:tukHeadLensTexture,color:0xfff8ed,emissive:0x99764b,
  emissiveIntensity:.3,metalness:.06,roughness:.23,
  clearcoat:.75,clearcoatRoughness:.16
-});
-const tukTail=new THREE.MeshPhysicalMaterial({
- map:tukTailLensTexture,color:0xffd6d2,emissive:0x8c171b,
- emissiveIntensity:.24,metalness:0,roughness:.29,
- clearcoat:.65,clearcoatRoughness:.19
 });
 const tukEngineSteel=new THREE.MeshStandardMaterial({color:0x51565a,metalness:.66,roughness:.72});
 const tukEngineUnitBox=new THREE.BoxGeometry(1,1,1);
@@ -4446,6 +4440,59 @@ const tukPlateMaterial=new THREE.MeshStandardMaterial({
  map:tukPlateTexture,metalness:.08,roughness:.59,side:THREE.DoubleSide
 });
 const tukPlateGeometry=new THREE.PlaneGeometry(.46,.23);
+// Shared, baked three-chamber Bangkok tuk-tuk rear lamps. Amber indicators,
+// ribbed red stop lenses and pale reversing lenses replace featureless red
+// spheres. All reflections, dust and housing seams live in one tiny atlas;
+// traffic clones share its PBR material, geometry and GPU texture.
+const tukRearLampCanvas=document.createElement('canvas');
+tukRearLampCanvas.width=128;tukRearLampCanvas.height=256;
+const tukRearLampCtx=tukRearLampCanvas.getContext('2d');
+tukRearLampCtx.fillStyle='#191c20';tukRearLampCtx.fillRect(0,0,128,256);
+for(const [y,h,light,dark] of [
+ [12,65,'#ffc35e','#a84a13'],  // amber turn signal
+ [82,104,'#ff5d4c','#750f1b'], // red brake and tail lamp
+ [192,52,'#d9e4df','#64716f']  // reversing lens
+]){
+ const lens=tukRearLampCtx.createLinearGradient(12,y,114,y+h);
+ lens.addColorStop(0,light);lens.addColorStop(.47,dark);lens.addColorStop(1,light);
+ tukRearLampCtx.fillStyle=lens;tukRearLampCtx.fillRect(12,y,104,h);
+ tukRearLampCtx.strokeStyle='rgba(15,18,21,.75)';tukRearLampCtx.lineWidth=4;
+ tukRearLampCtx.strokeRect(12,y,104,h);
+ tukRearLampCtx.strokeStyle='rgba(255,247,221,.25)';tukRearLampCtx.lineWidth=1;
+ for(let rib=y+7;rib<y+h-3;rib+=7){
+  tukRearLampCtx.beginPath();tukRearLampCtx.moveTo(18,rib);
+  tukRearLampCtx.lineTo(110,rib);tukRearLampCtx.stroke();
+ }
+}
+tukRearLampCtx.strokeStyle='#55595c';tukRearLampCtx.lineWidth=5;
+tukRearLampCtx.strokeRect(5,5,118,246);
+for(const y of [9,247])for(const x of [9,119]){
+ tukRearLampCtx.fillStyle='#9a9990';tukRearLampCtx.beginPath();
+ tukRearLampCtx.arc(x,y,2.5,0,Math.PI*2);tukRearLampCtx.fill();
+}
+for(let i=0;i<85;i++){
+ const x=(i*47+19)%128,y=(i*71+13)%256;
+ tukRearLampCtx.fillStyle=i%3?'rgba(26,20,16,.14)':'rgba(255,242,203,.15)';
+ tukRearLampCtx.fillRect(x,y,1+i%2,1);
+}
+const tukRearLampTexture=new THREE.CanvasTexture(tukRearLampCanvas);
+tukRearLampTexture.colorSpace=THREE.SRGBColorSpace;
+tukRearLampTexture.anisotropy=mobile?2:4;
+const tukRearLampMaterial=new THREE.MeshPhysicalMaterial({
+ map:tukRearLampTexture,emissiveMap:tukRearLampTexture,
+ emissive:0x663323,emissiveIntensity:.19,metalness:0,roughness:.3,
+ clearcoat:.58,clearcoatRoughness:.23
+});
+// A slightly convex lens catches the existing scene lights without another
+// realtime light or draw call. Two rear lamps are instanced per tuk-tuk.
+const tukRearLampGeometry=new THREE.PlaneGeometry(.23,.42,4,6);
+const tukRearLampPositions=tukRearLampGeometry.attributes.position;
+for(let i=0;i<tukRearLampPositions.count;i++){
+ const x=tukRearLampPositions.getX(i);
+ tukRearLampPositions.setZ(i,.014*(1-(x/.115)**2));
+}
+tukRearLampPositions.needsUpdate=true;
+tukRearLampGeometry.computeVertexNormals();
 function makeTukTuk(){
  const g=new THREE.Group();
  // The tapered pressed-metal nose and rear wheel arch have rounded bevels.
@@ -4474,8 +4521,21 @@ function makeTukTuk(){
   // Handlebar mirrors project beyond the narrow front cab.
   rod(g,[side*.61,1.45,.89],[side*.9,1.93,1.03],.027,tukTrim);
   const mirror=cube(.29,.19,.07,tukWindow,side*.91,1.98,1.04);mirror.rotation.y=side*.12;g.add(mirror);
-  g.add(ball(.12,tukTail,side*.57,.84,-1.36));
  }
+ // Both rear lamp clusters face following traffic; the shared 128x256 atlas
+ // renders brake, indicator and reversing lenses in one draw call per vehicle.
+ const rearLamps=new THREE.InstancedMesh(tukRearLampGeometry,tukRearLampMaterial,2);
+ const rearLampPose=new THREE.Object3D();
+ for(const [i,side] of [-1,1].entries()){
+  rearLampPose.position.set(side*.59,.94,-1.53);
+  rearLampPose.rotation.set(0,Math.PI,0);
+  rearLampPose.updateMatrix();
+  rearLamps.setMatrixAt(i,rearLampPose.matrix);
+ }
+ rearLamps.instanceMatrix.needsUpdate=true;
+ rearLamps.computeBoundingSphere();
+ rearLamps.name='bangkok-tuktuk-three-chamber-tail-lamps';
+ g.add(rearLamps);
  // Recessed stamped engine inspection hatches on both exterior side skirts.
  // One instanced draw call, shared texture, and no change to obstacle bounds.
  const serviceHatches=new THREE.InstancedMesh(tukServiceGeometry,tukServiceMaterial,2);
