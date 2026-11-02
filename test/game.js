@@ -7774,6 +7774,34 @@ function makeExpresswayMotorcycle(){
  hubs.instanceMatrix.needsUpdate=true;
  spokes.instanceMatrix.needsUpdate=true;
  g.add(tyres,hubs,spokes);
+ // Disc brakes inside both sport-bike tyres: two PBR rotor rings and two
+ // compact calipers share two instanced draws, without new textures or lights.
+ // .202m rotor outer radius fits the .22m tyre opening; .119m inner radius
+ // clears the .105m wheel hub. All parts are cached with the bike template.
+ const brakeRotorGeometry=new THREE.RingGeometry(.119,.202,24,2);
+ brakeRotorGeometry.rotateY(Math.PI/2);
+ const brakeRotorMaterial=new THREE.MeshStandardMaterial({
+  color:0xb6bec1,metalness:.83,roughness:.32,side:THREE.DoubleSide
+ });
+ const brakeCaliperMaterial=new THREE.MeshStandardMaterial({
+  color:0x414a52,metalness:.65,roughness:.43
+ });
+ const brakeRotors=new THREE.InstancedMesh(brakeRotorGeometry,brakeRotorMaterial,2);
+ const brakeCalipers=new THREE.InstancedMesh(
+  new THREE.BoxGeometry(.072,.155,.12),brakeCaliperMaterial,2
+ );
+ for(let i=0;i<2;i++){
+  const z=i===0?-1.02:1.02,side=i===0?-1:1;
+  matrix.makeTranslation(side*.124,.46,z);
+  brakeRotors.setMatrixAt(i,matrix);
+  matrix.makeTranslation(side*.163,.59,z+.04);
+  brakeCalipers.setMatrixAt(i,matrix);
+ }
+ brakeRotors.instanceMatrix.needsUpdate=true;
+ brakeCalipers.instanceMatrix.needsUpdate=true;
+ brakeRotors.computeBoundingSphere();
+ brakeCalipers.computeBoundingSphere();
+ g.add(brakeRotors,brakeCalipers);
  function mesh(geometry,material,x,y,z,sx=1,sy=1,sz=1){
   const m=new THREE.Mesh(geometry,material);
   m.position.set(x,y,z);m.scale.set(sx,sy,sz);g.add(m);return m;
