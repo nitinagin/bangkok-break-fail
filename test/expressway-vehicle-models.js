@@ -649,6 +649,40 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   const rearFascia=makeBusRearFascia(THREE);
   rearFascia.position.set(0,1.65,-length/2-.09);
   group.add(rearFascia);
+  // Four wheel wells share one low-poly PBR mesh: dark brake-dust liner,
+  // worn steel lip and red pressed-metal shoulder. Decorative only; no
+  // change to collision, lane clearance, lighting or external downloads.
+  const busArchPositions=[],busArchColors=[],busArchIndices=[];
+  const busArchRadii=[.435,.476,.515],busArchSegments=16;
+  const busArchPalette=[0x161d22,0x6b6661,0xae3431].map(c=>new THREE.Color(c));
+  for(const side of [-1,1])for(const axle of [-1,1]){
+   const start=busArchPositions.length/3;
+   for(let band=0;band<busArchRadii.length;band++){
+    const radius=busArchRadii[band],shade=busArchPalette[band];
+    for(let step=0;step<=busArchSegments;step++){
+     const angle=Math.PI*step/busArchSegments;
+     busArchPositions.push(side*(w*.5+.08),.4+Math.sin(angle)*radius,
+      axle*1.42+Math.cos(angle)*radius);
+     busArchColors.push(shade.r,shade.g,shade.b);
+    }
+   }
+   for(let band=0;band<busArchRadii.length-1;band++){
+    for(let step=0;step<busArchSegments;step++){
+     const a=start+band*(busArchSegments+1)+step,b=a+busArchSegments+1;
+     busArchIndices.push(a,b,a+1,a+1,b,b+1);
+    }
+   }
+  }
+  const busArchGeometry=new THREE.BufferGeometry();
+  busArchGeometry.setAttribute('position',new THREE.Float32BufferAttribute(busArchPositions,3));
+  busArchGeometry.setAttribute('color',new THREE.Float32BufferAttribute(busArchColors,3));
+  busArchGeometry.setIndex(busArchIndices);
+  busArchGeometry.computeVertexNormals();
+  const busArchMesh=new THREE.Mesh(busArchGeometry,new THREE.MeshStandardMaterial({
+   vertexColors:true,metalness:.24,roughness:.76,side:THREE.DoubleSide
+  }));
+  busArchMesh.name='bangkok-bus-pressed-wheel-arches';
+  group.add(busArchMesh);
  }else{
   // Dark transparent glazing reveals a seated driver instead of an empty car.
   const windshield=makeSportsCarLaminatedGlass(THREE);
