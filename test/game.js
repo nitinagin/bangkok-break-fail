@@ -2278,6 +2278,39 @@ const ramaFloodPoolMat=new THREE.MeshBasicMaterial({
  map:ramaFloodTexture,transparent:true,depthWrite:false,
  blending:THREE.AdditiveBlending,polygonOffset:true,polygonOffsetFactor:-1
 });
+// Rama II weathered corrugated-steel site hoarding. Two shared 256x128
+// PBR atlases and one opaque instanced draw per work zone, off the road.
+const ramaHoardPaint=document.createElement('canvas');
+const ramaHoardRough=document.createElement('canvas');
+ramaHoardPaint.width=ramaHoardRough.width=256;
+ramaHoardPaint.height=ramaHoardRough.height=128;
+const rhp=ramaHoardPaint.getContext('2d'),rhr=ramaHoardRough.getContext('2d');
+rhp.fillStyle='#53696b';rhp.fillRect(0,0,256,128);
+rhr.fillStyle='#dfdfdf';rhr.fillRect(0,0,256,128);
+// Raised metal ribs, faded paint, corroded fasteners and dirt streaks.
+for(let x=0;x<256;x+=12){
+ rhp.fillStyle='#344b4e';rhp.fillRect(x,0,2,128);
+ rhp.fillStyle='#879393';rhp.fillRect(x+3,0,2,128);
+ rhp.fillStyle='#627a7c';rhp.fillRect(x+5,0,5,128);
+ rhr.fillStyle='#bdbdbd';rhr.fillRect(x+3,0,2,128);
+ for(const y of [11,116]){
+  rhp.fillStyle='#6e4935';rhp.fillRect(x+5,y,4,4);
+  rhp.fillStyle='#b69a76';rhp.fillRect(x+6,y,1,1);
+ }
+}
+for(let i=0;i<220;i++){
+ const px=(i*73+19)%256,py=(i*47+11)%128;
+ rhp.fillStyle=i%4===0?'rgba(132,81,51,.24)':'rgba(24,32,33,.13)';
+ rhp.fillRect(px,py,1+i%3,2+i%6);
+}
+const ramaHoardMap=new THREE.CanvasTexture(ramaHoardPaint);
+ramaHoardMap.colorSpace=THREE.SRGBColorSpace;
+const ramaHoardRoughMap=new THREE.CanvasTexture(ramaHoardRough);
+const ramaHoardMaterial=new THREE.MeshStandardMaterial({
+ color:0xffffff,map:ramaHoardMap,roughnessMap:ramaHoardRoughMap,
+ roughness:.9,metalness:.28,side:THREE.FrontSide
+});
+const ramaHoardGeometry=new THREE.PlaneGeometry(6.35,2.9);
 function ramaWorkZone(side,z){
  const g=new THREE.Group();
  // Fourteen weathered precast barriers and inward-facing hazard chevrons.
@@ -2340,6 +2373,17 @@ function ramaWorkZone(side,z){
   mesh.instanceMatrix.needsUpdate=true;mesh.computeBoundingSphere();g.add(mesh);
  }
 
+ // Corrugated construction hoarding stands behind the x=+/-6.05
+ // barriers at x=+/-8.45, never in a playable dodge lane.
+ const hoarding=new THREE.InstancedMesh(ramaHoardGeometry,ramaHoardMaterial,8);
+ const hoardPose=new THREE.Object3D();
+ for(let i=0;i<8;i++){
+  hoardPose.position.set(side*8.45,1.54,-22.4+i*6.4);
+  hoardPose.rotation.set(0,side===1?-Math.PI/2:Math.PI/2,0);
+  hoardPose.updateMatrix();hoarding.setMatrixAt(i,hoardPose.matrix);
+ }
+ hoarding.instanceMatrix.needsUpdate=true;
+ hoarding.computeBoundingSphere();g.add(hoarding);
  // A separate unfinished pier, behind the barriers and clear of the roadway.
  g.add(cube(2.4,.7,2.4,siteConcrete,side*10,.35,-6));
  g.add(cube(1.7,10,1.7,siteConcrete,side*10,5.35,-6));
