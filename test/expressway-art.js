@@ -653,8 +653,34 @@ export function createExpresswayArt(THREE){
  }
  const acousticTexture=new THREE.CanvasTexture(acousticCanvas);
  acousticTexture.colorSpace=THREE.SRGBColorSpace;
+ // Baked PBR rib normals and patchy galvanized roughness match the existing
+ // 16px panel corrugation. Two tiny 128x256 maps, no new draw calls or lights.
+ const acousticNormalCanvas=document.createElement('canvas');
+ const acousticRoughnessCanvas=document.createElement('canvas');
+ acousticNormalCanvas.width=acousticRoughnessCanvas.width=128;
+ acousticNormalCanvas.height=acousticRoughnessCanvas.height=256;
+ const anc=acousticNormalCanvas.getContext('2d');
+ const arc=acousticRoughnessCanvas.getContext('2d');
+ const an=anc.createImageData(128,256),ar=arc.createImageData(128,256);
+ for(let y=0;y<256;y++)for(let x=0;x<128;x++){
+  const phase=(x%16)/16*Math.PI*2,seam=y%63<2;
+  const sx=Math.cos(phase)*.34,sy=seam?.18:0;
+  const inv=1/Math.hypot(sx,sy,1),i=(y*128+x)*4;
+  an.data[i]=Math.round(128-127*sx*inv);
+  an.data[i+1]=Math.round(128-127*sy*inv);
+  an.data[i+2]=Math.round(128+127*inv);
+  an.data[i+3]=255;
+  const wear=205+((x*17+y*29)%19)-(Math.sin(phase)>.35?24:0)+(seam?25:0);
+  ar.data[i]=ar.data[i+1]=ar.data[i+2]=Math.min(255,wear);
+  ar.data[i+3]=255;
+ }
+ anc.putImageData(an,0,0);arc.putImageData(ar,0,0);
+ const acousticNormalTexture=new THREE.CanvasTexture(acousticNormalCanvas);
+ const acousticRoughnessTexture=new THREE.CanvasTexture(acousticRoughnessCanvas);
  const acousticMat=new THREE.MeshStandardMaterial({
-  map:acousticTexture,color:0xc4d0c9,metalness:.14,roughness:.73
+  map:acousticTexture,normalMap:acousticNormalTexture,
+  normalScale:new THREE.Vector2(.55,.55),roughnessMap:acousticRoughnessTexture,
+  color:0xc4d0c9,metalness:.14,roughness:.88
  });
  const acousticCount=24,acousticZ=[];
  const acousticPanels=new THREE.InstancedMesh(
@@ -969,7 +995,7 @@ gantry.position.z=-75;group.add(gantry);
    carPaint.dispose();carGlass.dispose();tyreMaterial.dispose();
    taxiLiveryMaterial.dispose();taxiTexture.dispose();
    busShellMaterial.dispose();busWindowMaterial.dispose();busWindowTexture.dispose();busTyreMaterial.dispose();
-  windowTexture.dispose();emissiveTexture.dispose();poolTexture.dispose();signTexture.dispose();flyoverTexture.dispose();acousticTexture.dispose();barrierTexture.dispose();reflectorTexture.dispose();vmsTexture.dispose();vmsMaterial.dispose();
+  windowTexture.dispose();emissiveTexture.dispose();poolTexture.dispose();signTexture.dispose();flyoverTexture.dispose();acousticTexture.dispose();acousticNormalTexture.dispose();acousticRoughnessTexture.dispose();barrierTexture.dispose();reflectorTexture.dispose();vmsTexture.dispose();vmsMaterial.dispose();
   billboardMaterial.dispose();neonMap.dispose();neonGlowMap.dispose();
  }};
 }
