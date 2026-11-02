@@ -254,6 +254,55 @@ export function createExpresswayArt(THREE){
  }
  placeFlyovers();group.add(flyoverPiers,flyoverDecks,flyoverParapets,flyoverGirders,flyoverPierCaps);
 
+ // The elevated crossovers now have a worn asphalt wearing course instead of
+ // exposed pale concrete. One 256x128 baked PBR atlas provides faded paint,
+ // tyre polish, repaired patches and expansion joints for all three decks.
+ // Surface stays inside the concrete deck and 6mm below moving lamp pools.
+ const bridgeAsphaltCanvas=document.createElement('canvas');
+ bridgeAsphaltCanvas.width=256;bridgeAsphaltCanvas.height=128;
+ const bac=bridgeAsphaltCanvas.getContext('2d');
+ bac.fillStyle='#34383c';bac.fillRect(0,0,256,128);
+ for(let i=0;i<920;i++){
+  const x=(i*71+17)%256,y=(i*97+29)%128;
+  bac.fillStyle=i%4===0?'rgba(173,170,158,.13)':'rgba(10,15,18,.13)';
+  bac.fillRect(x,y,1+i%3,1+(i%5===0?2:0));
+ }
+ for(const y of [29,43,85,99]){
+  const wear=bac.createLinearGradient(0,y-4,0,y+4);
+  wear.addColorStop(0,'rgba(14,18,21,0)');
+  wear.addColorStop(.5,'rgba(14,18,21,.20)');
+  wear.addColorStop(1,'rgba(14,18,21,0)');
+  bac.fillStyle=wear;bac.fillRect(0,y-4,256,8);
+ }
+ bac.fillStyle='rgba(207,208,196,.48)';
+ bac.fillRect(0,8,256,2);bac.fillRect(0,118,256,2);
+ for(let x=9;x<256;x+=43){
+  bac.fillStyle='rgba(231,222,188,.53)';bac.fillRect(x,62,26,3);
+  bac.fillStyle='rgba(53,57,59,.38)';bac.fillRect(x+4,63,7,1);
+ }
+ bac.fillStyle='rgba(18,23,27,.18)';
+ bac.fillRect(29,14,39,28);bac.fillRect(174,87,48,22);
+ for(const x of [58,128,198]){
+  bac.fillStyle='rgba(9,12,14,.62)';bac.fillRect(x,0,2,128);
+  bac.fillStyle='rgba(156,153,145,.23)';bac.fillRect(x+2,0,1,128);
+ }
+ const bridgeAsphaltTexture=new THREE.CanvasTexture(bridgeAsphaltCanvas);
+ bridgeAsphaltTexture.colorSpace=THREE.SRGBColorSpace;
+ bridgeAsphaltTexture.anisotropy=2;
+ const bridgeAsphaltMaterial=new THREE.MeshStandardMaterial({
+  map:bridgeAsphaltTexture,roughness:.93,metalness:0
+ });
+ const bridgeAsphaltGeometry=new THREE.PlaneGeometry(15.65,2.44);
+ bridgeAsphaltGeometry.rotateX(-Math.PI/2);
+ const bridgeAsphalt=new THREE.InstancedMesh(bridgeAsphaltGeometry,bridgeAsphaltMaterial,flyoverZ.length);
+ bridgeAsphalt.name='bangkok-flyover-worn-asphalt-and-lane-markings';
+ for(let i=0;i<flyoverZ.length;i++){
+  flyoverMatrix.makeTranslation(0,8.529,flyoverZ[i]);
+  bridgeAsphalt.setMatrixAt(i,flyoverMatrix);
+ }
+ bridgeAsphalt.instanceMatrix.needsUpdate=true;
+ group.add(bridgeAsphalt);
+
  // Elevated expressway cross-traffic: paired LED lenses, not toy-block car
  // bodies. Two instanced draw calls for 12 moving vehicles; all >8m above
  // the drivable road, with no new lights, collision meshes or network assets.
@@ -844,6 +893,7 @@ gantry.position.z=-75;group.add(gantry);
  },dispose(){
   group.traverse(obj=>{if(obj.geometry)obj.geometry.dispose();});
   for(const material of [towerMat,mastMaterial,steel,warm,poolMaterial,sign.material,concrete,reflective,flyoverConcrete,acousticMat])material.dispose();
+  bridgeAsphaltMaterial.dispose();bridgeAsphaltTexture.dispose();
   studMaterial.dispose();studMesh.geometry.dispose();
   arrowPaintMaterial.dispose();arrowPaintTexture.dispose();
    bridgeHeadMaterial.dispose();bridgeTailMaterial.dispose();bridgeGlowMaterial.dispose();bridgeGlowTexture.dispose();
