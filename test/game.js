@@ -4726,6 +4726,40 @@ function makeTukTuk(){
  // Baked analogue speedometer behind the windscreen: no animated textures.
  const instrument=new THREE.Mesh(new THREE.PlaneGeometry(.33,.29),tukGaugeMaterial);
  instrument.position.set(0,1.34,.97);instrument.rotation.x=-.22;g.add(instrument);
+ // A seated Bangkok tuk-tuk driver is visible through the existing curved
+ // windscreen. One seven-instance PBR mesh adds a recognisable human silhouette
+ // (navy shirt, skin, dark hair, arms reaching the handlebars) without seven
+ // individual draw calls, external assets, animated bones or collision changes.
+ // Keep all parts inside the 1.5m-wide cabin and below the canopy.
+ const driverParts=new THREE.InstancedMesh(
+  new THREE.CapsuleGeometry(.17,.25,3,6),
+  new THREE.MeshStandardMaterial({color:0xffffff,metalness:0,roughness:.88}),
+  7
+ );
+ const driverPose=new THREE.Object3D();
+ const driverColors=[0x283f54,0xb88768,0x242326,0x283f54,0x283f54,0xb88768,0xb88768];
+ const driverDimensions=[
+  [0,1.49,.19,1.55,1.18,1.05,0,0], // work shirt and shoulders
+  [0,1.98,.28,.88,.66,.88,0,0],     // face
+  [0,2.125,.27,.88,.20,.90,0,0],    // short dark hair
+  [-.285,1.51,.46,.47,.88,.47,-.66,-.27],
+  [.285,1.51,.46,.47,.88,.47,-.66,.27],
+  [-.40,1.425,.72,.31,.34,.31,-.55,-.16],
+  [.40,1.425,.72,.31,.34,.31,-.55,.16]
+ ];
+ driverDimensions.forEach(([px,py,pz,sx,sy,sz,rx,rz],i)=>{
+  driverPose.position.set(px,py,pz);
+  driverPose.rotation.set(rx,0,rz);
+  driverPose.scale.set(sx,sy,sz);
+  driverPose.updateMatrix();
+  driverParts.setMatrixAt(i,driverPose.matrix);
+  driverParts.setColorAt(i,new THREE.Color(driverColors[i]));
+ });
+ driverParts.instanceMatrix.needsUpdate=true;
+ driverParts.instanceColor.needsUpdate=true;
+ driverParts.computeBoundingSphere();
+ driverParts.name='bangkok-tuktuk-seated-driver';
+ g.add(driverParts);
  return g;
 }
 // PBR Thai street scooter: swept body panels, real tyre profiles and human-shaped riders.
