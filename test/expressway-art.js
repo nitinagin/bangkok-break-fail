@@ -158,7 +158,52 @@ export function createExpresswayArt(THREE){
  flyoverTexture.colorSpace=THREE.SRGBColorSpace;
  const flyoverConcrete=new THREE.MeshStandardMaterial({color:0xd1d2cd,map:flyoverTexture,roughness:.93,metalness:0});
  const flyoverZ=[-38,-98,-158];
- const flyoverPiers=new THREE.InstancedMesh(new THREE.BoxGeometry(.88,7.8,1.08),flyoverConcrete,6);
+ // Chamfered, flared concrete interchange columns instead of box piers.
+ // Six instances share one 96-triangle PBR geometry and the existing material.
+ // Their nearest edge remains x=6.71m, outside the drivable corridor.
+ const pierRings=[
+  [-3.90,.86,1.05,.11],[-3.72,.94,1.12,.11],
+  [2.50,.95,1.12,.12],[3.16,1.18,1.34,.14],
+  [3.64,1.43,1.55,.16],[3.90,1.48,1.60,.16]
+ ];
+ function makeBangkokFlyoverPier(){
+  const positions=[],uvs=[];
+  const outline=([y,width,depth,cut])=>{
+   const w=width/2,d=depth/2;
+   return [[-w+cut,-d],[w-cut,-d],[w,-d+cut],[w,d-cut],
+    [w-cut,d],[-w+cut,d],[-w,d-cut],[-w,-d+cut]]
+    .map(([x,z])=>[x,y,z]);
+  };
+  const rings=pierRings.map(outline);
+  function triangle(a,b,c,ua,ub,uc){
+   for(const [point,uv] of [[a,ua],[b,ub],[c,uc]]){
+    positions.push(...point);uvs.push(...uv);
+   }
+  }
+  for(let level=0;level<rings.length-1;level++){
+   const v0=(pierRings[level][0]+3.9)/7.8,v1=(pierRings[level+1][0]+3.9)/7.8;
+   for(let edge=0;edge<8;edge++){
+    const next=(edge+1)%8;
+    const a=rings[level][edge],b=rings[level][next];
+    const c=rings[level+1][edge],d=rings[level+1][next];
+    triangle(a,c,b,[0,v0],[0,v1],[1,v0]);
+    triangle(b,c,d,[1,v0],[0,v1],[1,v1]);
+   }
+  }
+  const bottom=[0,-3.9,0],top=[0,3.9,0];
+  for(let edge=0;edge<8;edge++){
+   const next=(edge+1)%8;
+   triangle(bottom,rings[0][edge],rings[0][next],[.5,.5],[0,0],[1,0]);
+   triangle(top,rings[rings.length-1][next],rings[rings.length-1][edge],
+    [.5,.5],[1,1],[0,1]);
+  }
+  const geometry=new THREE.BufferGeometry();
+  geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+  geometry.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));
+  geometry.computeVertexNormals();
+  return geometry;
+ }
+ const flyoverPiers=new THREE.InstancedMesh(makeBangkokFlyoverPier(),flyoverConcrete,6);
  const flyoverDecks=new THREE.InstancedMesh(new THREE.BoxGeometry(15.9,.75,2.6),flyoverConcrete,3);
  const flyoverParapets=new THREE.InstancedMesh(new THREE.BoxGeometry(15.9,.62,.18),flyoverConcrete,6);
  // Structural I-section girders under each crossover: shaped flanges/web,
@@ -182,7 +227,7 @@ export function createExpresswayArt(THREE){
  // Broad weathered concrete pier heads tie the uprights to the deck;
  // all six stay beyond the road edge, without collision or shadows.
  const flyoverPierCaps=new THREE.InstancedMesh(
-  new THREE.BoxGeometry(1.28,.5,3.08),flyoverConcrete,6
+  new THREE.BoxGeometry(1.72,.5,3.08),flyoverConcrete,6
  );
  const flyoverMatrix=new THREE.Matrix4();
  function placeFlyovers(){
