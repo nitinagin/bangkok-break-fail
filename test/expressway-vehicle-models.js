@@ -953,6 +953,7 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   // Baked rear lamps replace two separate rear lamp meshes.
   const rearFascia=new THREE.Mesh(new THREE.PlaneGeometry(1.62,.32),makeSportsCarRearFascia(THREE));
   rearFascia.rotation.y=Math.PI;rearFascia.position.set(0,.8,-length/2-.09);
+   rearFascia.name='sports-car-rear-fascia';
   group.add(rearFascia);
  }
  const tailLamps=new THREE.MeshStandardMaterial({color:0xff3028,emissive:0xee1308,emissiveIntensity:.9,roughness:.28});
@@ -984,5 +985,23 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
  }
  group.add(tires,hubs,mirrorBodies,mirrorFaces);
  group.userData.type=type;
+ // At expressway approach distance, detailed cabin/interior/aero parts are
+ // smaller than a mobile pixel. Keep the recognisable body, roof, wheels and
+ // red rear lamps, sharing their existing geometries and PBR materials.
+ // The near car stays fully detailed; collision and lane logic are untouched.
+ if(!isBus){
+  const distant=new THREE.Group();
+  const roof=group.children.find(node=>node.name==='sports-car-fastback-greenhouse');
+  const rear=group.children.find(node=>node.name==='sports-car-rear-fascia');
+  for(const part of [group.children[0],roof,rear,tires,hubs]){
+   if(!part)throw new Error('Sports-car LOD is missing a silhouette part');
+   distant.add(part.clone());
+  }
+  const lod=new THREE.LOD();
+  lod.addLevel(group,0,.08);
+  lod.addLevel(distant,36,.08);
+  lod.userData.type=type;
+  return lod;
+ }
  return group;
 }
