@@ -65,6 +65,31 @@ export function createExpresswayArt(THREE){
   ctx.fillStyle='rgba(13,22,31,.65)';ctx.fillRect(0,8+floor*15,256,4);
   ctx.fillStyle='rgba(179,191,195,.15)';ctx.fillRect(0,12+floor*15,256,1);
  }
+ // Broad rain-washed concrete streaks and rooftop runoff on the existing
+ // facade atlas: irregular vertical stains break up the uniform tower grid.
+ // Keep all stains on opaque concrete strips so lit glazing stays legible.
+ for(let col=0;col<8;col++){
+  const stripX=5+col*30;
+  for(let streak=0;streak<3;streak++){
+   const x=stripX+(streak*3+col)%5;
+   const start=(col*71+streak*113)%420;
+   const length=38+(col*17+streak*29)%85;
+   const gradient=ctx.createLinearGradient(x,start,x,start+length);
+   gradient.addColorStop(0,'rgba(13,23,30,.30)');
+   gradient.addColorStop(.45,'rgba(15,26,33,.15)');
+   gradient.addColorStop(1,'rgba(15,26,33,0)');
+   ctx.fillStyle=gradient;ctx.fillRect(x,start,1+(streak%2),length);
+  }
+ }
+ // Uneven mineral deposits at every eighth-floor concrete ledge.
+ for(let floor=0;floor<32;floor+=8){
+  const y=12+floor*15;
+  for(let col=0;col<8;col++){
+   const x=4+col*30;
+   ctx.fillStyle='rgba(172,178,165,.16)';
+   ctx.fillRect(x,y,8+(col*7+floor)%11,1);
+  }
+ }
  const windowTexture=new THREE.CanvasTexture(windowCanvas);windowTexture.colorSpace=THREE.SRGBColorSpace;
  const emissiveTexture=new THREE.CanvasTexture(emissiveCanvas);
  emissiveTexture.colorSpace=THREE.SRGBColorSpace;
