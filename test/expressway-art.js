@@ -530,6 +530,20 @@ export function createExpresswayArt(THREE){
    bac.fillRect(gx,gy,2,1);
   }
  }
+ // Damp tyre-polished lanes catch headlamp glints without extra lights or meshes.
+ // Broad translucent streaks are interrupted by dry gaps, avoiding a plastic sheen.
+ for(const laneY of [33,91]){
+  for(let segment=0;segment<9;segment++){
+   const x=segment*31+(segment%3)*3;
+   const width=16+(segment*7)%13;
+   const sheen=bac.createLinearGradient(0,laneY-5,0,laneY+5);
+   sheen.addColorStop(0,'rgba(148,158,166,0)');
+   sheen.addColorStop(.42,'rgba(148,158,166,.13)');
+   sheen.addColorStop(.56,'rgba(185,190,190,.17)');
+   sheen.addColorStop(1,'rgba(148,158,166,0)');
+   bac.fillStyle=sheen;bac.fillRect(x,laneY-5,width,10);
+  }
+ }
  const bridgeAsphaltTexture=new THREE.CanvasTexture(bridgeAsphaltCanvas);
  bridgeAsphaltTexture.colorSpace=THREE.SRGBColorSpace;
  bridgeAsphaltTexture.anisotropy=2;
