@@ -2206,6 +2206,15 @@ function addRamaExcavator(g,side){
   box(chrome,x+side*.785,1.65+i*.045,z-.30,.025,.012,.76);
  box(steel,x+side*.64,2.34,z+.71,.12,.92,.12);
  box(steel,x+side*.64,2.82,z+.71,.18,.07,.18);
+ // Open steel access ladder and counterweight grab rail, batched with existing steel.
+ // These components remain beyond the road barriers and add no draw calls.
+ for(let step=0;step<4;step++)
+  box(steel,x-side*1.00,1.16+step*.27,z+.68,.10,.045,.48);
+ for(const zz of [z+.45,z+.91])
+  beam(steel,x-side*1.00,1.05,zz,x-side*1.00,2.26,zz,.045,.045);
+ beam(steel,x-side*.84,2.08,z+1.17,x-side*.84,2.08,z+.55,.045,.045);
+ for(const zz of [z+.55,z+1.17])
+  beam(steel,x-side*.84,1.72,zz,x-side*.84,2.08,zz,.045,.045);
  // Main boom and dipper stick form an unmistakable raised excavator profile.
  beam(painted,x,2.05,z-.68,x,5.0,z-2.72,.37,.43);
  beam(painted,x,5.0,z-2.72,x,1.85,z-5.28,.27,.31);
