@@ -1106,6 +1106,41 @@ gantry.position.z=-75;group.add(gantry);
   laneArrows.instanceMatrix.needsUpdate=true;
  }
  placeLaneArrows();group.add(laneArrows);
+ // Cast-iron storm drains along Bangkok's elevated expressway shoulders.
+ // A shared 128px PBR atlas draws open slots, rust and worn raised ribs;
+ // 32 grates use one instanced draw call and stay outside all dodge lanes.
+ const drainCanvas=document.createElement('canvas');drainCanvas.width=drainCanvas.height=128;
+ const dc=drainCanvas.getContext('2d');
+ dc.fillStyle='#555c5c';dc.fillRect(0,0,128,128);
+ for(let i=0;i<10;i++){
+  const x=9+i*12;
+  dc.fillStyle='#111b20';dc.fillRect(x,9,6,110);
+  dc.fillStyle='#87908b';dc.fillRect(x-2,9,2,110);
+  dc.fillStyle='#303d3d';dc.fillRect(x+6,9,2,110);
+ }
+ dc.fillStyle='#777a72';dc.fillRect(0,0,128,7);dc.fillRect(0,121,128,7);
+ for(let i=0;i<85;i++){
+  dc.fillStyle=i%3===0?'rgba(144,88,56,.35)':'rgba(23,28,28,.25)';
+  dc.fillRect((i*47+13)%128,(i*73+19)%128,2+i%3,2);
+ }
+ const drainTexture=new THREE.CanvasTexture(drainCanvas);
+ drainTexture.colorSpace=THREE.SRGBColorSpace;drainTexture.anisotropy=2;
+ const drainMaterial=new THREE.MeshStandardMaterial({map:drainTexture,metalness:.68,roughness:.79,side:THREE.DoubleSide});
+ const drainGeometry=new THREE.PlaneGeometry(.68,1.15);
+ drainGeometry.rotateX(-Math.PI/2);
+ const drainCount=32,drainZ=[];
+ const drains=new THREE.InstancedMesh(drainGeometry,drainMaterial,drainCount);
+ drains.name='expressway-shoulder-cast-iron-storm-drains';drains.frustumCulled=false;
+ const drainPose=new THREE.Object3D();
+ for(let i=0;i<drainCount;i++)drainZ.push(-12-Math.floor(i/2)*11);
+ function placeDrains(){
+  for(let i=0;i<drainCount;i++){
+   drainPose.position.set(i%2===0?-5.12:5.12,.09,drainZ[i]);
+   drainPose.updateMatrix();drains.setMatrixAt(i,drainPose.matrix);
+  }
+  drains.instanceMatrix.needsUpdate=true;
+ }
+ placeDrains();group.add(drains);
  group.visible=false;
  return {group,update(dt,speed){
   const advance=dt*Math.min(95,30+speed*.12);
@@ -1116,6 +1151,7 @@ gantry.position.z=-75;group.add(gantry);
   for(let i=0;i<acousticCount;i++){acousticZ[i]+=advance;if(acousticZ[i]>24)acousticZ[i]-=12*5.9;}placeAcousticScreens();placeRailMarkers();placeRailBolts();
   for(let i=0;i<studCount;i++){studZ[i]+=advance;if(studZ[i]>18)studZ[i]-=36*5.35;}placeStuds();
   for(let i=0;i<arrowCount;i++){arrowZ[i]+=advance;if(arrowZ[i]>22)arrowZ[i]-=168;}placeLaneArrows();
+  for(let i=0;i<drainCount;i++){drainZ[i]+=advance;if(drainZ[i]>20)drainZ[i]-=16*11;}placeDrains();
   gantry.position.z+=advance;if(gantry.position.z>24)gantry.position.z-=195;
   for(let i=0;i<barrierCount;i++){barrierZ[i]+=advance;if(barrierZ[i]>20)barrierZ[i]-=22*barrierLength*1.15;}placeBarriers();
  },dispose(){
@@ -1124,6 +1160,7 @@ gantry.position.z=-75;group.add(gantry);
   bridgeAsphaltMaterial.dispose();bridgeAsphaltTexture.dispose();
   studMaterial.dispose();studMesh.geometry.dispose();railMarkerMaterial.dispose();railBoltMaterial.dispose();
   arrowPaintMaterial.dispose();arrowPaintTexture.dispose();
+  drainMaterial.dispose();drainTexture.dispose();
    bridgeHeadMaterial.dispose();bridgeTailMaterial.dispose();bridgeGlowMaterial.dispose();bridgeGlowTexture.dispose();
    carPaint.dispose();carGlass.dispose();tyreMaterial.dispose();
    taxiLiveryMaterial.dispose();taxiTexture.dispose();
