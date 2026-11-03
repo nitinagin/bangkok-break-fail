@@ -265,9 +265,33 @@ export function createExpresswayArt(THREE){
  // Long rain streaks and formwork seams read as weathered reinforced concrete.
  fc.fillStyle='rgba(54,61,65,.18)';
  for(let i=0;i<7;i++)fc.fillRect(0,17+i*19,128,1);
+ // Baked concrete pore normals, formwork joints and shallow rain erosion.
+ // Shared by all flyover piers/decks: no extra geometry, lights or draw calls.
+ const flyoverNormalCanvas=document.createElement('canvas');
+ flyoverNormalCanvas.width=flyoverNormalCanvas.height=128;
+ const fnctx=flyoverNormalCanvas.getContext('2d');
+ const concreteHeight=(x,y)=>{
+  const seam=(y%19===17||y%19===18)?-17:0;
+  const pores=((x*73+y*151+x*y*7)%29)-14;
+  const streak=(x%23<2&&y%19>3)?-6:0;
+  return seam+pores*.72+streak;
+ };
+ const fnImage=fnctx.createImageData(128,128);
+ for(let y=0;y<128;y++)for(let x=0;x<128;x++){
+  const dx=concreteHeight((x+1)%128,y)-concreteHeight((x+127)%128,y);
+  const dy=concreteHeight(x,(y+1)%128)-concreteHeight(x,(y+127)%128);
+  const inv=1/Math.hypot(dx*.025,dy*.025,1);
+  const i=(y*128+x)*4;
+  fnImage.data[i]=Math.round(127.5*(1-dx*.025*inv));
+  fnImage.data[i+1]=Math.round(127.5*(1-dy*.025*inv));
+  fnImage.data[i+2]=Math.round(127.5*(1+inv));
+  fnImage.data[i+3]=255;
+ }
+ fnctx.putImageData(fnImage,0,0);
+ const flyoverNormalTexture=new THREE.CanvasTexture(flyoverNormalCanvas);
  const flyoverTexture=new THREE.CanvasTexture(flyoverCanvas);
  flyoverTexture.colorSpace=THREE.SRGBColorSpace;
- const flyoverConcrete=new THREE.MeshStandardMaterial({color:0xd1d2cd,map:flyoverTexture,roughness:.93,metalness:0});
+ const flyoverConcrete=new THREE.MeshStandardMaterial({color:0xd1d2cd,map:flyoverTexture,normalMap:flyoverNormalTexture,normalScale:new THREE.Vector2(.42,.42),roughness:.93,metalness:0});
  const flyoverZ=[-38,-98,-158];
  // Chamfered, flared concrete interchange columns instead of box piers.
  // Six instances share one 96-triangle PBR geometry and the existing material.
@@ -1104,7 +1128,7 @@ gantry.position.z=-75;group.add(gantry);
    carPaint.dispose();carGlass.dispose();tyreMaterial.dispose();
    taxiLiveryMaterial.dispose();taxiTexture.dispose();
    busShellMaterial.dispose();busWindowMaterial.dispose();busWindowTexture.dispose();busTyreMaterial.dispose();
-  windowTexture.dispose();emissiveTexture.dispose();facadeNormalTexture.dispose();poolTexture.dispose();signTexture.dispose();flyoverTexture.dispose();acousticTexture.dispose();acousticNormalTexture.dispose();acousticRoughnessTexture.dispose();barrierTexture.dispose();reflectorTexture.dispose();vmsTexture.dispose();vmsMaterial.dispose();
+  windowTexture.dispose();emissiveTexture.dispose();facadeNormalTexture.dispose();poolTexture.dispose();signTexture.dispose();flyoverTexture.dispose();flyoverNormalTexture.dispose();acousticTexture.dispose();acousticNormalTexture.dispose();acousticRoughnessTexture.dispose();barrierTexture.dispose();reflectorTexture.dispose();vmsTexture.dispose();vmsMaterial.dispose();
   billboardMaterial.dispose();neonMap.dispose();neonGlowMap.dispose();
  }};
 }
