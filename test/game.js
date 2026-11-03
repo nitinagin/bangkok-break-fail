@@ -2215,6 +2215,16 @@ function addRamaExcavator(g,side){
  beam(chrome,x+side*.29,3.30,z-1.59,x+side*.29,4.18,z-2.18,.07,.07);
  beam(steel,x+side*.22,4.57,z-2.82,x+side*.22,3.74,z-3.61,.115,.115);
  beam(chrome,x+side*.22,3.77,z-3.58,x+side*.22,2.98,z-4.31,.065,.065);
+ // Routed hydraulic return lines and steel retaining clamps on the boom/dipper.
+ // Existing instanced steel batch: no new draw calls, materials or textures.
+ // The lines remain entirely inside the roadside excavator work zone.
+ for(const offset of [-.16,.16]){
+  beam(steel,x+offset,2.34,z-.88,x+offset,4.82,z-2.62,.035,.035);
+  beam(steel,x+offset,4.84,z-2.66,x+offset,2.08,z-5.05,.03,.03);
+ }
+ for(const [yy,zz] of [[3.0,-1.36],[4.13,-2.12],[4.28,-3.30],[3.03,-4.28]]){
+  box(steel,x,yy,z+zz,.47,.055,.075);
+ }
  // Sixty-four steel track shoes follow the upper, lower and curved end
  // runs. All are batched into the existing steel InstancedMesh draw call.
  for(let i=0;i<12;i++)for(const dx of [-.73,.73]){
