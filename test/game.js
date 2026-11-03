@@ -1960,6 +1960,26 @@ function addRamaLatticeCrane(g,side){
  }
  // Fixed yellow hook block; steel hoist cable is one separate thin mesh.
  strut(x,10.95,tip+1.9,x,11.35,tip+1.9,.22);
+ // Rama II crane operator cabin: framed steel cab with PBR tinted glazing.
+ // Offset outward from the tower so the cab stays behind the road barriers.
+ // Reuse the crane's existing instanced yellow steel draw call for the cab frame,
+ // floor and roof: no additional structural-steel draw calls.
+ const cabX=x+side*1.10,cabFront=z-1.25,cabRear=z+.30;
+ const cabBottom=14.40,cabTop=16.20;
+ for(const cx of [cabX-.46,cabX+.46])for(const cz of [cabFront,cabRear])
+  strut(cx,cabBottom,cz,cx,cabTop,cz,.085);
+ for(const cy of [cabBottom,cabTop]){
+  for(const cz of [cabFront,cabRear])
+   strut(cabX-.46,cy,cz,cabX+.46,cy,cz,.085);
+  for(const cx of [cabX-.46,cabX+.46])
+   strut(cx,cy,cabFront,cx,cy,cabRear,.085);
+ }
+ // Shallow opaque sheet-metal floor and overhanging roof, same instance batch.
+ for(const cy of [cabBottom-.055,cabTop+.075]){
+  pose.position.set(cabX,cy,(cabFront+cabRear)*.5);
+  pose.quaternion.identity();pose.scale.set(1.04,.13,1.76);
+  pose.updateMatrix();parts.push(pose.matrix.clone());
+ }
  const lattice=new THREE.InstancedMesh(ramaCraneStrutGeometry,siteCrane,parts.length);
  for(let i=0;i<parts.length;i++)lattice.setMatrixAt(i,parts[i]);
  lattice.instanceMatrix.needsUpdate=true;
@@ -1994,6 +2014,29 @@ function addRamaLatticeCrane(g,side){
  }
  slings.instanceMatrix.needsUpdate=true;slings.computeBoundingSphere();
  g.add(girder,slings);
+ // Opaque blue-grey PBR glass avoids mobile alpha sorting and overdraw.
+ // Three windows share one plane geometry, one material and one draw call.
+ const cabGlassMaterial=new THREE.MeshStandardMaterial({
+  color:0x29485a,metalness:.28,roughness:.19,side:THREE.DoubleSide
+ });
+ const cabWindows=new THREE.InstancedMesh(
+  new THREE.PlaneGeometry(1,1),cabGlassMaterial,3
+ );
+ const cabWindowY=(cabBottom+cabTop)*.5;
+ pose.quaternion.identity();
+ pose.position.set(cabX,cabWindowY,cabFront-.012);
+ pose.scale.set(.76,1.53,1);pose.updateMatrix();
+ cabWindows.setMatrixAt(0,pose.matrix);
+ for(let i=0;i<2;i++){
+  pose.rotation.set(0,Math.PI/2,0);
+  pose.position.set(cabX+(i===0?-.467:.467),cabWindowY,(cabFront+cabRear)*.5);
+  pose.scale.set(1.35,1.53,1);pose.updateMatrix();
+  cabWindows.setMatrixAt(i+1,pose.matrix);
+ }
+ cabWindows.instanceMatrix.needsUpdate=true;
+ cabWindows.computeBoundingSphere();
+ cabWindows.name='rama2-crane-operator-cabin-pbr-glazing';
+ g.add(cabWindows);
 }
 // Static roadside tracked excavator: articulated boom, hydraulic rams, cab glass,
 // rubber tracks and a scooped bucket. Five shared-material draw calls per work zone;
