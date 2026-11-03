@@ -704,9 +704,25 @@ export function createExpresswayArt(THREE){
  const acousticPosts=new THREE.InstancedMesh(
   new THREE.BoxGeometry(.17,4.05,.19),steel,acousticCount
  );
- // Galvanized twin W-beam guardrails: one instanced draw call, shared PBR steel.
- // Both rails remain at |x|=6.25, beyond the playable dodge corridor.
- const guardrails=new THREE.InstancedMesh(new THREE.BoxGeometry(.14,.19,5.72),steel,acousticCount*2);
+ // Pressed W-profile steel rather than rectangular bars: two shallow corrugations
+ // catch headlamp highlights while retaining one instanced draw call for 48 rails.
+ // The cross-section stays within the previous .14m thickness and .19m height;
+ // both rails remain at |x|=6.25, outside the playable dodge corridor.
+ const railProfile=new THREE.Shape();
+ const railPoints=[
+  [-.07,-.095],[-.025,-.095],[.045,-.055],[.07,-.032],
+  [.035,0],[.07,.032],[.045,.055],[-.025,.095],[-.07,.095],
+  [-.07,.065],[.008,.035],[.025,.025],[-.005,0],
+  [.025,-.025],[.008,-.035],[-.07,-.065]
+ ];
+ railProfile.moveTo(...railPoints[0]);
+ for(let p=1;p<railPoints.length;p++)railProfile.lineTo(...railPoints[p]);
+ railProfile.closePath();
+ const railGeometry=new THREE.ExtrudeGeometry(railProfile,{
+  depth:5.72,steps:1,bevelEnabled:false,curveSegments:1
+ });
+ railGeometry.translate(0,0,-2.86);
+ const guardrails=new THREE.InstancedMesh(railGeometry,steel,acousticCount*2);
  guardrails.name='bangkok-expressway-galvanized-guardrails';
  guardrails.frustumCulled=false;
  const acousticDummy=new THREE.Object3D();
