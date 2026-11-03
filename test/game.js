@@ -2173,6 +2173,24 @@ function addRamaExcavator(g,side){
  if(trackWheelIndex!==10)throw Error('Rama II excavator wheel count mismatch');
  trackWheels.instanceMatrix.needsUpdate=true;
  trackWheels.computeBoundingSphere();g.add(trackWheels);
+ // Heavy tracked undercarriage: sloped mudguards, side wear plates and
+ // visible cross-bracing. These reuse the existing instanced PBR steel batch,
+ // stay outside the playable lane and add no draw calls or textures.
+ for(const trackSide of [-1,1]){
+  const outerX=x+trackSide*1.24;
+  // Long steel skirt hides the toy-like gap above each continuous track.
+  box(steel,outerX,.94,z, .075,.20,2.05);
+  // Angled front/rear guards follow the track's rising end silhouette.
+  beam(steel,outerX,.87,z-1.00,outerX,1.06,z-.72,.095,.11);
+  beam(steel,outerX,1.06,z+.72,outerX,.87,z+1.00,.095,.11);
+  // Recessed bogie carrier and two substantial vertical supports.
+  box(steel,x+trackSide*.91,.79,z,.14,.14,1.72);
+  for(const zz of [z-.58,z+.58])
+   box(steel,x+trackSide*.94,.97,zz,.15,.40,.14);
+ }
+ // The lower chassis remains aligned with the track loops, not the road.
+ box(steel,x,.73,z-.66,1.55,.16,.15);
+ box(steel,x,.73,z+.66,1.55,.16,.15);
  // Painted turntable, rear counterweight, offset operator cab and roof.
  box(steel,x,.83,z,1.15,.24,1.95); // undercarriage frame between the tracks
  box(painted,x,1.2,z,1.88,.5,2.25);
