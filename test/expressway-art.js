@@ -771,6 +771,26 @@ export function createExpresswayArt(THREE){
   guardrails.instanceMatrix.needsUpdate=true;
  }
  placeAcousticScreens();group.add(acousticPanels,acousticPosts,guardrails);
+ // Amber reflector plates attached to both W-beam heights, outside dodge lanes.
+ // One shared instanced mesh; no realtime lights or transparent overdraw.
+ const railMarkerGeometry=new THREE.BoxGeometry(.04,.11,.16);
+ const railMarkerMaterial=new THREE.MeshStandardMaterial({color:0xffb84d,metalness:.08,roughness:.34,emissive:0x8b3900,emissiveIntensity:.32});
+ const railMarkers=new THREE.InstancedMesh(railMarkerGeometry,railMarkerMaterial,acousticCount*2);
+ railMarkers.name='expressway-guardrail-amber-reflectors';
+ railMarkers.frustumCulled=false;
+ function placeRailMarkers(){
+  for(let i=0;i<acousticCount;i++){
+   const side=i%2===0?-1:1;
+   for(let rail=0;rail<2;rail++){
+    acousticDummy.position.set(side*6.20,.85+rail*.48,acousticZ[i]);
+    acousticDummy.rotation.set(0,0,0);
+    acousticDummy.updateMatrix();
+    railMarkers.setMatrixAt(i*2+rail,acousticDummy.matrix);
+   }
+  }
+  railMarkers.instanceMatrix.needsUpdate=true;
+ }
+ placeRailMarkers();group.add(railMarkers);
  // Realistic retroreflective Thai-English lane sign. Baked once; no extra draw calls.
  // 1024x320 atlas matches the existing 6.8x2.13m overhead panel aspect ratio.
  const signCanvas=document.createElement('canvas');signCanvas.width=1024;signCanvas.height=320;
@@ -1048,7 +1068,7 @@ gantry.position.z=-75;group.add(gantry);
   for(let i=0;i<flyoverZ.length;i++){flyoverZ[i]+=advance;if(flyoverZ[i]>26)flyoverZ[i]-=180;}placeFlyovers();
    for(let i=0;i<bridgeCarCount;i++)bridgeCarProgress[i]=(bridgeCarProgress[i]+Math.min(dt,.05)*(.16+(i%4)*.035))%1;
    placeBridgeTraffic();
-  for(let i=0;i<acousticCount;i++){acousticZ[i]+=advance;if(acousticZ[i]>24)acousticZ[i]-=12*5.9;}placeAcousticScreens();
+  for(let i=0;i<acousticCount;i++){acousticZ[i]+=advance;if(acousticZ[i]>24)acousticZ[i]-=12*5.9;}placeAcousticScreens();placeRailMarkers();
   for(let i=0;i<studCount;i++){studZ[i]+=advance;if(studZ[i]>18)studZ[i]-=36*5.35;}placeStuds();
   for(let i=0;i<arrowCount;i++){arrowZ[i]+=advance;if(arrowZ[i]>22)arrowZ[i]-=168;}placeLaneArrows();
   gantry.position.z+=advance;if(gantry.position.z>24)gantry.position.z-=195;
@@ -1057,7 +1077,7 @@ gantry.position.z=-75;group.add(gantry);
   group.traverse(obj=>{if(obj.geometry)obj.geometry.dispose();});
   for(const material of [towerMat,mastMaterial,beaconMaterial,steel,warm,poolMaterial,sign.material,concrete,reflective,flyoverConcrete,acousticMat])material.dispose();
   bridgeAsphaltMaterial.dispose();bridgeAsphaltTexture.dispose();
-  studMaterial.dispose();studMesh.geometry.dispose();
+  studMaterial.dispose();studMesh.geometry.dispose();railMarkerMaterial.dispose();
   arrowPaintMaterial.dispose();arrowPaintTexture.dispose();
    bridgeHeadMaterial.dispose();bridgeTailMaterial.dispose();bridgeGlowMaterial.dispose();bridgeGlowTexture.dispose();
    carPaint.dispose();carGlass.dispose();tyreMaterial.dispose();
