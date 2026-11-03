@@ -2176,7 +2176,13 @@ function addRamaExcavator(g,side){
  // Painted turntable, rear counterweight, offset operator cab and roof.
  box(steel,x,.83,z,1.15,.24,1.95); // undercarriage frame between the tracks
  box(painted,x,1.2,z,1.88,.5,2.25);
- box(painted,x,1.67,z+.8,1.95,.65,.9);
+ // Tapered rear counterweight silhouette: bevelled upper shoulder and
+ // reinforced lower edge. Reuse the existing painted/steel instanced batches.
+ box(painted,x,1.54,z+.8,1.95,.43,.9);
+ beam(painted,x-.84,1.75,z+.82,x-.62,1.96,z+.82,.34,.48);
+ beam(painted,x+.84,1.75,z+.82,x+.62,1.96,z+.82,.34,.48);
+ box(painted,x,1.83,z+.8,1.24,.24,.88);
+ box(steel,x,1.31,z+1.265,1.68,.09,.055);
  box(painted,x-side*.42,2.15,z+.25,.96,1.05,1.25);
  box(painted,x-side*.42,2.82,z+.25,1.1,.13,1.38);
  box(painted,x+side*.37,1.83,z-.3,.75,.52,1.0);
