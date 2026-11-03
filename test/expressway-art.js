@@ -48,7 +48,34 @@ export function createExpresswayArt(THREE){
  const windowTexture=new THREE.CanvasTexture(windowCanvas);windowTexture.colorSpace=THREE.SRGBColorSpace;
  const emissiveTexture=new THREE.CanvasTexture(emissiveCanvas);
  emissiveTexture.colorSpace=THREE.SRGBColorSpace;
- const towerMat=new THREE.MeshStandardMaterial({map:windowTexture,roughness:.83,metalness:.13,emissive:0xffffff,emissiveMap:emissiveTexture,emissiveIntensity:.42});
+ // Baked tangent-space facade relief: recessed glazing, raised concrete mullions
+ // and horizontal floor ledges. One 256x512 normal texture, no extra geometry.
+ const facadeNormals=document.createElement('canvas');facadeNormals.width=256;facadeNormals.height=512;
+ const fn=facadeNormals.getContext('2d'),pixels=fn.createImageData(256,512);
+ const relief=new Float32Array(256*512);
+ for(let y=0;y<512;y++)for(let x=0;x<256;x++){
+  const col=Math.floor((x-9)/30),row=Math.floor((y-13)/15);
+  let h=.46;
+  if(col>=0&&col<8&&row>=0&&row<32){
+   const lx=x-(9+col*30),ly=y-(13+row*15);
+   if(lx>=-1&&lx<22&&ly>=-1&&ly<12)h=.24;
+   if(lx>=1&&lx<20&&ly>=1&&ly<9)h=.08;
+  }
+  if(y%120>=8&&y%120<12)h=.62;
+  relief[y*256+x]=h;
+ }
+ for(let y=0;y<512;y++)for(let x=0;x<256;x++){
+  const dx=(relief[y*256+Math.min(255,x+1)]-relief[y*256+Math.max(0,x-1)])*.9;
+  const dy=(relief[Math.min(511,y+1)*256+x]-relief[Math.max(0,y-1)*256+x])*.9;
+  const inv=1/Math.hypot(dx,dy,1),at=(y*256+x)*4;
+  pixels.data[at]=Math.round(128-127*dx*inv);
+  pixels.data[at+1]=Math.round(128-127*dy*inv);
+  pixels.data[at+2]=Math.round(128+127*inv);
+  pixels.data[at+3]=255;
+ }
+ fn.putImageData(pixels,0,0);
+ const facadeNormalTexture=new THREE.CanvasTexture(facadeNormals);
+ const towerMat=new THREE.MeshStandardMaterial({map:windowTexture,normalMap:facadeNormalTexture,normalScale:new THREE.Vector2(.34,.34),roughness:.83,metalness:.13,emissive:0xffffff,emissiveMap:emissiveTexture,emissiveIntensity:.42});
  // Stepped parapets and rooftop plant rooms give each scaled tower a
  // recognizable Bangkok high-rise silhouette, without adding tower meshes.
  const towerOutline=new THREE.Shape();
