@@ -111,6 +111,18 @@ export function createExpresswayArt(THREE){
  towers.instanceMatrix.needsUpdate=true;
  if(towers.instanceColor)towers.instanceColor.needsUpdate=true;
  towers.frustumCulled=false;group.add(towers);
+ // Shared emissive rooftop aircraft-warning markers; one draw call, no dynamic lights.
+ const skylineMarkerGeometry=new THREE.SphereGeometry(.16,6,4);
+ const skylineMarkerMaterial=new THREE.MeshStandardMaterial({color:0xff3d2d,emissive:0xff1808,emissiveIntensity:1.8,metalness:.12,roughness:.38});
+ const skylineMarkers=new THREE.InstancedMesh(skylineMarkerGeometry,skylineMarkerMaterial,24);
+ for(let i=0;i<24;i++){
+  const side=i%2===0?-1:1,row=Math.floor(i/2),height=10+(i*13%19);
+  dummy.position.set(side*(12+(i*7%17)),height-1.46,-15-row*9);
+  dummy.scale.setScalar(1);dummy.updateMatrix();skylineMarkers.setMatrixAt(i,dummy.matrix);
+ }
+ skylineMarkers.instanceMatrix.needsUpdate=true;
+ skylineMarkers.name='expressway-highrise-aircraft-warning-markers';
+ group.add(skylineMarkers);
  // Six Thai/English illuminated high-rise fascia panels. All 12 triangles
  // are batched into ONE PBR mesh; two small shared atlases are baked once.
  // No dynamic lights, shadow maps, external assets or per-frame updates.
@@ -1165,6 +1177,7 @@ gantry.position.z=-75;group.add(gantry);
    carPaint.dispose();carGlass.dispose();tyreMaterial.dispose();
    taxiLiveryMaterial.dispose();taxiTexture.dispose();
    busShellMaterial.dispose();busWindowMaterial.dispose();busWindowTexture.dispose();busTyreMaterial.dispose();
+  skylineMarkerMaterial.dispose();
   windowTexture.dispose();emissiveTexture.dispose();facadeNormalTexture.dispose();poolTexture.dispose();signTexture.dispose();flyoverTexture.dispose();flyoverNormalTexture.dispose();acousticTexture.dispose();acousticNormalTexture.dispose();acousticRoughnessTexture.dispose();barrierTexture.dispose();reflectorTexture.dispose();vmsTexture.dispose();vmsMaterial.dispose();
   billboardMaterial.dispose();neonMap.dispose();neonGlowMap.dispose();
  }};
