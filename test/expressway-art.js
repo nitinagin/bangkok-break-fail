@@ -111,6 +111,23 @@ export function createExpresswayArt(THREE){
  towers.instanceMatrix.needsUpdate=true;
  if(towers.instanceColor)towers.instanceColor.needsUpdate=true;
  towers.frustumCulled=false;group.add(towers);
+ // Rooftop mechanical plant rooms break up repeated tower silhouettes.
+ // One instanced PBR mesh for 24 structures; no external assets or animation.
+ const plantGeometry=new THREE.BoxGeometry(1,1,1);
+ const plantMaterial=new THREE.MeshStandardMaterial({color:0x77818a,metalness:.38,roughness:.76});
+ const roofPlants=new THREE.InstancedMesh(plantGeometry,plantMaterial,24);
+ roofPlants.name='expressway-highrise-rooftop-mechanical-plant';
+ for(let i=0;i<24;i++){
+  const side=i%2===0?-1:1,height=10+(i*13%19);
+  const width=4+(i*5%7),depth=5+(i*3%7);
+  const plantHeight=.65+(i%4)*.22;
+  dummy.position.set(side*(12+(i*7%17))+width*.23,
+   height-2+plantHeight*.5,-15-Math.floor(i/2)*9-depth*.16);
+  dummy.scale.set(width*.30,plantHeight,depth*.35);
+  dummy.updateMatrix();roofPlants.setMatrixAt(i,dummy.matrix);
+ }
+ roofPlants.instanceMatrix.needsUpdate=true;
+ roofPlants.frustumCulled=false;group.add(roofPlants);
  // Shared emissive rooftop aircraft-warning markers; one draw call, no dynamic lights.
  const skylineMarkerGeometry=new THREE.SphereGeometry(.16,6,4);
  const skylineMarkerMaterial=new THREE.MeshStandardMaterial({color:0xff3d2d,emissive:0xff1808,emissiveIntensity:1.8,metalness:.12,roughness:.38});
@@ -1177,7 +1194,7 @@ gantry.position.z=-75;group.add(gantry);
    carPaint.dispose();carGlass.dispose();tyreMaterial.dispose();
    taxiLiveryMaterial.dispose();taxiTexture.dispose();
    busShellMaterial.dispose();busWindowMaterial.dispose();busWindowTexture.dispose();busTyreMaterial.dispose();
-  skylineMarkerMaterial.dispose();
+  skylineMarkerMaterial.dispose();plantMaterial.dispose();
   windowTexture.dispose();emissiveTexture.dispose();facadeNormalTexture.dispose();poolTexture.dispose();signTexture.dispose();flyoverTexture.dispose();flyoverNormalTexture.dispose();acousticTexture.dispose();acousticNormalTexture.dispose();acousticRoughnessTexture.dispose();barrierTexture.dispose();reflectorTexture.dispose();vmsTexture.dispose();vmsMaterial.dispose();
   billboardMaterial.dispose();neonMap.dispose();neonGlowMap.dispose();
  }};
