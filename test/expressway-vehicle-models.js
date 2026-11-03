@@ -1037,6 +1037,23 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
  // smaller than a mobile pixel. Keep the recognisable body, roof, wheels and
  // red rear lamps, sharing their existing geometries and PBR materials.
  // The near car stays fully detailed; collision and lane logic are untouched.
+ if(isBus){
+  // Distant buses retain their curved body, rooftop HVAC and wheels, but
+  // omit subpixel interior, lettering and glass detail beyond 42 metres.
+  // Clones share geometry/material with the near model: no extra textures.
+  const distant=new THREE.Group();
+  const roof=group.children.find(node=>node.name==='bangkok-bus-curved-roof-hvac');
+  if(!roof)throw new Error('Bus LOD is missing its rooftop silhouette');
+  for(const part of [group.children[0],roof,tires,hubs]){
+   if(!part)throw new Error('Bus LOD is missing a silhouette part');
+   distant.add(part.clone());
+  }
+  const lod=new THREE.LOD();
+  lod.addLevel(group,0,.08);
+  lod.addLevel(distant,42,.08);
+  lod.userData.type=type;
+  return lod;
+ }
  if(!isBus){
   const distant=new THREE.Group();
   const roof=group.children.find(node=>node.name==='sports-car-fastback-greenhouse');
