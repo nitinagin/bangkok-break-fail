@@ -32,6 +32,26 @@ export function createExpresswayArt(THREE){
    ec.fillStyle='rgba(255,242,210,.18)';
    ec.fillRect(x+2,y+1,2,8);
   }
+  // Curtains and blinds vary occupied rooms; mask emissive glazing too.
+  const room=(row*37+col*23+row*col*3)%19;
+  if(room===2||room===8||room===14){
+   const width=room===14?12:6;
+   ctx.fillStyle=room===8?'rgba(79,67,66,.88)':'rgba(37,49,58,.91)';
+   ctx.fillRect(x+1,y+1,width,8);
+   ec.fillStyle='#000';ec.fillRect(x+1,y+1,width,8);
+   ctx.fillStyle='rgba(185,173,153,.18)';ctx.fillRect(x+width,y+1,1,8);
+  }else if(room===5||room===11){
+   ctx.fillStyle='rgba(19,31,41,.75)';
+   ec.fillStyle='#000';
+   for(let blind=0;blind<4;blind++){
+    ctx.fillRect(x+1,y+2+blind*2,19,1);
+    ec.fillRect(x+1,y+2+blind*2,19,1);
+   }
+  }
+  if(lit&&room===17){
+   ctx.fillStyle='rgba(24,32,38,.82)';ctx.fillRect(x+13,y+4,4,5);
+   ec.fillStyle='#000';ec.fillRect(x+13,y+4,4,5);
+  }
   ctx.fillStyle=lit?'rgba(255,238,199,.18)':'rgba(179,208,222,.10)';
   ctx.fillRect(x+2,y+1,2,8);
   ctx.fillStyle='rgba(5,13,21,.38)';ctx.fillRect(x+10,y+1,1,8);
