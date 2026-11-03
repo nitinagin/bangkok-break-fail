@@ -704,6 +704,11 @@ export function createExpresswayArt(THREE){
  const acousticPosts=new THREE.InstancedMesh(
   new THREE.BoxGeometry(.17,4.05,.19),steel,acousticCount
  );
+ // Galvanized twin W-beam guardrails: one instanced draw call, shared PBR steel.
+ // Both rails remain at |x|=6.25, beyond the playable dodge corridor.
+ const guardrails=new THREE.InstancedMesh(new THREE.BoxGeometry(.14,.19,5.72),steel,acousticCount*2);
+ guardrails.name='bangkok-expressway-galvanized-guardrails';
+ guardrails.frustumCulled=false;
  const acousticDummy=new THREE.Object3D();
  for(let i=0;i<acousticCount;i++)acousticZ.push(-8-Math.floor(i/2)*5.9);
  function placeAcousticScreens(){
@@ -713,11 +718,16 @@ export function createExpresswayArt(THREE){
    acousticDummy.updateMatrix();acousticPanels.setMatrixAt(i,acousticDummy.matrix);
    acousticDummy.position.set(side*6.55,2.025,z+2.86);
    acousticDummy.updateMatrix();acousticPosts.setMatrixAt(i,acousticDummy.matrix);
+   for(let rail=0;rail<2;rail++){
+    acousticDummy.position.set(side*6.25,.85+rail*.48,z);
+    acousticDummy.updateMatrix();guardrails.setMatrixAt(i*2+rail,acousticDummy.matrix);
+   }
   }
   acousticPanels.instanceMatrix.needsUpdate=true;
   acousticPosts.instanceMatrix.needsUpdate=true;
+  guardrails.instanceMatrix.needsUpdate=true;
  }
- placeAcousticScreens();group.add(acousticPanels,acousticPosts);
+ placeAcousticScreens();group.add(acousticPanels,acousticPosts,guardrails);
  // Realistic retroreflective Thai-English lane sign. Baked once; no extra draw calls.
  // 1024x320 atlas matches the existing 6.8x2.13m overhead panel aspect ratio.
  const signCanvas=document.createElement('canvas');signCanvas.width=1024;signCanvas.height=320;
