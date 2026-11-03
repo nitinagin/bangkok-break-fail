@@ -450,6 +450,26 @@ export function createExpresswayArt(THREE){
   bac.fillStyle='rgba(9,12,14,.62)';bac.fillRect(x,0,2,128);
   bac.fillStyle='rgba(156,153,145,.23)';bac.fillRect(x+2,0,1,128);
  }
+ // Irregular sealed expansion cracks and patched pothole edges on the elevated deck.
+ // Baked into the existing asphalt atlas: zero extra meshes, materials or draw calls.
+ for(let seam=0;seam<7;seam++){
+  const sx=13+seam*36,sy=15+(seam*23)%91;
+  bac.beginPath();bac.moveTo(sx,sy);
+  for(let step=1;step<=5;step++)bac.lineTo(sx+step*4,sy+Math.sin(step*1.7+seam)*3+step*.6);
+  bac.strokeStyle='rgba(8,11,13,.62)';bac.lineWidth=2.3;bac.stroke();
+  bac.strokeStyle='rgba(111,110,103,.30)';bac.lineWidth=.65;bac.stroke();
+ }
+ for(const patch of [[44,48,21,10],[153,18,30,8],[206,101,25,11]]){
+  const [x,y,w,h]=patch;
+  bac.fillStyle='rgba(17,22,25,.32)';bac.fillRect(x,y,w,h);
+  bac.strokeStyle='rgba(119,114,103,.26)';bac.lineWidth=1;
+  bac.strokeRect(x+.5,y+.5,w-1,h-1);
+  for(let grain=0;grain<12;grain++){
+   const gx=x+(grain*13+3)%w,gy=y+(grain*7+2)%h;
+   bac.fillStyle=grain%3?'rgba(171,165,150,.12)':'rgba(5,9,12,.20)';
+   bac.fillRect(gx,gy,2,1);
+  }
+ }
  const bridgeAsphaltTexture=new THREE.CanvasTexture(bridgeAsphaltCanvas);
  bridgeAsphaltTexture.colorSpace=THREE.SRGBColorSpace;
  bridgeAsphaltTexture.anisotropy=2;
