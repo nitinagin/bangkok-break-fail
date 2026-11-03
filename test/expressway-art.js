@@ -444,6 +444,21 @@ export function createExpresswayArt(THREE){
   bac.fillStyle='rgba(231,222,188,.53)';bac.fillRect(x,62,26,3);
   bac.fillStyle='rgba(53,57,59,.38)';bac.fillRect(x+4,63,7,1);
  }
+ // Faded diagonal shoulder-hazard hatching on both edges of the elevated deck.
+ // Painted directly into the shared asphalt atlas: no geometry, lighting or draw-call cost.
+ // Low-opacity strokes preserve the worn, rain-darkened Bangkok road surface.
+ bac.save();
+ for(const shoulderY of [13,108]){
+  bac.beginPath();bac.rect(0,shoulderY,256,10);bac.clip();
+  for(let x=-20;x<276;x+=24){
+   bac.beginPath();bac.moveTo(x,shoulderY+10);bac.lineTo(x+12,shoulderY);
+   bac.strokeStyle='rgba(219,190,113,.35)';bac.lineWidth=4;bac.stroke();
+   bac.beginPath();bac.moveTo(x+1,shoulderY+10);bac.lineTo(x+13,shoulderY);
+   bac.strokeStyle='rgba(24,29,31,.24)';bac.lineWidth=1;bac.stroke();
+  }
+  bac.restore();bac.save();
+ }
+ bac.restore();
  bac.fillStyle='rgba(18,23,27,.18)';
  bac.fillRect(29,14,39,28);bac.fillRect(174,87,48,22);
  for(const x of [58,128,198]){
