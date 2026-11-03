@@ -165,6 +165,21 @@ export function createExpresswayArt(THREE){
   mastMesh.setMatrixAt(i,mastDummy.matrix);
  }
  mastMesh.instanceMatrix.needsUpdate=true;group.add(mastMesh);
+ // Twelve low-cost aviation warning lamps give tall Bangkok rooftops scale.
+ // Single instanced draw call; no shadows, dynamic lights or animation.
+ const beaconMaterial=new THREE.MeshBasicMaterial({color:0xff3025});
+ const beaconGeometry=new THREE.SphereGeometry(.115,8,6);
+ const beaconTowers=[1,3,5,7,9,11,13,15,17,19,21,23];
+ const beacons=new THREE.InstancedMesh(beaconGeometry,beaconMaterial,beaconTowers.length);
+ const beaconPose=new THREE.Object3D();
+ for(let b=0;b<beaconTowers.length;b++){
+  const i=beaconTowers[b],height=10+(i*13%19),side=i%2===0?-1:1;
+  beaconPose.position.set(side*(12+(i*7%17)),height-1.34,-15-Math.floor(i/2)*9);
+  beaconPose.updateMatrix();beacons.setMatrixAt(b,beaconPose.matrix);
+ }
+ beacons.instanceMatrix.needsUpdate=true;
+ beacons.name='expressway-rooftop-aviation-beacons';
+ group.add(beacons);
  const steel=new THREE.MeshStandardMaterial({color:0x69717a,roughness:.55,metalness:.65});
  const warm=new THREE.MeshBasicMaterial({color:0xffe6ac});
  const box=(w,h,d,mat,x,y,z)=>{const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);mesh.position.set(x,y,z);return mesh;};
@@ -987,7 +1002,7 @@ gantry.position.z=-75;group.add(gantry);
   for(let i=0;i<barrierCount;i++){barrierZ[i]+=advance;if(barrierZ[i]>20)barrierZ[i]-=22*barrierLength*1.15;}placeBarriers();
  },dispose(){
   group.traverse(obj=>{if(obj.geometry)obj.geometry.dispose();});
-  for(const material of [towerMat,mastMaterial,steel,warm,poolMaterial,sign.material,concrete,reflective,flyoverConcrete,acousticMat])material.dispose();
+  for(const material of [towerMat,mastMaterial,beaconMaterial,steel,warm,poolMaterial,sign.material,concrete,reflective,flyoverConcrete,acousticMat])material.dispose();
   bridgeAsphaltMaterial.dispose();bridgeAsphaltTexture.dispose();
   studMaterial.dispose();studMesh.geometry.dispose();
   arrowPaintMaterial.dispose();arrowPaintTexture.dispose();
