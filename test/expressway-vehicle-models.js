@@ -100,6 +100,20 @@ function makeBusSideLivery(THREE){
   const x=(i*79+23)%512,y=(i*17+11)%64;
   ctx.fillRect(x,y,1+(i%3),1+(i%2));
  }
+ // Weathered pressed-metal bodywork: panel joins, rivets and rain-borne
+ // road grime baked into the existing livery atlas, with no extra geometry.
+ // Keep destination lettering clear by placing streaks below the text band.
+ ctx.fillStyle='rgba(11,28,37,.27)';
+ for(const seam of [4,164,328,505])ctx.fillRect(seam,7,2,43);
+ for(let i=0;i<36;i++){
+  const x=(i*83+17)%512,y=47+(i*7)%6;
+  ctx.fillStyle=i%3===0?'rgba(18,32,38,.28)':'rgba(93,80,63,.20)';
+  ctx.fillRect(x,y,1+(i%3),3+(i%5));
+ }
+ ctx.fillStyle='rgba(228,230,218,.52)';
+ for(const seam of [4,164,328,505])for(const y of [10,45]){
+  ctx.beginPath();ctx.arc(seam+4,y,1.3,0,Math.PI*2);ctx.fill();
+ }
  ctx.fillStyle='rgba(240,235,218,.12)';
  ctx.fillRect(270,10,6,38);ctx.fillRect(439,10,3,38);
  const map=new THREE.CanvasTexture(canvas);
