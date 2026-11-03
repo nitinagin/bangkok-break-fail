@@ -1063,7 +1063,7 @@ gantry.position.z=-75;group.add(gantry);
    carPaint.dispose();carGlass.dispose();tyreMaterial.dispose();
    taxiLiveryMaterial.dispose();taxiTexture.dispose();
    busShellMaterial.dispose();busWindowMaterial.dispose();busWindowTexture.dispose();busTyreMaterial.dispose();
-  windowTexture.dispose();emissiveTexture.dispose();poolTexture.dispose();signTexture.dispose();flyoverTexture.dispose();acousticTexture.dispose();acousticNormalTexture.dispose();acousticRoughnessTexture.dispose();barrierTexture.dispose();reflectorTexture.dispose();vmsTexture.dispose();vmsMaterial.dispose();
+  windowTexture.dispose();emissiveTexture.dispose();facadeNormalTexture.dispose();poolTexture.dispose();signTexture.dispose();flyoverTexture.dispose();acousticTexture.dispose();acousticNormalTexture.dispose();acousticRoughnessTexture.dispose();barrierTexture.dispose();reflectorTexture.dispose();vmsTexture.dispose();vmsMaterial.dispose();
   billboardMaterial.dispose();neonMap.dispose();neonGlowMap.dispose();
  }};
 }
