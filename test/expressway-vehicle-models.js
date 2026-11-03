@@ -75,6 +75,14 @@ function makeBusDestination(THREE){
  ctx.fillStyle='#f9d582';ctx.font='bold 106px sans-serif';ctx.textBaseline='middle';ctx.fillText('8',20,65);
  ctx.fillStyle='#ffe8a4';ctx.font='bold 54px sans-serif';ctx.fillText('กรุงเทพฯ',142,56);
  ctx.fillStyle='#cbd8c7';ctx.font='bold 25px sans-serif';ctx.fillText('BANGKOK',153,100);
+ // Subtle dark LED pixel gaps on the existing destination sign atlas.
+ // The sign stays readable and requires no extra mesh or texture.
+ ctx.save();
+ ctx.fillStyle='rgba(3,13,16,.42)';
+ for(let y=9;y<119;y+=6){
+  for(let x=9;x<503;x+=6)ctx.fillRect(x,y,1.5,1.5);
+ }
+ ctx.restore();
  const map=new THREE.CanvasTexture(canvas);map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=2;
  return new THREE.MeshBasicMaterial({map,toneMapped:false});
 }
