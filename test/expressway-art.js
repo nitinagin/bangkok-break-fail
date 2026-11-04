@@ -191,10 +191,12 @@ export function createExpresswayArt(THREE){
  const neonCanvas=document.createElement('canvas'),neonEmission=document.createElement('canvas');
  neonCanvas.width=neonEmission.width=512;neonCanvas.height=neonEmission.height=256;
  const nc=neonCanvas.getContext('2d'),ne=neonEmission.getContext('2d');
+ // District-specific bilingual signage replaces generic hotel branding.
+ // Thai route names remain readable from the moving expressway camera.
  const neonRows=[
-  ['สุขุมวิท','SUKHUMVIT','#77e0d9','#d2faf1'],
-  ['โรงแรม','HOTEL','#f091a4','#ffe1e5'],
-  ['กรุงเทพฯ','BANGKOK','#edc578','#fff0c8']
+  ['ทางด่วน','EXPRESSWAY','#77e0d9','#d2faf1'],
+  ['ดินแดง','DIN DAENG','#f091a4','#ffe1e5'],
+  ['พระราม ๙','RAMA IX','#edc578','#fff0c8']
  ];
  ne.fillStyle='#000';ne.fillRect(0,0,512,256);
  for(let row=0;row<3;row++){
