@@ -4939,22 +4939,9 @@ function makeTukTuk(){
   rod(g,[side*.61,1.45,.89],[side*.9,1.93,1.03],.027,tukTrim);
   const mirror=cube(.29,.19,.07,tukWindow,side*.91,1.98,1.04);mirror.rotation.y=side*.12;g.add(mirror);
  }
- // Five recessed horizontal cooling vents give the stamped front nose
- // a recognizable Thai tuk-tuk engine grille instead of a blank toy-like panel.
- // All slats share one instanced draw call and the existing dark metal PBR trim.
- const noseVents=new THREE.InstancedMesh(new THREE.BoxGeometry(.62,.027,.012),tukTrim,5);
- const ventPose=new THREE.Object3D();
- for(let i=0;i<5;i++){
-  ventPose.position.set(0,.84+i*.071,1.476-i*.028);
-  ventPose.rotation.set(-.14,0,0);
-  ventPose.scale.set(1-i*.065,1,1);
-  ventPose.updateMatrix();
-  noseVents.setMatrixAt(i,ventPose.matrix);
- }
- noseVents.instanceMatrix.needsUpdate=true;
- noseVents.computeBoundingSphere();
- noseVents.name='bangkok-tuktuk-pressed-steel-front-grille';
- g.add(noseVents);
+ // The lower recessed grille below is the single front ventilation assembly.
+ // Avoid a second overlapping five-slat grille that caused z-fighting and
+ // an unnecessary draw call on mobile traffic clones.
  // Both rear lamp clusters face following traffic; the shared 128x256 atlas
  // renders brake, indicator and reversing lenses in one draw call per vehicle.
  const rearLamps=new THREE.InstancedMesh(tukRearLampGeometry,tukRearLampMaterial,2);
