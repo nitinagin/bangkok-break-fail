@@ -37,9 +37,18 @@ function makeBusGlazing(THREE){
  // No additional geometry, materials, lights or per-frame work.
  ctx.fillStyle='rgba(6,12,15,.94)';ctx.fillRect(64,29,128,39);
  ctx.strokeStyle='rgba(93,110,101,.72)';ctx.lineWidth=2;ctx.strokeRect(65,30,126,37);
- ctx.fillStyle='#e6a94c';ctx.textAlign='center';ctx.textBaseline='middle';
- ctx.font='bold 24px sans-serif';ctx.fillText('สาย ๕๑๑',128,49);
- ctx.fillStyle='rgba(248,191,88,.32)';ctx.fillRect(74,64,108,2);
+ // Route-number-first Bangkok LED board: readable at mobile resolution.
+ // All details are baked into the existing windshield atlas.
+ ctx.textBaseline='middle';ctx.textAlign='left';ctx.fillStyle='#ffd179';
+ ctx.font='bold 31px sans-serif';ctx.fillText('511',75,48);
+ ctx.textAlign='right';ctx.fillStyle='#edb962';
+ ctx.font='bold 14px sans-serif';ctx.fillText('สาย',182,49);
+ // Amber LED diffuser dots and a thin bottom rail.
+ ctx.fillStyle='rgba(255,195,86,.33)';
+ for(let row=0;row<2;row++)for(let col=0;col<19;col++){
+  ctx.fillRect(74+col*6,62+row*3,1,1);
+ }
+ ctx.fillStyle='rgba(248,191,88,.32)';ctx.fillRect(74,68,108,1);
  // Fine windshield dust gathers at the lower seal, outside the route board.
  const lowerDust=ctx.createLinearGradient(0,197,0,251);
  lowerDust.addColorStop(0,'rgba(119,113,96,0)');
