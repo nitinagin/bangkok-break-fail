@@ -591,11 +591,16 @@ export function createExpresswayArt(THREE){
  const bridgeGlowCanvas=document.createElement('canvas');
  bridgeGlowCanvas.width=bridgeGlowCanvas.height=128;
  const bgc=bridgeGlowCanvas.getContext('2d');
- const bridgeGlowGradient=bgc.createRadialGradient(64,64,2,64,64,64);
- bridgeGlowGradient.addColorStop(0,'rgba(255,255,255,.85)');
- bridgeGlowGradient.addColorStop(.32,'rgba(255,255,255,.32)');
+ // Stretch the light falloff along the direction of travel: wet asphalt
+ // produces broken longitudinal streaks, not circular glowing stickers.
+ bgc.save();bgc.translate(64,64);bgc.scale(.34,1);
+ const bridgeGlowGradient=bgc.createRadialGradient(0,0,2,0,0,64);
+ bridgeGlowGradient.addColorStop(0,'rgba(255,255,255,.8)');
+ bridgeGlowGradient.addColorStop(.22,'rgba(255,255,255,.45)');
+ bridgeGlowGradient.addColorStop(.58,'rgba(255,255,255,.14)');
  bridgeGlowGradient.addColorStop(1,'rgba(255,255,255,0)');
- bgc.fillStyle=bridgeGlowGradient;bgc.fillRect(0,0,128,128);
+ bgc.fillStyle=bridgeGlowGradient;bgc.fillRect(-192,-64,384,128);
+ bgc.restore();
  const bridgeGlowTexture=new THREE.CanvasTexture(bridgeGlowCanvas);
  const bridgeGlowMaterial=new THREE.MeshBasicMaterial({
   map:bridgeGlowTexture,transparent:true,opacity:.43,
@@ -603,7 +608,7 @@ export function createExpresswayArt(THREE){
   polygonOffset:true,polygonOffsetFactor:-1,side:THREE.DoubleSide,
   toneMapped:false
  });
- const bridgeGlowGeometry=new THREE.PlaneGeometry(1.4,.84);
+ const bridgeGlowGeometry=new THREE.PlaneGeometry(.85,2.3);
  bridgeGlowGeometry.rotateX(-Math.PI/2);
  const bridgeRoadGlows=new THREE.InstancedMesh(bridgeGlowGeometry,bridgeGlowMaterial,bridgeCarCount*2);
  bridgeRoadGlows.name='bangkok-flyover-moving-headlight-reflections';
