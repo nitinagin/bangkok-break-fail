@@ -135,15 +135,17 @@ function makeBusRoutePanel(THREE,material){
  mesh.name='bangkok-bus-front-route-panel';
  return mesh;
 }
+// Keep route 511 consistent on the windscreen, front destination and both flanks.
+// This corrects the contradictory route 8/511 signage without new geometry or textures.
 // A real bilingual route panel replaces an existing blank window: zero extra meshes.
 function makeBusDestination(THREE){
  const canvas=document.createElement('canvas');canvas.width=512;canvas.height=128;
  const ctx=canvas.getContext('2d');
  ctx.fillStyle='#08161c';ctx.fillRect(0,0,512,128);
  ctx.fillStyle='#e0a74e';ctx.fillRect(0,0,512,5);ctx.fillRect(0,123,512,5);
- ctx.fillStyle='#f9d582';ctx.font='bold 106px sans-serif';ctx.textBaseline='middle';ctx.fillText('8',20,65);
- ctx.fillStyle='#ffe8a4';ctx.font='bold 54px sans-serif';ctx.fillText('กรุงเทพฯ',142,56);
- ctx.fillStyle='#cbd8c7';ctx.font='bold 25px sans-serif';ctx.fillText('BANGKOK',153,100);
+ ctx.fillStyle='#f9d582';ctx.font='bold 76px sans-serif';ctx.textBaseline='middle';ctx.fillText('511',14,65);
+ ctx.fillStyle='#ffe8a4';ctx.font='bold 54px sans-serif';ctx.fillText('กรุงเทพฯ',195,56);
+ ctx.fillStyle='#cbd8c7';ctx.font='bold 25px sans-serif';ctx.fillText('BANGKOK',205,100);
  // Subtle dark LED pixel gaps on the existing destination sign atlas.
  // The sign stays readable and requires no extra mesh or texture.
  ctx.save();
@@ -166,12 +168,12 @@ function makeBusSideLivery(THREE){
  ctx.fillStyle='#f3d69a';ctx.fillRect(0,51,512,4);
  // Route number, Thai destination and an English identifier are painted on
  // the bus body rather than separate geometry or real-time text sprites.
- ctx.fillStyle='#f8e6b4';ctx.fillRect(10,11,56,34);
- ctx.fillStyle='#183b50';ctx.font='bold 31px sans-serif';
- ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('8',38,28);
+ ctx.fillStyle='#f8e6b4';ctx.fillRect(10,11,74,34);
+ ctx.fillStyle='#183b50';ctx.font='bold 26px sans-serif';
+ ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('511',47,28);
  ctx.textAlign='left';ctx.fillStyle='#fff2d4';
- ctx.font='bold 23px sans-serif';ctx.fillText('กรุงเทพฯ',79,28);
- ctx.font='bold 13px sans-serif';ctx.fillText('BANGKOK CITY BUS',80,44);
+ ctx.font='bold 23px sans-serif';ctx.fillText('กรุงเทพฯ',95,28);
+ ctx.font='bold 13px sans-serif';ctx.fillText('BANGKOK CITY BUS',96,44);
  ctx.fillStyle='rgba(26,36,41,.15)';
  for(let i=0;i<54;i++){
   const x=(i*79+23)%512,y=(i*17+11)%64;
