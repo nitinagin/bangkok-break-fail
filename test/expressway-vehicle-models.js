@@ -22,6 +22,14 @@ function makeBusGlazing(THREE){
   ctx.fillStyle=i%3===0?'rgba(211,224,232,.16)':'rgba(159,175,182,.09)';
   ctx.fillRect(x,y,1,18+(i%5)*9);
  }
+ // Bangkok route display behind the windscreen: an amber LED destination
+ // board with a legible Thai route number, baked into the shared glazing atlas.
+ // No additional geometry, materials, lights or per-frame work.
+ ctx.fillStyle='rgba(6,12,15,.94)';ctx.fillRect(64,29,128,39);
+ ctx.strokeStyle='rgba(93,110,101,.72)';ctx.lineWidth=2;ctx.strokeRect(65,30,126,37);
+ ctx.fillStyle='#e6a94c';ctx.textAlign='center';ctx.textBaseline='middle';
+ ctx.font='bold 24px sans-serif';ctx.fillText('สาย ๕๑๑',128,49);
+ ctx.fillStyle='rgba(248,191,88,.32)';ctx.fillRect(74,64,108,2);
  // Bake two parked windscreen wipers and a weathered rubber surround
  // into the existing glass atlas: no extra draw calls or dynamic lights.
  ctx.strokeStyle='rgba(11,19,23,.85)';ctx.lineWidth=7;
