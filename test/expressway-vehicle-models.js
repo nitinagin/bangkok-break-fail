@@ -502,11 +502,20 @@ function makeBusCurvedRoofHVAC(THREE){
   }
  // Air-conditioning enclosure and recessed ventilation grille. No rooftop
  // projections extend beyond the bus width or the existing front/rear ends.
- box(-.64,.64,2.93,3.16,-.88,.64,palette.shell,palette.edge);
- for(let n=0;n<7;n++){
-  const z=-.74+n*.19;
-  quad([-.48,3.165,z], [.48,3.165,z],
-       [.48,3.165,z+.078],[-.48,3.165,z+.078],palette.grille);
+ // Two low-profile rooftop A/C pods, as seen on Bangkok city buses.
+ // Both are baked into this existing vertex-colour roof mesh: one draw call.
+ for(const centerZ of [-.94,.91]){
+  box(-.68,.68,2.93,3.13,centerZ-.52,centerZ+.52,palette.shell,palette.edge);
+  // Recessed fan panels with transverse ventilation slats.
+  box(-.53,.53,3.132,3.137,centerZ-.39,centerZ+.39,palette.grille,palette.grille);
+  for(let n=0;n<5;n++){
+   const z=centerZ-.34+n*.16;
+   quad([-.47,3.14,z], [.47,3.14,z],
+        [.47,3.14,z+.035],[-.47,3.14,z+.035],palette.edge);
+  }
+  // End cap folds distinguish pressed sheet metal from a toy block.
+  quad([-.68,3.13,centerZ-.52],[.68,3.13,centerZ-.52],
+       [.53,3.17,centerZ-.43],[-.53,3.17,centerZ-.43],palette.ridge);
  }
  const geo=new THREE.BufferGeometry();
  geo.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
