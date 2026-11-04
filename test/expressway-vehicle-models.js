@@ -168,6 +168,26 @@ function makeBusFrontFascia(THREE){
   ctx.fillStyle='#536872';ctx.fillRect(x+29,43,29,25);
   ctx.fillStyle='#d6e3e8';ctx.fillRect(x+35,47,17,15);
  }
+ // Recessed fog lamps and contoured bumper corners are baked into the same
+ // fascia atlas: no extra meshes, lights, textures or mobile draw calls.
+ for(const x of [13,443]){
+  ctx.fillStyle='#34434b';
+  ctx.beginPath();ctx.moveTo(x,105);ctx.lineTo(x+56,105);
+  ctx.lineTo(x+50,128);ctx.lineTo(x+8,128);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#111e26';ctx.beginPath();ctx.ellipse(x+28,116,19,10,0,0,Math.PI*2);ctx.fill();
+  const fog=ctx.createRadialGradient(x+25,113,1,x+28,116,16);
+  fog.addColorStop(0,'#e6e6d4');fog.addColorStop(.45,'#a7b5b5');fog.addColorStop(1,'#3d535c');
+  ctx.fillStyle=fog;ctx.beginPath();ctx.ellipse(x+28,116,14,7,0,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='rgba(230,234,228,.32)';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(x+8,103);ctx.lineTo(x+48,103);ctx.stroke();
+ }
+ // Dark recessed air intake with a sloped painted lip adds full-width depth.
+ ctx.fillStyle='#53636b';ctx.beginPath();ctx.moveTo(114,110);
+ ctx.lineTo(398,110);ctx.lineTo(389,125);ctx.lineTo(123,125);ctx.closePath();ctx.fill();
+ ctx.fillStyle='#192b34';ctx.fillRect(129,113,254,8);
+ for(let i=0;i<14;i++){
+  ctx.fillStyle='rgba(199,207,206,.21)';ctx.fillRect(134+i*18,113,2,8);
+ }
  // Steel bumper, tow sockets and fictional Bangkok plate.
  ctx.fillStyle='#303f49';ctx.fillRect(0,122,512,14);
  ctx.fillStyle='#89969a';ctx.fillRect(0,138,512,30);
