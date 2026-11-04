@@ -5087,8 +5087,12 @@ function makeTukTuk(){
   const v=row/paneRows,halfWidth=.71-.06*v;
   for(let col=0;col<=paneColumns;col++){
    const u=col/paneColumns,nx=2*u-1;
-   const bow=.072*(1-nx*nx)*Math.sin(Math.PI*(.12+.76*v));
-   paneVertices.push(nx*halfWidth,-.335+.67*v,bow);
+   // Rounded top corners create a realistic trapezoidal tuk-tuk windscreen.
+   const cornerInset=v>.66?.055*Math.pow((v-.66)/.34,2)*Math.pow(Math.abs(nx),6):0;
+   const glassX=nx*(halfWidth-cornerInset);
+   // Lean the upper glass rearward while retaining its subtle central bow.
+   const bow=.072*(1-nx*nx)*Math.sin(Math.PI*(.12+.76*v))-.065*v;
+   paneVertices.push(glassX,-.335+.67*v,bow);
    paneUvs.push(u,v);
   }
  }
