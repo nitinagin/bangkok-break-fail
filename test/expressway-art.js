@@ -544,6 +544,22 @@ export function createExpresswayArt(THREE){
    bac.fillStyle=sheen;bac.fillRect(x,laneY-5,width,10);
   }
  }
+ // Rainwater gathers in shallow, irregular wheel-track depressions. Bake
+ // broken amber/cool reflections into the existing road atlas rather than
+ // adding transparent planes, lights, textures or per-frame animation.
+ // Narrow discontinuous strokes avoid the mirror-like toy-road appearance.
+ for(const [trackY,tint] of [[27,'191,171,128'],[38,'135,166,188'],[85,'191,171,128'],[98,'135,166,188']]){
+  for(let segment=0;segment<16;segment++){
+   const x=segment*17+(segment*11%7),span=5+(segment*13%12);
+   const y=trackY+(segment*7%5)-2;
+   const glow=bac.createLinearGradient(x,y,x+span,y);
+   glow.addColorStop(0,'rgba('+tint+',0)');
+   glow.addColorStop(.3,'rgba('+tint+',.22)');
+   glow.addColorStop(.7,'rgba('+tint+',.12)');
+   glow.addColorStop(1,'rgba('+tint+',0)');
+   bac.fillStyle=glow;bac.fillRect(x,y,span,1+(segment%4===0?1:0));
+  }
+ }
  const bridgeAsphaltTexture=new THREE.CanvasTexture(bridgeAsphaltCanvas);
  bridgeAsphaltTexture.colorSpace=THREE.SRGBColorSpace;
  bridgeAsphaltTexture.anisotropy=2;
