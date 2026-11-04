@@ -22,14 +22,8 @@ function makeBusGlazing(THREE){
   ctx.fillStyle=i%3===0?'rgba(211,224,232,.16)':'rgba(159,175,182,.09)';
   ctx.fillRect(x,y,1,18+(i%5)*9);
  }
- // Bangkok route display behind the windscreen: an amber LED destination
- // board with a legible Thai route number, baked into the shared glazing atlas.
- // No additional geometry, materials, lights or per-frame work.
- ctx.fillStyle='rgba(6,12,15,.94)';ctx.fillRect(64,29,128,39);
- ctx.strokeStyle='rgba(93,110,101,.72)';ctx.lineWidth=2;ctx.strokeRect(65,30,126,37);
- ctx.fillStyle='#e6a94c';ctx.textAlign='center';ctx.textBaseline='middle';
- ctx.font='bold 24px sans-serif';ctx.fillText('สาย ๕๑๑',128,49);
- ctx.fillStyle='rgba(248,191,88,.32)';ctx.fillRect(74,64,108,2);
+ // Apply the laminated-glass sunshade BEFORE painting the interior LED route board;
+ // otherwise the gradient obscures route 511 and makes the number unreadable.
  // Laminated-glass upper sunshade and subtle grime gradient: the bus now
  // reads as a working Bangkok vehicle rather than a uniformly blue glass slab.
  // Baked in the existing shared windscreen atlas, with zero extra draw calls.
@@ -38,6 +32,14 @@ function makeBusGlazing(THREE){
  shade.addColorStop(.40,'rgba(24,46,50,.35)');
  shade.addColorStop(1,'rgba(24,46,50,0)');
  ctx.fillStyle=shade;ctx.fillRect(7,7,242,85);
+ // Bangkok route display behind the windscreen: an amber LED destination
+ // board with a legible Thai route number, baked into the shared glazing atlas.
+ // No additional geometry, materials, lights or per-frame work.
+ ctx.fillStyle='rgba(6,12,15,.94)';ctx.fillRect(64,29,128,39);
+ ctx.strokeStyle='rgba(93,110,101,.72)';ctx.lineWidth=2;ctx.strokeRect(65,30,126,37);
+ ctx.fillStyle='#e6a94c';ctx.textAlign='center';ctx.textBaseline='middle';
+ ctx.font='bold 24px sans-serif';ctx.fillText('สาย ๕๑๑',128,49);
+ ctx.fillStyle='rgba(248,191,88,.32)';ctx.fillRect(74,64,108,2);
  // Fine windshield dust gathers at the lower seal, outside the route board.
  const lowerDust=ctx.createLinearGradient(0,197,0,251);
  lowerDust.addColorStop(0,'rgba(119,113,96,0)');
