@@ -60,6 +60,48 @@ function makeBusCurvedWindshield(THREE,material){
  mesh.name='bangkok-bus-curved-pbr-windshield';
  return mesh;
 }
+// Paired Bangkok bus wing mirrors: curved support arms and broad vertical
+// housings baked into one indexed vertex-colour PBR mesh (one draw call).
+// Mirrors stay inside the decorative vehicle envelope; no collision changes.
+function makeBusWingMirrors(THREE){
+ const positions=[],colors=[],indices=[];
+ const steel=new THREE.Color(0x414b50),housing=new THREE.Color(0x1c252b),
+  glass=new THREE.Color(0x7c9ca6),glint=new THREE.Color(0xb9cbd0);
+ function vertex(x,y,z,color){
+  const id=positions.length/3;positions.push(x,y,z);
+  colors.push(color.r,color.g,color.b);return id;
+ }
+ function quad(a,b,c,d,color){
+  const start=positions.length/3;
+  for(const p of [a,b,c,d])vertex(...p,color);
+  indices.push(start,start+1,start+2,start,start+2,start+3);
+ }
+ for(const side of [-1,1]){
+  // Two angled steel braces support each mirror at the front cab corner.
+  for(const [y,z] of [[2.27,1.98],[2.05,2.08]]){
+   const a=[side*1.025,y,z],b=[side*1.19,y+.065,z+.075];
+   const width=.025;
+   quad([a[0],a[1]-width,a[2]],[b[0],b[1]-width,b[2]],
+    [b[0],b[1]+width,b[2]],[a[0],a[1]+width,a[2]],steel);
+  }
+  const x=side*1.195,z=2.14,y0=1.96,y1=2.45,half=.135;
+  // Front/rear housing plus reflective insert, not a flat floating rectangle.
+  quad([x-half,y0,z],[x+half,y0,z],[x+half,y1,z],[x-half,y1,z],housing);
+  quad([x-half+.018,y0+.025,z+.012],[x+half-.018,y0+.025,z+.012],
+   [x+half-.018,y1-.025,z+.012],[x-half+.018,y1-.025,z+.012],glass);
+  quad([x-half+.03,y1-.12,z+.015],[x+half-.045,y1-.12,z+.015],
+   [x+half-.055,y1-.045,z+.015],[x-half+.045,y1-.045,z+.015],glint);
+ }
+ const geometry=new THREE.BufferGeometry();
+ geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+ geometry.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));
+ geometry.setIndex(indices);geometry.computeVertexNormals();
+ const mesh=new THREE.Mesh(geometry,new THREE.MeshStandardMaterial({
+  vertexColors:true,metalness:.36,roughness:.48,side:THREE.DoubleSide
+ }));
+ mesh.name='bangkok-bus-paired-wing-mirrors';
+ return mesh;
+}
 function makeBusRoutePanel(THREE,material){
  const mesh=new THREE.Mesh(new THREE.PlaneGeometry(1.48,.23),material);
  mesh.position.set(0,2.7,2.315);
@@ -685,6 +727,7 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   // Front-facing route sign and curved glass replace texture-stretched boxes.
   // Vehicle footprint, collision and stage behavior are unchanged.
   group.add(makeBusCurvedWindshield(THREE,busGlazing));
+  group.add(makeBusWingMirrors(THREE));
   group.add(makeBusRoutePanel(THREE,destination));
   // Shared, UV-baked window strip follows the bus flank at the original height.
   const sideGlazing=makeBusSideWindows(THREE);
