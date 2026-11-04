@@ -2272,8 +2272,17 @@ function addRamaExcavator(g,side){
   pose.scale.set(.54,.065,.115);pose.updateMatrix();
   steel.push(pose.matrix.clone());
  }
- for(let i=0;i<4;i++)
-  box(steel,x-.47+i*.31,1.03,z-6.03,.105,.19,.38);
+ // Hardened bucket cutting edge and five pointed digging teeth:
+ // all reuse the existing steel InstancedMesh and stay behind barriers.
+ box(steel,x,1.00,z-5.99,1.34,.12,.16);
+ for(let i=0;i<5;i++){
+  const toothX=x+(i-2)*.285;
+  beam(steel,toothX,1.04,z-6.00,toothX,.83,z-6.27,.095,.13);
+  box(steel,toothX,1.09,z-5.86,.14,.16,.24);
+ }
+ // Bucket cheek plates visibly connect the dipper to its cutting lip.
+ for(const cheek of [-.55,.55])
+  beam(steel,x+cheek,1.48,z-5.44,x+cheek,1.04,z-5.95,.10,.11);
  batch(ramaExcavatorUnit,ramaExcavatorPaint,painted);
  batch(ramaExcavatorUnit,ramaExcavatorGlass,glass);
  batch(ramaExcavatorUnit,ramaExcavatorSteel,steel);
