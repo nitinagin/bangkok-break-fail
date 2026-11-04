@@ -496,12 +496,22 @@ function makeSportsCarProjectorHeadlights(THREE){
   ctx.strokeStyle='rgba(231,242,239,.46)';ctx.lineWidth=2;
   ctx.beginPath();ctx.arc(cx,63,29,3.75,5.7);ctx.stroke();
  }
- // Continuous upper LED signature, lower smoked trim and restrained reflections.
- ctx.strokeStyle='#e5f2ed';ctx.lineWidth=6;ctx.beginPath();
- ctx.moveTo(13,26);ctx.lineTo(55,21);ctx.lineTo(119,24);
- ctx.lineTo(195,21);ctx.lineTo(242,28);ctx.stroke();
- ctx.strokeStyle='rgba(154,207,221,.75)';ctx.lineWidth=2;
- ctx.beginPath();ctx.moveTo(14,33);ctx.lineTo(243,34);ctx.stroke();
+ // Swept left/right DRL clusters with a real grille gap, rather than
+ // a single toy-like LED strip crossing the entire nose. Atlas-only detail.
+ for(const mirror of [false,true]){
+  ctx.save();
+  if(mirror){ctx.translate(256,0);ctx.scale(-1,1);}
+  ctx.strokeStyle='#e5f2ed';ctx.lineWidth=5;ctx.lineJoin='round';
+  ctx.beginPath();ctx.moveTo(13,35);ctx.lineTo(22,24);
+  ctx.lineTo(59,20);ctx.lineTo(109,26);ctx.stroke();
+  ctx.strokeStyle='rgba(154,207,221,.68)';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(17,42);ctx.lineTo(26,31);
+  ctx.lineTo(59,28);ctx.lineTo(108,33);ctx.stroke();
+  ctx.restore();
+ }
+ // Central shut-line makes the twin projector housings read as separate units.
+ ctx.strokeStyle='rgba(10,17,22,.70)';ctx.lineWidth=3;
+ ctx.beginPath();ctx.moveTo(128,15);ctx.lineTo(128,105);ctx.stroke();
  ctx.fillStyle='rgba(200,217,222,.20)';ctx.fillRect(14,101,228,4);
  const map=new THREE.CanvasTexture(canvas);
  map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=2;
