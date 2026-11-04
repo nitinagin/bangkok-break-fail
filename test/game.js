@@ -4579,6 +4579,24 @@ for(let i=0;i<1100;i++){
  tukRoofCtx.fillStyle=i%5===0?'rgba(188,174,145,.18)':'rgba(9,12,14,.13)';
  tukRoofCtx.fillRect(px,py,1+i%3,1+i%2);
 }
+// Broad, uneven sun-faded vinyl bands follow the roof's length. These
+// break up the flat charcoal canopy silhouette without new geometry or GPU work.
+// Keep the middle panel brighter and the outer edges rain-darkened.
+const tukFade=tukRoofCtx.createLinearGradient(0,0,256,0);
+tukFade.addColorStop(0,'rgba(12,18,21,.38)');
+tukFade.addColorStop(.18,'rgba(157,151,135,.055)');
+tukFade.addColorStop(.48,'rgba(205,196,169,.19)');
+tukFade.addColorStop(.78,'rgba(145,142,133,.055)');
+tukFade.addColorStop(1,'rgba(12,18,21,.36)');
+tukRoofCtx.fillStyle=tukFade;tukRoofCtx.fillRect(0,0,256,256);
+// Longitudinal waterproofed seams with a narrow worn stitch highlight.
+for(const x of [48,208]){
+ tukRoofCtx.fillStyle='rgba(14,19,22,.48)';tukRoofCtx.fillRect(x-3,7,6,242);
+ tukRoofCtx.strokeStyle='rgba(194,187,165,.47)';tukRoofCtx.lineWidth=1;
+ tukRoofCtx.setLineDash([4,5]);
+ tukRoofCtx.beginPath();tukRoofCtx.moveTo(x+2,9);tukRoofCtx.lineTo(x+2,247);tukRoofCtx.stroke();
+ tukRoofCtx.setLineDash([]);
+}
 // Reinforced hems and double-stitched transverse canopy panels.
 tukRoofCtx.strokeStyle='rgba(12,16,19,.62)';tukRoofCtx.lineWidth=5;
 tukRoofCtx.strokeRect(5,5,246,246);
