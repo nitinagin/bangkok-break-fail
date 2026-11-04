@@ -749,6 +749,49 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   const busGlazing=makeBusGlazing(THREE),destination=makeBusDestination(THREE);
   box(0,1.07,0,2.07,.25,4.4,stripe);
   group.add(makeBusSideLivery(THREE));
+  // Pressed lower body panels with a continuous recessed beltline and
+  // chamfered sill. Both flanks share one indexed PBR mesh and one draw call.
+  // Decorative overlay stays inside the existing vehicle collision envelope.
+  const skirtPositions=[],skirtColors=[],skirtIndices=[];
+  const skirtRows=[
+   [.47,1.064,0x333b40], // road-dirt shadow at sill
+   [.53,1.080,0x8d3436], // rolled lower edge
+   [.61,1.088,0xb43b3d], // outward pressed shoulder
+   [.85,1.088,0xb8393b], // red painted panel
+   [1.00,1.072,0x8e292f], // recessed beltline seam
+   [1.045,1.080,0xc64a45] // highlight beneath cream body
+  ];
+  const skirtStations=[-2.10,-1.72,-1.28,-.72,0,.72,1.28,1.72,2.10];
+  for(const side of [-1,1]){
+   const offset=skirtPositions.length/3;
+   for(let row=0;row<skirtRows.length;row++){
+    const [y,depth,color]=skirtRows[row];
+    for(const z of skirtStations){
+     const endTaper=Math.max(0,(Math.abs(z)-1.72)/.38);
+     skirtPositions.push(side*(depth-.018*endTaper),y,z);
+     const tint=new THREE.Color(color).multiplyScalar(
+      1-.055*Math.abs(z)/2.1);
+     skirtColors.push(tint.r,tint.g,tint.b);
+    }
+   }
+   for(let row=0;row<skirtRows.length-1;row++){
+    for(let col=0;col<skirtStations.length-1;col++){
+     const a=offset+row*skirtStations.length+col,b=a+skirtStations.length;
+     if(side>0)skirtIndices.push(a,a+1,b,a+1,b+1,b);
+     else skirtIndices.push(a,b,a+1,a+1,b,b+1);
+    }
+   }
+  }
+  const skirtGeo=new THREE.BufferGeometry();
+  skirtGeo.setAttribute('position',new THREE.Float32BufferAttribute(skirtPositions,3));
+  skirtGeo.setAttribute('color',new THREE.Float32BufferAttribute(skirtColors,3));
+  skirtGeo.setIndex(skirtIndices);skirtGeo.computeVertexNormals();
+  const skirtMesh=new THREE.Mesh(skirtGeo,new THREE.MeshStandardMaterial({
+   vertexColors:true,metalness:.22,roughness:.58,side:THREE.DoubleSide
+  }));
+  skirtMesh.name='bangkok-bus-pressed-lower-body';
+  group.add(skirtMesh);
+
   group.add(makeBusCurvedRoofHVAC(THREE));
   group.add(makeBusFrontFascia(THREE));
   // Front-facing route sign and curved glass replace texture-stretched boxes.
