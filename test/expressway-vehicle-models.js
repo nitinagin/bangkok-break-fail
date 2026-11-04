@@ -826,6 +826,30 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   skirtMesh.name='bangkok-bus-pressed-lower-body';
   group.add(skirtMesh);
 
+  // Weathered flexible rear mudflaps: a single indexed PBR mesh for both
+  // rear wheels, inside the bus silhouette and outside collision logic.
+  const flapPos=[],flapCol=[],flapIdx=[];
+  function flapQuad(points,color){
+   const start=flapPos.length/3,shade=new THREE.Color(color);
+   for(const point of points){flapPos.push(...point);flapCol.push(shade.r,shade.g,shade.b);}
+   flapIdx.push(start,start+1,start+2,start,start+2,start+3);
+  }
+  for(const side of [-1,1]){
+   const x=side*.78,z=-1.93;
+   flapQuad([[x-.23,.47,z],[x+.23,.47,z],[x+.21,.13,z-.045],[x-.21,.13,z-.045]],0x1a1d1e);
+   flapQuad([[x+.21,.13,z-.049],[x-.21,.13,z-.049],[x-.23,.47,z-.004],[x+.23,.47,z-.004]],0x242728);
+   flapQuad([[x-.19,.18,z-.052],[x+.19,.18,z-.052],[x+.19,.205,z-.049],[x-.19,.205,z-.049]],0x55524b);
+   flapQuad([[x-.13,.36,z-.052],[x+.13,.36,z-.052],[x+.13,.405,z-.05],[x-.13,.405,z-.05]],0x9b292b);
+  }
+  const flapGeo=new THREE.BufferGeometry();
+  flapGeo.setAttribute('position',new THREE.Float32BufferAttribute(flapPos,3));
+  flapGeo.setAttribute('color',new THREE.Float32BufferAttribute(flapCol,3));
+  flapGeo.setIndex(flapIdx);flapGeo.computeVertexNormals();
+  const mudflaps=new THREE.Mesh(flapGeo,new THREE.MeshStandardMaterial({
+   vertexColors:true,roughness:.94,metalness:0,side:THREE.DoubleSide
+  }));
+  mudflaps.name='bangkok-bus-rear-rubber-mudflaps';
+  group.add(mudflaps);
   group.add(makeBusCurvedRoofHVAC(THREE));
   group.add(makeBusFrontFascia(THREE));
   // Front-facing route sign and curved glass replace texture-stretched boxes.
