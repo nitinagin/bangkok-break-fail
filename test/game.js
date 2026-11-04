@@ -5105,10 +5105,13 @@ function makeTukTuk(){
  rod(g,[-.7,1.53,.85],[-.7,2.23,.72],.027,tukTrim);
  rod(g,[.7,1.53,.85],[.7,2.23,.72],.027,tukTrim);
  g.add(cube(1.46,.055,.055,tukTrim,0,2.24,.72));
+// Extended front canopy lip by 27cm: Bangkok-style rain/sun visor over the windscreen.
+ // The curved roof, side valances and front hem share the same indexed mesh,
+ // preserving the original single draw call and clear driving collision bounds.
  // Curved cloth canopy: a single low-poly strip instead of a flat slab.
  const vertices=[],indices=[],uvs=[],nx=8,nz=3;
  for(let iz=0;iz<=nz;iz++)for(let ix=0;ix<=nx;ix++){
-  const x=-.86+ix*1.72/nx,z=-1.38+iz*2.16/nz;
+  const x=-.86+ix*1.72/nx,z=-1.38+iz*2.43/nz;
   vertices.push(x,2.34+.16*(1-(x/.86)*(x/.86)),z);uvs.push(ix/nx,iz/nz);
  }
  for(let iz=0;iz<nz;iz++)for(let ix=0;ix<nx;ix++){
@@ -5121,7 +5124,7 @@ function makeTukTuk(){
  for(const side of [-1,1]){
   const base=vertices.length/3,segments=12;
   for(let iz=0;iz<=segments;iz++){
-   const v=iz/segments,z=-1.38+2.16*v;
+   const v=iz/segments,z=-1.38+2.43*v;
    const scallop=.018*(1-Math.cos(6*Math.PI*v))*.5;
    vertices.push(side*.86,2.34,z,side*.86,2.17+scallop,z);
    uvs.push(side<0?.09:.91,v,side<0?.02:.98,v);
@@ -5131,7 +5134,7 @@ function makeTukTuk(){
   }
  }
  for(const end of [-1,1]){
-  const base=vertices.length/3,z=end<0?-1.38:.78,segments=8;
+  const base=vertices.length/3,z=end<0?-1.38:1.05,segments=8;
   for(let ix=0;ix<=segments;ix++){
    const u=ix/segments,x=-.86+1.72*u;
    const roofY=2.34+.16*(1-(x/.86)**2);
