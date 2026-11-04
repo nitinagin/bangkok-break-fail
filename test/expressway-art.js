@@ -530,6 +530,27 @@ export function createExpresswayArt(THREE){
    bac.fillRect(gx,gy,2,1);
   }
  }
+ // Curved braking scuffs near the interchange: paired, feathered tyre arcs
+ // baked into the asphalt atlas. No runtime geometry, transparency or draw calls.
+ // Keep the centre lane markings readable and leave the dodge corridor unchanged.
+ bac.save();
+ bac.lineCap='round';
+ for(const [startX,startY,drift] of [[26,37,7],[142,91,-6]]){
+  for(const offset of [-3,3]){
+   bac.beginPath();
+   bac.moveTo(startX,startY+offset);
+   bac.bezierCurveTo(startX+18,startY+offset+drift*.22,
+    startX+40,startY+offset+drift*.8,startX+62,startY+offset+drift);
+   bac.strokeStyle='rgba(10,13,15,.24)';
+   bac.lineWidth=2.8;bac.stroke();
+   // Interrupted rubber deposit avoids a solid black cartoon stripe.
+   bac.setLineDash([7,5,11,4]);
+   bac.strokeStyle='rgba(7,10,12,.28)';
+   bac.lineWidth=1.1;bac.stroke();
+   bac.setLineDash([]);
+  }
+ }
+ bac.restore();
  // Damp tyre-polished lanes catch headlamp glints without extra lights or meshes.
  // Broad translucent streaks are interrupted by dry gaps, avoiding a plastic sheen.
  for(const laneY of [33,91]){
