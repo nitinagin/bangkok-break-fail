@@ -1063,6 +1063,51 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   doorMesh.name='sports-car-sculpted-door-skins';
   group.add(doorMesh);
 
+  // Folded coupe door mirrors: aerodynamic painted shells, dark stems and
+  // inset reflective glass. Both mirrors use one indexed PBR mesh; the
+  // geometry is shared by cloned hazards and never animated per frame.
+  const mirrorPositions=[],mirrorColors=[],mirrorIndices=[];
+  function mirrorQuad(points,hex){
+   const base=mirrorPositions.length/3,color=new THREE.Color(hex);
+   for(const point of points){
+    mirrorPositions.push(...point);
+    mirrorColors.push(color.r,color.g,color.b);
+   }
+   mirrorIndices.push(base,base+1,base+2,base,base+2,base+3);
+  }
+  for(const side of [-1,1]){
+   const x=side*1.045,z=.38;
+   // Stalk meets the door just below the leading side window.
+   mirrorQuad([
+    [side*.945,.87,z-.045],[x,.91,z-.045],
+    [x,.94,z+.045],[side*.945,.88,z+.045]
+   ],0x252c32);
+   // Tapered upper shell and underslung dark edge.
+   mirrorQuad([
+    [x,.90,z-.15],[side*1.24,.94,z-.11],
+    [side*1.24,1.025,z+.09],[x,1.00,z+.13]
+   ],0x9c293b);
+   mirrorQuad([
+    [x,.90,z-.15],[side*1.24,.94,z-.11],
+    [side*1.24,.955,z-.095],[x,.915,z-.13]
+   ],0x171c22);
+   // Visible reflective insert facing rearward.
+   mirrorQuad([
+    [side*1.08,.935,z-.153],[side*1.21,.96,z-.125],
+    [side*1.21,1.008,z-.117],[side*1.08,.987,z-.145]
+   ],0x7f9ea8);
+  }
+  const mirrorGeometry=new THREE.BufferGeometry();
+  mirrorGeometry.setAttribute('position',new THREE.Float32BufferAttribute(mirrorPositions,3));
+  mirrorGeometry.setAttribute('color',new THREE.Float32BufferAttribute(mirrorColors,3));
+  mirrorGeometry.setIndex(mirrorIndices);
+  mirrorGeometry.computeVertexNormals();
+  const mirrorMesh=new THREE.Mesh(mirrorGeometry,new THREE.MeshStandardMaterial({
+   vertexColors:true,metalness:.38,roughness:.34,side:THREE.DoubleSide
+  }));
+  mirrorMesh.name='sports-car-aerodynamic-door-mirrors';
+  group.add(mirrorMesh);
+
   // Contoured fastback roof and three sloping window pillars per side.
   // A single shared PBR mesh gives the coupe a rounded greenhouse silhouette,
   // replacing the flat-looking roof edge without extra textures or animation.
