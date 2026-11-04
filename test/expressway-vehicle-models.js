@@ -247,8 +247,19 @@ function makeBusFrontFascia(THREE){
   ctx.fillStyle=lens;ctx.fillRect(x+6,32,80,41);
   ctx.fillStyle='#f2c06c';ctx.fillRect(x+6,76,80,7);
   ctx.fillStyle='rgba(255,255,255,.55)';ctx.fillRect(x+11,36,64,3);
-  ctx.fillStyle='#536872';ctx.fillRect(x+29,43,29,25);
-  ctx.fillStyle='#d6e3e8';ctx.fillRect(x+35,47,17,15);
+  // Dual inset projector bowls and chrome rings, baked into the existing atlas.
+  // No extra geometry, texture or draw calls on mobile.
+  for(const cx of [x+30,x+65]){
+   const bowl=ctx.createRadialGradient(cx-3,52,2,cx,53,17);
+   bowl.addColorStop(0,'#f9f5df');bowl.addColorStop(.28,'#b7d1d8');
+   bowl.addColorStop(.55,'#344c59');bowl.addColorStop(.82,'#9eb1b6');
+   bowl.addColorStop(1,'#182a34');
+   ctx.fillStyle=bowl;ctx.beginPath();ctx.ellipse(cx,53,15,15,0,0,Math.PI*2);ctx.fill();
+   ctx.strokeStyle='rgba(243,248,236,.85)';ctx.lineWidth=2;
+   ctx.beginPath();ctx.ellipse(cx,53,12,12,0,0,Math.PI*2);ctx.stroke();
+   ctx.fillStyle='rgba(255,255,245,.8)';
+   ctx.beginPath();ctx.ellipse(cx-4,48,3,2,-.3,0,Math.PI*2);ctx.fill();
+  }
  }
  // Recessed fog lamps and contoured bumper corners are baked into the same
  // fascia atlas: no extra meshes, lights, textures or mobile draw calls.
