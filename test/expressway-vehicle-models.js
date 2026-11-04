@@ -30,6 +30,25 @@ function makeBusGlazing(THREE){
  ctx.fillStyle='#e6a94c';ctx.textAlign='center';ctx.textBaseline='middle';
  ctx.font='bold 24px sans-serif';ctx.fillText('สาย ๕๑๑',128,49);
  ctx.fillStyle='rgba(248,191,88,.32)';ctx.fillRect(74,64,108,2);
+ // Laminated-glass upper sunshade and subtle grime gradient: the bus now
+ // reads as a working Bangkok vehicle rather than a uniformly blue glass slab.
+ // Baked in the existing shared windscreen atlas, with zero extra draw calls.
+ const shade=ctx.createLinearGradient(0,0,0,85);
+ shade.addColorStop(0,'rgba(13,29,34,.76)');
+ shade.addColorStop(.40,'rgba(24,46,50,.35)');
+ shade.addColorStop(1,'rgba(24,46,50,0)');
+ ctx.fillStyle=shade;ctx.fillRect(7,7,242,85);
+ // Fine windshield dust gathers at the lower seal, outside the route board.
+ const lowerDust=ctx.createLinearGradient(0,197,0,251);
+ lowerDust.addColorStop(0,'rgba(119,113,96,0)');
+ lowerDust.addColorStop(1,'rgba(119,113,96,.20)');
+ ctx.fillStyle=lowerDust;ctx.fillRect(8,197,240,54);
+ // Irregular wiping arcs reveal clearer glass around the two parked blades.
+ ctx.save();ctx.strokeStyle='rgba(185,206,205,.095)';ctx.lineWidth=2;
+ for(const [cx,cy,r,start,end] of [[45,234,142,-1.38,-.35],[211,234,142,-2.79,-1.76]]){
+  ctx.beginPath();ctx.arc(cx,cy,r,start,end);ctx.stroke();
+ }
+ ctx.restore();
  // Bake two parked windscreen wipers and a weathered rubber surround
  // into the existing glass atlas: no extra draw calls or dynamic lights.
  ctx.strokeStyle='rgba(11,19,23,.85)';ctx.lineWidth=7;
