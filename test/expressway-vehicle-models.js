@@ -1353,10 +1353,16 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
  const mirrorGlass=new THREE.MeshStandardMaterial({color:0x8aabb8,metalness:.65,roughness:.16});
  const tires=new THREE.InstancedMesh(tireGeo,rubber,4);
  const hubs=new THREE.InstancedMesh(hubGeo,hubMetal,4);
- // Buses already have sculpted paired wing mirrors. Avoid drawing a second
- // pair of floating box mirrors over them; sports cars keep their own pair.
- const mirrorBodies=isBus?null:new THREE.InstancedMesh(new THREE.BoxGeometry(.28,.18,.15),mirrorShell,2);
- const mirrorFaces=isBus?null:new THREE.InstancedMesh(new THREE.BoxGeometry(.22,.12,.012),mirrorGlass,2);
+ // Sculpt the sports-car mirrors as compact aerodynamic shells rather than
+ // rectangular boxes. Low-segment ellipsoids preserve the two instanced
+ // draw calls, while their glass inserts sit on the rear-facing surface.
+ // Buses retain their separately sculpted wing mirrors.
+ const mirrorShellGeo=new THREE.SphereGeometry(1,10,6);
+ mirrorShellGeo.scale(.17,.105,.092);
+ const mirrorLensGeo=new THREE.CircleGeometry(.085,10);
+ mirrorLensGeo.scale(1.30,.78,1);
+ const mirrorBodies=isBus?null:new THREE.InstancedMesh(mirrorShellGeo,mirrorShell,2);
+ const mirrorFaces=isBus?null:new THREE.InstancedMesh(mirrorLensGeo,mirrorGlass,2);
  const matrix=new THREE.Matrix4();
  let wheelIndex=0,mirrorIndex=0;
  for(const side of [-1,1]){
@@ -1369,7 +1375,7 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   if(!isBus){
    const mirrorX=side*(w/2+.12),mirrorY=1.18,mirrorZ=.63;
    matrix.makeTranslation(mirrorX,mirrorY,mirrorZ);mirrorBodies.setMatrixAt(mirrorIndex,matrix);
-   matrix.makeTranslation(mirrorX,mirrorY,mirrorZ-.081);mirrorFaces.setMatrixAt(mirrorIndex,matrix);
+   matrix.makeTranslation(mirrorX,mirrorY,mirrorZ-.094);mirrorFaces.setMatrixAt(mirrorIndex,matrix);
    mirrorIndex++;
   }
   // Keep distinct front and rear lamps.
