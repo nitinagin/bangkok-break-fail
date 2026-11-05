@@ -688,6 +688,20 @@ export function createExpresswayArt(THREE){
  bridgeGlowGradient.addColorStop(1,'rgba(255,255,255,0)');
  bgc.fillStyle=bridgeGlowGradient;bgc.fillRect(-192,-64,384,128);
  bgc.restore();
+ // Broken longitudinal reflections from wet road grooves, baked once into
+ // the existing glow texture; no extra geometry, draw calls or live lights.
+ bgc.save();
+ bgc.globalCompositeOperation='destination-out';
+ for(let track=0;track<2;track++){
+  const x=track===0?49:78;
+  for(let n=0;n<8;n++){
+   const y=15+n*14+(track?5:0);
+   const width=3+(n*3+track)%5;
+   bgc.fillStyle='rgba(0,0,0,'+(.32+(n%3)*.12)+')';
+   bgc.fillRect(x-width/2,y,width,3+(n%2)*2);
+  }
+ }
+ bgc.restore();
  const bridgeGlowTexture=new THREE.CanvasTexture(bridgeGlowCanvas);
  const bridgeGlowMaterial=new THREE.MeshBasicMaterial({
   map:bridgeGlowTexture,transparent:true,opacity:.43,
