@@ -3174,7 +3174,11 @@ for(let j=0;j<=windRows;j++){
  const v=j/windRows,halfWidth=.82-.06*v;
  for(let i=0;i<=windCols;i++){
   const u=i/windCols,side=2*u-1;
-  windshieldPositions.push(side*halfWidth,1.42+.68*v,-.95+.07*v-.035*(1-side*side));
+  // Pressed curved glass: arched upper edge, swept side pillars and a shallow
+  // convex centre. All shaping stays in the existing 8x4 pane / draw call.
+  const crown=.045*v*(1-side*side);
+  const sweptSide=.025*v*v*side;
+  windshieldPositions.push(side*halfWidth+sweptSide,1.42+.68*v+crown,-.95+.07*v-.065*(1-side*side));
   windshieldUVs.push(u,v);
  }
 }
