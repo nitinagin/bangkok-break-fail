@@ -569,8 +569,14 @@ for(let py=0;py<256;py++)for(let px=0;px<192;px++){
  const nearBounce=.20*Math.exp(-Math.pow((distance-.17)/.13,2));
  // Low-contrast asphalt grain breaks up a synthetic-looking solid light blob.
  const grain=.94+.06*Math.sin(distance*113+lateral*27)*Math.sin(distance*57-lateral*11);
+ // An asymmetric dipped-beam cutoff keeps the oncoming side darker; narrow,
+ // discontinuous specular streaks read as rain-wet asphalt rather than fog.
+ const cutoff=.73+.27*Math.max(0,Math.min(1,(lateral+.12)*2.1));
+ const puddleBreak=.76+.24*Math.pow(Math.sin(distance*89+lateral*15),2);
+ const tireTrack=.85+.15*Math.pow(Math.sin(lateral*31+distance*9),2);
  const alpha=Math.round(Math.min(155,Math.max(0,
-  125*(distanceFade+nearBounce)*(.58*(left+right)+.28*(wetLeft+wetRight))*grain)));
+  125*(distanceFade+nearBounce)*(.58*(left+right)*cutoff+
+  .28*(wetLeft+wetRight)*puddleBreak)*grain*tireTrack)));
  const k=(py*192+px)*4;
  lowBeamPixels.data[k]=255;lowBeamPixels.data[k+1]=232;
  lowBeamPixels.data[k+2]=190;lowBeamPixels.data[k+3]=alpha;
