@@ -4636,7 +4636,35 @@ for(const y of [63,128,193]){
 const tukRoofTexture=new THREE.CanvasTexture(tukRoofPattern);
 tukRoofTexture.colorSpace=THREE.SRGBColorSpace;
 tukRoofTexture.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());
-tukCanvas.map=tukRoofTexture;tukCanvas.needsUpdate=true;
+// Separate linear roughness mask: waterproofed seams and rain pools catch neon
+// while dry woven vinyl stays matte. Baked once; no additional draw calls.
+const tukRoughCanvas=document.createElement('canvas');
+tukRoughCanvas.width=tukRoughCanvas.height=256;
+const tukRoughCtx=tukRoughCanvas.getContext('2d');
+tukRoughCtx.fillStyle='#ededed';tukRoughCtx.fillRect(0,0,256,256);
+for(const x of [48,208]){
+ tukRoughCtx.fillStyle='#686868';tukRoughCtx.fillRect(x-3,7,6,242);
+}
+for(const y of [63,128,193]){
+ tukRoughCtx.fillStyle='#797979';tukRoughCtx.fillRect(10,y-3,236,7);
+}
+for(let i=0;i<34;i++){
+ const x=16+(i*71+Math.floor(i/7)*19)%224;
+ const y=12+(i*43)%176;
+ const len=19+(i*17)%56;
+ const wet=tukRoughCtx.createLinearGradient(x,y,x+2,y+len);
+ wet.addColorStop(0,'rgba(91,91,91,0)');
+ wet.addColorStop(.32,'rgba(91,91,91,.9)');
+ wet.addColorStop(1,'rgba(91,91,91,0)');
+ tukRoughCtx.fillStyle=wet;
+ tukRoughCtx.fillRect(x-2,y,5,len);
+}
+const tukRoughMap=new THREE.CanvasTexture(tukRoughCanvas);
+tukRoughMap.colorSpace=THREE.NoColorSpace;
+tukRoughMap.anisotropy=Math.min(2,renderer.capabilities.getMaxAnisotropy());
+tukCanvas.map=tukRoofTexture;
+tukCanvas.roughnessMap=tukRoughMap;
+tukCanvas.needsUpdate=true;
 const tukTrim=new THREE.MeshStandardMaterial({color:0xb6b9ad,metalness:.74,roughness:.29});
 // Shared, baked windscreen for traffic tuk-tuks: subtle street-light reflections,
 // rubber gasket and a parked wiper. One 256x128 map, no per-frame work or meshes.
