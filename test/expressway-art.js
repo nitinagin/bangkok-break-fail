@@ -323,6 +323,23 @@ export function createExpresswayArt(THREE){
  poolGlow.addColorStop(1,'rgba(255,180,92,0)');
  pc.save();pc.translate(64,128);pc.scale(.42,1);
  pc.fillStyle=poolGlow;pc.fillRect(-155,-128,310,256);pc.restore();
+ // Two broken wheel-track highlights anchor the sodium reflection to wet
+ // asphalt rather than a floating glow. All marks are baked into the same
+ // 128x256 canvas; zero new textures, meshes, lights or draw calls.
+ for(let track=0;track<2;track++){
+  const center=track===0?49:79;
+  for(let j=0;j<23;j++){
+   const y=9+j*11+((j*7+track*3)%7);
+   const x=center+((j*13+track*11)%9)-4;
+   const width=1+(j%3),length=3+((j*17)%12);
+   const glint=pc.createLinearGradient(x,y,x,y+length);
+   glint.addColorStop(0,'rgba(255,231,179,0)');
+   glint.addColorStop(.36,'rgba(255,231,179,.28)');
+   glint.addColorStop(.68,'rgba(255,244,210,.20)');
+   glint.addColorStop(1,'rgba(255,231,179,0)');
+   pc.fillStyle=glint;pc.fillRect(x,y,width,length);
+  }
+ }
  // Thin, discontinuous specular streaks follow the direction of travel.
  for(let i=0;i<32;i++){
   const x=64+((i*37)%49)-24,y=17+((i*53)%218);
