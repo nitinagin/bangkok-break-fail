@@ -1145,6 +1145,21 @@ gantry.position.z=-75;group.add(gantry);
   bc.fillStyle='rgba(24,29,32,.15)';
   bc.fillRect(px,py,8+(i%3)*6,2+(i%2));
  }
+ // Roadside impact scuffs: irregular rubber transfers at bumper height.
+ // Baked into the existing concrete atlas, so no additional geometry or draw calls.
+ // Restrict marks to the lower third; reflective warning plates remain unobscured.
+ for(let i=0;i<9;i++){
+  const x=8+(i*37)%107,y=176+(i*23)%55;
+  bc.save();bc.translate(x,y);bc.rotate((i%5-2)*.12);
+  const smear=bc.createLinearGradient(-15,0,22,0);
+  smear.addColorStop(0,'rgba(20,25,28,0)');
+  smear.addColorStop(.35,'rgba(22,27,30,.26)');
+  smear.addColorStop(.75,'rgba(29,33,35,.14)');
+  smear.addColorStop(1,'rgba(22,27,30,0)');
+  bc.fillStyle=smear;
+  bc.beginPath();bc.ellipse(0,0,17+(i%3)*5,2+(i%2),0,0,Math.PI*2);bc.fill();
+  bc.restore();
+ }
  const barrierTexture=new THREE.CanvasTexture(barrierCanvas);
  barrierTexture.colorSpace=THREE.SRGBColorSpace;
  barrierTexture.wrapS=barrierTexture.wrapT=THREE.RepeatWrapping;
