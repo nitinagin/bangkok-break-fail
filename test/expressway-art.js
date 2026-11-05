@@ -295,12 +295,25 @@ export function createExpresswayArt(THREE){
  // Warm streetlight spill baked once, instanced to avoid per-lamp lights and draw calls.
  const poolCanvas=document.createElement('canvas');poolCanvas.width=128;poolCanvas.height=256;
  const pc=poolCanvas.getContext('2d');
- const poolGlow=pc.createRadialGradient(64,128,4,64,128,125);
- poolGlow.addColorStop(0,'rgba(255,237,192,.83)');
- poolGlow.addColorStop(.25,'rgba(255,211,141,.47)');
- poolGlow.addColorStop(.58,'rgba(245,184,109,.16)');
+ // Wet asphalt reflects sodium lamps as broken longitudinal highlights,
+ // not circular orange decals. Entire effect is baked into the existing atlas.
+ const poolGlow=pc.createRadialGradient(64,128,3,64,128,120);
+ poolGlow.addColorStop(0,'rgba(255,237,192,.76)');
+ poolGlow.addColorStop(.19,'rgba(255,211,141,.42)');
+ poolGlow.addColorStop(.54,'rgba(245,184,109,.13)');
  poolGlow.addColorStop(1,'rgba(255,180,92,0)');
- pc.fillStyle=poolGlow;pc.fillRect(0,0,128,256);
+ pc.save();pc.translate(64,128);pc.scale(.42,1);
+ pc.fillStyle=poolGlow;pc.fillRect(-155,-128,310,256);pc.restore();
+ // Thin, discontinuous specular streaks follow the direction of travel.
+ for(let i=0;i<32;i++){
+  const x=64+((i*37)%49)-24,y=17+((i*53)%218);
+  const w=1+(i%3),h=5+((i*11)%24);
+  const fade=pc.createLinearGradient(x,y,x,y+h);
+  fade.addColorStop(0,'rgba(255,225,169,0)');
+  fade.addColorStop(.45,'rgba(255,225,169,.18)');
+  fade.addColorStop(1,'rgba(255,225,169,0)');
+  pc.fillStyle=fade;pc.fillRect(x,y,w,h);
+ }
  const poolTexture=new THREE.CanvasTexture(poolCanvas);poolTexture.colorSpace=THREE.SRGBColorSpace;
  const poolMaterial=new THREE.MeshBasicMaterial({
   map:poolTexture,color:0xffe8c5,transparent:true,opacity:.38,
