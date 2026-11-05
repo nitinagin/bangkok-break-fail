@@ -964,6 +964,35 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   busArchMesh.name='bangkok-bus-pressed-wheel-arches';
   group.add(busArchMesh);
  }else{
+  // Pressed-metal shoulder creases follow both sports-car flanks, replacing
+  // the featureless slab silhouette without adding lights or altering physics.
+  // Both sides share one indexed PBR mesh (one draw call per near LOD car).
+  const creasePositions=[],creaseColors=[],creaseIndices=[];
+  const stations=[[-1.49,.70],[-1.05,.76],[-.52,.83],[.20,.85],[.83,.78],[1.43,.69]];
+  for(const side of [-1,1]){
+   const base=creasePositions.length/3;
+   for(const [z,y] of stations){
+    for(const [offset,dy,tint] of [[0,-.045,0x4b1521],[.018,0,0xa83d4c],[0,.026,0xe16b72]]){
+     creasePositions.push(side*(w/2+.026+offset),y+dy,z);
+     const color=new THREE.Color(tint);
+     creaseColors.push(color.r,color.g,color.b);
+    }
+   }
+   for(let i=0;i<stations.length-1;i++)for(let band=0;band<2;band++){
+    const a=base+i*3+band,b=a+3;
+    creaseIndices.push(a,b,a+1,a+1,b,b+1);
+   }
+  }
+  const creaseGeometry=new THREE.BufferGeometry();
+  creaseGeometry.setAttribute('position',new THREE.Float32BufferAttribute(creasePositions,3));
+  creaseGeometry.setAttribute('color',new THREE.Float32BufferAttribute(creaseColors,3));
+  creaseGeometry.setIndex(creaseIndices);
+  creaseGeometry.computeVertexNormals();
+  const creases=new THREE.Mesh(creaseGeometry,new THREE.MeshStandardMaterial({
+   vertexColors:true,metalness:.55,roughness:.3,side:THREE.DoubleSide
+  }));
+  creases.name='sports-car-pressed-shoulder-creases';
+  group.add(creases);
   // Dark transparent glazing reveals a seated driver instead of an empty car.
   const windshield=makeSportsCarLaminatedGlass(THREE);
   const seatMat=new THREE.MeshStandardMaterial({color:0x171b23,roughness:.88});
