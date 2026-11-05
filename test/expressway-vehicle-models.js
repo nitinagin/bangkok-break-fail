@@ -338,6 +338,20 @@ function makeBusSideWindows(THREE){
    ctx.fillStyle='rgba(255,220,152,.35)';
    ctx.fillRect(x+37,14,52,2);
   }
+  // Streetlight reflection and rain tracks baked into existing bus window atlas.
+  const lamp=ctx.createLinearGradient(x+16,0,x+110,0);
+  lamp.addColorStop(0,'rgba(255,214,151,0)');
+  lamp.addColorStop(.30,'rgba(255,214,151,.14)');
+  lamp.addColorStop(.38,'rgba(255,231,185,.25)');
+  lamp.addColorStop(.52,'rgba(255,214,151,0)');
+  lamp.addColorStop(1,'rgba(255,214,151,0)');
+  ctx.fillStyle=lamp;ctx.fillRect(x+14,13,96,98);
+  for(let streak=0;streak<9;streak++){
+   const sx=x+15+(streak*37+i*11)%95;
+   const sy=18+(streak*19+i*7)%48;
+   ctx.fillStyle=streak%3===0?'rgba(211,224,225,.18)':'rgba(173,196,204,.10)';
+   ctx.fillRect(sx,sy,1,11+(streak*7)%30);
+  }
   // Low-contrast seats and heads give the glazing depth without geometry.
   const cx=x+42+(i%2)*37;
   ctx.fillStyle='rgba(12,20,26,.52)';
