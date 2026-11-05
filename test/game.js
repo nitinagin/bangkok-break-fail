@@ -4603,6 +4603,23 @@ for(const x of [48,208]){
  tukRoofCtx.beginPath();tukRoofCtx.moveTo(x+2,9);tukRoofCtx.lineTo(x+2,247);tukRoofCtx.stroke();
  tukRoofCtx.setLineDash([]);
 }
+// Directional rain runoff on the weathered canopy: tapered water tracks
+// and intermittent specular glints follow the roof fabric, baked into the
+// existing 256px PBR albedo rather than allocating geometry or lights.
+for(let i=0;i<34;i++){
+ const x=16+(i*71+Math.floor(i/7)*19)%224;
+ const y=12+(i*43)%176;
+ const len=19+(i*17)%56;
+ const wet=tukRoofCtx.createLinearGradient(x,y,x+2,y+len);
+ wet.addColorStop(0,'rgba(203,218,215,.03)');
+ wet.addColorStop(.32,'rgba(194,211,207,.19)');
+ wet.addColorStop(1,'rgba(28,39,44,0)');
+ tukRoofCtx.fillStyle=wet;
+ tukRoofCtx.beginPath();
+ tukRoofCtx.moveTo(x,y);tukRoofCtx.lineTo(x+1.8,y+len*.55);
+ tukRoofCtx.lineTo(x+.5,y+len);tukRoofCtx.lineTo(x-.8,y+len*.48);
+ tukRoofCtx.closePath();tukRoofCtx.fill();
+}
 // Reinforced hems and double-stitched transverse canopy panels.
 tukRoofCtx.strokeStyle='rgba(12,16,19,.62)';tukRoofCtx.lineWidth=5;
 tukRoofCtx.strokeRect(5,5,246,246);
