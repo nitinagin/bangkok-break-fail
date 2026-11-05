@@ -1315,8 +1315,10 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
  const mirrorGlass=new THREE.MeshStandardMaterial({color:0x8aabb8,metalness:.65,roughness:.16});
  const tires=new THREE.InstancedMesh(tireGeo,rubber,4);
  const hubs=new THREE.InstancedMesh(hubGeo,hubMetal,4);
- const mirrorBodies=new THREE.InstancedMesh(new THREE.BoxGeometry(isBus?.36:.28,isBus?.25:.18,.15),mirrorShell,2);
- const mirrorFaces=new THREE.InstancedMesh(new THREE.BoxGeometry(isBus?.29:.22,isBus?.19:.12,.012),mirrorGlass,2);
+ // Buses already have sculpted paired wing mirrors. Avoid drawing a second
+ // pair of floating box mirrors over them; sports cars keep their own pair.
+ const mirrorBodies=isBus?null:new THREE.InstancedMesh(new THREE.BoxGeometry(.28,.18,.15),mirrorShell,2);
+ const mirrorFaces=isBus?null:new THREE.InstancedMesh(new THREE.BoxGeometry(.22,.12,.012),mirrorGlass,2);
  const matrix=new THREE.Matrix4();
  let wheelIndex=0,mirrorIndex=0;
  for(const side of [-1,1]){
@@ -1326,14 +1328,17 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
    matrix.makeTranslation(side*(w*.48+.108),.4,wheelZ);hubs.setMatrixAt(wheelIndex,matrix);
    wheelIndex++;
   }
-  const mirrorX=side*(w/2+.12),mirrorY=isBus?2.12:1.18,mirrorZ=isBus?1.96:.63;
-  matrix.makeTranslation(mirrorX,mirrorY,mirrorZ);mirrorBodies.setMatrixAt(mirrorIndex,matrix);
-  matrix.makeTranslation(mirrorX,mirrorY,mirrorZ-.081);mirrorFaces.setMatrixAt(mirrorIndex,matrix);
-  mirrorIndex++;
+  if(!isBus){
+   const mirrorX=side*(w/2+.12),mirrorY=1.18,mirrorZ=.63;
+   matrix.makeTranslation(mirrorX,mirrorY,mirrorZ);mirrorBodies.setMatrixAt(mirrorIndex,matrix);
+   matrix.makeTranslation(mirrorX,mirrorY,mirrorZ-.081);mirrorFaces.setMatrixAt(mirrorIndex,matrix);
+   mirrorIndex++;
+  }
   // Keep distinct front and rear lamps.
   if(isBus)box(side*w*.37,.8,-length/2-.04,.27,.14,.06,tailLamps);
  }
- group.add(tires,hubs,mirrorBodies,mirrorFaces);
+ group.add(tires,hubs);
+ if(!isBus)group.add(mirrorBodies,mirrorFaces);
  group.userData.type=type;
  // At expressway approach distance, detailed cabin/interior/aero parts are
  // smaller than a mobile pixel. Keep the recognisable body, roof, wheels and
