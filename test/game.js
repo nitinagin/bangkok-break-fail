@@ -5191,7 +5191,13 @@ function makeTukTuk(){
  const vertices=[],indices=[],uvs=[],nx=8,nz=3;
  for(let iz=0;iz<=nz;iz++)for(let ix=0;ix<=nx;ix++){
   const x=-.86+ix*1.72/nx,z=-1.38+iz*2.43/nz;
-  vertices.push(x,2.34+.16*(1-(x/.86)*(x/.86)),z);uvs.push(ix/nx,iz/nz);
+  // Sculpt the canvas in both axes: taut transverse crown, gentle longitudinal
+  // tension and a dipped rain-shedding front visor. Same mesh/triangle count.
+  const transverseCrown=.16*(1-(x/.86)*(x/.86));
+  const lengthTension=.045*Math.sin(Math.PI*iz/nz)*(1-.35*Math.abs(x/.86));
+  const visorDip=iz===nz?-.055:0;
+  vertices.push(x,2.34+transverseCrown+lengthTension+visorDip,z);
+  uvs.push(ix/nx,iz/nz);
  }
  for(let iz=0;iz<nz;iz++)for(let ix=0;ix<nx;ix++){
   const a=iz*(nx+1)+ix,b=a+nx+1;indices.push(a,b,a+1,b,b+1,a+1);
@@ -5216,7 +5222,8 @@ function makeTukTuk(){
   const base=vertices.length/3,z=end<0?-1.38:1.05,segments=8;
   for(let ix=0;ix<=segments;ix++){
    const u=ix/segments,x=-.86+1.72*u;
-   const roofY=2.34+.16*(1-(x/.86)**2);
+   // Match the front visor dip to the roof surface to avoid a visible seam.
+   const roofY=2.34+.16*(1-(x/.86)**2)+(end>0?-.055:0);
    vertices.push(x,roofY,z,x,roofY-.11,z);
    uvs.push(u,end<0?.07:.93,u,end<0?.01:.99);
   }
