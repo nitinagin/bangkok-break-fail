@@ -404,7 +404,16 @@ function makeSportsCarRearFascia(THREE){
    ctx.fillStyle='#f5242c';ctx.fillRect(lx,23,11,7);
    ctx.fillStyle='rgba(255,202,174,.46)';ctx.fillRect(lx,14,11,1);
   }
+  // Baked diffused red lens bloom and an inner amber turn-signal segment:
+  // visibly richer rear lamps at night without dynamic lights or new meshes.
+  const glow=ctx.createLinearGradient(x,0,x+68,0);
+  glow.addColorStop(0,'rgba(255,75,60,.08)');
+  glow.addColorStop(.5,'rgba(255,93,72,.38)');
+  glow.addColorStop(1,'rgba(255,75,60,.08)');
+  ctx.fillStyle=glow;ctx.fillRect(x+2,7,64,35);
   ctx.fillStyle='rgba(255,242,225,.28)';ctx.fillRect(x+4,11,60,1);
+  ctx.fillStyle='#bc6b24';ctx.fillRect(left?x+52:x+3,27,12,6);
+  ctx.fillStyle='rgba(255,201,102,.75)';ctx.fillRect(left?x+54:x+5,28,8,2);
   ctx.fillStyle='#5a1017';ctx.fillRect(x+3,34,62,3);
  }
  // Fictional Thai plate with a dark recessed mounting panel.
