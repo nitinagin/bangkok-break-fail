@@ -4995,6 +4995,13 @@ function makeTukTuk(){
  }
  sideShell([[-1.32,.55],[1.32,.55],[1.47,.81],[1.27,1.24],[.94,1.47],[.44,1.34],[-.65,1.08],[-1.29,1.04]],1.5,tukPaint);
  sideShell([[.62,1.12],[1.26,1.14],[1.32,1.22],[.84,1.31]],1.54,tukAccent);
+ // Rounded cast-metal mirror housings and inset PBR reflective lenses.
+ // Allocate geometry once per cached obstacle template, never per animation frame.
+ const tukMirrorShellGeometry=new THREE.SphereGeometry(1,12,8);
+ tukMirrorShellGeometry.scale(.155,.105,.055);
+ const tukMirrorGlassGeometry=new THREE.SphereGeometry(1,12,8,0,Math.PI*2,0,Math.PI);
+ tukMirrorGlassGeometry.scale(.132,.084,.012);
+ const tukMirrorGlassMaterial=new THREE.MeshPhysicalMaterial({color:0x8aaebd,metalness:.65,roughness:.16,clearcoat:.8,clearcoatRoughness:.1});
  // Open-sided passenger compartment: no solid toy-box walls above the beltline.
  for(const side of [-1,1]){
   g.add(cube(.065,.45,1.12,tukPaint,side*.73,1.03,-.63));
@@ -5009,7 +5016,16 @@ function makeTukTuk(){
   rod(g,[side*.74,1.32,.58],[side*.77,2.36,.7],.032,tukTrim);
   // Handlebar mirrors project beyond the narrow front cab.
   rod(g,[side*.61,1.45,.89],[side*.9,1.93,1.03],.027,tukTrim);
-  const mirror=cube(.29,.19,.07,tukWindow,side*.91,1.98,1.04);mirror.rotation.y=side*.12;g.add(mirror);
+  // Rounded mirror shell and inset silver-blue glass replace the toy-box mirror.
+  // Shared sphere geometry/materials are reused across both sides and clones.
+  const mirrorShell=new THREE.Mesh(tukMirrorShellGeometry,tukTrim);
+  mirrorShell.position.set(side*.91,1.98,1.04);
+  mirrorShell.rotation.y=side*.12;
+  g.add(mirrorShell);
+  const mirrorGlass=new THREE.Mesh(tukMirrorGlassGeometry,tukMirrorGlassMaterial);
+  mirrorGlass.position.set(side*.91,1.98,1.083);
+  mirrorGlass.rotation.y=side*.12;
+  g.add(mirrorGlass);
  }
  // The lower recessed grille below is the single front ventilation assembly.
  // Avoid a second overlapping five-slat grille that caused z-fighting and
