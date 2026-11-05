@@ -525,6 +525,21 @@ export function createExpresswayArt(THREE){
   bac.fillStyle='rgba(9,12,14,.62)';bac.fillRect(x,0,2,128);
   bac.fillStyle='rgba(156,153,145,.23)';bac.fillRect(x+2,0,1,128);
  }
+ // Recessed amber/white road studs guide the shoulder at night.
+ // Bake tiny retroreflective glints into the existing deck atlas rather than
+ // creating emissive meshes or realtime lights. Alternate color and brightness
+ // to suggest worn reflectors, with dark sockets anchored to the road surface.
+ for(const shoulderY of [9,119]){
+  for(let x=12,stud=0;x<256;x+=24,stud++){
+   bac.fillStyle='rgba(8,12,14,.62)';
+   bac.fillRect(x-2,shoulderY-2,7,5);
+   const amber=(stud+Math.floor(shoulderY/100))%3===0;
+   bac.fillStyle=amber?'rgba(239,174,74,.80)':'rgba(223,231,220,.72)';
+   bac.fillRect(x,shoulderY-1,4,2);
+   bac.fillStyle=amber?'rgba(255,214,129,.50)':'rgba(255,255,240,.45)';
+   bac.fillRect(x+1,shoulderY-1,2,1);
+  }
+ }
  // Irregular sealed expansion cracks and patched pothole edges on the elevated deck.
  // Baked into the existing asphalt atlas: zero extra meshes, materials or draw calls.
  for(let seam=0;seam<7;seam++){
