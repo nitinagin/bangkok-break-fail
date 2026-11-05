@@ -169,7 +169,14 @@ export function createExpresswayArt(THREE){
   dummy.position.set(side*(12+(i*7%17)),height*.5-2,-15-row*9);
   dummy.scale.set(4+(i*5%7),height,5+(i*3%7));
   dummy.updateMatrix();towers.setMatrixAt(i,dummy.matrix);
-  towers.setColorAt(i,new THREE.Color(facadeTints[i%facadeTints.length]));
+  // Atmospheric perspective on the existing 24 instanced towers: distant
+  // facades lose warm contrast in humid Bangkok night air. The cool haze
+  // gradient is baked into instance colors (zero new meshes/draw calls).
+  // Keep nearby buildings brighter so the player reads the street depth.
+  const depthFade=Math.min(.42,row/11*.42);
+  const facadeColor=new THREE.Color(facadeTints[i%facadeTints.length]);
+  facadeColor.lerp(new THREE.Color(0x526579),depthFade);
+  towers.setColorAt(i,facadeColor);
   if(i%3===0)rooftopMasts.push({x:dummy.position.x+dummy.scale.x*.12,y:height-2,z:dummy.position.z,height:1.2+(i%4)*.45});
  }
  towers.instanceMatrix.needsUpdate=true;
