@@ -4726,6 +4726,27 @@ function makeTukLampLensTexture(rear){
   ctx.beginPath();ctx.moveTo(x,12);ctx.lineTo(x,116);
   ctx.lineWidth=1;ctx.strokeStyle=rear?'rgba(75,4,9,.24)':'rgba(40,54,58,.16)';ctx.stroke();
  }
+ // Asymmetric dipped-beam optic: a warm projector hotspot, horizontal
+ // cutoff and small reflector facets, baked into the existing lamp atlas.
+ // Keeps the traffic tuk-tuk lens readable at night without another light.
+ if(!rear){
+  const beam=ctx.createRadialGradient(49,48,2,53,53,36);
+  beam.addColorStop(0,'rgba(255,255,244,.92)');
+  beam.addColorStop(.32,'rgba(255,247,209,.65)');
+  beam.addColorStop(1,'rgba(255,240,193,0)');
+  ctx.fillStyle=beam;ctx.fillRect(14,14,100,100);
+  ctx.fillStyle='rgba(35,47,51,.24)';
+  ctx.fillRect(19,76,90,3);
+  for(let j=0;j<7;j++){
+   const a=(j/7)*Math.PI*2;
+   const x=64+Math.cos(a)*39,y=64+Math.sin(a)*39;
+   ctx.save();ctx.translate(x,y);ctx.rotate(a);
+   ctx.fillStyle='rgba(255,255,230,.15)';
+   ctx.fillRect(-3,-8,6,16);ctx.restore();
+  }
+  ctx.beginPath();ctx.ellipse(43,36,12,5,-.45,0,Math.PI*2);
+  ctx.fillStyle='rgba(255,255,255,.46)';ctx.fill();
+ }
  ctx.restore();
  ctx.beginPath();ctx.arc(64,64,57,0,Math.PI*2);
  ctx.lineWidth=6;ctx.strokeStyle=rear?'#4c1418':'#51575a';ctx.stroke();
