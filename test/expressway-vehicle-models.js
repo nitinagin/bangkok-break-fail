@@ -314,6 +314,17 @@ function makeBusSideWindows(THREE){
   // Painted window pillars and inset rubber seals are part of the atlas.
   ctx.fillStyle='#313a40';ctx.fillRect(x+3,3,122,122);
   ctx.fillStyle=glaze;ctx.fillRect(x+10,10,108,108);
+  // Recessed warm cabin light: varied occupied/unoccupied windows on a night bus.
+  // Painted into the existing atlas, so there are no new meshes or lights.
+  if(i!==2){
+   const cabin=ctx.createLinearGradient(x+10,12,x+10,113);
+   cabin.addColorStop(0,'rgba(247,193,105,.27)');
+   cabin.addColorStop(.48,'rgba(209,145,75,.09)');
+   cabin.addColorStop(1,'rgba(209,145,75,0)');
+   ctx.fillStyle=cabin;ctx.fillRect(x+11,11,106,102);
+   ctx.fillStyle='rgba(255,220,152,.35)';
+   ctx.fillRect(x+37,14,52,2);
+  }
   // Low-contrast seats and heads give the glazing depth without geometry.
   const cx=x+42+(i%2)*37;
   ctx.fillStyle='rgba(12,20,26,.52)';
