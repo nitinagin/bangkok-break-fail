@@ -204,6 +204,19 @@ function makeBusSideLivery(THREE){
  for(const seam of [4,164,328,505])for(const y of [10,45]){
   ctx.beginPath();ctx.arc(seam+4,y,1.3,0,Math.PI*2);ctx.fill();
  }
+ // Reflective amber side-marker strips and rear-quarter diagonal conspicuity
+ // markings are baked into the existing bus livery atlas (no extra geometry).
+ // Keep the route text band above y=45 unobstructed.
+ ctx.fillStyle='rgba(255,205,105,.88)';
+ for(const x of [18,250,470]){
+  ctx.fillRect(x,55,18,4);
+  ctx.fillStyle='rgba(255,241,183,.72)';ctx.fillRect(x+2,55,12,1);
+  ctx.fillStyle='rgba(255,205,105,.88)';
+ }
+ ctx.save();ctx.beginPath();ctx.rect(405,55,60,7);ctx.clip();
+ ctx.strokeStyle='rgba(255,218,124,.78)';ctx.lineWidth=4;
+ for(let x=399;x<476;x+=12){ctx.beginPath();ctx.moveTo(x,63);ctx.lineTo(x+10,54);ctx.stroke();}
+ ctx.restore();
  ctx.fillStyle='rgba(240,235,218,.12)';
  ctx.fillRect(270,10,6,38);ctx.fillRect(439,10,3,38);
  const map=new THREE.CanvasTexture(canvas);
