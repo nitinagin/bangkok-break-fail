@@ -352,6 +352,17 @@ function makeBusSideWindows(THREE){
    ctx.fillStyle=streak%3===0?'rgba(211,224,225,.18)':'rgba(173,196,204,.10)';
    ctx.fillRect(sx,sy,1,11+(streak*7)%30);
   }
+  // Emergency-exit decals and a restrained amber grab rail are printed on the
+  // existing side-window atlas, rather than adding geometry per moving bus.
+  // Keep the upper glazing mostly clear so cabin silhouettes remain readable.
+  if(i===1 || i===3){
+   ctx.fillStyle='rgba(233,239,221,.70)';ctx.fillRect(x+77,22,32,18);
+   ctx.fillStyle='#294e4b';ctx.font='bold 10px sans-serif';
+   ctx.textAlign='center';ctx.textBaseline='middle';
+   ctx.fillText('EXIT',x+93,31);
+   ctx.textAlign='left';
+  }
+  ctx.fillStyle='rgba(218,161,83,.55)';ctx.fillRect(x+12,105,104,2);
   // Low-contrast seats and heads give the glazing depth without geometry.
   const cx=x+42+(i%2)*37;
   ctx.fillStyle='rgba(12,20,26,.52)';
