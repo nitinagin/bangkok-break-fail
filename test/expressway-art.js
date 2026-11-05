@@ -81,6 +81,25 @@ export function createExpresswayArt(THREE){
    ctx.fillStyle=gradient;ctx.fillRect(x,start,1+(streak%2),length);
   }
  }
+ // Rain-darkened sill shadows and irregular dust on the glazing: baked
+ // into the existing facade atlas, avoiding extra geometry or draw calls.
+ // Keep the central glass clear so occupied-room emission stays legible.
+ for(let row=0;row<32;row++)for(let col=0;col<8;col++){
+  const x=9+col*30,y=13+row*15;
+  const wear=(row*23+col*17+row*col*5)%11;
+  ctx.fillStyle='rgba(8,17,23,.34)';
+  ctx.fillRect(x,y+9,22,2);
+  ctx.fillStyle='rgba(156,177,180,.14)';
+  ctx.fillRect(x+2,y+8,17,1);
+  if(wear<5){
+   ctx.fillStyle='rgba(16,29,36,.19)';
+   ctx.fillRect(x+3+wear*3,y+2,1,3+(row+col)%4);
+  }
+  if(wear===7||wear===9){
+   ctx.fillStyle='rgba(190,198,194,.15)';
+   ctx.fillRect(x+16,y+2,1,4);
+  }
+ }
  // Uneven mineral deposits at every eighth-floor concrete ledge.
  for(let floor=0;floor<32;floor+=8){
   const y=12+floor*15;
