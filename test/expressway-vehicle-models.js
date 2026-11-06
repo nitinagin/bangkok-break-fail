@@ -477,7 +477,25 @@ function makeSportsCarRearFascia(THREE){
  ctx.textAlign='center';ctx.fillText('กท 918',128,31);
  ctx.font='8px Tahoma, sans-serif';ctx.fillText('กรุงเทพฯ',128,42);
  ctx.fillStyle='#717c80';ctx.fillRect(119,4,18,3);
- ctx.fillStyle='#4d5558';ctx.fillRect(4,52,248,3);
+ // Baked rear diffuser: staggered vertical vanes and twin exhaust shadows.
+ // Fits inside the existing rear-fascia atlas without extra geometry/draw calls.
+ const diffuser=ctx.createLinearGradient(0,49,0,64);
+ diffuser.addColorStop(0,'#333a40');diffuser.addColorStop(.35,'#10171c');
+ diffuser.addColorStop(1,'#080b10');
+ ctx.fillStyle=diffuser;ctx.fillRect(3,49,250,15);
+ for(let i=0;i<9;i++){
+  const x=32+i*24;
+  ctx.fillStyle='rgba(8,12,16,.85)';ctx.fillRect(x,52,4,12);
+  ctx.fillStyle='rgba(137,149,153,.37)';ctx.fillRect(x+4,52,1,10);
+ }
+ for(const x of [18,220]){
+  ctx.fillStyle='#05080b';ctx.beginPath();ctx.ellipse(x,57,12,5,0,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#7a858a';ctx.lineWidth=2;
+  ctx.beginPath();ctx.ellipse(x,57,11,4,0,0,Math.PI*2);ctx.stroke();
+ }
+ // Recessed plate screws and fine bumper seam, still on the shared map.
+ ctx.fillStyle='#596269';ctx.fillRect(96,16,3,3);ctx.fillRect(157,16,3,3);
+ ctx.fillStyle='rgba(180,190,191,.42)';ctx.fillRect(4,49,248,1);
  const map=new THREE.CanvasTexture(canvas);
  map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=2;
  return new THREE.MeshBasicMaterial({map,toneMapped:false});
