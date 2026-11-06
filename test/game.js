@@ -3197,6 +3197,53 @@ tube([[-.84,1.38,-.95],[-.76,2.1,-.88],[0,2.1,-.915],[.76,2.1,-.88],[.84,1.38,-.
 tube([[.08,1.43,-1.025],[.05,1.51,-1.02],[-.52,1.58,-1.01]],.018,playerDark);
 car.add(cube(1.05,.08,.08,chrome,0,1.43,-1.04));
 car.add(cube(.5,.12,.07,dark,0,1.51,-.99));
+// Pressed-steel front ventilation grille on the always-playable tuk-tuk.
+// Bake slotted louvers, fasteners and weathering into one compact PBR panel;
+// no external GLB dependency, per-frame work or dynamic lighting.
+const grilleCanvas=document.createElement('canvas');
+grilleCanvas.width=128;grilleCanvas.height=128;
+const grilleCtx=grilleCanvas.getContext('2d');
+const grilleBase=grilleCtx.createLinearGradient(0,0,128,128);
+grilleBase.addColorStop(0,'#6b8587');grilleBase.addColorStop(.5,'#25383c');
+grilleBase.addColorStop(1,'#101e24');
+grilleCtx.fillStyle=grilleBase;grilleCtx.fillRect(0,0,128,128);
+grilleCtx.strokeStyle='#b5b9ad';grilleCtx.lineWidth=5;
+grilleCtx.strokeRect(6,7,116,114);
+for(let i=0;i<7;i++){
+ const x=17+i*15;
+ grilleCtx.fillStyle='#09141a';grilleCtx.fillRect(x,21,9,86);
+ grilleCtx.fillStyle='rgba(181,206,203,.48)';grilleCtx.fillRect(x,21,2,86);
+ grilleCtx.fillStyle='rgba(3,8,12,.65)';grilleCtx.fillRect(x+7,21,2,86);
+}
+for(const x of [12,116])for(const y of [13,115]){
+ grilleCtx.fillStyle='#b9a884';grilleCtx.beginPath();
+ grilleCtx.arc(x,y,2.5,0,Math.PI*2);grilleCtx.fill();
+}
+const grilleTexture=new THREE.CanvasTexture(grilleCanvas);
+grilleTexture.colorSpace=THREE.SRGBColorSpace;
+const grilleMaterial=new THREE.MeshStandardMaterial({
+ map:grilleTexture,metalness:.58,roughness:.48,side:THREE.DoubleSide
+});
+const grillePositions=[],grilleUVs=[],grilleIndices=[];
+for(let row=0;row<=4;row++){
+ const v=row/4,y=.80+row*.065;
+ for(let col=0;col<=8;col++){
+  const u=col/8,x=(u-.5)*.70;
+  grillePositions.push(x,y,-1.586+.075*Math.pow(x/.35,2)+.014*(v-.5)**2);
+  grilleUVs.push(u,v);
+ }
+}
+for(let row=0;row<4;row++)for(let col=0;col<8;col++){
+ const a=row*9+col,b=a+9;
+ grilleIndices.push(a,b,a+1,b,b+1,a+1);
+}
+const grilleGeometry=new THREE.BufferGeometry();
+grilleGeometry.setAttribute('position',new THREE.Float32BufferAttribute(grillePositions,3));
+grilleGeometry.setAttribute('uv',new THREE.Float32BufferAttribute(grilleUVs,2));
+grilleGeometry.setIndex(grilleIndices);grilleGeometry.computeVertexNormals();
+const grilleMesh=new THREE.Mesh(grilleGeometry,grilleMaterial);
+grilleMesh.name='player-tuktuk-curved-pressed-steel-front-grille';
+car.add(grilleMesh);
 // front single wheel and rounded fender
 cyl(.4,.4,.22,playerRubber,0,.42,-1.42,Math.PI/2);
 cyl(.22,.22,.24,chrome,0,.42,-1.42,Math.PI/2);
