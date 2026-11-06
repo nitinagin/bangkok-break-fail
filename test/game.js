@@ -4832,12 +4832,24 @@ tukServiceCtx.fillStyle=serviceBase;tukServiceCtx.fillRect(0,0,128,128);
 tukServiceCtx.fillStyle='#13242b';tukServiceCtx.fillRect(7,9,114,110);
 tukServiceCtx.strokeStyle='rgba(189,210,211,.72)';
 tukServiceCtx.lineWidth=2;tukServiceCtx.strokeRect(9,11,110,106);
+// Pressed ventilation slots: beveled lips, recessed shadows and uneven
+// workshop grime are baked once into the existing shared PBR decal.
 for(let row=0;row<5;row++){
  const y=27+row*17;
- tukServiceCtx.fillStyle='#09151b';tukServiceCtx.fillRect(22,y,84,10);
- tukServiceCtx.fillStyle='#73909b';tukServiceCtx.fillRect(23,y,82,2);
- tukServiceCtx.fillStyle='#283e48';tukServiceCtx.fillRect(23,y+6,82,2);
- tukServiceCtx.fillStyle='rgba(9,13,17,.3)';tukServiceCtx.fillRect(22,y+10,84,2);
+ const lip=tukServiceCtx.createLinearGradient(0,y,0,y+12);
+ lip.addColorStop(0,'#9baeb2');lip.addColorStop(.16,'#526f7b');
+ lip.addColorStop(.32,'#101d24');lip.addColorStop(.8,'#071117');
+ lip.addColorStop(1,'#344d58');
+ tukServiceCtx.fillStyle=lip;tukServiceCtx.fillRect(22,y,84,12);
+ tukServiceCtx.fillStyle='rgba(3,8,11,.65)';tukServiceCtx.fillRect(26,y+4,76,5);
+ tukServiceCtx.fillStyle='rgba(205,219,217,.33)';tukServiceCtx.fillRect(24,y+1,80,1);
+ tukServiceCtx.fillStyle='rgba(5,10,12,.35)';tukServiceCtx.fillRect(22,y+11,84,2);
+}
+// Grease runs down from the lower louvers, with deterministic variation.
+for(let i=0;i<18;i++){
+ const x=25+(i*37)%78,y=91+(i*11)%12;
+ tukServiceCtx.fillStyle=i%3===0?'rgba(8,13,15,.26)':'rgba(13,21,24,.14)';
+ tukServiceCtx.fillRect(x,y,1+(i%2),6+(i*7)%15);
 }
 for(const px of [15,113])for(const py of [17,111]){
  tukServiceCtx.fillStyle='#a7b6b5';
