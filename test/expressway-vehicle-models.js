@@ -129,6 +129,13 @@ function makeBusWingMirrors(THREE){
    [x+half-.018,y1-.025,z+.012],[x-half+.018,y1-.025,z+.012],glass);
   quad([x-half+.03,y1-.12,z+.015],[x+half-.045,y1-.12,z+.015],
    [x+half-.055,y1-.045,z+.015],[x-half+.045,y1-.045,z+.015],glint);
+  // Real depth for both mirror housings, in the existing single PBR draw call.
+  const back=z-.055,front=z+.012;
+  quad([x-half,y0,back],[x+half,y0,back],[x+half,y1,back],[x-half,y1,back],housing);
+  quad([x-half,y0,back],[x-half,y0,front],[x-half,y1,front],[x-half,y1,back],steel);
+  quad([x+half,y0,front],[x+half,y0,back],[x+half,y1,back],[x+half,y1,front],steel);
+  quad([x-half,y1,back],[x+half,y1,back],[x+half,y1,front],[x-half,y1,front],housing);
+  quad([x-half,y0,front],[x+half,y0,front],[x+half,y0,back],[x-half,y0,back],housing);
  }
  const geometry=new THREE.BufferGeometry();
  geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
