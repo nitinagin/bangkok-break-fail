@@ -14,6 +14,16 @@ function makeBusGlazing(THREE){
   const x=43+i*82;ctx.beginPath();ctx.ellipse(x,151,18,24,0,0,Math.PI*2);ctx.fill();
   ctx.fillRect(x-21,170,42,80);
  }
+ // Baked overhead passenger grab rail and hanging handles add interior depth
+ // without extra meshes, lights, or animation on mobile.
+ ctx.strokeStyle='rgba(197,171,119,.38)';ctx.lineWidth=4;
+ ctx.beginPath();ctx.moveTo(20,107);ctx.lineTo(237,107);ctx.stroke();
+ for(const x of [57,112,167,222]){
+  ctx.strokeStyle='rgba(197,171,119,.38)';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(x,107);ctx.lineTo(x,130);ctx.stroke();
+  ctx.strokeStyle='rgba(220,204,159,.35)';ctx.lineWidth=3;
+  ctx.beginPath();ctx.ellipse(x,139,9,12,0,0,Math.PI*2);ctx.stroke();
+ }
  ctx.fillStyle='rgba(224,235,229,.17)';
  ctx.beginPath();ctx.moveTo(22,0);ctx.lineTo(57,0);ctx.lineTo(130,256);ctx.lineTo(111,256);ctx.fill();
  ctx.fillStyle='rgba(255,248,222,.07)';ctx.fillRect(0,21,256,8);
