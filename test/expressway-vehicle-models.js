@@ -325,7 +325,26 @@ function makeBusFrontFascia(THREE){
   ctx.fillStyle='rgba(32,37,36,.09)';ctx.fillRect(x,y,1+(i%3),1+(i%2));
  }
  const map=new THREE.CanvasTexture(canvas);map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=2;
- const mesh=new THREE.Mesh(new THREE.PlaneGeometry(2,.72),
+ // Curved stamped-metal nose, sharing the existing fascia texture and material.
+ // Sixteen triangles instead of two; no new draw calls or collision changes.
+ const positions=[],uvs=[],indices=[],segments=8;
+ for(let row=0;row<2;row++){
+  const y=row===0?-.36:.36;
+  for(let i=0;i<=segments;i++){
+   const nx=i/segments*2-1;
+   positions.push(nx,y,.035*(1-nx*nx));
+   uvs.push(i/segments,row);
+  }
+ }
+ for(let i=0;i<segments;i++){
+  const a=i,b=i+1,c=i+segments+1,d=c+1;
+  indices.push(a,b,c,b,d,c);
+ }
+ const fasciaGeometry=new THREE.BufferGeometry();
+ fasciaGeometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+ fasciaGeometry.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));
+ fasciaGeometry.setIndex(indices);fasciaGeometry.computeVertexNormals();
+ const mesh=new THREE.Mesh(fasciaGeometry,
   new THREE.MeshStandardMaterial({map,metalness:.23,roughness:.52}));
  mesh.position.set(0,.8,2.30);mesh.name='bangkok-bus-pbr-front-fascia';
  return mesh;
