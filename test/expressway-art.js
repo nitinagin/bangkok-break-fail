@@ -357,6 +357,24 @@ export function createExpresswayArt(THREE){
   fade.addColorStop(1,'rgba(255,225,169,0)');
   pc.fillStyle=fade;pc.fillRect(x,y,w,h);
  }
+ // Cool LED and neon reflections break up the sodium-orange lamp pools.
+ // Baked into the existing shared canvas: no extra textures or draw calls.
+ // Short offset fragments suggest shallow puddles, not painted lane stripes.
+ for(let bank=0;bank<2;bank++){
+  const center=bank===0?37:91;
+  for(let j=0;j<18;j++){
+   const y=15+j*13+((j*5+bank*7)%9);
+   const x=center+((j*17+bank*11)%17)-8;
+   const width=1+(j%3),height=4+((j*7)%17);
+   const glimmer=pc.createLinearGradient(x,y,x,y+height);
+   const tint=(j+bank)%4===0?'157,213,255':'113,193,214';
+   glimmer.addColorStop(0,'rgba('+tint+',0)');
+   glimmer.addColorStop(.42,'rgba('+tint+',.22)');
+   glimmer.addColorStop(.7,'rgba('+tint+',.12)');
+   glimmer.addColorStop(1,'rgba('+tint+',0)');
+   pc.fillStyle=glimmer;pc.fillRect(x,y,width,height);
+  }
+ }
  const poolTexture=new THREE.CanvasTexture(poolCanvas);poolTexture.colorSpace=THREE.SRGBColorSpace;
  const poolMaterial=new THREE.MeshBasicMaterial({
   map:poolTexture,color:0xffe8c5,transparent:true,opacity:.38,
