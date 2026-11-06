@@ -65,6 +65,24 @@ export function createExpresswayArt(THREE){
   ctx.fillStyle='rgba(13,22,31,.65)';ctx.fillRect(0,8+floor*15,256,4);
   ctx.fillStyle='rgba(179,191,195,.15)';ctx.fillRect(0,12+floor*15,256,1);
  }
+ // Bangkok rooftop service floors: dark mechanical louvers, occasional warm
+ // maintenance lamps and antenna shadows baked into the shared facade atlas.
+ // These break the repetitive office-window grid without new meshes/textures.
+ for(let band=0;band<4;band++){
+  const y=band*120+3;
+  ctx.fillStyle='rgba(9,17,23,.94)';ctx.fillRect(0,y,256,7);
+  ctx.fillStyle='rgba(103,119,124,.42)';ctx.fillRect(0,y+7,256,1);
+  for(let vent=0;vent<12;vent++){
+   const x=3+vent*21+(band%2)*3;
+   ctx.fillStyle='#263640';ctx.fillRect(x,y+1,15,5);
+   ctx.fillStyle='rgba(4,11,17,.85)';
+   for(let slit=0;slit<3;slit++)ctx.fillRect(x+2,y+2+slit,11,1);
+   if((vent+band*3)%11===0){
+    ctx.fillStyle='#bba06c';ctx.fillRect(x+16,y+2,2,2);
+    ec.fillStyle='#a58a59';ec.fillRect(x+16,y+2,2,2);
+   }
+  }
+ }
  // Broad rain-washed concrete streaks and rooftop runoff on the existing
  // facade atlas: irregular vertical stains break up the uniform tower grid.
  // Keep all stains on opaque concrete strips so lit glazing stays legible.
