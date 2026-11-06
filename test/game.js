@@ -4991,7 +4991,14 @@ function makeTukTuk(){
  // The tapered pressed-metal nose and rear wheel arch have rounded bevels.
  function sideShell(points,width,material){
   const outline=new THREE.Shape();
-  points.forEach(([z,y],i)=>i?outline.lineTo(-z,y):outline.moveTo(-z,y));
+  // Rounded stamped-steel shoulder, using the existing shell and material.
+  points.forEach(([z,y],i)=>{
+   const next=points[(i+1)%points.length],after=points[(i+2)%points.length];
+   const x=-z,nx=-next[0],ax=-after[0],ny=next[1];
+   if(i===0)outline.moveTo(x*.82+nx*.18,y*.82+ny*.18);
+   outline.lineTo(x*.18+nx*.82,y*.18+ny*.82);
+   outline.quadraticCurveTo(nx,ny,nx*.82+ax*.18,ny*.82+after[1]*.18);
+  });
   outline.closePath();
   const geo=new THREE.ExtrudeGeometry(outline,{depth:width-.07,steps:1,bevelEnabled:true,bevelThickness:.035,bevelSize:.035,bevelSegments:2,curveSegments:3});
   const mesh=new THREE.Mesh(geo,material);
