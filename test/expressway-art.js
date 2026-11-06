@@ -268,6 +268,15 @@ export function createExpresswayArt(THREE){
   nc.textAlign=ne.textAlign='center';
   nc.textBaseline=ne.textBaseline='middle';
   nc.font=ne.font='bold 36px "Noto Sans Thai", Tahoma, sans-serif';
+  // Bake a soft two-pass neon halo into the existing emissive atlas.
+  // This is texture-space bloom, not an extra transparent mesh or light.
+  ne.save();
+  ne.shadowColor=ink;ne.shadowBlur=13;
+  ne.fillStyle=ink;ne.globalAlpha=.48;
+  ne.fillText(thai,256,y+37,455);
+  ne.globalAlpha=.7;ne.shadowBlur=5;
+  ne.fillText(thai,256,y+37,455);
+  ne.restore();
   nc.fillStyle=ne.fillStyle=light;
   nc.fillText(thai,256,y+37,455);ne.fillText(thai,256,y+37,455);
   nc.font=ne.font='bold 15px Arial,sans-serif';
