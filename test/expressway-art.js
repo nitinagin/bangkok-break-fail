@@ -221,18 +221,26 @@ export function createExpresswayArt(THREE){
  // Baked road-facing Thai skyline signage: one shared atlas and instanced draw call.
  const skylineThaiCanvas=document.createElement('canvas');skylineThaiCanvas.width=256;skylineThaiCanvas.height=128;
  const skylineThaiCtx=skylineThaiCanvas.getContext('2d');
- skylineThaiCtx.fillStyle='#091725';skylineThaiCtx.fillRect(0,0,256,128);
- skylineThaiCtx.fillStyle='#1d3445';skylineThaiCtx.fillRect(7,7,242,114);
- skylineThaiCtx.strokeStyle='#54d9e9';skylineThaiCtx.lineWidth=5;skylineThaiCtx.strokeRect(10,10,236,108);
- // Legible bilingual expressway wayfinding, rather than a repeated generic
- // skyline advert. Baked into the existing atlas (no extra draw calls).
+ // Highway-green retroreflective direction board rather than a glowing
+ // advertisement. All details are baked into the existing 256x128 atlas.
+ skylineThaiCtx.fillStyle='#10251d';skylineThaiCtx.fillRect(0,0,256,128);
+ skylineThaiCtx.fillStyle='#12613e';skylineThaiCtx.fillRect(6,6,244,116);
+ skylineThaiCtx.strokeStyle='#e4e9dc';skylineThaiCtx.lineWidth=3;
+ skylineThaiCtx.strokeRect(12,12,232,104);
+ // Narrow mounting seams and rivets read as a real metal road sign.
+ skylineThaiCtx.fillStyle='rgba(0,0,0,.22)';
+ skylineThaiCtx.fillRect(8,105,240,3);
+ skylineThaiCtx.fillStyle='#a9b6ad';
+ for(const x of [19,237])for(const y of [19,109]){
+  skylineThaiCtx.beginPath();skylineThaiCtx.arc(x,y,2,0,Math.PI*2);skylineThaiCtx.fill();
+ }
  skylineThaiCtx.textAlign='center';skylineThaiCtx.textBaseline='middle';
- skylineThaiCtx.shadowColor='#45eaff';skylineThaiCtx.shadowBlur=8;
- skylineThaiCtx.font='bold 35px sans-serif';skylineThaiCtx.fillStyle='#f5f3dc';
+ skylineThaiCtx.shadowBlur=0;
+ skylineThaiCtx.font='bold 35px sans-serif';skylineThaiCtx.fillStyle='#f7f8ee';
  skylineThaiCtx.fillText('ทางด่วน',128,49);
- skylineThaiCtx.shadowBlur=0;skylineThaiCtx.font='bold 18px sans-serif';
- skylineThaiCtx.fillStyle='#c4f5ef';skylineThaiCtx.fillText('EXPRESSWAY',128,82);
- skylineThaiCtx.strokeStyle='#b4f5d7';skylineThaiCtx.lineWidth=5;
+ skylineThaiCtx.font='bold 18px sans-serif';
+ skylineThaiCtx.fillText('EXPRESSWAY',128,82);
+ skylineThaiCtx.strokeStyle='#f7f8ee';skylineThaiCtx.lineWidth=5;
  skylineThaiCtx.lineCap='round';skylineThaiCtx.beginPath();
  skylineThaiCtx.moveTo(128,111);skylineThaiCtx.lineTo(128,95);
  skylineThaiCtx.moveTo(120,102);skylineThaiCtx.lineTo(128,94);
