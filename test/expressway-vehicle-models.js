@@ -217,6 +217,25 @@ function makeBusSideLivery(THREE){
  ctx.strokeStyle='rgba(255,218,124,.78)';ctx.lineWidth=4;
  for(let x=399;x<476;x+=12){ctx.beginPath();ctx.moveTo(x,63);ctx.lineTo(x+10,54);ctx.stroke();}
  ctx.restore();
+ // Weathered Bangkok bus side panels: lower sill shadows, wheel-spray grime,
+ // and intermittent reflected street lighting baked into the existing atlas.
+ // Keep the route text at y=11..44 unobstructed; no new geometry/draw calls.
+ const sill=ctx.createLinearGradient(0,48,0,64);
+ sill.addColorStop(0,'rgba(16,28,35,0)');
+ sill.addColorStop(.65,'rgba(16,28,35,.22)');
+ sill.addColorStop(1,'rgba(10,20,25,.48)');
+ ctx.fillStyle=sill;ctx.fillRect(0,48,512,16);
+ for(const wheelCenter of [118,390]){
+  for(let i=0;i<28;i++){
+   const x=wheelCenter-49+(i*37)%99;
+   const y=49+(i*13)%14;
+   const distance=Math.abs(x-wheelCenter)/50;
+   ctx.fillStyle=i%3===0?'rgba(38,37,32,.24)':'rgba(93,83,67,.18)';
+   ctx.fillRect(x,y,1+(i%3),Math.max(1,Math.round((1-distance)*4)));
+  }
+ }
+ ctx.fillStyle='rgba(244,227,180,.20)';
+ for(const x of [23,194,345,485])ctx.fillRect(x,49,31,1);
  ctx.fillStyle='rgba(240,235,218,.12)';
  ctx.fillRect(270,10,6,38);ctx.fillRect(439,10,3,38);
  const map=new THREE.CanvasTexture(canvas);
