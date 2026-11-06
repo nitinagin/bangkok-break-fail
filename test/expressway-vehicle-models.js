@@ -1304,6 +1304,28 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   roofMesh.name='sports-car-fastback-greenhouse';
   group.add(roofMesh);
 
+  // Parked windscreen wipers follow the raked greenhouse glazing.
+  // Two blades and two arms use one shared instanced draw call (near LOD only).
+  const wiperMat=new THREE.MeshStandardMaterial({color:0x111820,metalness:.24,roughness:.62});
+  const wipers=new THREE.InstancedMesh(new THREE.BoxGeometry(1,1,1),wiperMat,4);
+  const wiperMatrix=new THREE.Matrix4(),wiperQuat=new THREE.Quaternion();
+  const wiperAxis=new THREE.Vector3(0,0,1),wiperScale=new THREE.Vector3();
+  const wiperPosition=new THREE.Vector3();
+  function placeWiper(index,x,y,z,length,angle,thickness){
+   wiperQuat.setFromAxisAngle(wiperAxis,angle);
+   wiperScale.set(length,thickness,.025);
+   wiperPosition.set(x,y,z);
+   wiperMatrix.compose(wiperPosition,wiperQuat,wiperScale);
+   wipers.setMatrixAt(index,wiperMatrix);
+  }
+  placeWiper(0,-.30,1.025,.45,.53,-.22,.024);
+  placeWiper(1,.30,1.025,.45,.53,.22,.024);
+  placeWiper(2,-.56,.997,.40,.20,-.22,.014);
+  placeWiper(3,.56,.997,.40,.20,.22,.014);
+  wipers.instanceMatrix.needsUpdate=true;
+  wipers.name='sports-car-parked-wipers';
+  group.add(wipers);
+
   // Sports-car grille, splitter, rear wing, supports and side ducts:
   // Nine carbon-finish pieces in one instanced draw call, no texture upload.
   const carbon=new THREE.MeshStandardMaterial({color:0x111820,metalness:.24,roughness:.54});
