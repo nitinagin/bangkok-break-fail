@@ -3248,10 +3248,34 @@ car.add(grilleMesh);
 cyl(.4,.4,.22,playerRubber,0,.42,-1.42,Math.PI/2);
 cyl(.22,.22,.24,chrome,0,.42,-1.42,Math.PI/2);
 ellipsoid(0,.69,-1.43,.45,.13,.5,playerBrass);
+// Fluted glass headlamp lenses: baked radial optics on the existing lamp
+// meshes. Shared texture/material, no additional draw calls or real-time lights.
+const headlampCanvas=document.createElement('canvas');
+headlampCanvas.width=headlampCanvas.height=128;
+const headlampCtx=headlampCanvas.getContext('2d');
+const lampGlow=headlampCtx.createRadialGradient(64,64,4,64,64,64);
+lampGlow.addColorStop(0,'#fffef0');
+lampGlow.addColorStop(.48,'#f5eac9');
+lampGlow.addColorStop(.85,'#a6a99d');
+lampGlow.addColorStop(1,'#3a4549');
+headlampCtx.fillStyle=lampGlow;headlampCtx.fillRect(0,0,128,128);
+headlampCtx.save();headlampCtx.beginPath();headlampCtx.arc(64,64,58,0,Math.PI*2);headlampCtx.clip();
+for(let x=9;x<124;x+=9){
+ headlampCtx.strokeStyle=x%2?'rgba(255,255,245,.38)':'rgba(41,55,60,.22)';
+ headlampCtx.lineWidth=2;headlampCtx.beginPath();headlampCtx.moveTo(x,8);
+ headlampCtx.quadraticCurveTo(x+7,64,x,120);headlampCtx.stroke();
+}
+headlampCtx.restore();
+const headlampTexture=new THREE.CanvasTexture(headlampCanvas);
+headlampTexture.colorSpace=THREE.SRGBColorSpace;
+const headlampGlass=new THREE.MeshStandardMaterial({
+ map:headlampTexture,metalness:.08,roughness:.23,
+ emissive:new THREE.Color('#c6b88b'),emissiveIntensity:.18
+});
 // lamps, bumper, tail plate
 for(const side of [-1,1]){
   ellipsoid(side*.58,1.02,-1.5,.22,.22,.12,chrome);
-  ellipsoid(side*.58,1.02,-1.61,.15,.15,.045,playerHeadlight);
+  ellipsoid(side*.58,1.02,-1.61,.15,.15,.045,headlampGlass);
 
 }
 // Baked three-chamber rear lamps for the always-playable player tuk-tuk.
