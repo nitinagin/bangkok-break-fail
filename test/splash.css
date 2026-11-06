@@ -101,3 +101,13 @@
  #overlay:has(#start) #panel::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,rgba(3,6,12,.38),transparent 45%,rgba(3,6,12,.38)),linear-gradient(0deg,rgba(3,6,12,.88),transparent 52%)}
  #overlay:has(#start) #start{position:absolute;z-index:3;left:50%;bottom:calc(env(safe-area-inset-bottom) + 10px);width:min(280px,48vw);min-height:44px;padding:8px 16px;font-size:17px;transform:translateX(-50%)}
 }
+
+/* Short landscape iPhones: scroll the results instead of clipping the restart
+   button below the home indicator. The splash poster remains unchanged. */
+@media (orientation:landscape) and (max-height:500px){
+ #overlay:not(:has(#start)){display:block;overflow-y:auto;overscroll-behavior:contain;padding:calc(env(safe-area-inset-top) + 8px) calc(env(safe-area-inset-right) + 12px) calc(env(safe-area-inset-bottom) + 16px) calc(env(safe-area-inset-left) + 12px)}
+ #overlay:not(:has(#start)) #panel{margin:auto;max-width:620px;width:100%;gap:5px;padding:10px 16px}
+ #overlay:not(:has(#start)) #panel h1{font-size:22px}
+ #overlay:not(:has(#start)) #panel .result-score{font-size:32px}
+ #overlay:not(:has(#start)) #again{min-height:44px;margin-top:4px}
+}
