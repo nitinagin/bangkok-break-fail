@@ -199,6 +199,32 @@ export function createExpresswayArt(THREE){
  }
  roofPlants.instanceMatrix.needsUpdate=true;
  roofPlants.frustumCulled=false;group.add(roofPlants);
+
+ // Baked road-facing Thai skyline signage: one shared atlas and instanced draw call.
+ const skylineThaiCanvas=document.createElement('canvas');skylineThaiCanvas.width=256;skylineThaiCanvas.height=128;
+ const skylineThaiCtx=skylineThaiCanvas.getContext('2d');
+ skylineThaiCtx.fillStyle='#091725';skylineThaiCtx.fillRect(0,0,256,128);
+ skylineThaiCtx.fillStyle='#1d3445';skylineThaiCtx.fillRect(7,7,242,114);
+ skylineThaiCtx.strokeStyle='#54d9e9';skylineThaiCtx.lineWidth=5;skylineThaiCtx.strokeRect(10,10,236,108);
+ skylineThaiCtx.shadowColor='#45eaff';skylineThaiCtx.shadowBlur=12;
+ skylineThaiCtx.font='bold 44px sans-serif';skylineThaiCtx.textAlign='center';skylineThaiCtx.textBaseline='middle';
+ skylineThaiCtx.fillStyle='#f5f3dc';skylineThaiCtx.fillText('กรุงเทพ',128,57);
+ skylineThaiCtx.shadowBlur=0;skylineThaiCtx.font='bold 17px sans-serif';skylineThaiCtx.fillStyle='#7de8ee';
+ skylineThaiCtx.fillText('BANGKOK NIGHT',128,98);
+ const skylineThaiTexture=new THREE.CanvasTexture(skylineThaiCanvas);skylineThaiTexture.colorSpace=THREE.SRGBColorSpace;
+ const skylineThaiMaterial=new THREE.MeshBasicMaterial({map:skylineThaiTexture,side:THREE.DoubleSide});
+ const skylineThaiSigns=new THREE.InstancedMesh(new THREE.PlaneGeometry(1,1),skylineThaiMaterial,12);
+ skylineThaiSigns.name='expressway-road-facing-thai-neon-signs';
+ for(let i=0;i<12;i++){
+  const tower=i*2+1,side=tower%2===0?-1:1,row=Math.floor(tower/2);
+  const height=10+(tower*13%19),width=4+(tower*5%7);
+  dummy.position.set(side*(12+(tower*7%17)-width*.51),height*.63-2,-15-row*9);
+  dummy.rotation.set(0,side*Math.PI/2,0);
+  dummy.scale.set(2.8,1.4,1);dummy.updateMatrix();skylineThaiSigns.setMatrixAt(i,dummy.matrix);
+ }
+ skylineThaiSigns.instanceMatrix.needsUpdate=true;skylineThaiSigns.frustumCulled=false;group.add(skylineThaiSigns);
+ dummy.rotation.set(0,0,0);
+
  // Shared emissive rooftop aircraft-warning markers; one draw call, no dynamic lights.
  const skylineMarkerGeometry=new THREE.SphereGeometry(.16,6,4);
  const skylineMarkerMaterial=new THREE.MeshStandardMaterial({color:0xff3d2d,emissive:0xff1808,emissiveIntensity:1.8,metalness:.12,roughness:.38});
