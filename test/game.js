@@ -5080,10 +5080,18 @@ function makeTukTuk(){
  const guardSteps=14,guardWidths=[-.27,-.235,.235,.27];
  for(let step=0;step<=guardSteps;step++){
   const angle=-1.27+2.54*step/guardSteps;
-  const topY=.4+.45*Math.cos(angle),topZ=1.41+.45*Math.sin(angle);
+  // A pressed-steel Thai tuk-tuk mudguard rises over the tyre and tapers
+  // into the fork at each end; a constant-width semicircle looked toy-like.
+  const crown=Math.pow(Math.max(0,Math.cos(angle)),.65);
+  const radius=.425+.042*crown;
+  const topY=.4+radius*Math.cos(angle),topZ=1.41+radius*Math.sin(angle);
+  const halfWidth=.16+.12*crown;
   for(let col=0;col<4;col++){
-   const rolledEdge=(col===0||col===3)?-.045:0;
-   guardVertices.push(guardWidths[col],topY+rolledEdge,topZ);
+   const side=col<2?-1:1;
+   const rolledEdge=(col===0||col===3)?-.034:0;
+   const x=side*(col===0||col===3?halfWidth:halfWidth-.038);
+   // Subtle crown ridge and folded lips, with no extra vertices/draw calls.
+   guardVertices.push(x,topY+rolledEdge+(col===1||col===2?.018*crown:0),topZ);
    guardUV.push(col/3,step/guardSteps);
   }
  }
