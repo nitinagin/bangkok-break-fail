@@ -224,11 +224,19 @@ export function createExpresswayArt(THREE){
  skylineThaiCtx.fillStyle='#091725';skylineThaiCtx.fillRect(0,0,256,128);
  skylineThaiCtx.fillStyle='#1d3445';skylineThaiCtx.fillRect(7,7,242,114);
  skylineThaiCtx.strokeStyle='#54d9e9';skylineThaiCtx.lineWidth=5;skylineThaiCtx.strokeRect(10,10,236,108);
- skylineThaiCtx.shadowColor='#45eaff';skylineThaiCtx.shadowBlur=12;
- skylineThaiCtx.font='bold 44px sans-serif';skylineThaiCtx.textAlign='center';skylineThaiCtx.textBaseline='middle';
- skylineThaiCtx.fillStyle='#f5f3dc';skylineThaiCtx.fillText('กรุงเทพ',128,57);
- skylineThaiCtx.shadowBlur=0;skylineThaiCtx.font='bold 17px sans-serif';skylineThaiCtx.fillStyle='#7de8ee';
- skylineThaiCtx.fillText('BANGKOK NIGHT',128,98);
+ // Legible bilingual expressway wayfinding, rather than a repeated generic
+ // skyline advert. Baked into the existing atlas (no extra draw calls).
+ skylineThaiCtx.textAlign='center';skylineThaiCtx.textBaseline='middle';
+ skylineThaiCtx.shadowColor='#45eaff';skylineThaiCtx.shadowBlur=8;
+ skylineThaiCtx.font='bold 35px sans-serif';skylineThaiCtx.fillStyle='#f5f3dc';
+ skylineThaiCtx.fillText('ทางด่วน',128,49);
+ skylineThaiCtx.shadowBlur=0;skylineThaiCtx.font='bold 18px sans-serif';
+ skylineThaiCtx.fillStyle='#c4f5ef';skylineThaiCtx.fillText('EXPRESSWAY',128,82);
+ skylineThaiCtx.strokeStyle='#b4f5d7';skylineThaiCtx.lineWidth=5;
+ skylineThaiCtx.lineCap='round';skylineThaiCtx.beginPath();
+ skylineThaiCtx.moveTo(128,111);skylineThaiCtx.lineTo(128,95);
+ skylineThaiCtx.moveTo(120,102);skylineThaiCtx.lineTo(128,94);
+ skylineThaiCtx.lineTo(136,102);skylineThaiCtx.stroke();
  const skylineThaiTexture=new THREE.CanvasTexture(skylineThaiCanvas);skylineThaiTexture.colorSpace=THREE.SRGBColorSpace;
  const skylineThaiMaterial=new THREE.MeshBasicMaterial({map:skylineThaiTexture,side:THREE.DoubleSide});
  const skylineThaiSigns=new THREE.InstancedMesh(new THREE.PlaneGeometry(1,1),skylineThaiMaterial,12);
