@@ -825,6 +825,18 @@ function makeBusRearFascia(THREE){
  ctx.fillStyle='#4d5558';ctx.fillRect(73,186,110,16);
  ctx.fillStyle='#161e23';
  for(let i=0;i<14;i++)ctx.fillRect(79+i*7,189,3,10);
+
+ // High-visibility rear bumper chevrons: reflective red/cream tape is baked
+ // into the existing rear-fascia atlas, so distant traffic reads as a real
+ // working Bangkok bus without adding geometry, lights or draw calls.
+ ctx.save();ctx.beginPath();ctx.rect(58,224,140,12);ctx.clip();
+ ctx.fillStyle='#eee5c8';ctx.fillRect(58,224,140,12);
+ ctx.strokeStyle='#b92f34';ctx.lineWidth=8;
+ for(let x=46;x<214;x+=22){
+  ctx.beginPath();ctx.moveTo(x,237);ctx.lineTo(x+17,222);ctx.stroke();
+ }
+ ctx.restore();
+ ctx.fillStyle='rgba(255,248,213,.55)';ctx.fillRect(59,225,138,1);
  ctx.fillStyle='#242e34';ctx.fillRect(9,239,238,11);
  // Two wide, three-section red/amber rear clusters.
  for(const x of [17,205]){
