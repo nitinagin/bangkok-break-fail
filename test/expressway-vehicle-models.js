@@ -247,6 +247,22 @@ function makeBusFrontFascia(THREE){
  const ctx=canvas.getContext('2d'),body=ctx.createLinearGradient(0,0,0,192);
  body.addColorStop(0,'#e1dcd0');body.addColorStop(.55,'#b9b9b1');body.addColorStop(1,'#4c5961');
  ctx.fillStyle=body;ctx.fillRect(0,0,512,192);
+ // Pressed-metal front panel: broad shoulder highlights and a recessed
+ // central nose replace the flat, toy-like slab without extra geometry.
+ const shoulder=ctx.createLinearGradient(0,0,512,0);
+ shoulder.addColorStop(0,'rgba(17,28,35,.38)');
+ shoulder.addColorStop(.14,'rgba(244,247,236,.24)');
+ shoulder.addColorStop(.35,'rgba(243,246,236,.08)');
+ shoulder.addColorStop(.5,'rgba(16,31,39,.21)');
+ shoulder.addColorStop(.65,'rgba(243,246,236,.08)');
+ shoulder.addColorStop(.86,'rgba(244,247,236,.24)');
+ shoulder.addColorStop(1,'rgba(17,28,35,.38)');
+ ctx.fillStyle=shoulder;ctx.fillRect(0,0,512,121);
+ // Curved hood break and stamped lower lip follow the body contours.
+ ctx.strokeStyle='rgba(244,246,235,.34)';ctx.lineWidth=3;
+ ctx.beginPath();ctx.moveTo(8,19);ctx.quadraticCurveTo(256,4,504,19);ctx.stroke();
+ ctx.strokeStyle='rgba(23,36,44,.37)';ctx.lineWidth=4;
+ ctx.beginPath();ctx.moveTo(10,95);ctx.quadraticCurveTo(256,106,502,95);ctx.stroke();
  ctx.fillStyle='#24323a';ctx.fillRect(112,31,288,88);
  for(let i=0;i<7;i++){
   ctx.fillStyle=i%2?'#14242b':'#1b2d35';ctx.fillRect(119,45+i*10,274,5);
