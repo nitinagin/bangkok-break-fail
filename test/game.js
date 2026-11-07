@@ -8652,7 +8652,10 @@ if(darkHeadlight.visible){
  const lampX=camera.position.x;
  darkHeadlight.position.x=lampX;
  darkHeadlight.target.position.x=lampX+smoothed*1.15;
+ // Keep the existing baked twin-beam reflection aligned with steering.
+ // The small yaw preserves a visible dodge lane without extra lights or meshes.
  darkRoadLowBeam.position.x=lampX+smoothed*.45;
+ darkRoadLowBeam.rotation.y=smoothed*.045;
 }
 renderer.render(scene,camera);
  // Keep the scene crisp on fast phones and lower resolution only if FPS drops.
