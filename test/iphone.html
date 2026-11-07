@@ -9,6 +9,11 @@
 #status{color:#f4f7ff;line-height:1.3}
 #district,#challenge{max-width:calc(100vw - 30px);overflow:hidden;text-overflow:ellipsis}
 @media (max-width:390px){#hud{padding:8px;gap:5px}#score,#status{padding:6px 8px}#score{font-size:16px}#status{font-size:12px}}
+/* iPhone start screen: keep the cinematic artwork framed and the start button reachable. */
+#coverArt{display:block;width:100%;max-width:100%;height:auto;max-height:min(36dvh,250px);object-fit:cover;object-position:center;border-radius:12px;border:1px solid rgba(255,225,125,.36);box-shadow:0 10px 28px rgba(0,0,0,.45);margin:0 auto 12px}
+#panel{max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 32px);overflow-y:auto;overscroll-behavior:contain}
+#panel h1{font-size:clamp(24px,7vw,34px)}
+@media(max-height:680px) and (orientation:portrait){#coverArt{max-height:22dvh}#panel{padding:12px 16px}#panel p{margin:7px 0}#panel small{margin-top:7px}}
 /* Compact iPhone landscape: keep the start/restart action reachable and the driving view clear. */
 @media (orientation:landscape) and (max-height:500px){
  #overlay{overflow-y:auto;align-items:start;padding:calc(env(safe-area-inset-top) + 8px) calc(env(safe-area-inset-right) + 12px) calc(env(safe-area-inset-bottom) + 8px) calc(env(safe-area-inset-left) + 12px)}
