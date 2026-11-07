@@ -2867,7 +2867,18 @@ const cockpitCowlGeometry=new THREE.BoxGeometry(2.45,.28,.5,12,2,3);
 const cowlPositions=cockpitCowlGeometry.attributes.position;
 for(let i=0;i<cowlPositions.count;i++){
  const px=cowlPositions.getX(i),py=cowlPositions.getY(i),pz=cowlPositions.getZ(i);
- if(py>0)cowlPositions.setY(i,py+.075*Math.max(0,1-(px/1.225)**2)+.022*(.5-pz));
+ // Pressed-steel bonnet: crowned centre ridge, narrowing nose and rolled shoulders.
+ // Deform the existing subdivided box; no new meshes, materials or draw calls.
+ const frontFactor=THREE.MathUtils.clamp((.25-pz)/.5,0,1);
+ const taper=1-.13*frontFactor;
+ cowlPositions.setX(i,px*taper);
+ if(py>0){
+  const normalizedX=Math.abs(px)/1.225;
+  const crown=.105*Math.max(0,1-normalizedX*normalizedX);
+  const ridge=.035*Math.exp(-Math.pow(px/.25,2));
+  const shoulder=-.028*Math.pow(normalizedX,6);
+  cowlPositions.setY(i,py+crown+ridge+shoulder+.026*frontFactor);
+ }
 }
 cowlPositions.needsUpdate=true;cockpitCowlGeometry.computeVertexNormals();
 const cockpitCowl=new THREE.Mesh(cockpitCowlGeometry,cockpitBlue);
