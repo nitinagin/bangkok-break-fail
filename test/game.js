@@ -4689,6 +4689,17 @@ for(let i=0;i<1100;i++){
  tukRoofCtx.fillStyle=i%5===0?'rgba(188,174,145,.18)':'rgba(9,12,14,.13)';
  tukRoofCtx.fillRect(px,py,1+i%3,1+i%2);
 }
+// Heat-welded diagonal reinforcement seams baked into the vinyl canopy.
+// No added meshes, textures, or draw calls on mobile.
+tukRoofCtx.save();
+tukRoofCtx.lineCap='round';
+for(const offset of [-72,72]){
+ tukRoofCtx.beginPath();tukRoofCtx.moveTo(108+offset,0);tukRoofCtx.lineTo(148+offset,256);
+ tukRoofCtx.strokeStyle='rgba(9,12,15,.38)';tukRoofCtx.lineWidth=7;tukRoofCtx.stroke();
+ tukRoofCtx.beginPath();tukRoofCtx.moveTo(111+offset,0);tukRoofCtx.lineTo(151+offset,256);
+ tukRoofCtx.strokeStyle='rgba(190,190,178,.20)';tukRoofCtx.lineWidth=2;tukRoofCtx.stroke();
+}
+tukRoofCtx.restore();
 // Broad, uneven sun-faded vinyl bands follow the roof's length. These
 // break up the flat charcoal canopy silhouette without new geometry or GPU work.
 // Keep the middle panel brighter and the outer edges rain-darkened.
