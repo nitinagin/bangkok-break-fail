@@ -32,6 +32,18 @@ function makeBusGlazing(THREE){
   ctx.fillStyle=i%3===0?'rgba(211,224,232,.16)':'rgba(159,175,182,.09)';
   ctx.fillRect(x,y,1,18+(i%5)*9);
  }
+ // Rain-cleared wiper sweeps expose the road through the working bus windshield.
+ // Bake two soft, overlapping curved wipe boundaries into the shared glazing
+ // texture: no geometry, per-frame canvas work, or additional draw calls.
+ ctx.save();
+ ctx.lineCap='round';
+ for(const [cx,cy,r,start,end] of [[69,237,167,Math.PI*1.12,Math.PI*1.91],[194,236,158,Math.PI*1.10,Math.PI*1.89]]){
+  ctx.beginPath();ctx.arc(cx,cy,r,start,end);
+  ctx.strokeStyle='rgba(218,233,233,.13)';ctx.lineWidth=2;ctx.stroke();
+  ctx.beginPath();ctx.arc(cx,cy,r-5,start,end);
+  ctx.strokeStyle='rgba(12,26,32,.22)';ctx.lineWidth=8;ctx.stroke();
+ }
+ ctx.restore();
  // Apply the laminated-glass sunshade BEFORE painting the interior LED route board;
  // otherwise the gradient obscures route 511 and makes the number unreadable.
  // Laminated-glass upper sunshade and subtle grime gradient: the bus now
