@@ -1560,7 +1560,12 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   const distant=new THREE.Group();
   const roof=group.children.find(node=>node.name==='bangkok-bus-curved-roof-hvac');
   if(!roof)throw new Error('Bus LOD is missing its rooftop silhouette');
-  for(const part of [group.children[0],roof,tires,hubs]){
+  // Preserve both emissive rear lamps in the distant bus silhouette: at night
+  // these are vital depth cues, even after glazing and signage are culled.
+  // Reuse the near model's PBR material and geometry; no new textures.
+  const rearLamps=group.children.filter(node=>node.material===tailLamps);
+  if(rearLamps.length!==2)throw new Error('Bus LOD requires two rear lamps');
+  for(const part of [group.children[0],roof,tires,hubs,...rearLamps]){
    if(!part)throw new Error('Bus LOD is missing a silhouette part');
    distant.add(part.clone());
   }
