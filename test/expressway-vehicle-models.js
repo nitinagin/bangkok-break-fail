@@ -1057,13 +1057,27 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   group.add(makeBusRoutePanel(THREE,destination));
   // Shared, UV-baked window strip follows the bus flank at the original height.
   const sideGlazing=makeBusSideWindows(THREE);
-  const sideWindowGeometry=new THREE.PlaneGeometry(3.82,.65);
+  // Batch both side-window strips into one indexed PBR mesh. Preserve the
+  // original outward-reading UV orientation and two-sided glazing material,
+  // while halving the side-window draw calls on every expressway bus.
+  const windowPositions=[],windowUVs=[],windowIndices=[];
   for(const side of [-1,1]){
-   const pane=new THREE.Mesh(sideWindowGeometry,sideGlazing);
-   pane.rotation.y=side*Math.PI/2;
-   pane.position.set(side*1.082,2.17,0);
-   group.add(pane);
+   const base=windowPositions.length/3,x=side*1.082;
+   windowPositions.push(x,1.845,-1.91,x,1.845,1.91,
+                        x,2.495,1.91,x,2.495,-1.91);
+   const uAtNegativeZ=side<0?0:1,uAtPositiveZ=1-uAtNegativeZ;
+   windowUVs.push(uAtNegativeZ,0,uAtPositiveZ,0,
+                  uAtPositiveZ,1,uAtNegativeZ,1);
+   windowIndices.push(base,base+1,base+2,base,base+2,base+3);
   }
+  const windowGeometry=new THREE.BufferGeometry();
+  windowGeometry.setAttribute('position',new THREE.Float32BufferAttribute(windowPositions,3));
+  windowGeometry.setAttribute('uv',new THREE.Float32BufferAttribute(windowUVs,2));
+  windowGeometry.setIndex(windowIndices);
+  windowGeometry.computeVertexNormals();
+  const windowStrips=new THREE.Mesh(windowGeometry,sideGlazing);
+  windowStrips.name='bangkok-bus-batched-side-glazing';
+  group.add(windowStrips);
   // The rear faces approaching drivers; keep the fascia within the existing
   // bus silhouette and away from collision logic.
   const rearFascia=makeBusRearFascia(THREE);
