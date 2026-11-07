@@ -2984,6 +2984,23 @@ for(const side of [-1,1]){
  glass.scale.set(.161,.129,1);glass.position.set(side*1.12,.05,-1.474);
  cockpit.add(housing,glass);cockpitSideMirrors.push({side,housing,glass});
 }
+// Parked tuk-tuk windshield wipers below the driver's sightline, instanced for mobile.
+const wiperMetal=new THREE.MeshStandardMaterial({color:0x303538,metalness:.62,roughness:.52});
+const wiperRubber=new THREE.MeshStandardMaterial({color:0x101416,roughness:.94});
+const wiperArms=new THREE.InstancedMesh(new THREE.BoxGeometry(.52,.018,.022),wiperMetal,2);
+const wiperBlades=new THREE.InstancedMesh(new THREE.BoxGeometry(.60,.025,.025),wiperRubber,2);
+const wiperPose=new THREE.Object3D();
+for(let i=0;i<2;i++){
+ const side=i===0?-1:1;
+ wiperPose.position.set(side*.49,-.59,-1.40);
+ wiperPose.rotation.set(0,0,side*.13);
+ wiperPose.updateMatrix();wiperArms.setMatrixAt(i,wiperPose.matrix);
+ wiperPose.position.set(side*.50,-.574,-1.408);
+ wiperPose.updateMatrix();wiperBlades.setMatrixAt(i,wiperPose.matrix);
+}
+wiperArms.instanceMatrix.needsUpdate=true;
+wiperBlades.instanceMatrix.needsUpdate=true;
+cockpit.add(wiperArms,wiperBlades);
 // Remove the overhead trim from the camera view; keep the lower dashboard and side frame.
 // Upper windshield crossbar removed to expose the street.
 const speedDial=new THREE.Group();speedDial.position.set(0,-.67,-1.37);cockpit.add(speedDial);
