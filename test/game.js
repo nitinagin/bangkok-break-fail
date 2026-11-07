@@ -574,9 +574,17 @@ for(let py=0;py<256;py++)for(let px=0;px<192;px++){
  const cutoff=.73+.27*Math.max(0,Math.min(1,(lateral+.12)*2.1));
  const puddleBreak=.76+.24*Math.pow(Math.sin(distance*89+lateral*15),2);
  const tireTrack=.85+.15*Math.pow(Math.sin(lateral*31+distance*9),2);
+ // Broken longitudinal glints from shallow ruts: three narrow, fading
+ // highlights inside the existing headlamp atlas, not extra light sources.
+ // Their staggered interruptions keep wet asphalt from reading as a flat glow.
+ const glintCenter=.18*Math.sin(distance*6.5)+.025*Math.sin(distance*31);
+ const glintWidth=.012+.014*distance;
+ const glint=Math.exp(-Math.pow((lateral-glintCenter)/glintWidth,2));
+ const glintBreak=Math.pow(Math.max(0,Math.sin(distance*38+3*Math.sin(distance*11))),3);
+ const wetGlint=.22*glint*glintBreak*(1-distance*.55);
  const alpha=Math.round(Math.min(155,Math.max(0,
   125*(distanceFade+nearBounce)*(.58*(left+right)*cutoff+
-  .28*(wetLeft+wetRight)*puddleBreak)*grain*tireTrack)));
+  .28*(wetLeft+wetRight)*puddleBreak+wetGlint)*grain*tireTrack)));
  const k=(py*192+px)*4;
  lowBeamPixels.data[k]=255;lowBeamPixels.data[k+1]=232;
  lowBeamPixels.data[k+2]=190;lowBeamPixels.data[k+3]=alpha;
