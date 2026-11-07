@@ -6415,8 +6415,33 @@ function paintWindshield(){
   c.restore();
  }
  if(windshieldHits>=3){
-  c.fillStyle='rgba(200,223,237,.18)';c.fillRect(0,0,w,h);
-  c.fillStyle='rgba(5,12,21,.30)';c.fillRect(0,0,w,h);
+  // Final collision: laminated glass fractures into irregular interlocking shards.
+  // Draw once on the existing 2D overlay; no per-frame work or WebGL draw calls.
+  const cols=11,rows=7,cellW=w/cols,cellH=h/rows;
+  for(let row=0;row<rows;row++)for(let col=0;col<cols;col++){
+   const seed=(row*71+col*43)%29;
+   const x=col*cellW,y=row*cellH;
+   const jitterX=((seed%7)-3)*cellW*.045;
+   const jitterY=((seed%5)-2)*cellH*.055;
+   c.beginPath();
+   c.moveTo(x+jitterX,y+jitterY);
+   c.lineTo(x+cellW+((seed*3)%7-3)*cellW*.04,y+((seed*5)%7-3)*cellH*.04);
+   c.lineTo(x+cellW+((seed*7)%7-3)*cellW*.04,y+cellH+((seed*11)%5-2)*cellH*.05);
+   c.lineTo(x+((seed*13)%7-3)*cellW*.04,y+cellH);
+   c.closePath();
+   c.fillStyle=(row+col)%4===0?'rgba(196,219,234,.22)':'rgba(214,232,243,.12)';
+   c.fill();
+   c.strokeStyle='rgba(8,18,30,.82)';c.lineWidth=2.2;c.stroke();
+   c.strokeStyle='rgba(241,249,255,.82)';c.lineWidth=.85;c.stroke();
+   // A few secondary fracture lines make the final impact read as shattered glass.
+   if((row+col)%3===0){
+    c.beginPath();c.moveTo(x+cellW*.15,y+cellH*.12);
+    c.lineTo(x+cellW*.54,y+cellH*.58);
+    c.lineTo(x+cellW*.89,y+cellH*.77);
+    c.strokeStyle='rgba(232,245,255,.65)';c.lineWidth=.85;c.stroke();
+   }
+  }
+  c.fillStyle='rgba(5,12,21,.22)';c.fillRect(0,0,w,h);
  }
 }
 addEventListener('resize',paintWindshield);
