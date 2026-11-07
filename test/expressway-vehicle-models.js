@@ -71,6 +71,21 @@ function makeBusGlazing(THREE){
   ctx.fillRect(74+col*6,62+row*3,1,1);
  }
  ctx.fillStyle='rgba(248,191,88,.32)';ctx.fillRect(74,68,108,1);
+ // Baked diagonal sodium-vapor streetlight streaks on laminated glass.
+ // Tapered reflections suggest moving Bangkok traffic without extra geometry,
+ // per-frame canvas work, texture memory or mobile GPU draw calls.
+ ctx.save();
+ ctx.globalCompositeOperation='screen';
+ for(const [x,alpha] of [[31,.16],[211,.12]]){
+  const reflection=ctx.createLinearGradient(x-20,92,x+34,196);
+  reflection.addColorStop(0,'rgba(255,198,112,0)');
+  reflection.addColorStop(.42,'rgba(255,198,112,'+alpha+')');
+  reflection.addColorStop(1,'rgba(255,198,112,0)');
+  ctx.fillStyle=reflection;
+  ctx.beginPath();ctx.moveTo(x,92);ctx.lineTo(x+12,92);
+  ctx.lineTo(x+48,196);ctx.lineTo(x+34,196);ctx.closePath();ctx.fill();
+ }
+ ctx.restore();
  // Fine windshield dust gathers at the lower seal, outside the route board.
  const lowerDust=ctx.createLinearGradient(0,197,0,251);
  lowerDust.addColorStop(0,'rgba(119,113,96,0)');
