@@ -407,17 +407,22 @@ function makeBusFrontFascia(THREE){
  const map=new THREE.CanvasTexture(canvas);map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=2;
  // Curved stamped-metal nose, sharing the existing fascia texture and material.
  // Sixteen triangles instead of two; no new draw calls or collision changes.
- const positions=[],uvs=[],indices=[],segments=8;
- for(let row=0;row<2;row++){
-  const y=row===0?-.36:.36;
+ const positions=[],uvs=[],indices=[],segments=8,rows=4;
+ // Pressed-steel front: tapered shoulder edges and a rounded lower apron.
+ // Keep the same material, texture, mesh count and collision envelope.
+ for(let row=0;row<=rows;row++){
+  const v=row/rows,y=(v-.5)*.72;
+  const shoulder=1-.035*Math.pow(Math.abs(v-.52)*2,2);
   for(let i=0;i<=segments;i++){
    const nx=i/segments*2-1;
-   positions.push(nx,y,.035*(1-nx*nx));
-   uvs.push(i/segments,row);
+   const crown=(1-nx*nx);
+   const z=.035*crown+.026*crown*(1-Math.pow(v*2-1,2))-.018*(1-v)*Math.abs(nx);
+   positions.push(nx*shoulder,y,z);
+   uvs.push(i/segments,v);
   }
  }
- for(let i=0;i<segments;i++){
-  const a=i,b=i+1,c=i+segments+1,d=c+1;
+ for(let row=0;row<rows;row++)for(let i=0;i<segments;i++){
+  const a=row*(segments+1)+i,b=a+1,c=a+segments+1,d=c+1;
   indices.push(a,b,c,b,d,c);
  }
  const fasciaGeometry=new THREE.BufferGeometry();
