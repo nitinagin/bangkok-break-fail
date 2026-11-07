@@ -1504,7 +1504,18 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   led.instanceMatrix.needsUpdate=true;
   group.add(led);
   // Baked rear lamps replace two separate rear lamp meshes.
-  const rearFascia=new THREE.Mesh(new THREE.PlaneGeometry(1.62,.32),makeSportsCarRearFascia(THREE));
+  // A subtly pressed, curved rear panel replaces the flat billboard fascia.
+  // Keep the existing shared 256x64 plate/lamp atlas and one draw call.
+  const rearPanelGeometry=new THREE.PlaneGeometry(1.62,.32,12,2);
+  const rearPanelPositions=rearPanelGeometry.attributes.position;
+  for(let vertex=0;vertex<rearPanelPositions.count;vertex++){
+   const x=rearPanelPositions.getX(vertex)/.81;
+   // Quarter-panel corners roll inward; the number plate stays flat and legible.
+   const shoulder=Math.max(0,(Math.abs(x)-.48)/.52);
+   rearPanelPositions.setZ(vertex,-.075*shoulder*shoulder);
+  }
+  rearPanelGeometry.computeVertexNormals();
+  const rearFascia=new THREE.Mesh(rearPanelGeometry,makeSportsCarRearFascia(THREE));
   rearFascia.rotation.y=Math.PI;rearFascia.position.set(0,.8,-length/2-.09);
    rearFascia.name='sports-car-rear-fascia';
   group.add(rearFascia);
