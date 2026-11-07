@@ -146,6 +146,18 @@ function makeBusWingMirrors(THREE){
   quad([x+half,y0,front],[x+half,y0,back],[x+half,y1,back],[x+half,y1,front],steel);
   quad([x-half,y1,back],[x+half,y1,back],[x+half,y1,front],[x-half,y1,front],housing);
   quad([x-half,y0,front],[x+half,y0,front],[x+half,y0,back],[x-half,y0,back],housing);
+  // Cast-metal mirror shells carry a recessed amber turn repeater on the
+  // outside edge. Vertex colours share the existing mirror PBR draw call.
+  // A narrow black gasket and inset lens add depth without dynamic lights.
+  const outer=x+side*half,inner=outer-side*.065;
+  const inset=side*.008;
+  quad([inner,2.075,front+.006],[outer,2.075,front+.006],
+   [outer,2.185,front+.006],[inner,2.185,front+.006],housing);
+  const amber=new THREE.Color(0xd88a35),lit=new THREE.Color(0xf4c46e);
+  quad([inner+inset,2.093,front+.009],[outer-inset,2.093,front+.009],
+   [outer-inset,2.162,front+.009],[inner+inset,2.162,front+.009],amber);
+  quad([inner+inset,2.151,front+.011],[outer-inset,2.151,front+.011],
+   [outer-inset,2.163,front+.011],[inner+inset,2.163,front+.011],lit);
  }
  const geometry=new THREE.BufferGeometry();
  geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
