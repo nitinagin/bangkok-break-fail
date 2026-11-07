@@ -733,15 +733,24 @@ function makeSportsCarProjectorHeadlights(THREE){
   const first=positions.length/3;
   const bottom=[[.45,.78,1.855],[.62,.775,1.83],[.80,.765,1.79]];
   const top=[[.46,.91,1.852],[.62,.895,1.825],[.78,.865,1.785]];
-  for(const [row,vertices] of [[0,bottom],[1,top]]){
+  // A shallow convex lens crown catches street lighting without dynamic lights.
+  // Nine vertices per side replace the old flat six-vertex projector surface.
+  const middle=bottom.map((v,i)=>[
+   (v[0]+top[i][0])*.5,
+   (v[1]+top[i][1])*.5,
+   (v[2]+top[i][2])*.5+.018
+  ]);
+  for(const [row,vertices] of [[0,bottom],[.5,middle],[1,top]]){
    for(let i=0;i<3;i++){
     const [x,y,z]=vertices[i];positions.push(side*x,y,z);
     uvs.push(i/2,row);
    }
   }
-  for(let i=0;i<2;i++){
-   const a=first+i,b=first+3+i;
-   indices.push(a,b,a+1,a+1,b,b+1);
+  for(let row=0;row<2;row++){
+   for(let i=0;i<2;i++){
+    const a=first+row*3+i,b=a+3;
+    indices.push(a,b,a+1,a+1,b,b+1);
+   }
   }
  }
  const geometry=new THREE.BufferGeometry();
