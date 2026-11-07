@@ -3163,8 +3163,11 @@ const canopyVertices=[],canopyUVs=[],canopyIndices=[],roofRows=8,roofCols=8;
 for(let j=0;j<=roofRows;j++){
  const v=j/roofRows,z=-1.40+3.06*v;
  for(let i=0;i<=roofCols;i++){
-  const u=i/roofCols,x=(u-.5)*2.24;
-  const y=2.27+.23*(1-(x/1.12)**2)-.035*Math.sin(Math.PI*v);
+  // Tapered canvas roof widens towards the passenger compartment.
+  // Reuse the original 8x8 canopy geometry and material draw call.
+  const u=i/roofCols,halfWidth=1.05+.13*v;
+  const x=(2*u-1)*halfWidth;
+  const y=2.27+.23*(1-(x/halfWidth)**2)-.035*Math.sin(Math.PI*v);
   canopyVertices.push(x,y,z);canopyUVs.push(u,v);
  }
 }
@@ -3177,7 +3180,8 @@ for(const side of [-1,1]){
  const base=canopyVertices.length/3;
  for(let j=0;j<=roofRows;j++){
   const v=j/roofRows,z=-1.40+3.06*v,y=2.27-.035*Math.sin(Math.PI*v);
-  canopyVertices.push(side*1.12,y,z,side*1.12,y-.16,z);
+  const edgeX=side*(1.05+.13*v);
+  canopyVertices.push(edgeX,y,z,edgeX,y-.16,z);
   canopyUVs.push(side<0?0:1,v,side<0?0:1,v+.05);
  }
  for(let j=0;j<roofRows;j++){
