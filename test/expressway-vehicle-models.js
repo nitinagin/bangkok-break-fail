@@ -1274,7 +1274,10 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
      const radius=archRadii[band];
      for(let step=0;step<=archSegments;step++){
       const angle=Math.PI*step/archSegments;
-      archPositions.push(side*(w*.5+.065),.4+Math.sin(angle)*radius,
+      // Step the liner inward and the painted arch outward to create a real raised lip.
+      // All three bands remain in the existing single indexed PBR mesh.
+      const lipOffset=[.012,.058,.102][band];
+      archPositions.push(side*(w*.5+lipOffset),.4+Math.sin(angle)*radius,
        axle*1.1+Math.cos(angle)*radius);
       const color=archPalette[band];
       archColors.push(color.r,color.g,color.b);
