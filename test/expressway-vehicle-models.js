@@ -111,20 +111,25 @@ function makeBusGlazing(THREE){
  const map=new THREE.CanvasTexture(canvas);map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=2;
  return new THREE.MeshStandardMaterial({map,metalness:.18,roughness:.29});
 }
-// A raked, slightly bowed windshield replaces the square bus glass box.
-// Eight segments, sixteen triangles, and the existing shared PBR glass atlas.
+// Compound-curved laminated bus windscreen: a softly crowned centre, tapered
+// shoulders and progressive rake. One indexed mesh and the existing PBR atlas;
+// four vertical strips keep the curved reflections smooth on mobile.
 function makeBusCurvedWindshield(THREE,material){
- const positions=[],uvs=[],indices=[],segments=8;
- for(let row=0;row<=1;row++){
-  const y=1.745+row*.83;
+ const positions=[],uvs=[],indices=[],segments=8,rows=4;
+ for(let row=0;row<=rows;row++){
+  const t=row/rows,y=1.745+t*.83;
   for(let i=0;i<=segments;i++){
-   const nx=i/segments*2-1,x=nx*.9;
-   const z=2.335-row*.055+.028*(1-nx*nx);
-   positions.push(x,y,z);uvs.push(i/segments,row);
+   const nx=i/segments*2-1;
+   const shoulder=Math.pow(Math.abs(nx),2);
+   const x=nx*(.90-.025*t);
+   // Crown is deepest at mid-glass, fading into the metal window seal.
+   const crown=.042*(1-shoulder)*Math.sin(Math.PI*t);
+   const z=2.335-t*.055+.028*(1-shoulder)+crown-.014*shoulder*t;
+   positions.push(x,y,z);uvs.push(i/segments,t);
   }
  }
- for(let i=0;i<segments;i++){
-  const a=i,b=i+1,c=i+segments+1,d=c+1;
+ for(let row=0;row<rows;row++)for(let i=0;i<segments;i++){
+  const a=row*(segments+1)+i,b=a+1,c=a+segments+1,d=c+1;
   indices.push(a,b,c,b,d,c);
  }
  const geometry=new THREE.BufferGeometry();
@@ -132,7 +137,7 @@ function makeBusCurvedWindshield(THREE,material){
  geometry.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));
  geometry.setIndex(indices);geometry.computeVertexNormals();
  const mesh=new THREE.Mesh(geometry,material);
- mesh.name='bangkok-bus-curved-pbr-windshield';
+ mesh.name='bangkok-bus-compound-curved-pbr-windshield';
  return mesh;
 }
 // Paired Bangkok bus wing mirrors: curved support arms and broad vertical
