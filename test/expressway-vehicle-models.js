@@ -830,7 +830,20 @@ function makeBusCurvedRoofHVAC(THREE){
  // Two low-profile rooftop A/C pods, as seen on Bangkok city buses.
  // Both are baked into this existing vertex-colour roof mesh: one draw call.
  for(const centerZ of [-.94,.91]){
-  box(-.68,.68,2.93,3.13,centerZ-.52,centerZ+.52,palette.shell,palette.edge);
+  // Tapered pressed-metal HVAC cowling: the narrow raised lid and sloping
+  // shoulders replace the square rooftop box, retaining a single roof mesh.
+  // The ventilation tray above remains unchanged and unobstructed.
+  quad([-.53,3.13,centerZ-.52],[.53,3.13,centerZ-.52],
+       [.53,3.13,centerZ+.52],[-.53,3.13,centerZ+.52],palette.shell);
+  for(const side of [-1,1]){
+   const outer=side*.68,inner=side*.53;
+   quad([outer,2.93,centerZ-.52],[outer,2.93,centerZ+.52],
+        [inner,3.13,centerZ+.52],[inner,3.13,centerZ-.52],palette.edge);
+  }
+  quad([-.68,2.93,centerZ-.52],[.68,2.93,centerZ-.52],
+       [.53,3.13,centerZ-.52],[-.53,3.13,centerZ-.52],palette.shell);
+  quad([-.53,3.13,centerZ+.52],[.53,3.13,centerZ+.52],
+       [.68,2.93,centerZ+.52],[-.68,2.93,centerZ+.52],palette.shell);
   // Recessed fan panels with transverse ventilation slats.
   box(-.53,.53,3.132,3.137,centerZ-.39,centerZ+.39,palette.grille,palette.grille);
   for(let n=0;n<5;n++){
