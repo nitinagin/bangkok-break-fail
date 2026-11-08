@@ -4957,6 +4957,17 @@ function makeTukLampLensTexture(rear){
    ctx.fillStyle='rgba(255,255,230,.15)';
    ctx.fillRect(-3,-8,6,16);ctx.restore();
   }
+  // Vintage prismatic pressed-glass ribs, baked into the shared 128px lens.
+  // No extra meshes, textures, dynamic lights or draw calls.
+  for(let rib=0;rib<11;rib++){
+   const x=27+rib*7;
+   const glint=ctx.createLinearGradient(x-2,0,x+3,0);
+   glint.addColorStop(0,'rgba(12,29,36,.19)');
+   glint.addColorStop(.46,'rgba(255,252,221,.30)');
+   glint.addColorStop(1,'rgba(20,35,39,.10)');
+   ctx.fillStyle=glint;
+   ctx.fillRect(x,28+(rib%3)*3,3,70-(rib%4)*4);
+  }
   ctx.beginPath();ctx.ellipse(43,36,12,5,-.45,0,Math.PI*2);
   ctx.fillStyle='rgba(255,255,255,.46)';ctx.fill();
  }
