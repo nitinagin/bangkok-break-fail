@@ -426,6 +426,23 @@ export function createExpresswayArt(THREE){
   fade.addColorStop(1,'rgba(255,225,169,0)');
   pc.fillStyle=fade;pc.fillRect(x,y,w,h);
  }
+ // Wide, interrupted headlamp reflections on rain-soaked expressway asphalt.
+ // Draw into the existing shared light-pool atlas, with no extra GPU resources.
+ // The taper and gaps read as reflected beams instead of painted road lines.
+ for(let beam=0;beam<2;beam++){
+  const center=beam===0?27:101;
+  for(let segment=0;segment<16;segment++){
+   const y=18+segment*14+((segment*7+beam*3)%5);
+   const span=4+(segment%4)*2;
+   const x=center-Math.floor(span/2)+((segment*11)%7)-3;
+   const alpha=.08+(segment%5)*.023;
+   const sheen=pc.createLinearGradient(x,y,x,y+span);
+   sheen.addColorStop(0,'rgba(222,235,243,0)');
+   sheen.addColorStop(.4,'rgba(222,235,243,'+alpha.toFixed(3)+')');
+   sheen.addColorStop(1,'rgba(222,235,243,0)');
+   pc.fillStyle=sheen;pc.fillRect(x,y,2+(segment%3),span);
+  }
+ }
  // Cool LED and neon reflections break up the sodium-orange lamp pools.
  // Baked into the existing shared canvas: no extra textures or draw calls.
  // Short offset fragments suggest shallow puddles, not painted lane stripes.
