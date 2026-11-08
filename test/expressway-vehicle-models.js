@@ -116,6 +116,22 @@ function makeBusGlazing(THREE){
   ctx.beginPath();ctx.arc(cx,cy,r,start,end);ctx.stroke();
  }
  ctx.restore();
+ // Fine rain beads and trailing runoff on the upper side glazing: a fixed
+ // deterministic pattern baked once into the existing 256px glass texture.
+ // Keep the central route display and lower wiper-cleared field unobstructed.
+ ctx.save();
+ for(let i=0;i<68;i++){
+  const x=14+(i*79)%228,y=81+(i*47)%106;
+  if(x>62&&x<196&&y<99)continue;
+  const radius=.55+(i%4)*.22;
+  ctx.fillStyle=i%3===0?'rgba(219,232,234,.30)':'rgba(180,209,215,.18)';
+  ctx.beginPath();ctx.ellipse(x,y,radius,radius*1.65,0,0,Math.PI*2);ctx.fill();
+  if(i%5===0){
+   ctx.strokeStyle='rgba(173,204,209,.12)';ctx.lineWidth=.65;
+   ctx.beginPath();ctx.moveTo(x,y+2);ctx.lineTo(x+1,y+8+(i%4)*3);ctx.stroke();
+  }
+ }
+ ctx.restore();
  // Bake two parked windscreen wipers and a weathered rubber surround
  // into the existing glass atlas: no extra draw calls or dynamic lights.
  ctx.strokeStyle='rgba(11,19,23,.85)';ctx.lineWidth=7;
