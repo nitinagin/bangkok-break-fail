@@ -271,6 +271,17 @@ function makeBusSideLivery(THREE){
  for(const seam of [4,164,328,505])for(const y of [10,45]){
   ctx.beginPath();ctx.arc(seam+4,y,1.3,0,Math.PI*2);ctx.fill();
  }
+ // Two-leaf passenger entrance: narrow recessed joints, rubber seals, and
+ // inset grab handles painted into the shared side panel. No extra draw calls.
+ // Keep route lettering untouched: doors are indicated only below the band.
+ ctx.fillStyle='rgba(8,21,27,.68)';
+ for(const x of [348,376,404])ctx.fillRect(x,46,2,18);
+ ctx.fillStyle='rgba(213,220,209,.35)';
+ for(const x of [351,379,407])ctx.fillRect(x,46,1,16);
+ ctx.fillStyle='rgba(6,18,23,.55)';
+ for(const x of [366,392])ctx.fillRect(x,50,3,8);
+ ctx.fillStyle='rgba(236,226,195,.68)';
+ for(const x of [367,393])ctx.fillRect(x,51,1,5);
  // Reflective amber side-marker strips and rear-quarter diagonal conspicuity
  // markings are baked into the existing bus livery atlas (no extra geometry).
  // Keep the route text band above y=45 unobstructed.
