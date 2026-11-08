@@ -4812,6 +4812,22 @@ tukWindscreenCtx.closePath();tukWindscreenCtx.fill();
 tukWindscreenCtx.fillStyle='rgba(249,214,151,.10)';
 tukWindscreenCtx.fillRect(187,7,5,109);
 tukWindscreenCtx.fillRect(200,8,2,108);
+// Baked Yaowarat neon reflected across the outer edges of tuk-tuk glass.
+// Shared atlas only: no extra draw calls, textures, or per-frame updates.
+tukWindscreenCtx.save();
+tukWindscreenCtx.globalCompositeOperation='screen';
+for(const [x,rgb] of [[24,'255,72,122'],[207,'65,192,238']]){
+ const glow=tukWindscreenCtx.createLinearGradient(x-14,4,x+30,120);
+ glow.addColorStop(0,'rgba('+rgb+',0)');
+ glow.addColorStop(.4,'rgba('+rgb+',.2)');
+ glow.addColorStop(1,'rgba('+rgb+',0)');
+ tukWindscreenCtx.fillStyle=glow;
+ tukWindscreenCtx.beginPath();
+ tukWindscreenCtx.moveTo(x,8);tukWindscreenCtx.lineTo(x+8,8);
+ tukWindscreenCtx.lineTo(x+30,117);tukWindscreenCtx.lineTo(x+19,117);
+ tukWindscreenCtx.closePath();tukWindscreenCtx.fill();
+}
+tukWindscreenCtx.restore();
 // Baked weathered rubber seal and bottom-mounted wiper, avoiding extra draw calls.
 tukWindscreenCtx.strokeStyle='rgba(12,17,21,.85)';
 tukWindscreenCtx.lineWidth=9;tukWindscreenCtx.strokeRect(4.5,4.5,247,119);
