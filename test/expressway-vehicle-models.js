@@ -32,6 +32,19 @@ function makeBusGlazing(THREE){
   ctx.fillStyle=i%3===0?'rgba(211,224,232,.16)':'rgba(159,175,182,.09)';
   ctx.fillRect(x,y,1,18+(i%5)*9);
  }
+ // Road-film buildup collects below the wiper sweep on working Bangkok buses.
+ // Bake translucent soot and dried splash marks into the shared glazing atlas.
+ // No extra textures, meshes, draw calls or per-frame work.
+ const roadFilm=ctx.createLinearGradient(0,181,0,256);
+ roadFilm.addColorStop(0,'rgba(37,40,36,0)');
+ roadFilm.addColorStop(.65,'rgba(67,63,49,.13)');
+ roadFilm.addColorStop(1,'rgba(43,40,33,.30)');
+ ctx.fillStyle=roadFilm;ctx.fillRect(10,181,236,75);
+ for(let i=0;i<32;i++){
+  const x=13+(i*73)%230,y=205+(i*29)%46;
+  ctx.fillStyle=i%3===0?'rgba(169,155,124,.20)':'rgba(84,79,65,.17)';
+  ctx.fillRect(x,y,1+(i%3),1+(i%4));
+ }
  // Rain-cleared wiper sweeps expose the road through the working bus windshield.
  // Bake two soft, overlapping curved wipe boundaries into the shared glazing
  // texture: no geometry, per-frame canvas work, or additional draw calls.
