@@ -5238,10 +5238,14 @@ function makeTukTuk(){
   const halfWidth=.16+.12*crown;
   for(let col=0;col<4;col++){
    const side=col<2?-1:1;
-   const rolledEdge=(col===0||col===3)?-.034:0;
-   const x=side*(col===0||col===3?halfWidth:halfWidth-.038);
-   // Subtle crown ridge and folded lips, with no extra vertices/draw calls.
-   guardVertices.push(x,topY+rolledEdge+(col===1||col===2?.018*crown:0),topZ);
+   const outerLip=col===0||col===3;
+   const x=side*(outerLip?halfWidth:halfWidth-.038);
+   // A continuous transverse crown rolls down into the pressed outer lips.
+   // The wheel arch reads as curved sheet steel rather than a flat ribbon;
+   // vertex count, PBR material and draw calls remain unchanged.
+   const transverseCrown=.028*(1-(x/halfWidth)**2)*crown;
+   const rolledEdge=outerLip?-.037:0;
+   guardVertices.push(x,topY+transverseCrown+rolledEdge,topZ);
    guardUV.push(col/3,step/guardSteps);
   }
  }
