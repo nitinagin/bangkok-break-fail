@@ -792,6 +792,19 @@ export function createExpresswayArt(THREE){
   damp.addColorStop(1,'rgba(30,30,30,0)');
   brc.fillStyle=damp;brc.fillRect(0,trackY-7,256,14);
  }
+ // Match the three repaired pothole patches in the albedo atlas with
+ // smoother bitumen seams and coarse, high-roughness aggregate interiors.
+ // This corrects a visible PBR mismatch without extra draw calls or textures.
+ for(const [x,y,w,h] of [[44,48,21,10],[153,18,30,8],[206,101,25,11]]){
+  brc.fillStyle='#c8c8c8';brc.fillRect(x,y,w,h);
+  brc.strokeStyle='#505050';brc.lineWidth=2;
+  brc.strokeRect(x+.5,y+.5,w-1,h-1);
+  for(let grain=0;grain<24;grain++){
+   const gx=x+(grain*13+3)%w,gy=y+(grain*7+2)%h;
+   brc.fillStyle=grain%3?'rgba(255,255,255,.20)':'rgba(15,15,15,.12)';
+   brc.fillRect(gx,gy,2,1);
+  }
+ }
  for(let i=0;i<720;i++){
   const x=(i*73+19)%256,y=(i*101+7)%128;
   brc.fillStyle=i%3?'rgba(255,255,255,.14)':'rgba(15,15,15,.15)';
