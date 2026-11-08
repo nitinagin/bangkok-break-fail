@@ -54,6 +54,12 @@ function makeBusGlazing(THREE){
  shade.addColorStop(.40,'rgba(24,46,50,.35)');
  shade.addColorStop(1,'rgba(24,46,50,0)');
  ctx.fillStyle=shade;ctx.fillRect(7,7,242,85);
+ // Bonded rubber windscreen seal and metallic inner trim baked in the shared atlas.
+ // Keeps the glazing visually seated in the body without extra mobile draw calls.
+ ctx.save();
+ ctx.strokeStyle='rgba(6,12,16,.82)';ctx.lineWidth=7;ctx.strokeRect(4,4,248,248);
+ ctx.strokeStyle='rgba(122,141,145,.35)';ctx.lineWidth=1.5;ctx.strokeRect(9,9,238,238);
+ ctx.restore();
  // Bangkok route display behind the windscreen: an amber LED destination
  // board with a legible Thai route number, baked into the shared glazing atlas.
  // No additional geometry, materials, lights or per-frame work.
