@@ -749,6 +749,33 @@ export function createExpresswayArt(THREE){
   }
  }
  bac.restore();
+ // Rain-fed runoff at the outside parapet: dark drainage channel, broken
+ // silvery water edge and intermittent steel drain grates. This is painted
+ // into the shared flyover asphalt atlas, not separate road geometry.
+ // Both shoulders remain unobstructed and the driving lanes are untouched.
+ for(const edgeY of [17,105]){
+  const lip=bac.createLinearGradient(0,edgeY-3,0,edgeY+3);
+  lip.addColorStop(0,'rgba(7,13,17,0)');
+  lip.addColorStop(.38,'rgba(7,13,17,.42)');
+  lip.addColorStop(.68,'rgba(12,22,28,.48)');
+  lip.addColorStop(1,'rgba(7,13,17,0)');
+  bac.fillStyle=lip;bac.fillRect(0,edgeY-3,256,6);
+  for(let segment=0;segment<18;segment++){
+   const x=segment*15+(segment%4)*2;
+   bac.fillStyle=segment%3===0?'rgba(164,179,181,.28)':'rgba(111,133,141,.13)';
+   bac.fillRect(x,edgeY+(segment%3)-1,7+(segment%4),1);
+  }
+  for(const drainX of [36,126,216]){
+   bac.fillStyle='rgba(6,10,12,.78)';
+   bac.fillRect(drainX,edgeY-2,17,5);
+   bac.fillStyle='rgba(128,143,146,.45)';
+   bac.fillRect(drainX,edgeY-2,17,1);
+   for(let slot=0;slot<5;slot++){
+    bac.fillStyle='rgba(2,5,7,.9)';
+    bac.fillRect(drainX+2+slot*3,edgeY-1,1,3);
+   }
+  }
+ }
  // Damp tyre-polished lanes catch headlamp glints without extra lights or meshes.
  // Broad translucent streaks are interrupted by dry gaps, avoiding a plastic sheen.
  for(const laneY of [33,91]){
