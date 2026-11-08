@@ -29,7 +29,20 @@
  #hint{bottom:calc(env(safe-area-inset-bottom) + 10px);font-size:11px}
 }
 </style>
-<link rel="stylesheet" href="./hud.css"><link rel="stylesheet" href="./splash.css"></head>
+<link rel="stylesheet" href="./hud.css"><link rel="stylesheet" href="./splash.css">
+<!-- Cinematic mobile start/restart treatment: CSS-only, no GPU draw calls. -->
+<style>
+#overlay{background:linear-gradient(180deg,rgba(2,6,12,.90),rgba(3,9,17,.83) 50%,rgba(0,0,0,.94));}
+#panel{background:linear-gradient(165deg,rgba(16,25,33,.98),rgba(5,9,16,.98));border:1px solid rgba(230,181,92,.62);border-radius:12px;box-shadow:0 24px 70px rgba(0,0,0,.82),inset 0 1px rgba(255,255,255,.10);}
+#panel h1{color:#f6f1e8;text-shadow:0 2px 14px rgba(0,0,0,.75);letter-spacing:.015em;font-weight:950;}
+#panel p{color:#d5d9dc;letter-spacing:.045em;}
+#panel button{background:linear-gradient(180deg,#f6c66b,#d89234);color:#111920;border:1px solid #ffdf9d;border-radius:7px;box-shadow:0 5px 20px rgba(0,0,0,.48);min-height:48px;}
+#panel button:focus-visible{outline:3px solid #fff;outline-offset:3px;}
+#panel small{color:#b9c3c9;}
+#coverArt{border-radius:5px;border-color:rgba(245,195,114,.40);}
+@media (orientation:landscape) and (max-height:500px){#panel{border-radius:8px}#panel button{min-height:40px}}
+</style>
+</head>
 <body><div id="hud"><div id="score">0 PTS</div><div id="status">120 KM/H<br>❤️❤️❤️</div></div><div id="gameControls"><button id="pauseBtn" aria-label="Pause game">⏸</button><button id="soundBtn" aria-label="Toggle sound">🔊</button><button id="centerBtn" aria-label="Recenter steering">🎯</button></div><div id="challenge">🎯 SURVIVE 500m · +250</div><div id="district">☀️ BANGKOK DAYTIME</div><div id="hint">TILT TO STEER</div><div id="overlay"><div id="panel"><img id="coverArt" src="./game-cover.svg" width="900" height="600" alt="Cinematic tuk-tuk chase through neon Bangkok with Thai ghosts and a floating Krasue"><h1>🛺 NITINAGIN’S<br>BREAK FAIL!</h1><p>V6.7 — NEON NIGHT DRIVE</p><p>LIGHT OUT NIGHT : THAILAND<br>NO BRAKES. NO RULES.</p><p>เอียงมือถือเพื่อหลบสิ่งกีดขวาง</p><button id="start">START CHAOS</button><small>Hold phone comfortably before starting.<br>Use 🎯 to recenter tilt steering.</small></div></div><div id="error">3D could not load. Please check your internet connection and refresh Safari.</div>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"}}</script>
 <script type="module" src="./game.js"></script></body></html>
