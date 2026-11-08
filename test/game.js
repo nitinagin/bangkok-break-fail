@@ -3287,7 +3287,27 @@ car.add(grilleMesh);
 // front single wheel and rounded fender
 cyl(.4,.4,.22,playerRubber,0,.42,-1.42,Math.PI/2);
 cyl(.22,.22,.24,chrome,0,.42,-1.42,Math.PI/2);
-ellipsoid(0,.69,-1.43,.45,.13,.5,playerBrass);
+// Formed steel front mudguard: arched over tyre, tapering toward both ends.
+const guardVerts=[],guardFaces=[],guardRings=16,guardStrips=6;
+for(let ring=0;ring<=guardRings;ring++){
+ const angle=-Math.PI*.46+ring/guardRings*Math.PI*.92;
+ const z=-1.43-.49*Math.sin(angle),height=.44+.39*Math.cos(angle);
+ const width=.38*(.77+.23*Math.cos(angle));
+ for(let strip=0;strip<=guardStrips;strip++){
+  const u=strip/guardStrips*2-1;
+  guardVerts.push(u*width,height+.095*(1-u*u),z+.012*u*u);
+ }
+}
+for(let ring=0;ring<guardRings;ring++)for(let strip=0;strip<guardStrips;strip++){
+ const a=ring*(guardStrips+1)+strip,b=a+guardStrips+1;
+ guardFaces.push(a,a+1,b,a+1,b+1,b);
+}
+const guardGeometry=new THREE.BufferGeometry();
+guardGeometry.setAttribute('position',new THREE.Float32BufferAttribute(guardVerts,3));
+guardGeometry.setIndex(guardFaces);guardGeometry.computeVertexNormals();
+const frontMudguard=new THREE.Mesh(guardGeometry,playerBrass);
+frontMudguard.name='player-tuktuk-formed-steel-front-mudguard';
+car.add(frontMudguard);
 // Fluted glass headlamp lenses: baked radial optics on the existing lamp
 // meshes. Shared texture/material, no additional draw calls or real-time lights.
 const headlampCanvas=document.createElement('canvas');
