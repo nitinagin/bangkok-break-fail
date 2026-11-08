@@ -41,8 +41,23 @@
 #panel small{color:#b9c3c9;}
 #coverArt{border-radius:5px;border-color:rgba(245,195,114,.40);}
 @media (orientation:landscape) and (max-height:500px){#panel{border-radius:8px}#panel button{min-height:40px}}
+
+/* Unobstructed driving corridor on compact phones: cluster stage labels at the
+   top, and dock controls to the safe-area edge. No WebGL work per frame. */
+@media (orientation:portrait) and (max-width:430px){
+ #challenge{top:calc(env(safe-area-inset-top) + 63px);max-width:72vw;padding:5px 9px;background:rgba(5,12,20,.82);border:1px solid rgba(246,198,107,.25)}
+ #district{top:calc(env(safe-area-inset-top) + 94px);max-width:72vw;padding:3px 8px;background:rgba(5,12,20,.72)}
+ #gameControls{left:calc(env(safe-area-inset-left) + 8px);bottom:calc(env(safe-area-inset-bottom) + 8px);gap:5px}
+ #gameControls button{min-width:44px;min-height:44px;background:rgba(5,12,20,.86);border-color:rgba(246,198,107,.45)}
+ #hint{bottom:calc(env(safe-area-inset-bottom) + 60px);font-size:12px;letter-spacing:.08em;color:#f7e7c7}
+}
+@media (orientation:landscape) and (max-height:500px){
+ #challenge{top:calc(env(safe-area-inset-top) + 45px);max-width:48vw;background:rgba(5,12,20,.85)}
+ #district{top:calc(env(safe-area-inset-top) + 69px);max-width:48vw;background:rgba(5,12,20,.75)}
+ #hint{left:auto;right:calc(env(safe-area-inset-right) + 10px);width:auto;bottom:calc(env(safe-area-inset-bottom) + 12px);font-size:10px}
+}
 </style>
 </head>
-<body><div id="hud"><div id="score">0 PTS</div><div id="status">120 KM/H<br>❤️❤️❤️</div></div><div id="gameControls"><button id="pauseBtn" aria-label="Pause game">⏸</button><button id="soundBtn" aria-label="Toggle sound">🔊</button><button id="centerBtn" aria-label="Recenter steering">🎯</button></div><div id="challenge">🎯 SURVIVE 500m · +250</div><div id="district">☀️ BANGKOK DAYTIME</div><div id="hint">TILT TO STEER</div><div id="overlay"><div id="panel"><img id="coverArt" src="./game-cover.svg" width="900" height="600" alt="Cinematic tuk-tuk chase through neon Bangkok with Thai ghosts and a floating Krasue"><h1>🛺 NITINAGIN’S<br>BREAK FAIL!</h1><p>V6.7 — NEON NIGHT DRIVE</p><p>LIGHT OUT NIGHT : THAILAND<br>NO BRAKES. NO RULES.</p><p>เอียงมือถือเพื่อหลบสิ่งกีดขวาง</p><button id="start">START CHAOS</button><small>Hold phone comfortably before starting.<br>Use 🎯 to recenter tilt steering.</small></div></div><div id="error">3D could not load. Please check your internet connection and refresh Safari.</div>
+<body><div id="hud"><div id="score">0 PTS</div><div id="status">120 KM/H<br>❤️❤️❤️</div></div><div id="gameControls"><button id="pauseBtn" aria-label="Pause game">⏸</button><button id="soundBtn" aria-label="Toggle sound">🔊</button><button id="centerBtn" aria-label="Recenter steering">🎯</button></div><div id="challenge">🎯 SURVIVE 500m · +250</div><div id="district">🌃 BANGKOK NIGHT DRIVE</div><div id="hint">TILT TO STEER</div><div id="overlay"><div id="panel"><img id="coverArt" src="./game-cover.svg" width="900" height="600" alt="Cinematic tuk-tuk chase through neon Bangkok with Thai ghosts and a floating Krasue"><h1>🛺 NITINAGIN’S<br>BREAK FAIL!</h1><p>V6.7 — NEON NIGHT DRIVE</p><p>LIGHT OUT NIGHT : THAILAND<br>NO BRAKES. NO RULES.</p><p>เอียงมือถือเพื่อหลบสิ่งกีดขวาง</p><button id="start">START CHAOS</button><small>Hold phone comfortably before starting.<br>Use 🎯 to recenter tilt steering.</small></div></div><div id="error">3D could not load. Please check your internet connection and refresh Safari.</div>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"}}</script>
 <script type="module" src="./game.js"></script></body></html>
