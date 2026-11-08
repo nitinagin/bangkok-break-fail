@@ -240,6 +240,11 @@ export function createExpresswayArt(THREE){
  skylineThaiCtx.fillText('ทางด่วน',128,49);
  skylineThaiCtx.font='bold 18px sans-serif';
  skylineThaiCtx.fillText('EXPRESSWAY',128,82);
+ // Route shield baked into the existing atlas; no new draw calls.
+ skylineThaiCtx.fillStyle='#e8eee8';skylineThaiCtx.fillRect(207,20,30,29);
+ skylineThaiCtx.fillStyle='#174f79';skylineThaiCtx.fillRect(210,23,24,23);
+ skylineThaiCtx.fillStyle='#ffffff';skylineThaiCtx.font='bold 18px Arial,sans-serif';
+ skylineThaiCtx.fillText('9',222,35);
  skylineThaiCtx.strokeStyle='#f7f8ee';skylineThaiCtx.lineWidth=5;
  skylineThaiCtx.lineCap='round';skylineThaiCtx.beginPath();
  skylineThaiCtx.moveTo(128,111);skylineThaiCtx.lineTo(128,95);
