@@ -554,6 +554,16 @@ function makeSportsCarRearFascia(THREE){
    ctx.fillStyle='#f5242c';ctx.fillRect(lx,23,11,7);
    ctx.fillStyle='rgba(255,202,174,.46)';ctx.fillRect(lx,14,11,1);
   }
+  // Continuous C-shaped LED light signature, baked into the existing atlas.
+  ctx.save();ctx.lineJoin='round';ctx.lineCap='round';
+  ctx.shadowColor='rgba(255,52,41,.75)';ctx.shadowBlur=5;
+  ctx.strokeStyle='#ff5144';ctx.lineWidth=2.5;
+  ctx.beginPath();
+  if(left){ctx.moveTo(x+59,15);ctx.lineTo(x+12,15);ctx.lineTo(x+12,32);ctx.lineTo(x+59,32);}
+  else{ctx.moveTo(x+9,15);ctx.lineTo(x+56,15);ctx.lineTo(x+56,32);ctx.lineTo(x+9,32);}
+  ctx.stroke();ctx.shadowBlur=0;
+  ctx.strokeStyle='rgba(255,223,199,.8)';ctx.lineWidth=.8;ctx.stroke();
+  ctx.restore();
   // Baked diffused red lens bloom and an inner amber turn-signal segment:
   // visibly richer rear lamps at night without dynamic lights or new meshes.
   const glow=ctx.createLinearGradient(x,0,x+68,0);
