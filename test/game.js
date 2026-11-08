@@ -5254,6 +5254,20 @@ function makeTukTuk(){
   // Winding points outward toward the upper visible surface.
   guardIndices.push(a,b,a+1,a+1,b,b+1);
  }
+ // Fold both exposed longitudinal edges into shallow sheet-metal returns.
+ // The continuous lips add silhouette depth without extra materials or draw calls.
+ const lipBase=guardVertices.length/3;
+ for(let step=0;step<=guardSteps;step++)for(const edge of [0,3]){
+  const source=step*4+edge;
+  guardVertices.push(guardVertices[source*3],guardVertices[source*3+1]-.052,guardVertices[source*3+2]);
+  guardUV.push(edge/3,step/guardSteps);
+ }
+ for(let step=0;step<guardSteps;step++)for(let side=0;side<2;side++){
+  const upper=step*4+(side===0?0:3),nextUpper=upper+4;
+  const lower=lipBase+step*2+side,nextLower=lower+2;
+  if(side===0)guardIndices.push(upper,lower,nextUpper,nextUpper,lower,nextLower);
+  else guardIndices.push(upper,nextUpper,lower,nextUpper,nextLower,lower);
+ }
  const guardGeometry=new THREE.BufferGeometry();
  guardGeometry.setAttribute('position',new THREE.Float32BufferAttribute(guardVertices,3));
  guardGeometry.setAttribute('uv',new THREE.Float32BufferAttribute(guardUV,2));
