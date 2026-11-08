@@ -84,6 +84,16 @@ function makeBusGlazing(THREE){
  ctx.font='bold 31px sans-serif';ctx.fillText('511',75,48);
  ctx.textAlign='right';ctx.fillStyle='#edb962';
  ctx.font='bold 14px sans-serif';ctx.fillText('สาย',182,49);
+ // LED route-board side markers: paired amber corner lamps and a dim housing
+ // highlight make the destination display readable as a physical bus fixture.
+ // All pixels share the existing 256px windshield atlas and incur no draw calls.
+ ctx.fillStyle='rgba(255,179,62,.92)';
+ for(const x of [69,187]){
+  ctx.fillRect(x,36,2,19);
+  ctx.fillStyle='rgba(255,219,142,.45)';ctx.fillRect(x+2,37,1,17);
+  ctx.fillStyle='rgba(255,179,62,.92)';
+ }
+ ctx.fillStyle='rgba(255,224,162,.22)';ctx.fillRect(72,32,113,1);
  // Amber LED diffuser dots and a thin bottom rail.
  ctx.fillStyle='rgba(255,195,86,.33)';
  for(let row=0;row<2;row++)for(let col=0;col<19;col++){
