@@ -1077,6 +1077,27 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
  function box(x,y,z,a,b,c,material){const m=new THREE.Mesh(new THREE.BoxGeometry(a,b,c),material);m.position.set(x,y,z);group.add(m);}
  if(isBus){
   const busGlazing=makeBusGlazing(THREE),destination=makeBusDestination(THREE);
+  // Roof-edge amber clearance lamps make the full-size Bangkok bus readable
+  // at night without six separate draw calls or runtime point lights.
+  // Keep lamps above the roof and inside the original collision footprint.
+  const clearance=new THREE.InstancedMesh(
+   new THREE.BoxGeometry(.115,.055,.075),
+   new THREE.MeshStandardMaterial({
+    color:0xffb04a,emissive:0xff780c,emissiveIntensity:1.7,
+    metalness:.12,roughness:.34
+   }),6);
+  const clearanceMatrix=new THREE.Matrix4();
+  let clearanceIndex=0;
+  for(const z of [-2.12,2.12]){
+   for(const x of [-.76,0,.76]){
+    clearanceMatrix.makeTranslation(x,2.875,z);
+    clearance.setMatrixAt(clearanceIndex++,clearanceMatrix);
+   }
+  }
+  clearance.instanceMatrix.needsUpdate=true;
+  clearance.name='bangkok-bus-roof-clearance-lamps';
+  group.add(clearance);
+
   box(0,1.07,0,2.07,.25,4.4,stripe);
   group.add(makeBusSideLivery(THREE));
   // Pressed lower body panels with a continuous recessed beltline and
