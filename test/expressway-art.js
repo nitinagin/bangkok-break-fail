@@ -653,7 +653,7 @@ export function createExpresswayArt(THREE){
  // Paired rain-darkened wheel ruts and intermittent oily sheen from heavy traffic.
  // Baked into the existing asphalt atlas, with no added geometry or draw calls.
  // Keep contrast low so lane markings and the dodge corridor remain readable.
- for(const trackY of [39,47,81,89]){
+ for(const trackY of [27,38,85,98]){
   const rut=bac.createLinearGradient(0,trackY-3,0,trackY+3);
   rut.addColorStop(0,'rgba(9,14,18,0)');
   rut.addColorStop(.45,'rgba(7,12,16,.26)');
