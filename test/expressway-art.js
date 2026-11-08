@@ -777,8 +777,30 @@ export function createExpresswayArt(THREE){
  const bridgeAsphaltTexture=new THREE.CanvasTexture(bridgeAsphaltCanvas);
  bridgeAsphaltTexture.colorSpace=THREE.SRGBColorSpace;
  bridgeAsphaltTexture.anisotropy=2;
+ // Rain-polished wheel tracks on the crossover deck: a tiny shared PBR
+ // roughness atlas, generated once, gives wet ruts a different specular response.
+ // No new meshes, lights, draw calls or per-frame canvas work.
+ const bridgeRoughCanvas=document.createElement('canvas');
+ bridgeRoughCanvas.width=256;bridgeRoughCanvas.height=128;
+ const brc=bridgeRoughCanvas.getContext('2d');
+ brc.fillStyle='#e1e1e1';brc.fillRect(0,0,256,128);
+ for(const trackY of [39,47,81,89]){
+  const damp=brc.createLinearGradient(0,trackY-7,0,trackY+7);
+  damp.addColorStop(0,'rgba(30,30,30,0)');
+  damp.addColorStop(.45,'rgba(30,30,30,.70)');
+  damp.addColorStop(.65,'rgba(30,30,30,.58)');
+  damp.addColorStop(1,'rgba(30,30,30,0)');
+  brc.fillStyle=damp;brc.fillRect(0,trackY-7,256,14);
+ }
+ for(let i=0;i<720;i++){
+  const x=(i*73+19)%256,y=(i*101+7)%128;
+  brc.fillStyle=i%3?'rgba(255,255,255,.14)':'rgba(15,15,15,.15)';
+  brc.fillRect(x,y,1+i%2,1);
+ }
+ const bridgeRoughTexture=new THREE.CanvasTexture(bridgeRoughCanvas);
+ bridgeRoughTexture.anisotropy=2;
  const bridgeAsphaltMaterial=new THREE.MeshStandardMaterial({
-  map:bridgeAsphaltTexture,roughness:.93,metalness:0
+  map:bridgeAsphaltTexture,roughnessMap:bridgeRoughTexture,roughness:.93,metalness:0
  });
  const bridgeAsphaltGeometry=new THREE.PlaneGeometry(15.65,2.44);
  bridgeAsphaltGeometry.rotateX(-Math.PI/2);
@@ -1544,7 +1566,7 @@ gantry.position.z=-75;group.add(gantry);
  },dispose(){
   group.traverse(obj=>{if(obj.geometry)obj.geometry.dispose();});
   for(const material of [towerMat,mastMaterial,beaconMaterial,steel,warm,poolMaterial,sign.material,concrete,reflective,flyoverConcrete,acousticMat])material.dispose();
-  bridgeAsphaltMaterial.dispose();bridgeAsphaltTexture.dispose();
+  bridgeAsphaltMaterial.dispose();bridgeAsphaltTexture.dispose();bridgeRoughTexture.dispose();
   studMaterial.dispose();studMesh.geometry.dispose();railMarkerMaterial.dispose();railBoltMaterial.dispose();
   arrowPaintMaterial.dispose();arrowPaintTexture.dispose();
   drainMaterial.dispose();drainTexture.dispose();
