@@ -127,6 +127,30 @@ export function createExpresswayArt(THREE){
    ctx.fillRect(x,y,8+(col*7+floor)%11,1);
   }
  }
+ // Baked Bangkok apartment balcony railings and external AC condensers.
+ // Select sparse window bays so office facades remain readable at distance;
+ // all silhouettes and occlusion share the existing albedo/emissive atlases.
+ for(let row=2;row<31;row++)for(let col=0;col<8;col++){
+  const variant=(row*17+col*29+row*col*3)%23;
+  if(variant!==2&&variant!==7&&variant!==13)continue;
+  const x=9+col*30,y=13+row*15;
+  // Dark balcony slab with narrow weathered top edge.
+  ctx.fillStyle='rgba(10,20,27,.92)';ctx.fillRect(x-1,y+8,24,3);
+  ctx.fillStyle='rgba(148,159,157,.55)';ctx.fillRect(x-1,y+8,24,1);
+  ec.fillStyle='#000';ec.fillRect(x-1,y+8,24,3);
+  // Thin steel balustrade with transparent gaps, not solid cartoon bars.
+  ctx.fillStyle='rgba(105,121,127,.82)';ctx.fillRect(x,y+4,22,1);
+  ctx.fillStyle='rgba(45,60,67,.92)';
+  for(let rail=1;rail<22;rail+=5)ctx.fillRect(x+rail,y+4,1,5);
+  if(variant===7){
+   // Condenser grille and its wall bracket occupy the lower-right bay.
+   ctx.fillStyle='#53636a';ctx.fillRect(x+12,y+3,9,6);
+   ctx.fillStyle='#1a2a32';ctx.fillRect(x+13,y+4,7,4);
+   ctx.fillStyle='rgba(172,185,181,.7)';
+   for(let grille=0;grille<3;grille++)ctx.fillRect(x+13,y+4+grille*2,7,1);
+   ec.fillStyle='#000';ec.fillRect(x+12,y+3,9,6);
+  }
+ }
  const windowTexture=new THREE.CanvasTexture(windowCanvas);windowTexture.colorSpace=THREE.SRGBColorSpace;
  const emissiveTexture=new THREE.CanvasTexture(emissiveCanvas);
  emissiveTexture.colorSpace=THREE.SRGBColorSpace;
