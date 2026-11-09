@@ -1005,10 +1005,10 @@ function makeBusRearFascia(THREE){
  // Route board and illuminated destination.
  ctx.fillStyle='#07151b';ctx.fillRect(72,6,112,25);
  ctx.fillStyle='#f3c878';ctx.font='bold 21px Tahoma,sans-serif';
- ctx.textAlign='center';ctx.fillText('8  กรุงเทพฯ',128,25);
+ ctx.textAlign='center';ctx.fillText('511 กรุงเทพฯ',128,25);
  ec.fillStyle='#bd8b39';ec.fillRect(72,6,112,25);
  ec.fillStyle='#ffdc8a';ec.font='bold 21px Tahoma,sans-serif';
- ec.textAlign='center';ec.fillText('8  กรุงเทพฯ',128,25);
+ ec.textAlign='center';ec.fillText('511 กรุงเทพฯ',128,25);
  // Faded cream/red livery, inspection hatch, engine ventilation and seams.
  ctx.fillStyle='#a92d36';ctx.fillRect(8,144,240,37);
  ctx.fillStyle='#c9c0ad';ctx.fillRect(8,181,240,57);
