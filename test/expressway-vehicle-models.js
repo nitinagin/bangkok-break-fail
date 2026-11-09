@@ -539,6 +539,22 @@ function makeBusSideWindows(THREE){
    ctx.textAlign='left';
   }
   ctx.fillStyle='rgba(218,161,83,.55)';ctx.fillRect(x+12,105,104,2);
+  // Sliding window frames, top ventilation panes and a physical latch line
+  // make the four side windows read as working Bangkok bus glazing rather than
+  // a continuous tinted slab. All details are baked into the existing atlas.
+  ctx.fillStyle='rgba(17,29,35,.85)';ctx.fillRect(x+10,49,108,4);
+  ctx.fillStyle='rgba(196,205,200,.40)';ctx.fillRect(x+11,49,106,1);
+  ctx.fillStyle='rgba(14,26,33,.65)';ctx.fillRect(x+10,10,2,108);
+  ctx.fillRect(x+116,10,2,108);
+  ctx.fillStyle='rgba(208,215,207,.48)';ctx.fillRect(x+107,46,7,2);
+  ctx.fillStyle='rgba(13,23,29,.74)';ctx.fillRect(x+107,48,7,2);
+  // A slightly ajar upper ventilation pane on alternating windows reveals
+  // a dark cabin gap, with a narrow aluminium edge catching streetlights.
+  if(i===0 || i===2){
+   ctx.fillStyle='rgba(8,17,22,.78)';ctx.fillRect(x+19,19,86,6);
+   ctx.fillStyle='rgba(197,209,207,.48)';ctx.fillRect(x+19,25,86,2);
+   ctx.fillStyle='rgba(255,211,139,.18)';ctx.fillRect(x+21,20,82,1);
+  }
   // Low-contrast seats and heads give the glazing depth without geometry.
   const cx=x+42+(i%2)*37;
   ctx.fillStyle='rgba(12,20,26,.52)';
