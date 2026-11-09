@@ -5236,6 +5236,26 @@ function makeTukTuk(){
  rearLamps.computeBoundingSphere();
  rearLamps.name='bangkok-tuktuk-three-chamber-tail-lamps';
  g.add(rearLamps);
+ // Two flexible rear mudflaps: visible real-world silhouette behind the tyres.
+ // Instanced in one draw call; no texture, dynamic lighting or collision edits.
+ const flapOutline=new THREE.Shape();
+ flapOutline.moveTo(-.18,.12);flapOutline.lineTo(.18,.12);
+ flapOutline.lineTo(.15,-.26);flapOutline.quadraticCurveTo(0,-.29,-.15,-.26);
+ flapOutline.closePath();
+ const flapGeometry=new THREE.ShapeGeometry(flapOutline,3);
+ const flapMaterial=new THREE.MeshStandardMaterial({color:0x17191b,roughness:.96,metalness:0,side:THREE.DoubleSide});
+ const splashFlaps=new THREE.InstancedMesh(flapGeometry,flapMaterial,2);
+ const flapPose=new THREE.Object3D();
+ for(const [i,side] of [-1,1].entries()){
+  flapPose.position.set(side*.81,.48,-1.34);
+  flapPose.rotation.set(0,Math.PI,side*.06);
+  flapPose.updateMatrix();
+  splashFlaps.setMatrixAt(i,flapPose.matrix);
+ }
+ splashFlaps.instanceMatrix.needsUpdate=true;
+ splashFlaps.computeBoundingSphere();
+ splashFlaps.name='bangkok-tuktuk-rear-rubber-mudflaps';
+ g.add(splashFlaps);
  // Recessed stamped engine inspection hatches on both exterior side skirts.
  // One instanced draw call, shared texture, and no change to obstacle bounds.
  const serviceHatches=new THREE.InstancedMesh(tukServiceGeometry,tukServiceMaterial,2);
