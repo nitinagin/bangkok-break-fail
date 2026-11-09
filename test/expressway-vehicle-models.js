@@ -14,6 +14,17 @@ function makeBusGlazing(THREE){
   const x=43+i*82;ctx.beginPath();ctx.ellipse(x,151,18,24,0,0,Math.PI*2);ctx.fill();
   ctx.fillRect(x-21,170,42,80);
  }
+ // Driver and steering-wheel silhouette seen through the lower windscreen.
+ // Kept below the LED route board and baked into the existing 256px atlas.
+ ctx.save();
+ ctx.fillStyle='rgba(7,14,19,.82)';
+ ctx.beginPath();ctx.ellipse(199,165,17,21,-.12,0,Math.PI*2);ctx.fill();
+ ctx.beginPath();ctx.moveTo(174,188);ctx.quadraticCurveTo(199,174,224,190);
+ ctx.lineTo(235,237);ctx.lineTo(164,237);ctx.closePath();ctx.fill();
+ ctx.strokeStyle='rgba(13,19,21,.94)';ctx.lineWidth=5;
+ ctx.beginPath();ctx.arc(190,215,22,0,Math.PI*2);ctx.stroke();
+ ctx.beginPath();ctx.moveTo(190,215);ctx.lineTo(190,237);ctx.moveTo(190,215);ctx.lineTo(173,203);ctx.moveTo(190,215);ctx.lineTo(207,203);ctx.stroke();
+ ctx.restore();
  // Baked overhead passenger grab rail and hanging handles add interior depth
  // without extra meshes, lights, or animation on mobile.
  ctx.strokeStyle='rgba(197,171,119,.38)';ctx.lineWidth=4;
