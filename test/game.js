@@ -5447,9 +5447,12 @@ function makeTukTuk(){
   const x=-.86+ix*1.72/nx,z=-1.38+iz*2.43/nz;
   // Sculpt the canvas in both axes: taut transverse crown, gentle longitudinal
   // tension and a dipped rain-shedding front visor. Same mesh/triangle count.
-  const transverseCrown=.16*(1-(x/.86)*(x/.86));
-  const lengthTension=.045*Math.sin(Math.PI*iz/nz)*(1-.35*Math.abs(x/.86));
-  const visorDip=iz===nz?-.055:0;
+  // A raised central canvas ridge sheds rain toward both rolled side edges.
+  // The deeper front lip reads as a real Bangkok tuk-tuk rain visor at night.
+  // Preserve the existing indexed canopy mesh and its single draw call.
+  const transverseCrown=.235*(1-(x/.86)*(x/.86));
+  const lengthTension=.055*Math.sin(Math.PI*iz/nz)*(1-.35*Math.abs(x/.86));
+  const visorDip=iz===nz?-.115:0;
   vertices.push(x,2.34+transverseCrown+lengthTension+visorDip,z);
   uvs.push(ix/nx,iz/nz);
  }
