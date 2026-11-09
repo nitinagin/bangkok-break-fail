@@ -977,6 +977,23 @@ function makeSportsCarLaminatedGlass(THREE){
     ctx.beginPath();ctx.arc(pivot,112,91,Math.PI*1.18,Math.PI*1.88);ctx.stroke();
    }
   }
+  // Cabin depth visible through sports-car glass: headrests, seat shoulders
+  // and a low dashboard silhouette baked into the existing shared atlas.
+  ctx.save();
+  ctx.fillStyle='rgba(7,13,19,.46)';
+  for(const x of [73,183]){
+   ctx.beginPath();ctx.ellipse(x,65,19,23,0,0,Math.PI*2);ctx.fill();
+   ctx.beginPath();ctx.moveTo(x-29,112);ctx.quadraticCurveTo(x-30,83,x-17,83);
+   ctx.lineTo(x+17,83);ctx.quadraticCurveTo(x+30,83,x+29,112);ctx.closePath();ctx.fill();
+  }
+  if(!rear){
+   ctx.fillStyle='rgba(8,17,23,.57)';
+   ctx.beginPath();ctx.moveTo(11,116);ctx.quadraticCurveTo(128,94,245,116);
+   ctx.lineTo(245,123);ctx.lineTo(11,123);ctx.closePath();ctx.fill();
+   ctx.strokeStyle='rgba(137,166,173,.20)';ctx.lineWidth=1;
+   ctx.beginPath();ctx.moveTo(20,115);ctx.quadraticCurveTo(128,96,236,115);ctx.stroke();
+  }
+  ctx.restore();
   // Sparse fixed rain tracks; deterministic, no frame-time texture updates.
   for(let i=0;i<30;i++){
    const x=15+(i*73+11)%226,y=15+(i*43+7)%91;
