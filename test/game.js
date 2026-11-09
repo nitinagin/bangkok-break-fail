@@ -110,6 +110,16 @@ for(let i=0;i<6;i++){
   ctx.fillStyle=pool;ctx.fillRect(-1,-1,2,2);ctx.restore();
  }
 }
+// Baked broken neon storefront reflections in the existing wet-road atlas.
+// Generated once at startup; no new textures, lights or draw calls.
+for(let i=0;i<24;i++){
+ const x=(i*83+19)%256,y=(i*47+31)%256;
+ asphaltCtx.fillStyle=['rgba(245,65,115,.24)','rgba(45,192,235,.20)','rgba(255,182,76,.19)'][i%3];
+ for(let j=0;j<4;j++){
+  const width=2+((i+j*3)%9),offset=(j*17+i*5)%23;
+  asphaltCtx.fillRect(x-width/2+offset*.12,y+j*7,width,1+(j%2));
+ }
+}
 wetRoadRoughnessCtx.fillStyle='rgba(242,242,242,.32)';
 for(let i=0;i<180;i++){
  const px=(i*73+17)%256,py=(i*47+29)%256;
