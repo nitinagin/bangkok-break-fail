@@ -641,6 +641,29 @@ function makeSportsCarRearFascia(THREE){
   ctx.strokeStyle='#7a858a';ctx.lineWidth=2;
   ctx.beginPath();ctx.ellipse(x,57,11,4,0,0,Math.PI*2);ctx.stroke();
  }
+ // Road spray and exhaust soot collect on the lower bumper in wet Bangkok traffic.
+ // Deterministic, atlas-only weathering: no added geometry, textures or frame work.
+ const roadFilm=ctx.createLinearGradient(0,42,0,64);
+ roadFilm.addColorStop(0,'rgba(58,62,59,0)');
+ roadFilm.addColorStop(.55,'rgba(77,72,62,.17)');
+ roadFilm.addColorStop(1,'rgba(35,31,29,.32)');
+ ctx.fillStyle=roadFilm;ctx.fillRect(4,42,248,22);
+ for(let i=0;i<64;i++){
+  const x=7+(i*73%242),y=43+(i*19%19);
+  ctx.fillStyle=i%4===0?'rgba(189,177,151,.24)':'rgba(22,24,24,.24)';
+  ctx.fillRect(x,y,1+(i%3),1+(i%2));
+ }
+ for(const exhaustX of [18,220]){
+  const soot=ctx.createRadialGradient(exhaustX,56,2,exhaustX,56,22);
+  soot.addColorStop(0,'rgba(8,9,10,.35)');
+  soot.addColorStop(1,'rgba(8,9,10,0)');
+  ctx.fillStyle=soot;ctx.fillRect(exhaustX-22,42,44,22);
+ }
+ // Thin specular wet streaks catch nearby street lighting on the painted lip.
+ ctx.strokeStyle='rgba(181,201,205,.21)';ctx.lineWidth=.8;
+ for(const x of [14,46,76,181,209,240]){
+  ctx.beginPath();ctx.moveTo(x,43);ctx.lineTo(x-2,48+(x%7));ctx.stroke();
+ }
  // Recessed plate screws and fine bumper seam, still on the shared map.
  ctx.fillStyle='#596269';ctx.fillRect(96,16,3,3);ctx.fillRect(157,16,3,3);
  ctx.fillStyle='rgba(180,190,191,.42)';ctx.fillRect(4,49,248,1);
