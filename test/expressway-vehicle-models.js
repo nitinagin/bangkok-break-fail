@@ -809,6 +809,24 @@ function makeSportsCarProjectorHeadlights(THREE){
   ctx.lineTo(59,28);ctx.lineTo(108,33);ctx.stroke();
   ctx.restore();
  }
+ // Baked glass fluting softens the flat, toy-like projector lenses.
+ // No new meshes, textures, lights or draw calls on mobile.
+ for(const cx of [72,176]){
+  ctx.save();ctx.beginPath();ctx.ellipse(cx,63,38,35,0,0,Math.PI*2);ctx.clip();
+  for(let i=-3;i<=3;i++){
+   const x=cx+i*10,flute=ctx.createLinearGradient(x-3,0,x+3,0);
+   flute.addColorStop(0,'rgba(218,233,239,0)');
+   flute.addColorStop(.5,'rgba(218,233,239,.16)');
+   flute.addColorStop(1,'rgba(218,233,239,0)');
+   ctx.fillStyle=flute;ctx.fillRect(x-3,27,6,72);
+  }
+  ctx.restore();
+ }
+ // Rain-spray film settles along the lower lens edge, leaving DRLs clear.
+ const splash=ctx.createLinearGradient(0,88,0,114);
+ splash.addColorStop(0,'rgba(113,120,111,0)');
+ splash.addColorStop(1,'rgba(113,120,111,.22)');
+ ctx.fillStyle=splash;ctx.fillRect(10,88,236,26);
  // Central shut-line makes the twin projector housings read as separate units.
  ctx.strokeStyle='rgba(10,17,22,.70)';ctx.lineWidth=3;
  ctx.beginPath();ctx.moveTo(128,15);ctx.lineTo(128,105);ctx.stroke();
