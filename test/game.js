@@ -5472,8 +5472,8 @@ function makeTukTuk(){
  g.add(new THREE.Mesh(roofGeometry,tukCanvas));
  // Three curved transverse bows and two full-length edge rails make the
  // weathered canvas canopy read as tensioned fabric on a real steel frame.
- // The roof and handlebar share 21 chrome tube instances in one draw call.
- const frame=new THREE.InstancedMesh(tukCanopyFrameGeometry,tukTrim,21);
+ // Roof bows, handlebar and four triangulated canopy stays share one instanced steel draw call.
+ const frame=new THREE.InstancedMesh(tukCanopyFrameGeometry,tukTrim,25);
  const framePart=new THREE.Object3D();
  const frameStart=new THREE.Vector3(),frameEnd=new THREE.Vector3();
  const frameDirection=new THREE.Vector3(),frameUp=new THREE.Vector3(0,1,0);
@@ -5496,6 +5496,12 @@ function makeTukTuk(){
   }
  }
  for(const x of [-.85,.85])addCanopyTube(x,canopyY(x),-1.38,x,canopyY(x),.78);
+ // Sloping front/rear support stays create the recognizable open-sided Bangkok
+ // tuk-tuk silhouette; four extra instances, still one shared steel draw call.
+ for(const side of [-1,1]){
+  addCanopyTube(side*.85,1.23,-.96,side*.85,canopyY(side*.85),-1.33);
+  addCanopyTube(side*.85,1.23,.39,side*.85,canopyY(side*.85),.72);
+ }
  // The same instanced chrome tubes form the motorcycle-style handlebar,
  // steering stem and brake levers (7 parts, no additional steel draw call).
  const handlebarSegments=[
