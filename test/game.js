@@ -5566,6 +5566,34 @@ function makeTukTuk(){
  driverParts.computeBoundingSphere();
  driverParts.name='bangkok-tuktuk-seated-driver';
  g.add(driverParts);
+ // Passenger silhouette gives the rear bench a recognisable occupied Bangkok
+ // tuk-tuk profile. Five tinted instances share one draw call and geometry;
+ // no new lights, animation, collision volume or per-frame allocations.
+ const passenger=new THREE.InstancedMesh(
+  new THREE.CapsuleGeometry(.17,.24,3,6),
+  new THREE.MeshStandardMaterial({color:0xffffff,roughness:.89,metalness:0}),5
+ );
+ const passengerPose=new THREE.Object3D();
+ const passengerShapes=[
+  [-.25,1.47,-.65,1.35,1.13,1.03,0,0,0x9e5364], // torso
+  [-.25,1.94,-.61,.83,.68,.83,0,0,0xb9886d],    // face
+  [-.25,2.085,-.62,.89,.28,.89,0,0,0x26262b],  // hair
+  [-.54,1.51,-.56,.42,.88,.42,-.12,0,0x9e5364], // left arm
+  [.04,1.51,-.56,.42,.88,.42,-.12,0,0x9e5364]  // right arm
+ ];
+ passengerShapes.forEach(([x,y,z,sx,sy,sz,rx,rz,color],i)=>{
+  passengerPose.position.set(x,y,z);
+  passengerPose.rotation.set(rx,0,rz);
+  passengerPose.scale.set(sx,sy,sz);
+  passengerPose.updateMatrix();
+  passenger.setMatrixAt(i,passengerPose.matrix);
+  passenger.setColorAt(i,new THREE.Color(color));
+ });
+ passenger.instanceMatrix.needsUpdate=true;
+ passenger.instanceColor.needsUpdate=true;
+ passenger.computeBoundingSphere();
+ passenger.name='bangkok-tuktuk-rear-passenger';
+ g.add(passenger);
  return g;
 }
 // PBR Thai street scooter: swept body panels, real tyre profiles and human-shaped riders.
