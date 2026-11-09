@@ -1282,6 +1282,39 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   const windowStrips=new THREE.Mesh(windowGeometry,sideGlazing);
   windowStrips.name='bangkok-bus-batched-side-glazing';
   group.add(windowStrips);
+  // Folding passenger-door seams and stainless grab rails on both bus flanks.
+  // One batched mesh: readable full-height door architecture at traffic distance,
+  // without altering the bus footprint, collision, or adding dynamic lights.
+  const doorVerts=[],doorColors=[],doorFaces=[];
+  function doorLine(x,y1,z1,y2,z2,thickness,color){
+   const base=doorVerts.length/3,dy=y2-y1,dz=z2-z1;
+   const norm=Math.hypot(dy,dz)||1,oy=dz/norm*thickness*.5,oz=-dy/norm*thickness*.5;
+   doorVerts.push(x,y1+oy,z1+oz,x,y1-oy,z1-oz,x,y2-oy,z2-oz,x,y2+oy,z2+oz);
+   const c=new THREE.Color(color);
+   for(let k=0;k<4;k++)doorColors.push(c.r,c.g,c.b);
+   doorFaces.push(base,base+1,base+2,base,base+2,base+3);
+  }
+  for(const side of [-1,1]){
+   const x=side*1.094;
+   // Front boarding door: paired leaves, center split, lower kick plates.
+   for(const z of [1.13,1.49,1.85])doorLine(x,.58,z,2.48,z,.024,0x242c30);
+   for(const y of [.58,1.08,2.48])doorLine(x,y,1.13,y,1.85,.022,0x555f61);
+   // Curved-looking handrail silhouette: segmented satin metal.
+   doorLine(x,.96,1.42,1.53,1.42,.034,0xb4aaa0);
+   doorLine(x,.96,1.58,1.53,1.58,.034,0xb4aaa0);
+   // Recessed rubber door threshold contrasts with the red lower skirt.
+   doorLine(x,.57,1.15,.57,1.83,.055,0x171c1d);
+  }
+  const doorGeo=new THREE.BufferGeometry();
+  doorGeo.setAttribute('position',new THREE.Float32BufferAttribute(doorVerts,3));
+  doorGeo.setAttribute('color',new THREE.Float32BufferAttribute(doorColors,3));
+  doorGeo.setIndex(doorFaces);doorGeo.computeVertexNormals();
+  const doorTrim=new THREE.Mesh(doorGeo,new THREE.MeshStandardMaterial({
+   vertexColors:true,metalness:.43,roughness:.46,side:THREE.DoubleSide,
+   polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1
+  }));
+  doorTrim.name='bangkok-bus-batched-folding-door';
+  group.add(doorTrim);
   // The rear faces approaching drivers; keep the fascia within the existing
   // bus silhouette and away from collision logic.
   const rearFascia=makeBusRearFascia(THREE);
