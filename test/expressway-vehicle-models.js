@@ -1087,6 +1087,26 @@ function makeBusRearFascia(THREE){
  ctx.strokeStyle='rgba(199,215,211,.32)';ctx.lineWidth=2;
  ctx.beginPath();ctx.moveTo(32,129);ctx.lineTo(124,106);ctx.stroke();
  ctx.fillStyle='#19272f';ctx.fillRect(124,35,5,100);
+ // Wet Bangkok expressway: opposing magenta/cyan neon reflected across the
+ // rear glazing, interrupted by rain rivulets. Baked into the existing atlas.
+ // Preserve silhouettes and the route board above the glass.
+ ctx.save();ctx.beginPath();ctx.rect(17,35,222,100);ctx.clip();
+ for(const [x,r,g,b] of [[51,238,77,141],[201,72,191,230]]){
+  const glow=ctx.createLinearGradient(x-32,35,x+38,135);
+  glow.addColorStop(0,`rgba(${r},${g},${b},0)`);
+  glow.addColorStop(.45,`rgba(${r},${g},${b},.25)`);
+  glow.addColorStop(1,`rgba(${r},${g},${b},0)`);
+  ctx.fillStyle=glow;ctx.beginPath();
+  ctx.moveTo(x-27,35);ctx.lineTo(x-6,35);
+  ctx.lineTo(x+44,135);ctx.lineTo(x+14,135);ctx.closePath();ctx.fill();
+ }
+ ctx.lineWidth=1;
+ for(let i=0;i<27;i++){
+  const x=20+(i*67)%216,y=38+(i*31)%72;
+  ctx.strokeStyle=i%3===0?'rgba(223,238,241,.28)':'rgba(181,207,219,.15)';
+  ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-1,y+8+(i%5)*4);ctx.stroke();
+ }
+ ctx.restore();
  // Route board and illuminated destination.
  ctx.fillStyle='#07151b';ctx.fillRect(72,6,112,25);
  ctx.fillStyle='#f3c878';ctx.font='bold 21px Tahoma,sans-serif';
