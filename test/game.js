@@ -1538,7 +1538,8 @@ function building(x,z,i){
  // sidewalk instead of another flat facade decal. Reuse the bilingual sign atlas.
  // Only one in four buildings gets a projecting blade to bound mobile draw calls.
  if(i%4===1){
-  const blade=new THREE.Mesh(new THREE.PlaneGeometry(.88,1.38),shopSignMaterials[i%shopSignMaterials.length]);
+  // Thin solid enamel blade, not a paper-flat plane; reuses the bilingual sign material.
+  const blade=new THREE.Mesh(new THREE.BoxGeometry(.88,1.38,.065),shopSignMaterials[i%shopSignMaterials.length]);
   blade.rotation.y=Math.PI/2;
   blade.position.set(roadDir*1.40,4.05,front+roadDir*.82);
   g.add(blade);
