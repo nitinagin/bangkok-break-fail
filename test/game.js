@@ -1534,6 +1534,17 @@ function building(x,z,i){
   g.add(ball(.13,windowGlow,-1.18,2.38,front+roadDir*.47));
  }
  const sign=cube(2.7,.62,.12,signMaterials[i%3],0,2.94,front+(x<0?.07:-.07));g.add(sign);g.add(cube(2.85,.08,.19,M.gold,0,3.30,front+(x<0?.10:-.10)));g.userData.sign=sign;g.userData.signIndex=i;
+ // Perpendicular, double-sided hanging shop sign: a real 3D silhouette above the
+ // sidewalk instead of another flat facade decal. Reuse the bilingual sign atlas.
+ // Only one in four buildings gets a projecting blade to bound mobile draw calls.
+ if(i%4===1){
+  const blade=new THREE.Mesh(new THREE.PlaneGeometry(.88,1.38),shopSignMaterials[i%shopSignMaterials.length]);
+  blade.rotation.y=Math.PI/2;
+  blade.position.set(roadDir*1.40,4.05,front+roadDir*.82);
+  g.add(blade);
+  // Short steel cantilever visually attaches the blade to the shophouse wall.
+  g.add(cube(.055,.055,.88,yaowaratBalconySteel,roadDir*1.40,4.78,front+roadDir*.44));
+ }
  // The existing bilingual enamel plaque carries readable lettering; omit toy-like block glyphs.
  if(i%2===0){g.add(cube(.13,.6,.13,M.gold,1.56,2.92,front));g.add(ball(.18,M.red,1.56,2.51,front))}
  if(i%3===0){g.add(cube(.14,1.7,.14,shopTrim,1.6,3.7,front));g.add(cube(.95,.12,.18,awningColors[i%3],1.1,4.45,front))}
