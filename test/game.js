@@ -657,6 +657,14 @@ function makeShopfrontMaterial(glazed){
     }
    }
   }
+  // Yaowarat gold-shop window lettering, baked into the shared storefront atlas.
+  // A subtle gold foil sign and its dark backing read as a real shop, not a glowing toy cube.
+  p.fillStyle='rgba(19,29,30,.91)';p.fillRect(17,13,222,25);
+  p.strokeStyle='rgba(189,143,68,.75)';p.lineWidth=1;p.strokeRect(18,14,220,23);
+  p.textAlign='center';p.textBaseline='middle';
+  p.font='bold 17px "Noto Sans Thai",Tahoma,sans-serif';
+  p.fillStyle='#d9b76c';p.fillText('ห้างทอง เยาวราช',128,26,204);
+  p.fillStyle='rgba(255,225,154,.30)';p.fillRect(22,16,212,1);
   // Dark counter edge and glass door remain legible behind exterior reflections.
   p.fillStyle='rgba(17,20,21,.72)';p.fillRect(12,216,232,18);
   const glare=p.createLinearGradient(0,0,256,0);
