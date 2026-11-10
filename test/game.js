@@ -703,6 +703,25 @@ function makeShopfrontMaterial(glazed){
    p.fillStyle=k%3===0?'rgba(94,48,29,.23)':'rgba(25,28,29,.16)';
    p.fillRect((k*79+19)%252,(k*47+7)%248,1+k%4,2+k%8);
   }
+  // Yaowarat shutter hand-painted lettering: aged Thai shop signage baked into
+  // the shared corrugated-steel albedo, with no extra draw calls or GPU textures.
+  p.save();
+  p.translate(128,112);
+  p.rotate(-.025);
+  p.fillStyle='rgba(43,35,30,.64)';p.fillRect(-105,-33,210,70);
+  p.strokeStyle='rgba(190,146,89,.58)';p.lineWidth=2;p.strokeRect(-103,-31,206,66);
+  p.textAlign='center';p.textBaseline='middle';
+  p.font='bold 25px "Noto Sans Thai",Tahoma,sans-serif';
+  p.fillStyle='rgba(226,195,133,.88)';p.fillText('ร้านค้าเยาวราช',0,-8,192);
+  p.font='bold 13px Tahoma,sans-serif';
+  p.fillStyle='rgba(215,199,165,.77)';p.fillText('เปิดทุกวัน  08:00 - 22:00',0,21,186);
+  // Scrapes reveal the underlying ribbed steel and prevent a flat digital-sign look.
+  for(let n=0;n<27;n++){
+   const sx=-96+(n*43)%192,sy=-28+(n*19)%60;
+   p.fillStyle=n%3===0?'rgba(43,35,30,.60)':'rgba(119,113,102,.34)';
+   p.fillRect(sx,sy,5+n%11,1+n%2);
+  }
+  p.restore();
   p.fillStyle='rgba(28,25,24,.3)';p.fillRect(0,0,13,256);p.fillRect(243,0,13,256);
  }
  const texture=new THREE.CanvasTexture(c);texture.colorSpace=THREE.SRGBColorSpace;
