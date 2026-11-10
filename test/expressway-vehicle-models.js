@@ -291,7 +291,23 @@ function makeBusSideLivery(THREE){
  const canvas=document.createElement('canvas');canvas.width=512;canvas.height=64;
  const ctx=canvas.getContext('2d');
  ctx.fillStyle='#e5dfcf';ctx.fillRect(0,0,512,64);
- ctx.fillStyle='#1e5874';ctx.fillRect(0,7,512,43);
+ // Full-width enamel livery with real-world panel shading: lighter crown,
+ // deep blue lower edge and worn reflective finish. Baked once per bus template;
+ // replaces the flat toy-like blue stripe without adding GPU work.
+ const enamel=ctx.createLinearGradient(0,7,0,50);
+ enamel.addColorStop(0,'#397c91');
+ enamel.addColorStop(.18,'#285f7a');
+ enamel.addColorStop(.65,'#1c4c67');
+ enamel.addColorStop(1,'#102f46');
+ ctx.fillStyle=enamel;ctx.fillRect(0,7,512,43);
+ const sideLight=ctx.createLinearGradient(0,0,512,0);
+ sideLight.addColorStop(0,'rgba(240,228,197,.13)');
+ sideLight.addColorStop(.22,'rgba(240,228,197,.02)');
+ sideLight.addColorStop(.72,'rgba(4,18,27,.04)');
+ sideLight.addColorStop(1,'rgba(3,13,22,.26)');
+ ctx.fillStyle=sideLight;ctx.fillRect(0,7,512,43);
+ ctx.fillStyle='rgba(246,239,211,.17)';ctx.fillRect(0,10,512,2);
+ ctx.fillStyle='rgba(3,17,26,.22)';ctx.fillRect(0,46,512,3);
  ctx.fillStyle='#d9b16a';ctx.fillRect(0,4,512,3);
  ctx.fillStyle='#f3d69a';ctx.fillRect(0,51,512,4);
  // Route number, Thai destination and an English identifier are painted on
