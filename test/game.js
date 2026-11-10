@@ -5520,10 +5520,10 @@ function makeTukTuk(){
  // The fallback traffic tuk-tuk now has a gently bowed, tapered glass pane
  // instead of a flat toy-like quad. Preserve the existing weathered PBR glass
  // atlas, rubber seal and wiper, with exactly one windshield draw call.
- // Nine columns keep the curvature visible in headlight glints without the
- // tessellation cost of a dense surface (36 vertices / 48 triangles).
+ // Thirteen columns and five rows resolve the bowed windscreen silhouette
+ // and rain-lit PBR normals without adding a mesh, material or draw call (65 vertices / 96 triangles).
  const windscreenGeometry=new THREE.BufferGeometry();
- const paneColumns=8,paneRows=3,paneVertices=[],paneUvs=[],paneIndices=[];
+ const paneColumns=12,paneRows=4,paneVertices=[],paneUvs=[],paneIndices=[];
  for(let row=0;row<=paneRows;row++){
   const v=row/paneRows,halfWidth=.71-.06*v;
   for(let col=0;col<=paneColumns;col++){
