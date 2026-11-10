@@ -1283,7 +1283,7 @@ const shopSignMaterials=[
  ['中華飯店','ภัตตาคารจีน'],
  ['永安藥房','ร้านขายยา'],
  ['大金行','ห้างทองเยาวราช']
-].map(([cn,th])=>streetSignMaterial(cn,th));
+].map(([cn,th])=>{const material=streetSignMaterial(cn,th);material.side=THREE.DoubleSide;return material;});
 const oldGold=new THREE.MeshStandardMaterial({color:0xb68a40,metalness:.68,roughness:.38}),warmNeon=new THREE.MeshBasicMaterial({color:0xffb84e}),redNeon=new THREE.MeshBasicMaterial({color:0xf02032}),glassDark=new THREE.MeshStandardMaterial({color:0x273c44,metalness:.3,roughness:.2}),brickTrim=new THREE.MeshLambertMaterial({color:0x4c3934});
 // The shared PBR road surface stays exposed: no opaque Lambert overlay or extra asphalt canvas.
 // Baked neon-tube signage: one 192x512 canvas per existing sign, no new meshes or runtime lights.
