@@ -110,6 +110,22 @@ for(let i=0;i<6;i++){
   ctx.fillStyle=pool;ctx.fillRect(-1,-1,2,2);ctx.restore();
  }
 }
+// Baked asphalt repair seams: irregular joins in the existing road PBR atlases.
+// No new geometry, textures, lights or work inside the render loop.
+for(let patch=0;patch<5;patch++){
+ const x=22+(patch*53)%204,y=28+(patch*41)%194;
+ const width=22+(patch*7)%21,height=13+(patch*11)%18;
+ asphaltCtx.fillStyle='rgba(27,32,37,.18)';
+ asphaltCtx.fillRect(x,y,width,height);
+ wetRoadRoughnessCtx.fillStyle='rgba(232,232,232,.30)';
+ wetRoadRoughnessCtx.fillRect(x,y,width,height);
+ asphaltCtx.strokeStyle='rgba(10,13,17,.34)';
+ asphaltCtx.lineWidth=1;asphaltCtx.beginPath();
+ asphaltCtx.moveTo(x,y+2);asphaltCtx.lineTo(x+width*.35,y);
+ asphaltCtx.lineTo(x+width,y+3);asphaltCtx.lineTo(x+width-2,y+height);
+ asphaltCtx.lineTo(x+width*.55,y+height-1);asphaltCtx.lineTo(x,y+height-3);
+ asphaltCtx.closePath();asphaltCtx.stroke();
+}
 // Weathered Thai shophouse neon reflections: narrow, vertically broken light
 // streaks baked into the existing asphalt albedo, not extra lights or meshes.
 // The staggered bands are aligned with the roadway UV direction and avoid
