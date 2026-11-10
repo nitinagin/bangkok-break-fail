@@ -110,6 +110,22 @@ for(let i=0;i<6;i++){
   ctx.fillStyle=pool;ctx.fillRect(-1,-1,2,2);ctx.restore();
  }
 }
+// Weathered Thai shophouse neon reflections: narrow, vertically broken light
+// streaks baked into the existing asphalt albedo, not extra lights or meshes.
+// The staggered bands are aligned with the roadway UV direction and avoid
+// bright, continuous toy-like stripes on rain-slick Yaowarat pavement.
+for(let sign=0;sign<12;sign++){
+ const center=18+(sign*47)%220;
+ const start=11+(sign*31)%193;
+ const tint=['rgba(255,54,68,.29)','rgba(255,187,69,.25)',
+  'rgba(43,209,215,.24)','rgba(240,76,174,.26)'][sign%4];
+ asphaltCtx.fillStyle=tint;
+ for(let segment=0;segment<7;segment++){
+  const y=(start+segment*8+(sign*3)%5)%256;
+  const width=2+(segment+sign)%6;
+  asphaltCtx.fillRect(center-width/2+(segment%3-1)*2,y,width,2+segment%2);
+ }
+}
 // Baked broken neon storefront reflections in the existing wet-road atlas.
 // Generated once at startup; no new textures, lights or draw calls.
 for(let i=0;i<24;i++){
