@@ -3190,7 +3190,26 @@ dialNeedlePivot.add(dialNeedle);speedDial.add(dialNeedlePivot);
 const playerPaint=new THREE.MeshPhysicalMaterial({color:0x078a9b,metalness:.42,roughness:.32,clearcoat:.65,clearcoatRoughness:.24});
 const playerBrass=new THREE.MeshStandardMaterial({color:0xc6a04b,metalness:.66,roughness:.34});
 const playerChrome=new THREE.MeshStandardMaterial({color:0xbcc8ce,metalness:.85,roughness:.22});
-const playerRubber=new THREE.MeshStandardMaterial({color:0x171a1e,metalness:0,roughness:.94});
+// Shared baked tyre sidewall/tread micro-relief for the procedural tuk-tuk.
+// One 128x64 bump texture for all three wheels; no extra geometry or draw calls.
+const tyreBumpCanvas=document.createElement('canvas');
+tyreBumpCanvas.width=128;tyreBumpCanvas.height=64;
+const tyreBumpCtx=tyreBumpCanvas.getContext('2d');
+tyreBumpCtx.fillStyle='#777';tyreBumpCtx.fillRect(0,0,128,64);
+for(let x=0;x<128;x+=8){
+ tyreBumpCtx.fillStyle='#a4a4a4';
+ tyreBumpCtx.fillRect(x,19,3,26);
+ tyreBumpCtx.fillStyle='#454545';
+ tyreBumpCtx.fillRect(x+4,19,2,26);
+}
+for(const y of [9,14,49,54]){
+ tyreBumpCtx.fillStyle='#555';
+ tyreBumpCtx.fillRect(0,y,128,1);
+}
+const tyreBumpTexture=new THREE.CanvasTexture(tyreBumpCanvas);
+tyreBumpTexture.wrapS=THREE.RepeatWrapping;
+tyreBumpTexture.anisotropy=mobile?2:4;
+const playerRubber=new THREE.MeshStandardMaterial({color:0x171a1e,metalness:0,roughness:.94,bumpMap:tyreBumpTexture,bumpScale:.028});
 const playerFabric=new THREE.MeshStandardMaterial({color:0x8e3042,metalness:0,roughness:.91,side:THREE.DoubleSide});
 const playerGlass=new THREE.MeshPhysicalMaterial({color:0x93b9c3,metalness:0,roughness:.16,transparent:true,opacity:.58,depthWrite:false,side:THREE.DoubleSide});
 const playerSeat=new THREE.MeshStandardMaterial({color:0x513c43,metalness:0,roughness:.82});
