@@ -4679,10 +4679,21 @@ function makeTaxi(){
  // Distinct Bangkok TAXI-METER roof sign, painted once for all traffic clones.
  const signCanvas=document.createElement('canvas');signCanvas.width=256;signCanvas.height=128;
  const ctx=signCanvas.getContext('2d');
- ctx.fillStyle='#f8f2d7';ctx.fillRect(0,0,256,128);
- ctx.fillStyle='#11654b';ctx.fillRect(6,6,244,116);
- ctx.fillStyle='#fff8dd';ctx.font='bold 41px sans-serif';ctx.textAlign='center';ctx.fillText('TAXI',128,55);
- ctx.font='bold 25px sans-serif';ctx.fillText('แท็กซี่',128,95);
+ // Baked backlit taxi-meter roof light: metal rim and Thai lettering.
+ const rim=ctx.createLinearGradient(0,0,0,128);
+ rim.addColorStop(0,'#e8e9e2');rim.addColorStop(.16,'#626f68');rim.addColorStop(.85,'#384c46');rim.addColorStop(1,'#c7cec3');
+ ctx.fillStyle=rim;ctx.fillRect(0,0,256,128);
+ const diffuser=ctx.createLinearGradient(0,8,0,118);
+ diffuser.addColorStop(0,'#237c58');diffuser.addColorStop(.38,'#52b78b');diffuser.addColorStop(.65,'#1a7555');diffuser.addColorStop(1,'#0a4235');
+ ctx.fillStyle=diffuser;ctx.fillRect(7,9,242,108);
+ ctx.fillStyle='rgba(255,255,255,.22)';ctx.fillRect(12,13,232,5);
+ ctx.strokeStyle='rgba(5,30,26,.6)';ctx.lineWidth=2;ctx.strokeRect(8,10,240,106);
+ ctx.textAlign='center';ctx.textBaseline='middle';
+ ctx.shadowColor='#f5ffdb';ctx.shadowBlur=9;
+ ctx.fillStyle='#fffce5';ctx.font='bold 39px sans-serif';ctx.fillText('TAXI-METER',128,46,230);
+ ctx.font='bold 30px sans-serif';ctx.fillText('แท็กซี่มิเตอร์',128,89,230);
+ ctx.shadowBlur=0;
+ ctx.fillStyle='rgba(0,0,0,.14)';ctx.fillRect(13,108,230,3);
  const signTexture=new THREE.CanvasTexture(signCanvas);
  signTexture.colorSpace=THREE.SRGBColorSpace;signTexture.anisotropy=1;
  const signMaterial=new THREE.MeshBasicMaterial({map:signTexture,side:THREE.DoubleSide});
