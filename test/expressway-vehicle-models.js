@@ -8,6 +8,24 @@ function makeBusGlazing(THREE){
  const ctx=canvas.getContext('2d'),g=ctx.createLinearGradient(0,0,256,256);
  g.addColorStop(0,'#4a6b7a');g.addColorStop(.24,'#243e4c');g.addColorStop(.7,'#132632');g.addColorStop(1,'#0c1a25');
  ctx.fillStyle=g;ctx.fillRect(0,0,256,256);
+ // Bangkok traffic-light reflections baked once into the shared bus glass atlas.
+ ctx.save();ctx.globalCompositeOperation='screen';
+ for(const [x,y,w,h,color] of [
+  [17,31,9,102,'rgba(244,66,94,.24)'],
+  [38,21,4,139,'rgba(255,208,129,.18)'],
+  [104,13,7,112,'rgba(73,179,235,.21)'],
+  [126,35,3,92,'rgba(253,240,199,.18)'],
+  [232,18,8,128,'rgba(245,83,113,.18)']
+ ]){
+  const glow=ctx.createLinearGradient(x,0,x+w,0);
+  glow.addColorStop(0,'rgba(0,0,0,0)');
+  glow.addColorStop(.5,color);
+  glow.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=glow;ctx.fillRect(x,y,w,h);
+ }
+ ctx.strokeStyle='rgba(215,237,246,.17)';ctx.lineWidth=2;
+ ctx.beginPath();ctx.moveTo(0,67);ctx.bezierCurveTo(70,49,151,54,256,26);ctx.stroke();
+ ctx.restore();
  // Warm interior silhouettes, tempered-glass reflections, and rain streaks.
  ctx.fillStyle='rgba(12,17,23,.8)';
  for(let i=0;i<3;i++){
