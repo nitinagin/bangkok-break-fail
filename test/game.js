@@ -1275,7 +1275,9 @@ function streetSignMaterial(cn,th,bg='#6d080c'){
  a.fillStyle='#f2e2c3';a.font='600 37px "Thonburi","Noto Sans Thai",sans-serif';
  a.fillText(th,256,193,450);
  const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;
- return new THREE.MeshBasicMaterial({map:t,side:THREE.DoubleSide});
+ // Weathered enamel reacts to street lighting while subtle self-illumination keeps lettering visible at night.
+ // Reuses the existing atlas: no new textures, lights, meshes or draw calls.
+ return new THREE.MeshStandardMaterial({map:t,emissiveMap:t,emissive:0x242020,roughness:.48,metalness:.18,side:THREE.DoubleSide});
 }
 const shopSignMaterials=[
  ['金龍海鮮','ภัตตาคารมังกรทอง'],
