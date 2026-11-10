@@ -681,6 +681,25 @@ function makeShopfrontMaterial(glazed){
   p.font='bold 17px "Noto Sans Thai",Tahoma,sans-serif';
   p.fillStyle='#d9b76c';p.fillText('ห้างทอง เยาวราช',128,26,204);
   p.fillStyle='rgba(255,225,154,.30)';p.fillRect(22,16,212,1);
+  // Baked gold-shop hanging ornaments and wet glazing, no extra meshes.
+  for(let charm=0;charm<5;charm++){
+   const x=38+charm*45,drop=52+(charm%2)*9;
+   p.strokeStyle='rgba(174,129,66,.75)';p.lineWidth=1;
+   p.beginPath();p.moveTo(x,40);p.lineTo(x,drop);p.stroke();
+   p.fillStyle='rgba(192,132,51,.83)';
+   p.beginPath();p.moveTo(x,drop);p.lineTo(x+5,drop+7);
+   p.lineTo(x,drop+14);p.lineTo(x-5,drop+7);p.closePath();p.fill();
+   p.fillStyle='rgba(255,222,146,.7)';p.fillRect(x-1,drop+3,2,5);
+  }
+  for(let streak=0;streak<24;streak++){
+   const x=14+(streak*73)%228,y=45+(streak*31)%110;
+   const length=14+(streak*17)%61;
+   p.strokeStyle=streak%4===0?'rgba(225,237,226,.22)':'rgba(187,202,201,.12)';
+   p.lineWidth=streak%5===0?1.5:.65;
+   p.beginPath();p.moveTo(x,y);
+   p.bezierCurveTo(x-2,y+length*.3,x+2,y+length*.7,x-1,y+length);
+   p.stroke();
+  }
   // Dark counter edge and glass door remain legible behind exterior reflections.
   p.fillStyle='rgba(17,20,21,.72)';p.fillRect(12,216,232,18);
   const glare=p.createLinearGradient(0,0,256,0);
