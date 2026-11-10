@@ -1172,6 +1172,21 @@ function facadeMaterial(seed){
     a.fillStyle='rgba(151,186,190,.14)';a.fillRect(x+10,y+8,9,56);
    }
    a.fillStyle='rgba(214,198,169,.78)';a.fillRect(x+38,y,5,77);a.fillRect(x,y+37,81,4);
+   // Weathered upper-floor sunshade and partially closed timber shutters.
+   // Baked into the existing shared facade atlas, no new draw calls.
+   a.fillStyle='rgba(16,20,22,.55)';a.fillRect(x-12,y-13,106,8);
+   a.fillStyle='rgba(85,65,51,.95)';a.fillRect(x-12,y-16,106,5);
+   a.fillStyle='rgba(208,174,132,.42)';a.fillRect(x-11,y-16,104,1);
+   if((seed+floor+col)%2===0){
+    const shutterX=col===0?x+2:x+59;
+    a.fillStyle='rgba(29,29,28,.72)';a.fillRect(shutterX,y+3,20,72);
+    a.fillStyle='#665748';a.fillRect(shutterX+2,y+3,17,70);
+    for(let slat=0;slat<10;slat++){
+     const sy=y+8+slat*6;
+     a.fillStyle='rgba(17,23,25,.54)';a.fillRect(shutterX+3,sy,15,2);
+     a.fillStyle='rgba(192,164,127,.35)';a.fillRect(shutterX+3,sy-1,15,1);
+    }
+   }
    a.fillStyle='rgba(28,25,25,.28)';a.fillRect(x-9,y+83,100,5);
    a.fillStyle='rgba(238,222,194,.6)';a.fillRect(x-10,y+82,101,2);
   }
