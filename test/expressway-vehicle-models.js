@@ -61,6 +61,19 @@ function makeBusGlazing(THREE){
   ctx.fillStyle=i%3===0?'rgba(211,224,232,.16)':'rgba(159,175,182,.09)';
   ctx.fillRect(x,y,1,18+(i%5)*9);
  }
+ // Fine laminated windshield heating wires and the subtle top-edge shadow
+ // are baked into the shared bus glass; no additional meshes or GPU draws.
+ // These are deliberately low contrast so the driver's view stays readable.
+ ctx.save();
+ const topEdge=ctx.createLinearGradient(0,0,0,28);
+ topEdge.addColorStop(0,'rgba(5,12,17,.52)');
+ topEdge.addColorStop(1,'rgba(5,12,17,0)');
+ ctx.fillStyle=topEdge;ctx.fillRect(10,8,236,20);
+ ctx.strokeStyle='rgba(164,184,189,.13)';ctx.lineWidth=.75;
+ for(const y of [199,213,227]){
+  ctx.beginPath();ctx.moveTo(14,y);ctx.bezierCurveTo(86,y-2,169,y+2,242,y);ctx.stroke();
+ }
+ ctx.restore();
  // Road-film buildup collects below the wiper sweep on working Bangkok buses.
  // Bake translucent soot and dried splash marks into the shared glazing atlas.
  // No extra textures, meshes, draw calls or per-frame work.
