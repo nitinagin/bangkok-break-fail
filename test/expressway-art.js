@@ -61,6 +61,20 @@ export function createExpresswayArt(THREE){
    ctx.fillStyle='#29343c';for(let g=0;g<4;g++)ctx.fillRect(x+5+g*3,y+11,1,2);
   }
  }
+ // Bake occupied-room glow into the existing emissive atlas once.
+ // No new WebGL lights, meshes, textures or draw calls.
+ ec.save();
+ ec.globalCompositeOperation='destination-over';
+ for(let row=0;row<32;row++)for(let col=0;col<8;col++){
+  if((row*19+col*31+row*col*7)%13>=5)continue;
+  const x=19+col*30,y=18+row*15;
+  const halo=ec.createRadialGradient(x,y,2,x,y,17);
+  const warm=(row+col)%3===0;
+  halo.addColorStop(0,warm?'rgba(235,171,92,.27)':'rgba(125,173,203,.22)');
+  halo.addColorStop(1,'rgba(0,0,0,0)');
+  ec.fillStyle=halo;ec.fillRect(x-17,y-17,34,34);
+ }
+ ec.restore();
  for(let floor=0;floor<32;floor+=8){
   ctx.fillStyle='rgba(13,22,31,.65)';ctx.fillRect(0,8+floor*15,256,4);
   ctx.fillStyle='rgba(179,191,195,.15)';ctx.fillRect(0,12+floor*15,256,1);
