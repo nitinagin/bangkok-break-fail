@@ -1888,7 +1888,7 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   // Reuse the near mesh/material/atlas, adding only one draw call per far car.
   const headlights=group.children.find(node=>node.name==='sports-car-swept-projector-headlamps');
   if(!headlights)throw new Error('Sports-car LOD is missing its projector headlamps');
-  for(const part of [group.children[0],roof,rear,headlights,tires,hubs]){
+  for(const part of [group.children[0],roof,rear,headlights,led,tires,hubs]){
    if(!part)throw new Error('Sports-car LOD is missing a silhouette part');
    distant.add(part.clone());
   }
