@@ -174,6 +174,23 @@ export function createExpresswayArt(THREE){
    ec.fillStyle='#000';ec.fillRect(x+12,y+3,9,6);
   }
  }
+ // Rain-streaked reflective glazing: bake fine vertical highlights and grime
+ // into the existing facade atlas. No extra meshes, lights or draw calls.
+ // Restrict marks to the window panes, preserving the concrete mullions.
+ for(let row=0;row<32;row++)for(let col=0;col<8;col++){
+  const x=10+col*30,y=14+row*15;
+  const seed=(row*43+col*71+row*col*11)%23;
+  if(seed%4===0){
+   ctx.fillStyle='rgba(196,218,223,.19)';
+   ctx.fillRect(x+3+seed%11,y,1,3+seed%5);
+   ctx.fillStyle='rgba(12,23,31,.22)';
+   ctx.fillRect(x+4+seed%11,y+2,1,4+seed%3);
+  }
+  if(seed===6||seed===17){
+   ctx.fillStyle='rgba(211,225,226,.12)';
+   ctx.fillRect(x+1,y+1,17,1);
+  }
+ }
  const windowTexture=new THREE.CanvasTexture(windowCanvas);windowTexture.colorSpace=THREE.SRGBColorSpace;
  const emissiveTexture=new THREE.CanvasTexture(emissiveCanvas);
  emissiveTexture.colorSpace=THREE.SRGBColorSpace;
