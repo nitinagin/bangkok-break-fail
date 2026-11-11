@@ -1830,22 +1830,15 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
  const tireGeo=new THREE.CylinderGeometry(isBus?.43:.37,isBus?.43:.37,.18,12);tireGeo.rotateZ(Math.PI/2);
  const hubGeo=new THREE.CylinderGeometry(isBus?.26:.22,isBus?.26:.22,.025,12);hubGeo.rotateZ(Math.PI/2);
  const hubMetal=isBus?makeBusStampedSteelWheel(THREE):makeSportsCarAlloyWheel(THREE);
- const mirrorShell=new THREE.MeshStandardMaterial({color:0x20272d,metalness:.2,roughness:.48});
- const mirrorGlass=new THREE.MeshStandardMaterial({color:0x8aabb8,metalness:.65,roughness:.16});
+
  const tires=new THREE.InstancedMesh(tireGeo,rubber,4);
  const hubs=new THREE.InstancedMesh(hubGeo,hubMetal,4);
- // Sculpt the sports-car mirrors as compact aerodynamic shells rather than
- // rectangular boxes. Low-segment ellipsoids preserve the two instanced
- // draw calls, while their glass inserts sit on the rear-facing surface.
- // Buses retain their separately sculpted wing mirrors.
- const mirrorShellGeo=new THREE.SphereGeometry(1,10,6);
- mirrorShellGeo.scale(.17,.105,.092);
- const mirrorLensGeo=new THREE.CircleGeometry(.085,10);
- mirrorLensGeo.scale(1.30,.78,1);
- const mirrorBodies=isBus?null:new THREE.InstancedMesh(mirrorShellGeo,mirrorShell,2);
- const mirrorFaces=isBus?null:new THREE.InstancedMesh(mirrorLensGeo,mirrorGlass,2);
+ // The sculpted vertex-colour door-mirror mesh above already supplies both
+ // housings, stems and reflective inserts. Do not layer a second pair of
+ // floating ellipsoid mirrors over it: this removes two redundant draw calls
+ // and avoids overlapping silhouettes on mobile.
  const matrix=new THREE.Matrix4();
- let wheelIndex=0,mirrorIndex=0;
+ let wheelIndex=0;
  for(const side of [-1,1]){
   for(const axle of [-1,1]){
    const wheelZ=axle*(isBus?1.42:1.1);
@@ -1853,17 +1846,12 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
    matrix.makeTranslation(side*(w*.48+.108),.4,wheelZ);hubs.setMatrixAt(wheelIndex,matrix);
    wheelIndex++;
   }
-  if(!isBus){
-   const mirrorX=side*(w/2+.12),mirrorY=1.18,mirrorZ=.63;
-   matrix.makeTranslation(mirrorX,mirrorY,mirrorZ);mirrorBodies.setMatrixAt(mirrorIndex,matrix);
-   matrix.makeTranslation(mirrorX,mirrorY,mirrorZ-.094);mirrorFaces.setMatrixAt(mirrorIndex,matrix);
-   mirrorIndex++;
-  }
+
   // Keep distinct front and rear lamps.
   if(isBus)box(side*w*.37,.8,-length/2-.04,.27,.14,.06,tailLamps);
  }
  group.add(tires,hubs);
- if(!isBus)group.add(mirrorBodies,mirrorFaces);
+
  group.userData.type=type;
  // At expressway approach distance, detailed cabin/interior/aero parts are
  // smaller than a mobile pixel. Keep the recognisable body, roof, wheels and
