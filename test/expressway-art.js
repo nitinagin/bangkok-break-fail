@@ -292,6 +292,21 @@ export function createExpresswayArt(THREE){
   dummy.scale.set(.9+(i%3)*.18,tankScaleY,.9+(i%3)*.18);
   dummy.updateMatrix();rooftopTanks.setMatrixAt(i,dummy.matrix);
  }
+ // Slim rooftop radio/telecom masts break up the boxy skyline without
+ // obstructing traffic. One shared low-poly instanced mesh, no runtime allocations.
+ const antennaMaterial=new THREE.MeshStandardMaterial({color:0x454e56,metalness:.7,roughness:.48});
+ const antennaMasts=new THREE.InstancedMesh(new THREE.CylinderGeometry(.035,.065,1,5),antennaMaterial,18);
+ antennaMasts.name='bangkok-rooftop-telecom-masts';
+ for(let i=0;i<18;i++){
+  const tower=(i*5)%24,side=tower%2===0?-1:1;
+  const height=10+(tower*13%19),width=4+(tower*5%7);
+  const mastHeight=2.4+(i%4)*.65;
+  dummy.position.set(side*(12+(tower*7%17))+width*.24,height-2+mastHeight*.5,-15-Math.floor(tower/2)*9);
+  dummy.scale.set(1,mastHeight,1);
+  dummy.updateMatrix();antennaMasts.setMatrixAt(i,dummy.matrix);
+ }
+ antennaMasts.instanceMatrix.needsUpdate=true;
+ antennaMasts.frustumCulled=false;group.add(antennaMasts);
  tankPlinths.instanceMatrix.needsUpdate=true;
  tankPlinths.frustumCulled=false;group.add(tankPlinths);
  rooftopTanks.instanceMatrix.needsUpdate=true;
@@ -1723,7 +1738,7 @@ gantry.position.z=-75;group.add(gantry);
    carPaint.dispose();carGlass.dispose();tyreMaterial.dispose();
    taxiLiveryMaterial.dispose();taxiTexture.dispose();
    busShellMaterial.dispose();busWindowMaterial.dispose();busWindowTexture.dispose();busTyreMaterial.dispose();
-  skylineMarkerMaterial.dispose();plantMaterial.dispose();rooftopTankMaterial.dispose();
+  skylineMarkerMaterial.dispose();plantMaterial.dispose();rooftopTankMaterial.dispose();antennaMaterial.dispose();
   windowTexture.dispose();emissiveTexture.dispose();facadeNormalTexture.dispose();poolTexture.dispose();signTexture.dispose();flyoverTexture.dispose();flyoverNormalTexture.dispose();acousticTexture.dispose();acousticNormalTexture.dispose();acousticRoughnessTexture.dispose();barrierTexture.dispose();reflectorTexture.dispose();vmsTexture.dispose();vmsMaterial.dispose();
   billboardMaterial.dispose();neonMap.dispose();neonGlowMap.dispose();
  }};
