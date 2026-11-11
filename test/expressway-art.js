@@ -539,6 +539,28 @@ export function createExpresswayArt(THREE){
  // Long rain streaks and formwork seams read as weathered reinforced concrete.
  fc.fillStyle='rgba(54,61,65,.18)';
  for(let i=0;i<7;i++)fc.fillRect(0,17+i*19,128,1);
+ // Elevated interchange expansion joints and water runoff: baked into the
+ // existing shared PBR concrete atlas, with no added meshes or draw calls.
+ // Uneven black bitumen seams and vertical rust runoff give the flyovers
+ // the weathered scale of Bangkok's real elevated infrastructure.
+ for(let joint=0;joint<3;joint++){
+  const y=24+joint*43;
+  fc.fillStyle='rgba(24,31,34,.63)';fc.fillRect(0,y,128,3);
+  fc.fillStyle='rgba(221,215,202,.29)';fc.fillRect(0,y+3,128,1);
+  for(let bolt=0;bolt<8;bolt++){
+   const x=7+bolt*16;
+   fc.fillStyle='rgba(47,42,37,.55)';fc.fillRect(x,y-2,3,2);
+   fc.fillStyle='rgba(147,86,49,.35)';fc.fillRect(x+1,y+4,2,8+(bolt*7+joint*3)%16);
+  }
+ }
+ for(let stain=0;stain<14;stain++){
+  const x=(stain*41+19)%124,start=(stain*17+11)%93;
+  const len=18+(stain*13)%34;
+  const runoff=fc.createLinearGradient(x,start,x,start+len);
+  runoff.addColorStop(0,'rgba(46,51,48,.32)');
+  runoff.addColorStop(1,'rgba(46,51,48,0)');
+  fc.fillStyle=runoff;fc.fillRect(x,start,2+(stain%3),len);
+ }
  // Baked concrete pore normals, formwork joints and shallow rain erosion.
  // Shared by all flyover piers/decks: no extra geometry, lights or draw calls.
  const flyoverNormalCanvas=document.createElement('canvas');
