@@ -5178,6 +5178,22 @@ for(let i=0;i<140;i++){
  tukServiceCtx.fillStyle=i%3?'rgba(6,12,16,.11)':'rgba(208,197,169,.09)';
  tukServiceCtx.fillRect(px,py,1+(i%3),1+(i%2));
 }
+// Oxidized pressed-steel edges and chipped enamel: baked into the existing
+// service-hatch atlas, so every traffic tuk-tuk gains weathering at zero
+// additional draw calls or runtime allocations.
+for(let i=0;i<64;i++){
+ const x=12+(i*53)%104, y=(i%2===0?14:112)+((i*17)%7-3);
+ const length=2+(i*11)%9;
+ tukServiceCtx.strokeStyle=i%3===0?'rgba(143,76,39,.52)':'rgba(196,157,112,.38)';
+ tukServiceCtx.lineWidth=i%5===0?2:1;
+ tukServiceCtx.beginPath();tukServiceCtx.moveTo(x,y);
+ tukServiceCtx.lineTo(Math.min(117,x+length),y+(i%3-1));tukServiceCtx.stroke();
+}
+for(let i=0;i<36;i++){
+ const x=(i%2===0?12:116)+((i*7)%5-2), y=17+(i*37)%94;
+ tukServiceCtx.fillStyle=i%3===0?'rgba(126,61,30,.48)':'rgba(209,174,123,.32)';
+ tukServiceCtx.fillRect(x,y,1+(i%3),2+(i%4));
+}
 const tukServiceTexture=new THREE.CanvasTexture(tukServiceCanvas);
 tukServiceTexture.colorSpace=THREE.SRGBColorSpace;
 tukServiceTexture.anisotropy=2;
