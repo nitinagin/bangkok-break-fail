@@ -271,15 +271,29 @@ export function createExpresswayArt(THREE){
  const rooftopTankMaterial=new THREE.MeshStandardMaterial({color:0x657982,metalness:.62,roughness:.53});
  const rooftopTanks=new THREE.InstancedMesh(rooftopTankGeometry,rooftopTankMaterial,12);
  rooftopTanks.name='bangkok-expressway-rooftop-water-tanks';
+ // Alternate tower sides rather than placing every tank on the left skyline.
+ // Tank bases sit flush on the actual parapet height (tower roof = height - 2).
+ // Raised concrete plinths give the tanks a grounded, recognizable silhouette.
+ const tankPlinths=new THREE.InstancedMesh(
+  new THREE.BoxGeometry(1.45,.22,1.45),rooftopTankMaterial,12
+ );
+ tankPlinths.name='bangkok-rooftop-water-tank-plinths';
  for(let i=0;i<12;i++){
-  const tower=i*2,side=tower%2===0?-1:1;
+  const tower=i*2+(i%2),side=tower%2===0?-1:1;
   const height=10+(tower*13%19),width=4+(tower*5%7);
-  const depth=5+(tower*3%7);
-  dummy.position.set(side*(12+(tower*7%17))-width*.18,
-   height-2+.72,-15-Math.floor(tower/2)*9+depth*.17);
-  dummy.scale.set(.9+(i%3)*.18,1.15+(i%4)*.13,.9+(i%3)*.18);
+  const depth=5+(tower*3%7),roofY=height-2;
+  const tankScaleY=1.15+(i%4)*.13;
+  const x=side*(12+(tower*7%17))-width*.18;
+  const z=-15-Math.floor(tower/2)*9+depth*.17;
+  dummy.position.set(x,roofY+.11,z);
+  dummy.scale.set(1,1,1);
+  dummy.updateMatrix();tankPlinths.setMatrixAt(i,dummy.matrix);
+  dummy.position.set(x,roofY+.22+.4*tankScaleY,z);
+  dummy.scale.set(.9+(i%3)*.18,tankScaleY,.9+(i%3)*.18);
   dummy.updateMatrix();rooftopTanks.setMatrixAt(i,dummy.matrix);
  }
+ tankPlinths.instanceMatrix.needsUpdate=true;
+ tankPlinths.frustumCulled=false;group.add(tankPlinths);
  rooftopTanks.instanceMatrix.needsUpdate=true;
  rooftopTanks.frustumCulled=false;group.add(rooftopTanks);
 
