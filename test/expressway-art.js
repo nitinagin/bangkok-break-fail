@@ -265,6 +265,24 @@ export function createExpresswayArt(THREE){
  roofPlants.instanceMatrix.needsUpdate=true;
  roofPlants.frustumCulled=false;group.add(roofPlants);
 
+ // Rooftop cylindrical water tanks add a distinctly Bangkok residential silhouette.
+ // Shared low-poly PBR geometry and one instanced draw call; static, outside road lanes.
+ const rooftopTankGeometry=new THREE.CylinderGeometry(.5,.5,.8,10,1);
+ const rooftopTankMaterial=new THREE.MeshStandardMaterial({color:0x657982,metalness:.62,roughness:.53});
+ const rooftopTanks=new THREE.InstancedMesh(rooftopTankGeometry,rooftopTankMaterial,12);
+ rooftopTanks.name='bangkok-expressway-rooftop-water-tanks';
+ for(let i=0;i<12;i++){
+  const tower=i*2,side=tower%2===0?-1:1;
+  const height=10+(tower*13%19),width=4+(tower*5%7);
+  const depth=5+(tower*3%7);
+  dummy.position.set(side*(12+(tower*7%17))-width*.18,
+   height-2+.72,-15-Math.floor(tower/2)*9+depth*.17);
+  dummy.scale.set(.9+(i%3)*.18,1.15+(i%4)*.13,.9+(i%3)*.18);
+  dummy.updateMatrix();rooftopTanks.setMatrixAt(i,dummy.matrix);
+ }
+ rooftopTanks.instanceMatrix.needsUpdate=true;
+ rooftopTanks.frustumCulled=false;group.add(rooftopTanks);
+
  // Baked road-facing Thai skyline signage: one shared atlas and instanced draw call.
  const skylineThaiCanvas=document.createElement('canvas');skylineThaiCanvas.width=512;skylineThaiCanvas.height=256;
  const skylineThaiCtx=skylineThaiCanvas.getContext('2d');
@@ -1691,7 +1709,7 @@ gantry.position.z=-75;group.add(gantry);
    carPaint.dispose();carGlass.dispose();tyreMaterial.dispose();
    taxiLiveryMaterial.dispose();taxiTexture.dispose();
    busShellMaterial.dispose();busWindowMaterial.dispose();busWindowTexture.dispose();busTyreMaterial.dispose();
-  skylineMarkerMaterial.dispose();plantMaterial.dispose();
+  skylineMarkerMaterial.dispose();plantMaterial.dispose();rooftopTankMaterial.dispose();
   windowTexture.dispose();emissiveTexture.dispose();facadeNormalTexture.dispose();poolTexture.dispose();signTexture.dispose();flyoverTexture.dispose();flyoverNormalTexture.dispose();acousticTexture.dispose();acousticNormalTexture.dispose();acousticRoughnessTexture.dispose();barrierTexture.dispose();reflectorTexture.dispose();vmsTexture.dispose();vmsMaterial.dispose();
   billboardMaterial.dispose();neonMap.dispose();neonGlowMap.dispose();
  }};
