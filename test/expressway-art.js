@@ -266,10 +266,13 @@ export function createExpresswayArt(THREE){
  roofPlants.frustumCulled=false;group.add(roofPlants);
 
  // Baked road-facing Thai skyline signage: one shared atlas and instanced draw call.
- const skylineThaiCanvas=document.createElement('canvas');skylineThaiCanvas.width=256;skylineThaiCanvas.height=128;
+ const skylineThaiCanvas=document.createElement('canvas');skylineThaiCanvas.width=512;skylineThaiCanvas.height=256;
  const skylineThaiCtx=skylineThaiCanvas.getContext('2d');
+ // Render Thai glyphs at 2x atlas resolution so highway signs stay legible
+ // at oblique camera angles; preserve existing layout and one instanced draw call.
+ skylineThaiCtx.scale(2,2);
  // Highway-green retroreflective direction board rather than a glowing
- // advertisement. All details are baked into the existing 256x128 atlas.
+ // advertisement. All details are baked into the shared 512x256 atlas.
  skylineThaiCtx.fillStyle='#10251d';skylineThaiCtx.fillRect(0,0,256,128);
  skylineThaiCtx.fillStyle='#12613e';skylineThaiCtx.fillRect(6,6,244,116);
  skylineThaiCtx.strokeStyle='#e4e9dc';skylineThaiCtx.lineWidth=3;
