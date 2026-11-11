@@ -99,6 +99,15 @@ export function createExpresswayArt(THREE){
    ctx.fillStyle=gradient;ctx.fillRect(x,start,1+(streak%2),length);
   }
  }
+ // Baked air-conditioner runoff and soot below selected office windows.
+ // Existing facade atlas only: no new meshes, textures or per-frame cost.
+ for(let row=1;row<31;row++)for(let col=0;col<8;col++){
+  if((row*13+col*17)%23!==4)continue;
+  const x=9+col*30,y=13+row*15;
+  ctx.fillStyle='rgba(11,23,30,.48)';ctx.fillRect(x+4,y+11,12,2);
+  ctx.fillStyle='rgba(13,26,32,.26)';ctx.fillRect(x+7,y+13,2,Math.min(12,512-y-13));
+  ctx.fillStyle='rgba(168,186,183,.16)';ctx.fillRect(x+9,y+13,1,Math.min(8,512-y-13));
+ }
  // Rain-darkened sill shadows and irregular dust on the glazing: baked
  // into the existing facade atlas, avoiding extra geometry or draw calls.
  // Keep the central glass clear so occupied-room emission stays legible.
