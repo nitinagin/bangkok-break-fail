@@ -126,6 +126,24 @@ for(let patch=0;patch<5;patch++){
  asphaltCtx.lineTo(x+width*.55,y+height-1);asphaltCtx.lineTo(x,y+height-3);
  asphaltCtx.closePath();asphaltCtx.stroke();
 }
+// Rain-polished twin wheel tracks: subtle longitudinal darkened rubber wear
+// and fragmented glossy water in the existing Yaowarat PBR atlases.
+// Baked once; no geometry, extra draw calls or frame-time updates.
+for(let track=0;track<2;track++){
+ const center=track===0?76:180;
+ for(let y=0;y<256;y+=3){
+  const sway=Math.sin(y*.036+track*.8)*2.2;
+  const gap=((y+track*29)%47)<7;
+  if(gap)continue;
+  const x=center+sway;
+  asphaltCtx.fillStyle='rgba(13,20,25,.13)';
+  asphaltCtx.fillRect(x-7,y,14,2);
+  asphaltCtx.fillStyle='rgba(14,19,23,.12)';
+  asphaltCtx.fillRect(x-3,y,6,3);
+  wetRoadRoughnessCtx.fillStyle='rgba(36,36,36,.11)';
+  wetRoadRoughnessCtx.fillRect(x-5,y,10,3);
+ }
+}
 // Weathered Thai shophouse neon reflections: narrow, vertically broken light
 // streaks baked into the existing asphalt albedo, not extra lights or meshes.
 // The staggered bands are aligned with the roadway UV direction and avoid
