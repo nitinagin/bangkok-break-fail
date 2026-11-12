@@ -3180,8 +3180,40 @@ for(let i=0;i<tukCanopyVertices.count;i++){
 }
 tukCanopyVertices.needsUpdate=true;
 tukCanopyGeometry.computeVertexNormals();
+// Weathered stitched vinyl canopy: baked canvas weave, tension ribs and edge
+// binding in a single 256px PBR albedo. No extra meshes, draw calls or frame work.
+const canopyCanvas=document.createElement('canvas');
+canopyCanvas.width=canopyCanvas.height=256;
+const canopyCtx=canopyCanvas.getContext('2d');
+canopyCtx.fillStyle='#29343b';canopyCtx.fillRect(0,0,256,256);
+for(let y=0;y<256;y+=3){
+ canopyCtx.strokeStyle=y%9===0?'rgba(161,171,168,.095)':'rgba(4,9,13,.12)';
+ canopyCtx.lineWidth=1;canopyCtx.beginPath();
+ canopyCtx.moveTo(0,y+.5);canopyCtx.lineTo(256,y+.5);canopyCtx.stroke();
+}
+for(let x=0;x<256;x+=4){
+ canopyCtx.fillStyle='rgba(191,195,181,.045)';
+ for(let y=(x%8)*.5;y<256;y+=8)canopyCtx.fillRect(x,y,1,2);
+}
+// Subtle fabric tension ribs run front-to-back; stitched seams avoid toy stripes.
+for(const x of [18,128,238]){
+ const rib=canopyCtx.createLinearGradient(x-7,0,x+7,0);
+ rib.addColorStop(0,'rgba(0,0,0,0)');
+ rib.addColorStop(.43,'rgba(0,0,0,.16)');
+ rib.addColorStop(.58,'rgba(169,176,168,.12)');
+ rib.addColorStop(1,'rgba(0,0,0,0)');
+ canopyCtx.fillStyle=rib;canopyCtx.fillRect(x-7,0,14,256);
+ canopyCtx.fillStyle='rgba(178,174,153,.32)';
+ for(let y=5;y<253;y+=9)canopyCtx.fillRect(x+3,y,1,3);
+}
+for(const x of [2,252]){
+ canopyCtx.fillStyle='rgba(9,14,18,.55)';canopyCtx.fillRect(x,0,2,256);
+}
+const canopyTexture=new THREE.CanvasTexture(canopyCanvas);
+canopyTexture.colorSpace=THREE.SRGBColorSpace;
+canopyTexture.anisotropy=Math.min(2,renderer.capabilities.getMaxAnisotropy());
 const tukCanopyFabric=new THREE.Mesh(tukCanopyGeometry,new THREE.MeshStandardMaterial({
- color:0x1b2730,roughness:.92,metalness:0,side:THREE.DoubleSide
+ color:0xc4c9c7,map:canopyTexture,roughness:.88,metalness:0,side:THREE.DoubleSide
 }));
 tukCanopyFabric.position.set(0,.91,-1.24);
 tukCanopyFabric.name='tuktuk-arched-canvas-roof';
