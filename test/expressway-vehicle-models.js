@@ -243,6 +243,12 @@ function makeBusWingMirrors(THREE){
   for(const p of [a,b,c,d])vertex(...p,color);
   indices.push(start,start+1,start+2,start,start+2,start+3);
  }
+ // Folded pressed-metal rain visor over the bus windscreen; the existing
+ // vertex-colour mirror mesh carries all three surfaces in one draw call.
+ const visorTop=new THREE.Color(0x66767b),visorLip=new THREE.Color(0x29363c),visorShade=new THREE.Color(0x121e24);
+ quad([-.94,2.66,2.39],[.94,2.66,2.39],[.91,2.72,2.25],[-.91,2.72,2.25],visorTop);
+ quad([-.94,2.66,2.39],[.94,2.66,2.39],[.94,2.625,2.405],[-.94,2.625,2.405],visorLip);
+ quad([-.94,2.625,2.405],[.94,2.625,2.405],[.91,2.72,2.25],[-.91,2.72,2.25],visorShade);
  for(const side of [-1,1]){
   // Two angled steel braces support each mirror at the front cab corner.
   for(const [y,z] of [[2.27,1.98],[2.05,2.08]]){
