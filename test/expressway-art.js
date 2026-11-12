@@ -367,10 +367,15 @@ export function createExpresswayArt(THREE){
  }
  skylineThaiCtx.textAlign='center';skylineThaiCtx.textBaseline='middle';
  skylineThaiCtx.shadowBlur=0;
- skylineThaiCtx.font='bold 35px sans-serif';skylineThaiCtx.fillStyle='#f7f8ee';
- skylineThaiCtx.fillText('ทางด่วน',128,49);
- skylineThaiCtx.font='bold 18px sans-serif';
- skylineThaiCtx.fillText('EXPRESSWAY',128,82);
+ skylineThaiCtx.font='bold 29px sans-serif';skylineThaiCtx.fillStyle='#f7f8ee';
+ skylineThaiCtx.fillText('ดินแดง',112,47);
+ skylineThaiCtx.font='bold 17px sans-serif';
+ skylineThaiCtx.fillText('DIN DAENG',112,77);
+ // Distance tab is baked into the existing atlas: no new draw calls.
+ skylineThaiCtx.fillStyle='#0d482f';skylineThaiCtx.fillRect(19,90,72,20);
+ skylineThaiCtx.strokeStyle='#d9e5d8';skylineThaiCtx.lineWidth=1;skylineThaiCtx.strokeRect(19.5,90.5,71,19);
+ skylineThaiCtx.fillStyle='#f7f8ee';skylineThaiCtx.font='bold 12px Arial,sans-serif';
+ skylineThaiCtx.fillText('1 km',55,100);
  // Route shield baked into the existing atlas; no new draw calls.
  skylineThaiCtx.fillStyle='#e8eee8';skylineThaiCtx.fillRect(207,20,30,29);
  skylineThaiCtx.fillStyle='#174f79';skylineThaiCtx.fillRect(210,23,24,23);
