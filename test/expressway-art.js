@@ -78,6 +78,19 @@ export function createExpresswayArt(THREE){
    ec.fillRect(x-2,y-6,2,6);ec.fillRect(x+22,y-6,2,6);
   }
  }
+ // Recessed window reflections: offset skyline streaks and uneven wet-glass
+ // specular bands break up the uniform facade without extra geometry.
+ // Draw on the diffuse atlas only; do not brighten unlit emissive rooms.
+ for(let floor=0;floor<32;floor++)for(let bay=0;bay<8;bay++){
+  const x=10+bay*30,y=14+floor*15;
+  const pattern=(floor*13+bay*17+floor*bay)%11;
+  if(pattern===0||pattern===3||pattern===7){
+   ctx.fillStyle='rgba(188,213,225,.18)';
+   ctx.fillRect(x+2+(pattern%3)*4,y,2,7);
+   ctx.fillStyle='rgba(229,238,239,.10)';
+   ctx.fillRect(x+5+(pattern%2)*5,y+1,1,5);
+  }
+ }
  // Bake occupied-room glow into the existing emissive atlas once.
  // No new WebGL lights, meshes, textures or draw calls.
  ec.save();
