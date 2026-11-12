@@ -3113,6 +3113,26 @@ cockpitRainGlints.renderOrder=3;cockpit.add(cockpitRainGlints);
 
 cockpitTube([[-.75,-.70,-1.36],[-.45,-.64,-1.42],[0,-.68,-1.48],[.45,-.64,-1.42],[.75,-.70,-1.36]],.046,cockpitChrome);
 
+// Curved stamped-steel windscreen uprights give the tuk-tuk a recognisable
+// canopy silhouette while keeping the central dodge lane unobstructed.
+// One shared six-sided tube instanced twice: one draw call, no frame work.
+const canopyUprightCurve=new THREE.CatmullRomCurve3([
+ new THREE.Vector3(.78,-.74,-1.39),new THREE.Vector3(.84,-.30,-1.62),
+ new THREE.Vector3(.88,.22,-1.73),new THREE.Vector3(.83,.74,-1.78)
+]);
+const canopyUprights=new THREE.InstancedMesh(
+ new THREE.TubeGeometry(canopyUprightCurve,18,.035,6,false),cockpitChrome,2);
+const canopyUprightPose=new THREE.Object3D();
+for(let i=0;i<2;i++){
+ canopyUprightPose.scale.set(i===0?-1:1,1,1);
+ canopyUprightPose.updateMatrix();
+ canopyUprights.setMatrixAt(i,canopyUprightPose.matrix);
+}
+canopyUprights.instanceMatrix.needsUpdate=true;
+canopyUprights.computeBoundingSphere();
+canopyUprights.name='tuktuk-curved-windscreen-uprights';
+cockpit.add(canopyUprights);
+
 // Driver-visible motorcycle-style tuk-tuk steering bar, not a car steering wheel.
 // A curved chrome bar and two instanced textured-rubber grips stay below the
 // road sightline. All geometry is created once; only the group rotates per frame.
