@@ -1377,6 +1377,26 @@ export function createExpresswayArt(THREE){
   ac.fillStyle=i%3===0?'rgba(31,49,47,.17)':'rgba(218,225,211,.15)';
   ac.fillRect(x,y,1+(i%3),9+(i%17));
  }
+ // Broad water-damaged lower panels and oxidized mounting plates break up
+ // the pristine repeating acoustic wall. Baked once into the existing atlas:
+ // no new geometry, alpha blending, draw calls or frame-time work.
+ const roadSplash=ac.createLinearGradient(0,165,0,256);
+ roadSplash.addColorStop(0,'rgba(28,40,39,0)');
+ roadSplash.addColorStop(.55,'rgba(27,40,39,.17)');
+ roadSplash.addColorStop(1,'rgba(16,29,29,.46)');
+ ac.fillStyle=roadSplash;ac.fillRect(0,165,128,91);
+ for(let bay=0;bay<8;bay++){
+  const x=bay*16+2;
+  const stainHeight=22+(bay*23%53);
+  const drip=ac.createLinearGradient(x,256-stainHeight,x,256);
+  drip.addColorStop(0,'rgba(51,62,55,0)');
+  drip.addColorStop(1,'rgba(29,39,34,.32)');
+  ac.fillStyle=drip;ac.fillRect(x,256-stainHeight,3+(bay%4),stainHeight);
+  // Weathered bolt heads and rust halos at the lower rail.
+  ac.fillStyle='rgba(105,64,43,.34)';ac.fillRect(x+4,226,8,10);
+  ac.fillStyle='#5d6661';ac.fillRect(x+6,229,3,3);
+  ac.fillStyle='rgba(205,211,196,.35)';ac.fillRect(x+6,229,1,1);
+ }
  const acousticTexture=new THREE.CanvasTexture(acousticCanvas);
  acousticTexture.colorSpace=THREE.SRGBColorSpace;
  // Baked PBR rib normals and patchy galvanized roughness match the existing
