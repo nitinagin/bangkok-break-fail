@@ -91,6 +91,25 @@ export function createExpresswayArt(THREE){
    ctx.fillRect(x+5+(pattern%2)*5,y+1,1,5);
   }
  }
+ // Broad, irregular vertical rain runoff and soot under window ledges.
+ // These are baked into the shared facade diffuse map, not separate geometry.
+ // Narrow bands are deliberately broken at floor boundaries so the towers
+ // read as weathered concrete rather than a uniform checkerboard.
+ for(let bay=0;bay<8;bay++){
+  const bx=7+bay*30;
+  for(let floor=1;floor<31;floor++){
+   const seed=(bay*41+floor*23+bay*floor*7)%17;
+   if(seed>6)continue;
+   const y=13+floor*15+11;
+   const length=3+(seed%4);
+   ctx.fillStyle=seed%3===0?'rgba(9,19,25,.23)':'rgba(13,25,31,.15)';
+   ctx.fillRect(bx+(seed%3),y,1+(seed%2),length);
+   if(seed===2||seed===5){
+    ctx.fillStyle='rgba(142,156,160,.13)';
+    ctx.fillRect(bx+3,y+1,1,Math.max(2,length-2));
+   }
+  }
+ }
  // Bake occupied-room glow into the existing emissive atlas once.
  // No new WebGL lights, meshes, textures or draw calls.
  ec.save();
