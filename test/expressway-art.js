@@ -61,6 +61,23 @@ export function createExpresswayArt(THREE){
    ctx.fillStyle='#29343c';for(let g=0;g<4;g++)ctx.fillRect(x+5+g*3,y+11,1,2);
   }
  }
+ // Realistic Bangkok facade depth: balcony slabs, shaded rails and irregular
+ // air-conditioning ledges baked into the shared atlas (no extra draw calls).
+ // Keep emissive windows occluded where concrete projects across the glazing.
+ for(let floor=3;floor<31;floor+=4){
+  const y=13+floor*15+9;
+  for(let bay=0;bay<8;bay++){
+   if((floor*7+bay*11)%5===0)continue;
+   const x=9+bay*30;
+   ctx.fillStyle='rgba(7,15,23,.78)';ctx.fillRect(x-3,y-2,27,4);
+   ctx.fillStyle='rgba(141,151,151,.65)';ctx.fillRect(x-3,y,27,2);
+   ctx.fillStyle='rgba(16,27,35,.83)';ctx.fillRect(x-2,y-6,2,6);
+   ctx.fillRect(x+22,y-6,2,6);
+   ctx.fillStyle='rgba(106,123,132,.66)';ctx.fillRect(x-1,y-6,23,1);
+   ec.fillStyle='#000';ec.fillRect(x-3,y-2,27,4);
+   ec.fillRect(x-2,y-6,2,6);ec.fillRect(x+22,y-6,2,6);
+  }
+ }
  // Bake occupied-room glow into the existing emissive atlas once.
  // No new WebGL lights, meshes, textures or draw calls.
  ec.save();
