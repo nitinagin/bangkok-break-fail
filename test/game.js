@@ -3149,6 +3149,26 @@ const canopyLip=new THREE.Mesh(
 canopyLip.name='tuktuk-crowned-pressed-steel-canopy-rain-gutter';
 cockpit.add(canopyLip);
 
+// Shaped canvas canopy above the driver: a gently arched fabric roof with a
+// rolled front edge instead of an exposed toy-like metal frame. The canopy
+// stays above the windshield sightline and is baked into one static PBR mesh.
+const tukCanopyGeometry=new THREE.BoxGeometry(1.83,.055,1.08,12,1,4);
+const tukCanopyVertices=tukCanopyGeometry.attributes.position;
+for(let i=0;i<tukCanopyVertices.count;i++){
+ const x=tukCanopyVertices.getX(i),z=tukCanopyVertices.getZ(i);
+ const arch=.15*(1-Math.pow(Math.abs(x)/.915,2));
+ const frontLift=.035*(.54-z)/1.08;
+ tukCanopyVertices.setY(i,tukCanopyVertices.getY(i)+arch+frontLift);
+}
+tukCanopyVertices.needsUpdate=true;
+tukCanopyGeometry.computeVertexNormals();
+const tukCanopyFabric=new THREE.Mesh(tukCanopyGeometry,new THREE.MeshStandardMaterial({
+ color:0x1b2730,roughness:.92,metalness:0,side:THREE.DoubleSide
+}));
+tukCanopyFabric.position.set(0,.91,-1.24);
+tukCanopyFabric.name='tuktuk-arched-canvas-roof';
+cockpit.add(tukCanopyFabric);
+
 // Driver-visible motorcycle-style tuk-tuk steering bar, not a car steering wheel.
 // A curved chrome bar and two instanced textured-rubber grips stay below the
 // road sightline. All geometry is created once; only the group rotates per frame.
