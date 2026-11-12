@@ -249,6 +249,20 @@ function makeBusWingMirrors(THREE){
  quad([-.94,2.66,2.39],[.94,2.66,2.39],[.91,2.72,2.25],[-.91,2.72,2.25],visorTop);
  quad([-.94,2.66,2.39],[.94,2.66,2.39],[.94,2.625,2.405],[-.94,2.625,2.405],visorLip);
  quad([-.94,2.625,2.405],[.94,2.625,2.405],[.91,2.72,2.25],[-.91,2.72,2.25],visorShade);
+ // Raised pressed-steel roof rain gutters on the Bangkok bus cab. Their
+ // shallow outward lips catch the silhouette above the windshield, rather
+ // than relying on a flat texture. Share the existing mirror/visor PBR mesh:
+ // no additional material, mesh, draw call, light or texture.
+ const gutterSteel=new THREE.Color(0x65757b),gutterShadow=new THREE.Color(0x202d33);
+ for(const side of [-1,1]){
+  const inner=side*.89,outer=side*.99;
+  quad([inner,2.69,2.28],[outer,2.69,2.28],
+   [outer,2.68,1.58],[inner,2.68,1.58],gutterSteel);
+  quad([outer,2.69,2.28],[outer,2.73,2.28],
+   [outer,2.72,1.58],[outer,2.68,1.58],gutterShadow);
+  quad([inner,2.69,2.28],[inner,2.70,2.28],
+   [inner,2.69,1.58],[inner,2.68,1.58],gutterSteel);
+ }
  for(const side of [-1,1]){
   // Two angled steel braces support each mirror at the front cab corner.
   for(const [y,z] of [[2.27,1.98],[2.05,2.08]]){
