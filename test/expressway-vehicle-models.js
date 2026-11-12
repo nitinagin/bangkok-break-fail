@@ -1389,6 +1389,26 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
    // Curved-looking handrail silhouette: segmented satin metal.
    doorLine(x,.96,1.42,1.53,1.42,.034,0xb4aaa0);
    doorLine(x,.96,1.58,1.53,1.58,.034,0xb4aaa0);
+   // Deep tinted folding-door panes with a narrow reflected streetlight band.
+   // Two leaves are built into the existing batched door mesh (no new draws).
+   // Set a tiny outward offset to avoid fighting the shared side-window atlas.
+   const paneX=side*1.098;
+   function pane(z0,z1,y0,y1,color){
+    const base=doorVerts.length/3,c=new THREE.Color(color);
+    doorVerts.push(paneX,y0,z0,paneX,y0,z1,paneX,y1,z1,paneX,y1,z0);
+    for(let k=0;k<4;k++)doorColors.push(c.r,c.g,c.b);
+    doorFaces.push(base,base+1,base+2,base,base+2,base+3);
+   }
+   pane(1.155,1.468,1.62,2.35,0x1b3540);
+   pane(1.512,1.825,1.62,2.35,0x1b3540);
+   // Thin vertical sodium-lamp reflection gives the glazing a curved feel.
+   pane(1.192,1.209,1.69,2.30,0x60767a);
+   pane(1.550,1.565,1.69,2.30,0x60767a);
+   // A tactile brushed-metal pull handle on each folding leaf.
+   for(const z of [1.40,1.60]){
+    doorLine(side*1.101,1.17,z,1.43,z,.037,0xc4c4b5);
+    doorLine(side*1.101,1.17,z-.045,1.17,z+.045,.026,0x7f8989);
+   }
    // Recessed rubber door threshold contrasts with the red lower skirt.
    doorLine(x,.57,1.15,.57,1.83,.055,0x171c1d);
   }
