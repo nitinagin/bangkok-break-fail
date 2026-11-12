@@ -2855,6 +2855,37 @@ for(const px of [13,243]){
   cockpitFinishCtx.beginPath();cockpitFinishCtx.moveTo(px-2,py);cockpitFinishCtx.lineTo(px+2,py);cockpitFinishCtx.stroke();
  }
 }
+// Baked tuk-tuk instrument cluster: two recessed analogue dials and worn
+// chrome bezels on the existing cockpit atlas. Zero extra meshes/draw calls.
+// Keep the numerals inside the dashboard rather than obscuring the road.
+for(const [cx,r] of [[96,31],[160,25]]){
+ const cy=66;
+ cockpitFinishCtx.fillStyle='#293038';
+ cockpitFinishCtx.beginPath();cockpitFinishCtx.arc(cx,cy,r+5,0,Math.PI*2);cockpitFinishCtx.fill();
+ cockpitFinishCtx.strokeStyle='#aab1ae';cockpitFinishCtx.lineWidth=3;
+ cockpitFinishCtx.beginPath();cockpitFinishCtx.arc(cx,cy,r+3,0,Math.PI*2);cockpitFinishCtx.stroke();
+ cockpitFinishCtx.strokeStyle='rgba(255,255,255,.26)';cockpitFinishCtx.lineWidth=1;
+ cockpitFinishCtx.beginPath();cockpitFinishCtx.arc(cx,cy,r,Math.PI*1.05,Math.PI*1.95);cockpitFinishCtx.stroke();
+ for(let tick=0;tick<=10;tick++){
+  const angle=Math.PI*(1.12+tick*.176);
+  const inner=r-(tick%2===0?10:6),outer=r-3;
+  cockpitFinishCtx.strokeStyle=tick>7?'#ce7658':'#d9d8c5';
+  cockpitFinishCtx.lineWidth=tick%2===0?2:1;
+  cockpitFinishCtx.beginPath();
+  cockpitFinishCtx.moveTo(cx+Math.cos(angle)*inner,cy+Math.sin(angle)*inner);
+  cockpitFinishCtx.lineTo(cx+Math.cos(angle)*outer,cy+Math.sin(angle)*outer);
+  cockpitFinishCtx.stroke();
+ }
+ cockpitFinishCtx.strokeStyle='#e6b866';cockpitFinishCtx.lineWidth=2.5;
+ cockpitFinishCtx.beginPath();cockpitFinishCtx.moveTo(cx,cy);
+ cockpitFinishCtx.lineTo(cx+Math.cos(3.72)*(r-11),cy+Math.sin(3.72)*(r-11));
+ cockpitFinishCtx.stroke();
+ cockpitFinishCtx.fillStyle='#b5b8b1';
+ cockpitFinishCtx.beginPath();cockpitFinishCtx.arc(cx,cy,3,0,Math.PI*2);cockpitFinishCtx.fill();
+}
+cockpitFinishCtx.textAlign='center';cockpitFinishCtx.textBaseline='middle';
+cockpitFinishCtx.font='bold 9px sans-serif';cockpitFinishCtx.fillStyle='#d9d8c5';
+cockpitFinishCtx.fillText('km/h',96,81);cockpitFinishCtx.fillText('FUEL',160,79);
 const cockpitFinishTexture=new THREE.CanvasTexture(cockpitFinishCanvas);
 cockpitFinishTexture.colorSpace=THREE.SRGBColorSpace;
 cockpitFinishTexture.anisotropy=mobile?2:4;
