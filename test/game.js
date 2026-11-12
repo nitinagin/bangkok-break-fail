@@ -3212,11 +3212,25 @@ const tyreBumpCanvas=document.createElement('canvas');
 tyreBumpCanvas.width=128;tyreBumpCanvas.height=64;
 const tyreBumpCtx=tyreBumpCanvas.getContext('2d');
 tyreBumpCtx.fillStyle='#777';tyreBumpCtx.fillRect(0,0,128,64);
-for(let x=0;x<128;x+=8){
- tyreBumpCtx.fillStyle='#a4a4a4';
- tyreBumpCtx.fillRect(x,19,3,26);
- tyreBumpCtx.fillStyle='#454545';
- tyreBumpCtx.fillRect(x+4,19,2,26);
+// Directional V-chevron tread replaces toy-like straight stripes.
+// Bake once into the existing 128x64 bump map; zero extra draw calls.
+tyreBumpCtx.lineCap='square';
+tyreBumpCtx.lineJoin='bevel';
+for(let x=-16;x<144;x+=16){
+ for(const side of [-1,1]){
+  tyreBumpCtx.beginPath();
+  tyreBumpCtx.moveTo(x,32);
+  tyreBumpCtx.lineTo(x+8,32+side*13);
+  tyreBumpCtx.lineWidth=4;
+  tyreBumpCtx.strokeStyle='#b8b8b8';
+  tyreBumpCtx.stroke();
+  tyreBumpCtx.beginPath();
+  tyreBumpCtx.moveTo(x+3,32);
+  tyreBumpCtx.lineTo(x+11,32+side*13);
+  tyreBumpCtx.lineWidth=2;
+  tyreBumpCtx.strokeStyle='#414141';
+  tyreBumpCtx.stroke();
+ }
 }
 for(const y of [9,14,49,54]){
  tyreBumpCtx.fillStyle='#555';
