@@ -5009,6 +5009,18 @@ for(const [x,rgb] of [[24,'255,72,122'],[207,'65,192,238']]){
  tukWindscreenCtx.closePath();tukWindscreenCtx.fill();
 }
 tukWindscreenCtx.restore();
+// A broad, faint wiper-cleared arc cuts through the dirty windshield film.
+// This is baked into the existing atlas rather than another transparent mesh.
+tukWindscreenCtx.save();
+tukWindscreenCtx.beginPath();
+tukWindscreenCtx.arc(122,116,98,Math.PI*1.08,Math.PI*1.91);
+tukWindscreenCtx.strokeStyle='rgba(204,225,223,.23)';
+tukWindscreenCtx.lineWidth=13;tukWindscreenCtx.stroke();
+tukWindscreenCtx.beginPath();
+tukWindscreenCtx.arc(122,116,86,Math.PI*1.08,Math.PI*1.91);
+tukWindscreenCtx.strokeStyle='rgba(22,37,44,.14)';
+tukWindscreenCtx.lineWidth=2;tukWindscreenCtx.stroke();
+tukWindscreenCtx.restore();
 // Baked weathered rubber seal and bottom-mounted wiper, avoiding extra draw calls.
 tukWindscreenCtx.strokeStyle='rgba(12,17,21,.85)';
 tukWindscreenCtx.lineWidth=9;tukWindscreenCtx.strokeRect(4.5,4.5,247,119);
