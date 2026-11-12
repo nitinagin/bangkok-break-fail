@@ -3133,6 +3133,22 @@ canopyUprights.computeBoundingSphere();
 canopyUprights.name='tuktuk-curved-windscreen-uprights';
 cockpit.add(canopyUprights);
 
+// Rolled front canopy lip: a shallow crowned steel rain gutter joining the
+// windscreen pillars. It sits above the forward sightline, preserving dodge
+// visibility while giving the driver a recognisable pressed-metal roof edge.
+// One static PBR tube, no textures, lighting changes or per-frame allocations.
+const canopyLipCurve=new THREE.CatmullRomCurve3([
+ new THREE.Vector3(-.83,.74,-1.78),
+ new THREE.Vector3(-.43,.80,-1.80),
+ new THREE.Vector3(0,.83,-1.81),
+ new THREE.Vector3(.43,.80,-1.80),
+ new THREE.Vector3(.83,.74,-1.78)
+]);
+const canopyLip=new THREE.Mesh(
+ new THREE.TubeGeometry(canopyLipCurve,20,.046,6,false),cockpitChrome);
+canopyLip.name='tuktuk-crowned-pressed-steel-canopy-rain-gutter';
+cockpit.add(canopyLip);
+
 // Driver-visible motorcycle-style tuk-tuk steering bar, not a car steering wheel.
 // A curved chrome bar and two instanced textured-rubber grips stay below the
 // road sightline. All geometry is created once; only the group rotates per frame.
