@@ -1024,6 +1024,20 @@ export function createExpresswayArt(THREE){
    bac.fillStyle=glow;bac.fillRect(x,y,span,1+(segment%4===0?1:0));
   }
  }
+ // Irregular sealed expansion joints on the elevated concrete deck: dark tar,
+ // chipped aggregate edges and short rain highlights baked into the road atlas.
+ // No additional draw calls, lights or per-frame work on mobile.
+ for(const jointX of [58,181]){
+  bac.fillStyle='rgba(9,15,21,.76)';bac.fillRect(jointX,0,2,128);
+  bac.fillStyle='rgba(137,145,149,.28)';bac.fillRect(jointX+2,0,1,128);
+  for(let y=3;y<128;y+=9){
+   const shift=((y*13+jointX)%7)-3;
+   bac.fillStyle='rgba(10,16,22,.62)';
+   bac.fillRect(jointX+shift,y,1,5+(y%3));
+   bac.fillStyle='rgba(184,189,183,.20)';
+   bac.fillRect(jointX+shift+2,y+1,1,3);
+  }
+ }
  const bridgeAsphaltTexture=new THREE.CanvasTexture(bridgeAsphaltCanvas);
  bridgeAsphaltTexture.colorSpace=THREE.SRGBColorSpace;
  bridgeAsphaltTexture.anisotropy=2;
