@@ -432,7 +432,23 @@ export function createExpresswayArt(THREE){
   base.addColorStop(0,'#354047');base.addColorStop(.25,'#121c23');
   base.addColorStop(1,'#26313a');
   nc.fillStyle=base;nc.fillRect(0,y,512,85);
+  // Recessed aluminium lightbox: bevel, lower lip and directional wet highlights.
+  // Baked in the shared atlas, so all six signs gain depth without new meshes.
   nc.fillStyle='#0b161d';nc.fillRect(12,y+8,488,69);
+  const bevel=nc.createLinearGradient(12,y+8,12,y+77);
+  bevel.addColorStop(0,'rgba(207,223,225,.38)');
+  bevel.addColorStop(.16,'rgba(90,111,120,.12)');
+  bevel.addColorStop(.76,'rgba(0,0,0,.04)');
+  bevel.addColorStop(1,'rgba(0,0,0,.6)');
+  nc.fillStyle=bevel;nc.fillRect(13,y+9,486,67);
+  nc.fillStyle='rgba(6,10,15,.7)';nc.fillRect(17,y+13,478,3);
+  nc.fillStyle='rgba(180,205,212,.3)';nc.fillRect(18,y+73,476,2);
+  for(let streak=0;streak<16;streak++){
+   const sx=28+(streak*131+row*43)%451;
+   const sy=y+17+(streak*17)%15;
+   nc.fillStyle='rgba(185,208,219,.055)';
+   nc.fillRect(sx,sy,1,8+(streak*7)%28);
+  }
   nc.strokeStyle='#758185';nc.lineWidth=3;nc.strokeRect(12,y+8,488,69);
   nc.strokeStyle=ne.strokeStyle=ink;
   nc.lineWidth=ne.lineWidth=2;
