@@ -839,6 +839,29 @@ for(let k=0;k<75;k++){
  skylineFacadeCtx.fillStyle=k%3===0?'rgba(23,25,27,.13)':'rgba(171,164,147,.08)';
  skylineFacadeCtx.fillRect(x,y,1+k%3,7+k%21);
 }
+// Baked balcony railings and external AC grilles on apartment facades.
+// Reuses the existing skyline albedo atlas: zero new draw calls.
+for(let col=0;col<8;col++){
+ const bx=8+col*31;
+ for(let row=0;row<15;row++){
+  if((col*5+row*3)%4===0)continue;
+  const x=bx+1,y=5+row*17;
+  skylineFacadeCtx.fillStyle='rgba(12,19,23,.72)';
+  skylineFacadeCtx.fillRect(x-2,y+10,23,3);
+  skylineFacadeCtx.fillStyle='rgba(159,162,152,.55)';
+  skylineFacadeCtx.fillRect(x-2,y+10,23,1);
+  skylineFacadeCtx.fillStyle='rgba(93,110,113,.72)';
+  skylineFacadeCtx.fillRect(x,y+6,1,5);
+  skylineFacadeCtx.fillRect(x+18,y+6,1,5);
+  skylineFacadeCtx.fillRect(x,y+7,19,1);
+  if((col+row)%3===0){
+   skylineFacadeCtx.fillStyle='#737b7a';
+   skylineFacadeCtx.fillRect(x+11,y+8,7,5);
+   skylineFacadeCtx.fillStyle='#293438';
+   for(let slat=0;slat<3;slat++)skylineFacadeCtx.fillRect(x+12,y+9+slat,5,1);
+  }
+ }
+}
 const skylineFacadeTexture=new THREE.CanvasTexture(skylineFacadeCanvas);
 skylineFacadeTexture.colorSpace=THREE.SRGBColorSpace;
 const skylineEmissionTexture=new THREE.CanvasTexture(skylineEmissionCanvas);
