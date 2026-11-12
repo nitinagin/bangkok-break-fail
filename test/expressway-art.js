@@ -840,6 +840,18 @@ export function createExpresswayArt(THREE){
    bac.fillRect(x,trackY+1,13+(section%4)*3,1);
   }
  }
+ // Broad, irregular resurfacing patches interrupt the perfectly uniform flyover.
+ // Baked into the existing shared road atlas: no meshes, textures or draw calls.
+ // Keep patches outside the center line and shoulder reflectors for lane clarity.
+ for(const [px,py,pw,ph] of [[18,24,64,18],[103,83,79,17],[191,27,54,16]]){
+  bac.fillStyle='rgba(14,20,23,.24)';
+  bac.beginPath();bac.moveTo(px,py+2);bac.lineTo(px+pw-5,py);
+  bac.lineTo(px+pw,py+ph-3);bac.lineTo(px+4,py+ph);bac.closePath();bac.fill();
+  bac.strokeStyle='rgba(147,146,136,.13)';bac.lineWidth=1;bac.stroke();
+  // Tire-polished strips pick up faint light without resembling painted lanes.
+  bac.fillStyle='rgba(154,164,162,.09)';
+  bac.fillRect(px+7,py+5,pw-17,2);bac.fillRect(px+12,py+ph-6,pw-25,1);
+ }
  bac.fillStyle='rgba(207,208,196,.48)';
  bac.fillRect(0,8,256,2);bac.fillRect(0,118,256,2);
  for(let x=9;x<256;x+=43){
