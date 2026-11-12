@@ -1157,7 +1157,29 @@ export function createExpresswayArt(THREE){
   bw.beginPath();bw.moveTo(x+7,19);bw.lineTo(x+15,19);
   bw.lineTo(x+7,74);bw.lineTo(x+3,74);bw.closePath();bw.fill();
  }
- bw.fillStyle='#e0c18c';bw.fillRect(0,81,256,4);
+ // Bangkok city-bus glazing: continuous aluminum belt rail, route plate,
+ // rubber window seals and road-film streaks baked into the existing atlas.
+ // Adds no geometry, texture, draw call or animation cost.
+ bw.fillStyle='#151f25';bw.fillRect(0,77,256,4);
+ bw.fillStyle='#b5b9ad';bw.fillRect(0,80,256,2);
+ bw.fillStyle='#6e7775';bw.fillRect(0,83,256,2);
+ for(let panel=0;panel<6;panel++){
+  const x=8+panel*41;
+  bw.fillStyle='rgba(8,19,26,.55)';bw.fillRect(x-2,15,2,64);
+  bw.fillStyle='rgba(217,226,217,.27)';bw.fillRect(x+35,17,1,59);
+  bw.fillStyle='rgba(185,198,192,.13)';
+  for(let streak=0;streak<3;streak++){
+   const sx=x+5+((panel*13+streak*9)%26);
+   bw.fillRect(sx,26+streak*12,1,8+((panel+streak)%3)*5);
+  }
+ }
+ // Side destination plate at the front window: recognizable Thai transit
+ // lettering, kept in the same 256x96 canvas and away from the road.
+ bw.fillStyle='#eee7cc';bw.fillRect(8,4,90,13);
+ bw.fillStyle='#202e32';bw.font='bold 10px Tahoma,sans-serif';
+ bw.textAlign='left';bw.textBaseline='middle';
+ bw.fillText('กรุงเทพ  ๕๑',12,11);
+ bw.fillStyle='#e0c18c';bw.fillRect(0,86,256,4);
  const busWindowTexture=new THREE.CanvasTexture(busWindowCanvas);
  busWindowTexture.colorSpace=THREE.SRGBColorSpace;
  busWindowTexture.anisotropy=2;
