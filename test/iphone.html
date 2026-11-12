@@ -56,6 +56,15 @@
  #district{top:calc(env(safe-area-inset-top) + 69px);max-width:48vw;background:rgba(5,12,20,.75)}
  #hint{left:auto;right:calc(env(safe-area-inset-right) + 10px);width:auto;bottom:calc(env(safe-area-inset-bottom) + 12px);font-size:10px}
 }
+
+/* Match the main entry's restrained night lens grade on iPhone. */
+/* Cinematic lens falloff: subtle night-edge contrast without covering the dodge
+   corridor. One fixed compositor layer, no WebGL draws or per-frame updates. */
+body::after{content:"";position:fixed;inset:0;z-index:1;pointer-events:none;
+ background:radial-gradient(ellipse 88% 77% at 50% 47%,transparent 43%,rgba(5,9,17,.13) 73%,rgba(1,3,9,.38) 100%);
+}
+@media (max-width:430px){body::after{background:radial-gradient(ellipse 100% 82% at 50% 47%,transparent 48%,rgba(4,8,16,.11) 77%,rgba(1,3,9,.29) 100%)}}
+
 </style>
 </head>
 <body><div id="hud"><div id="score">0 PTS</div><div id="status">120 KM/H<br>❤️❤️❤️</div></div><div id="gameControls"><button id="pauseBtn" aria-label="Pause game">⏸</button><button id="soundBtn" aria-label="Toggle sound">🔊</button><button id="centerBtn" aria-label="Recenter steering">🎯</button></div><div id="challenge">🎯 SURVIVE 500m · +250</div><div id="district">🌃 BANGKOK NIGHT DRIVE</div><div id="hint">TILT TO STEER</div><div id="overlay"><div id="panel"><img id="coverArt" src="./game-cover.svg" width="900" height="600" alt="Cinematic tuk-tuk chase through neon Bangkok with Thai ghosts and a floating Krasue"><h1>🛺 NITINAGIN’S<br>BREAK FAIL!</h1><p>V6.7 — NEON NIGHT DRIVE</p><p>LIGHT OUT NIGHT : THAILAND<br>NO BRAKES. NO RULES.</p><p>เอียงมือถือเพื่อหลบสิ่งกีดขวาง</p><button id="start">START CHAOS</button><small>Hold phone comfortably before starting.<br>Use 🎯 to recenter tilt steering.</small></div></div><div id="error">3D could not load. Please check your internet connection and refresh Safari.</div>
