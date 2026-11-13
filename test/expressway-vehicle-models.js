@@ -205,17 +205,9 @@ function makeBusGlazing(THREE){
   }
  }
  ctx.restore();
- // Bake two parked windscreen wipers and a weathered rubber surround
- // into the existing glass atlas: no extra draw calls or dynamic lights.
- ctx.strokeStyle='rgba(11,19,23,.85)';ctx.lineWidth=7;
- ctx.strokeRect(4,4,248,248);ctx.lineCap='round';
- for(const side of [-1,1]){
-  const pivot=side<0?45:211,tip=side<0?133:123;
-  ctx.strokeStyle='rgba(10,15,18,.92)';ctx.lineWidth=5;
-  ctx.beginPath();ctx.moveTo(pivot,234);ctx.lineTo(tip,202);ctx.stroke();
-  ctx.strokeStyle='rgba(185,196,194,.35)';ctx.lineWidth=1;
-  ctx.beginPath();ctx.moveTo(pivot,231);ctx.lineTo(tip,199);ctx.stroke();
- }
+ // Keep only the articulated paired wipers painted above. A second, later
+ // simplified wiper pass used to overpaint the detailed blades and rubber seal,
+ // creating four overlapping arms on the windshield at mobile resolution.
  const map=new THREE.CanvasTexture(canvas);map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=2;
  return new THREE.MeshStandardMaterial({map,metalness:.18,roughness:.29});
 }
