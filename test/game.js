@@ -5307,6 +5307,15 @@ function makeTukLampLensTexture(rear){
    ctx.fillStyle=glint;
    ctx.fillRect(x,28+(rib%3)*3,3,70-(rib%4)*4);
   }
+  // Shielded projector and Fresnel rim, baked once into existing lens atlas.
+  ctx.beginPath();ctx.arc(64,64,46,-2.65,-.35);
+  ctx.lineWidth=3;ctx.strokeStyle='rgba(255,251,225,.52)';ctx.stroke();
+  ctx.beginPath();ctx.arc(64,64,46,.22,2.55);
+  ctx.lineWidth=2;ctx.strokeStyle='rgba(19,32,37,.43)';ctx.stroke();
+  ctx.beginPath();ctx.ellipse(53,54,15,11,-.24,0,Math.PI*2);
+  ctx.strokeStyle='rgba(40,53,57,.57)';ctx.lineWidth=3;ctx.stroke();
+  ctx.beginPath();ctx.moveTo(38,58);ctx.quadraticCurveTo(53,62,69,57);
+  ctx.strokeStyle='rgba(36,48,52,.65)';ctx.lineWidth=2;ctx.stroke();
   ctx.beginPath();ctx.ellipse(43,36,12,5,-.45,0,Math.PI*2);
   ctx.fillStyle='rgba(255,255,255,.46)';ctx.fill();
  }
