@@ -3083,12 +3083,18 @@ const rainPaint=cockpitRainCanvas.getContext('2d');
 rainPaint.clearRect(0,0,128,256);
 for(let i=0;i<76;i++){
  const px=5+(i*47+19)%118,py=6+(i*73+31)%242,r=1+(i%4)*.55;
- rainPaint.fillStyle=i%3===0?'rgba(218,236,244,.50)':'rgba(192,214,225,.32)';
- rainPaint.beginPath();rainPaint.ellipse(px,py,r*.7,r,0,0,Math.PI*2);rainPaint.fill();
+ // Backlit beads have a dark refracted rim, offset specular highlight and
+ // gravity streak; keep the centre of the windscreen completely unobstructed.
+ rainPaint.fillStyle='rgba(9,21,30,.20)';
+ rainPaint.beginPath();rainPaint.ellipse(px+.35,py+.55,r*.86,r*1.13,0,0,Math.PI*2);rainPaint.fill();
+ rainPaint.fillStyle=i%3===0?'rgba(191,222,235,.33)':'rgba(151,188,208,.22)';
+ rainPaint.beginPath();rainPaint.ellipse(px,py,r*.67,r,0,0,Math.PI*2);rainPaint.fill();
+ rainPaint.fillStyle='rgba(239,249,255,.62)';
+ rainPaint.beginPath();rainPaint.ellipse(px-r*.22,py-r*.36,Math.max(.35,r*.18),Math.max(.45,r*.28),-.35,0,Math.PI*2);rainPaint.fill();
  if(i%4===0){
-  rainPaint.strokeStyle='rgba(187,213,227,.20)';rainPaint.lineWidth=.8;
+  rainPaint.strokeStyle='rgba(169,199,215,.22)';rainPaint.lineWidth=.65;
   rainPaint.beginPath();rainPaint.moveTo(px,py+r);
-  rainPaint.lineTo(px-.5,py+r+7+i%11);rainPaint.stroke();
+  rainPaint.bezierCurveTo(px+.6,py+r+3,px-1.2,py+r+6,px-.5,py+r+7+i%11);rainPaint.stroke();
  }
 }
 const cockpitRainTexture=new THREE.CanvasTexture(cockpitRainCanvas);
