@@ -1317,6 +1317,14 @@ export function createExpresswayArt(THREE){
  const busShellMaterial=new THREE.MeshStandardMaterial({
   color:0xe2d7b9,metalness:.14,roughness:.69
  });
+ // Two projecting rear-view mirror housings per Bangkok city bus, oriented
+ // toward the cross-traffic direction. Shared PBR shell, six instances and
+ // one draw call; no changes to road collisions or gameplay.
+ const busMirrorGeometry=new THREE.BoxGeometry(.18,.25,.16);
+ const busMirrors=new THREE.InstancedMesh(busMirrorGeometry,busShellMaterial,bridgeBusIndices.length*2);
+ busMirrors.name='bangkok-city-bus-exterior-mirrors';
+ busMirrors.frustumCulled=false;
+ busMirrors.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
  const bridgeBuses=new THREE.InstancedMesh(busShellGeometry,busShellMaterial,bridgeBusIndices.length);
  bridgeBuses.frustumCulled=false;
  bridgeBuses.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
@@ -1435,6 +1443,10 @@ export function createExpresswayArt(THREE){
     busPose.rotation.set(0,0,0);busPose.scale.set(1,1,1);
     busPose.position.set(x,8.54,z);busPose.updateMatrix();
     bridgeBuses.setMatrixAt(busIndex,busPose.matrix);
+    for(let flank=0;flank<2;flank++){
+     busPose.position.set(x+direction*1.14,9.37,z+(flank===0?-.64:.64));
+     busPose.updateMatrix();busMirrors.setMatrixAt(busIndex*2+flank,busPose.matrix);
+    }
     busPose.position.set(x,9.83,z);
     busPose.updateMatrix();
     busRoofUnits.setMatrixAt(busIndex,busPose.matrix);
@@ -1481,12 +1493,13 @@ export function createExpresswayArt(THREE){
   bridgeTaxiRoofSigns.instanceMatrix.needsUpdate=true;
   bridgeTaxiDoorSigns.instanceMatrix.needsUpdate=true;
   bridgeBuses.instanceMatrix.needsUpdate=true;
+  busMirrors.instanceMatrix.needsUpdate=true;
   bridgeBusWindows.instanceMatrix.needsUpdate=true;
   bridgeBusTyres.instanceMatrix.needsUpdate=true;
   busRoofUnits.instanceMatrix.needsUpdate=true;
  }
  placeBridgeTraffic();
- group.add(bridgeCarBodies,bridgeCarWindows,bridgeCarWheels,bridgeHeadlights,bridgeTaillights,bridgeRoadGlows,bridgeTaxiRoofSigns,bridgeTaxiDoorSigns,busRoofUnits,bridgeBuses,bridgeBusWindows,bridgeBusTyres);
+ group.add(busMirrors,bridgeCarBodies,bridgeCarWindows,bridgeCarWheels,bridgeHeadlights,bridgeTaillights,bridgeRoadGlows,bridgeTaxiRoofSigns,bridgeTaxiDoorSigns,busRoofUnits,bridgeBuses,bridgeBusWindows,bridgeBusTyres);
 
  // Roadside Bangkok expressway acoustic screens: weathered ribbed panels
  // and galvanized uprights. Opaque PBR prevents mobile alpha overdraw.
