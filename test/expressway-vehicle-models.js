@@ -1462,6 +1462,38 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   busArchMesh.name='bangkok-bus-pressed-wheel-arches';
   group.add(busArchMesh);
  }else{
+  // One batched PBR mesh adds a low front air dam, sculpted rear diffuser and
+  // side skirts to the expressway sports car. The silhouette is less boxy at
+  // traffic distance, with no extra textures, lights or animation updates.
+  // Keep every surface inside the existing body/collision envelope.
+  const aeroVertices=[],aeroColors=[],aeroFaces=[];
+  function aeroQuad(corners,hex){
+   const base=aeroVertices.length/3,color=new THREE.Color(hex);
+   for(const v of corners){aeroVertices.push(...v);aeroColors.push(color.r,color.g,color.b);}
+   aeroFaces.push(base,base+1,base+2,base,base+2,base+3);
+  }
+  // z positive is the nose; dark undercut contrasts with painted bodywork.
+  aeroQuad([[-.79,.41,1.77],[.79,.41,1.77],[.68,.34,1.69],[-.68,.34,1.69]],0x11191e);
+  aeroQuad([[-.68,.34,1.69],[.68,.34,1.69],[.55,.38,1.58],[-.55,.38,1.58]],0x343b40);
+  for(const side of [-1,1]){
+   const x=side*.87;
+   aeroQuad([[x,.42,-1.44],[x,.42,1.43],[x-side*.065,.35,1.33],[x-side*.065,.35,-1.34]],0x171f23);
+   aeroQuad([[x-side*.065,.35,-1.34],[x-side*.065,.35,1.33],[x-side*.095,.38,1.25],[x-side*.095,.38,-1.26]],0x5a252c);
+  }
+  // Three diffuser fins create visible depth below the rear fascia.
+  for(const x of [-.48,0,.48]){
+   aeroQuad([[x-.027,.38,-1.76],[x+.027,.38,-1.76],
+    [x+.018,.28,-1.59],[x-.018,.28,-1.59]],0x20272b);
+  }
+  const aeroGeometry=new THREE.BufferGeometry();
+  aeroGeometry.setAttribute('position',new THREE.Float32BufferAttribute(aeroVertices,3));
+  aeroGeometry.setAttribute('color',new THREE.Float32BufferAttribute(aeroColors,3));
+  aeroGeometry.setIndex(aeroFaces);aeroGeometry.computeVertexNormals();
+  const aeroMesh=new THREE.Mesh(aeroGeometry,new THREE.MeshStandardMaterial({
+   vertexColors:true,metalness:.32,roughness:.63,side:THREE.DoubleSide
+  }));
+  aeroMesh.name='sports-car-batched-front-splitter-side-skirts-rear-diffuser';
+  group.add(aeroMesh);
   // Pressed-metal shoulder creases follow both sports-car flanks, replacing
   // the featureless slab silhouette without adding lights or altering physics.
   // Both sides share one indexed PBR mesh (one draw call per near LOD car).
