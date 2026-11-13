@@ -369,6 +369,31 @@ for(let i=0;i<5;i++){
  const px=12+(i*59)%195,py=17+(i*47)%192,w=25+(i*7)%25,h=28+(i*11)%31;
  err.fillStyle='#c6c6c6';err.fillRect(px,py,w,h);
 }
+// Baked expressway micro-normal map from existing asphalt pixels.
+// Reuses the albedo's tar seams and aggregate; no runtime frame work or meshes.
+const expresswayNormalCanvas=document.createElement('canvas');
+expresswayNormalCanvas.width=expresswayNormalCanvas.height=256;
+const en=expresswayNormalCanvas.getContext('2d');
+const erPixels=er.getImageData(0,0,256,256).data;
+const enImage=en.createImageData(256,256),enPixels=enImage.data;
+function expresswayHeight(x,y){
+ const i=((y&255)*256+(x&255))*4;
+ return (erPixels[i]*.299+erPixels[i+1]*.587+erPixels[i+2]*.114)/255;
+}
+for(let y=0;y<256;y++)for(let x=0;x<256;x++){
+ const dx=expresswayHeight(x+1,y)-expresswayHeight(x-1,y);
+ const dy=expresswayHeight(x,y+1)-expresswayHeight(x,y-1);
+ const nx=-dx*.9,ny=-dy*.9,nz=1;
+ const inv=1/Math.hypot(nx,ny,nz),i=(y*256+x)*4;
+ enPixels[i]=Math.round(127.5*(nx*inv+1));
+ enPixels[i+1]=Math.round(127.5*(ny*inv+1));
+ enPixels[i+2]=Math.round(127.5*(nz*inv+1));
+ enPixels[i+3]=255;
+}
+en.putImageData(enImage,0,0);
+const expresswayNormalTexture=new THREE.CanvasTexture(expresswayNormalCanvas);
+expresswayNormalTexture.wrapS=expresswayNormalTexture.wrapT=THREE.RepeatWrapping;
+expresswayNormalTexture.repeat.set(1,18);
 const expresswayRoadTexture=new THREE.CanvasTexture(expresswayRoadCanvas);
 expresswayRoadTexture.colorSpace=THREE.SRGBColorSpace;
 expresswayRoadTexture.wrapS=expresswayRoadTexture.wrapT=THREE.RepeatWrapping;
@@ -378,6 +403,7 @@ expresswayRoughnessTexture.wrapS=expresswayRoughnessTexture.wrapT=THREE.RepeatWr
 expresswayRoughnessTexture.repeat.set(1,18);
 const expresswayAsphalt=new THREE.MeshStandardMaterial({
  color:0xc5c8ca,map:expresswayRoadTexture,roughnessMap:expresswayRoughnessTexture,
+ normalMap:expresswayNormalTexture,normalScale:new THREE.Vector2(.24,.24),
  roughness:.9,metalness:.03
 });
 // Dark Road: dedicated mobile-budget PBR asphalt. The old shared daytime road
