@@ -1179,6 +1179,22 @@ export function createExpresswayArt(THREE){
   }
  }
  bgc.restore();
+ // Paired, tapering tyre-channel highlights make each moving reflection read
+ // as light dragged across wet asphalt rather than a flat glowing rectangle.
+ // Painted into the existing 128px atlas once; no new draw calls or lights.
+ bgc.save();
+ bgc.globalCompositeOperation='source-atop';
+ for(let channel=0;channel<2;channel++){
+  const center=channel===0?56:72;
+  for(let segment=0;segment<9;segment++){
+   const y=9+segment*13+(channel?6:0);
+   const fade=1-Math.abs(y-64)/78;
+   const width=1.1+(segment%3)*.55;
+   bgc.fillStyle='rgba(255,255,255,'+(Math.max(0,fade)*(.24+(segment%2)*.12))+')';
+   bgc.fillRect(center-width/2+(segment%3-1)*1.5,y,width,5+(segment%3)*2);
+  }
+ }
+ bgc.restore();
  const bridgeGlowTexture=new THREE.CanvasTexture(bridgeGlowCanvas);
  const bridgeGlowMaterial=new THREE.MeshBasicMaterial({
   map:bridgeGlowTexture,transparent:true,opacity:.43,
