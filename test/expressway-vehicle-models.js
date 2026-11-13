@@ -698,7 +698,20 @@ function makeSportsCarRearFascia(THREE){
  }
  // Fictional Thai plate with a dark recessed mounting panel.
  ctx.fillStyle='#080c11';ctx.fillRect(86,10,84,43);
- ctx.fillStyle='#e5e5d8';ctx.fillRect(91,14,74,34);
+ // Warm twin plate lamps, retroreflective enamel and a recessed plate frame
+ // are baked into the shared rear atlas; no dynamic lights or extra draw calls.
+ const plateLight=ctx.createLinearGradient(0,12,0,49);
+ plateLight.addColorStop(0,'#fff7d9');plateLight.addColorStop(.35,'#e7e9d9');plateLight.addColorStop(1,'#a7b6b7');
+ ctx.fillStyle=plateLight;ctx.fillRect(91,14,74,34);
+ ctx.strokeStyle='rgba(238,245,239,.8)';ctx.lineWidth=1;ctx.strokeRect(91.5,14.5,73,33);
+ for(const lampX of [103,153]){
+  const beam=ctx.createRadialGradient(lampX,13,1,lampX,21,24);
+  beam.addColorStop(0,'rgba(255,247,202,.8)');
+  beam.addColorStop(.55,'rgba(255,238,190,.15)');
+  beam.addColorStop(1,'rgba(255,238,190,0)');
+  ctx.fillStyle=beam;ctx.fillRect(lampX-25,10,50,39);
+  ctx.fillStyle='#fff1bc';ctx.fillRect(lampX-5,11,10,2);
+ }
  ctx.fillStyle='#182c35';ctx.font='bold 15px Tahoma, sans-serif';
  ctx.textAlign='center';ctx.fillText('กท 918',128,31);
  ctx.font='8px Tahoma, sans-serif';ctx.fillText('กรุงเทพฯ',128,42);
