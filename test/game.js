@@ -646,8 +646,13 @@ for(let py=0;py<256;py++)for(let px=0;px<192;px++){
   125*(distanceFade+nearBounce)*(.58*(left+right)*cutoff+
   .28*(wetLeft+wetRight)*puddleBreak+wetGlint)*grain*tireTrack)));
  const k=(py*192+px)*4;
- lowBeamPixels.data[k]=255;lowBeamPixels.data[k+1]=232;
- lowBeamPixels.data[k+2]=190;lowBeamPixels.data[k+3]=alpha;
+ // Headlamp color warms in the near pool and cools toward the distant cutoff.
+ // Baked channel variation adds depth without dynamic lighting or extra meshes.
+ const warm=Math.max(0,1-distance);
+ lowBeamPixels.data[k]=255;
+ lowBeamPixels.data[k+1]=Math.round(218+18*warm);
+ lowBeamPixels.data[k+2]=Math.round(170+27*warm);
+ lowBeamPixels.data[k+3]=alpha;
 }
 lowBeamCtx.putImageData(lowBeamPixels,0,0);
 const lowBeamTexture=new THREE.CanvasTexture(lowBeamCanvas);
