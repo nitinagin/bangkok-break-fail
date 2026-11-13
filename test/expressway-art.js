@@ -1316,6 +1316,17 @@ export function createExpresswayArt(THREE){
  );
  bridgeBusTyres.frustumCulled=false;
  bridgeBusTyres.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+ // Low-profile rooftop air-conditioning pods on elevated Bangkok buses.
+ // One shared PBR instanced mesh; positioned above the shell and outside all
+ // player lanes. No new network asset or shadow-casting light.
+ const busRoofUnits=new THREE.InstancedMesh(
+  new THREE.BoxGeometry(.96,.17,.64),
+  new THREE.MeshStandardMaterial({color:0x737f83,metalness:.48,roughness:.66}),
+  bridgeBusIndices.length
+ );
+ busRoofUnits.name='bangkok-elevated-bus-rooftop-air-conditioning';
+ busRoofUnits.frustumCulled=false;
+ busRoofUnits.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
  const busPose=new THREE.Object3D();
  const carDummy=new THREE.Object3D();
  function placeBridgeTraffic(){
@@ -1358,6 +1369,9 @@ export function createExpresswayArt(THREE){
     busPose.rotation.set(0,0,0);busPose.scale.set(1,1,1);
     busPose.position.set(x,8.54,z);busPose.updateMatrix();
     bridgeBuses.setMatrixAt(busIndex,busPose.matrix);
+    busPose.position.set(x,9.83,z);
+    busPose.updateMatrix();
+    busRoofUnits.setMatrixAt(busIndex,busPose.matrix);
     for(let side=0;side<2;side++){
      const sign=side===0?-1:1;
      busPose.position.set(x,9.39,z+sign*.515);
@@ -1403,9 +1417,10 @@ export function createExpresswayArt(THREE){
   bridgeBuses.instanceMatrix.needsUpdate=true;
   bridgeBusWindows.instanceMatrix.needsUpdate=true;
   bridgeBusTyres.instanceMatrix.needsUpdate=true;
+  busRoofUnits.instanceMatrix.needsUpdate=true;
  }
  placeBridgeTraffic();
- group.add(bridgeCarBodies,bridgeCarWindows,bridgeCarWheels,bridgeHeadlights,bridgeTaillights,bridgeRoadGlows,bridgeTaxiRoofSigns,bridgeTaxiDoorSigns,bridgeBuses,bridgeBusWindows,bridgeBusTyres);
+ group.add(bridgeCarBodies,bridgeCarWindows,bridgeCarWheels,bridgeHeadlights,bridgeTaillights,bridgeRoadGlows,bridgeTaxiRoofSigns,bridgeTaxiDoorSigns,busRoofUnits,bridgeBuses,bridgeBusWindows,bridgeBusTyres);
 
  // Roadside Bangkok expressway acoustic screens: weathered ribbed panels
  // and galvanized uprights. Opaque PBR prevents mobile alpha overdraw.
