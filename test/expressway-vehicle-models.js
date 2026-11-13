@@ -99,6 +99,27 @@ function makeBusGlazing(THREE){
   ctx.strokeStyle='rgba(12,26,32,.22)';ctx.lineWidth=8;ctx.stroke();
  }
  ctx.restore();
+ // Parked dual bus wiper arms: angled articulated blades, steel pivots and
+ // rubber edges baked into the same windshield atlas (no additional meshes).
+ // Kept below the route sign and inside the driver's lower sightline.
+ ctx.save();
+ ctx.lineCap='round';ctx.lineJoin='round';
+ for(const [pivotX,pivotY,elbowX,elbowY,tipX,tipY] of [
+  [55,244,80,225,137,209],
+  [203,244,179,225,123,209]
+ ]){
+  ctx.strokeStyle='rgba(5,11,15,.84)';ctx.lineWidth=7;
+  ctx.beginPath();ctx.moveTo(pivotX,pivotY);ctx.lineTo(elbowX,elbowY);ctx.stroke();
+  ctx.strokeStyle='rgba(105,119,119,.65)';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(pivotX,pivotY);ctx.lineTo(elbowX,elbowY);ctx.stroke();
+  ctx.strokeStyle='rgba(8,14,17,.92)';ctx.lineWidth=5;
+  ctx.beginPath();ctx.moveTo(elbowX,elbowY);ctx.lineTo(tipX,tipY);ctx.stroke();
+  ctx.strokeStyle='rgba(151,164,158,.44)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(elbowX,elbowY-2);ctx.lineTo(tipX,tipY-2);ctx.stroke();
+  ctx.fillStyle='#111b1e';ctx.beginPath();ctx.arc(pivotX,pivotY,5,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='rgba(160,172,163,.60)';ctx.beginPath();ctx.arc(pivotX,pivotY,1.5,0,Math.PI*2);ctx.fill();
+ }
+ ctx.restore();
  // Apply the laminated-glass sunshade BEFORE painting the interior LED route board;
  // otherwise the gradient obscures route 511 and makes the number unreadable.
  // Laminated-glass upper sunshade and subtle grime gradient: the bus now
