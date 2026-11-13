@@ -642,9 +642,14 @@ for(let py=0;py<256;py++)for(let px=0;px<192;px++){
  const glint=Math.exp(-Math.pow((lateral-glintCenter)/glintWidth,2));
  const glintBreak=Math.pow(Math.max(0,Math.sin(distance*38+3*Math.sin(distance*11))),3);
  const wetGlint=.22*glint*glintBreak*(1-distance*.55);
+ // Irregular transverse tar repairs interrupt reflections across the road.
+ // Baked into the existing atlas; no geometry, texture or frame-time cost.
+ const seamPhase=distance*21+.19*Math.sin(lateral*17)+.08*Math.sin(lateral*43);
+ const seamDistance=Math.abs(Math.sin(Math.PI*seamPhase));
+ const seamMask=1-.30*Math.pow(Math.max(0,1-seamDistance/.105),2);
  const alpha=Math.round(Math.min(155,Math.max(0,
   125*(distanceFade+nearBounce)*(.58*(left+right)*cutoff+
-  .28*(wetLeft+wetRight)*puddleBreak+wetGlint)*grain*tireTrack)));
+  .28*(wetLeft+wetRight)*puddleBreak+wetGlint)*grain*tireTrack*seamMask)));
  const k=(py*192+px)*4;
  // Headlamp color warms in the near pool and cools toward the distant cutoff.
  // Baked channel variation adds depth without dynamic lighting or extra meshes.
