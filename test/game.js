@@ -6,7 +6,7 @@ import {createExpresswayArt} from "./expressway-art.js";
 import {makeExpresswayVehicle} from "./expressway-vehicle-models.js";
 const $=id=>document.getElementById(id),hud=$('score'),status=$('status'),hint=$('hint'),challenge=$('challenge'),districtLabel=$('district'),overlay=$('overlay'),panel=$('panel');
 let renderer;try{renderer=new THREE.WebGLRenderer({antialias:false,powerPreference:'high-performance'});}catch(e){$('error').style.display='block';throw e}
-const mobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);let mobilePixelRatio=Math.min(devicePixelRatio||1,mobile?1.05:1.25);renderer.setPixelRatio(mobilePixelRatio);renderer.setSize(innerWidth,innerHeight);renderer.setClearColor(0x20104e);document.body.insertBefore(renderer.domElement,document.body.firstChild);
+const mobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);let mobilePixelRatio=Math.min(devicePixelRatio||1,mobile?1.05:1.25);renderer.setPixelRatio(mobilePixelRatio);renderer.setSize(innerWidth,innerHeight);renderer.setClearColor(0x20104e);renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.25;document.body.insertBefore(renderer.domElement,document.body.firstChild);
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x20104e);scene.fog=new THREE.Fog(0x20104e,48,145);const districtSkies=[new THREE.Color(0x56cfff),new THREE.Color(0x131d30),new THREE.Color(0x8797a3)];const darkRoadSky=new THREE.Color(0x010308);
 // District-specific nocturnal atmosphere: urban light pollution remains visible
 // above Yaowarat, JJ and the expressway; Rama II and Dark Road stay unlit.
