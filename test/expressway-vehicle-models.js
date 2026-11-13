@@ -1896,7 +1896,7 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   // Sports-car grille, splitter, rear wing, supports and side ducts:
   // Nine carbon-finish pieces in one instanced draw call, no texture upload.
   const carbon=new THREE.MeshStandardMaterial({color:0x111820,metalness:.24,roughness:.54});
-  const aero=new THREE.InstancedMesh(new THREE.BoxGeometry(1,1,1),carbon,9);
+  const aero=new THREE.InstancedMesh(new THREE.BoxGeometry(1,1,1),carbon,12);
   const aeroMatrix=new THREE.Matrix4();
   function aeroPart(i,x,y,z,sx,sy,sz){
    aeroMatrix.makeScale(sx,sy,sz);
@@ -1913,6 +1913,13 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   // Low-profile hood extractor slits share the existing carbon draw call.
   aeroPart(7,-.48,.788,1.16,.115,.012,.27);
   aeroPart(8,.48,.788,1.16,.115,.012,.27);
+  // Full-length sculpted lower sills and rear diffuser: these extend the
+  // sports-car silhouette at chase-camera distance without another draw call.
+  // All three pieces reuse the existing carbon InstancedMesh/material.
+  // Stay inside the original vehicle collision width and wheelbase.
+  aeroPart(9,-.845,.435,0,.075,.085,2.34); // left rocker / side skirt
+  aeroPart(10,.845,.435,0,.075,.085,2.34); // right rocker / side skirt
+  aeroPart(11,0,.435,-1.755,1.30,.09,.20); // recessed rear diffuser
   aero.instanceMatrix.needsUpdate=true;
   group.add(aero);
   // Baked cooling ducts curve across the front, above the splitter.
