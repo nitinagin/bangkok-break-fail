@@ -1466,6 +1466,33 @@ export function createExpresswayArt(THREE){
   ac.fillStyle='#5d6661';ac.fillRect(x+6,229,3,3);
   ac.fillStyle='rgba(205,211,196,.35)';ac.fillRect(x+6,229,1,1);
  }
+ // Bangkok expressway maintenance stencil and diagonal impact markings:
+ // baked into the existing opaque PBR screen atlas (no new draw calls).
+ // Small, imperfect Thai lettering reads as road infrastructure, not neon art.
+ ac.save();
+ ac.textAlign='center';
+ ac.textBaseline='middle';
+ ac.font='bold 13px sans-serif';
+ ac.fillStyle='rgba(22,42,43,.56)';
+ ac.fillText('ทางพิเศษ',64,94,108);
+ ac.font='bold 8px sans-serif';
+ ac.fillStyle='rgba(21,42,42,.48)';
+ ac.fillText('เขตบำรุงรักษา',64,108,108);
+ // A weathered amber-and-black caution strip at the panel foot.
+ ac.fillStyle='rgba(26,32,29,.62)';ac.fillRect(0,240,128,11);
+ ac.save();ac.beginPath();ac.rect(0,240,128,11);ac.clip();
+ ac.strokeStyle='rgba(216,153,59,.65)';ac.lineWidth=7;
+ for(let x=-24;x<150;x+=20){
+  ac.beginPath();ac.moveTo(x,252);ac.lineTo(x+12,239);ac.stroke();
+ }
+ ac.restore();
+ // Paint chips soften the otherwise mechanically repeated markings.
+ for(let chip=0;chip<36;chip++){
+  const x=(chip*43+9)%128,y=88+(chip*29)%164;
+  ac.fillStyle=chip%3===0?'rgba(83,111,105,.50)':'rgba(36,58,55,.29)';
+  ac.fillRect(x,y,2+(chip%3),1+(chip%2));
+ }
+ ac.restore();
  const acousticTexture=new THREE.CanvasTexture(acousticCanvas);
  acousticTexture.colorSpace=THREE.SRGBColorSpace;
  // Baked PBR rib normals and patchy galvanized roughness match the existing
