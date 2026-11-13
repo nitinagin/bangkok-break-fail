@@ -1059,6 +1059,19 @@ export function createExpresswayArt(THREE){
    bac.fillRect(jointX+shift+2,y+1,1,3);
   }
  }
+ // Weathered retroreflective broken center guide on elevated crossovers.
+ // Baked into the existing road atlas, without geometry or draw-call overhead.
+ for(let segment=0;segment<8;segment++){
+  const x=segment*33+5,width=18+(segment%3)*2;
+  bac.fillStyle='rgba(9,14,17,.40)';bac.fillRect(x-1,61,width+2,5);
+  bac.fillStyle=segment%3===0?'rgba(218,215,192,.68)':'rgba(222,225,219,.81)';
+  bac.fillRect(x,62,width,3);
+  for(let chip=0;chip<5;chip++){
+   const cx=x+(chip*11+segment*3)%width;
+   bac.fillStyle='rgba(43,49,52,.48)';
+   bac.fillRect(cx,62+(chip%3)-1,1+(chip%2),1);
+  }
+ }
  const bridgeAsphaltTexture=new THREE.CanvasTexture(bridgeAsphaltCanvas);
  bridgeAsphaltTexture.colorSpace=THREE.SRGBColorSpace;
  bridgeAsphaltTexture.anisotropy=2;
