@@ -1045,6 +1045,23 @@ export function createExpresswayArt(THREE){
    bac.fillStyle=glow;bac.fillRect(x,y,span,1+(segment%4===0?1:0));
   }
  }
+ // Directional tyre-spray microglints baked into the existing wet road atlas.
+ // Deterministic fine highlights: no geometry, draw calls or runtime updates.
+ for(const trackY of [27,38,85,98]){
+  for(let i=0;i<110;i++){
+   const x=(i*73+trackY*11)%256;
+   const offset=((i*19+trackY)%13)-6;
+   const y=trackY+offset;
+   const fade=Math.max(0,1-Math.abs(offset)/8);
+   const length=2+(i*7)%9;
+   const glint=bac.createLinearGradient(x,y,x+length,y);
+   const alpha=(.045+((i*13)%7)*.012)*fade;
+   glint.addColorStop(0,'rgba(192,211,222,0)');
+   glint.addColorStop(.42,'rgba(192,211,222,'+alpha.toFixed(3)+')');
+   glint.addColorStop(1,'rgba(192,211,222,0)');
+   bac.fillStyle=glint;bac.fillRect(x,y,length,1);
+  }
+ }
  // Irregular sealed expansion joints on the elevated concrete deck: dark tar,
  // chipped aggregate edges and short rain highlights baked into the road atlas.
  // No additional draw calls, lights or per-frame work on mobile.
