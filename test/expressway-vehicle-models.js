@@ -284,6 +284,24 @@ function makeBusWingMirrors(THREE){
   quad([inner,2.69,2.28],[inner,2.70,2.28],
    [inner,2.69,1.58],[inner,2.68,1.58],gutterSteel);
  }
+ // Low-profile rooftop HVAC intake: a pressed-metal service housing with
+ // recessed ventilation louvers, visible above Bangkok traffic silhouettes.
+ // Fold into the existing vertex-colour bus mirror/visor mesh: zero extra draws.
+ const hvacTop=new THREE.Color(0x718087),hvacSide=new THREE.Color(0x35454c),
+  hvacSlot=new THREE.Color(0x111e25),hvacEdge=new THREE.Color(0x9aa6a7);
+ quad([-.48,2.74,.90],[.48,2.74,.90],[.48,2.74,-.18],[-.48,2.74,-.18],hvacTop);
+ quad([-.48,2.69,.90],[.48,2.69,.90],[.48,2.74,.90],[-.48,2.74,.90],hvacSide);
+ quad([-.48,2.69,-.18],[.48,2.69,-.18],[.48,2.74,-.18],[-.48,2.74,-.18],hvacSide);
+ for(const side of [-1,1]){
+  const x=side*.48;
+  quad([x,2.69,-.18],[x,2.69,.90],[x,2.74,.90],[x,2.74,-.18],hvacSide);
+ }
+ for(let i=0;i<8;i++){
+  const z=-.10+i*.12;
+  quad([-.39,2.746,z],[.39,2.746,z],[.39,2.746,z+.047],[-.39,2.746,z+.047],hvacSlot);
+  quad([-.39,2.748,z+.047],[.39,2.748,z+.047],
+   [.39,2.748,z+.058],[-.39,2.748,z+.058],hvacEdge);
+ }
  for(const side of [-1,1]){
   // Two angled steel braces support each mirror at the front cab corner.
   for(const [y,z] of [[2.27,1.98],[2.05,2.08]]){
