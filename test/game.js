@@ -220,7 +220,7 @@ wetRoadRoughnessTexture.repeat.set(2,26);
  wetRoadNormalTexture.repeat.set(2,26);
  wetRoadNormalTexture.anisotropy=Math.min(2,renderer.capabilities.getMaxAnisotropy());
 
-const asphaltTexture=new THREE.CanvasTexture(asphaltCanvas);asphaltTexture.wrapS=asphaltTexture.wrapT=THREE.RepeatWrapping;asphaltTexture.repeat.set(2,26);M.road.map=asphaltTexture;M.road.needsUpdate=true;
+const asphaltTexture=new THREE.CanvasTexture(asphaltCanvas);asphaltTexture.colorSpace=THREE.SRGBColorSpace;asphaltTexture.wrapS=asphaltTexture.wrapT=THREE.RepeatWrapping;asphaltTexture.repeat.set(2,26);M.road.map=asphaltTexture;M.road.needsUpdate=true;
 // V6.7: inexpensive wet-road neon reflections for Yaowarat night.
 // One shared gradient texture and two materials; no dynamic lights or downloads.
 const neonReflectionCanvas=document.createElement('canvas');
