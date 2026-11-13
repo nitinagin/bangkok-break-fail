@@ -110,6 +110,27 @@ export function createExpresswayArt(THREE){
    }
   }
  }
+ // Alternating Thai expressway maintenance floors: continuous recessed
+ // service corridors and amber safety beacons, baked into the shared facade.
+ // This replaces repeated office-window silhouettes at selected levels without
+ // extra geometry, textures, lights, or per-frame work.
+ for(let floor=7;floor<32;floor+=12){
+  const y=13+floor*15;
+  ctx.fillStyle='#17232b';ctx.fillRect(0,y-1,256,14);
+  ec.fillStyle='#000';ec.fillRect(0,y-1,256,14);
+  ctx.fillStyle='#59676b';ctx.fillRect(0,y-1,256,2);
+  ctx.fillStyle='#0a161d';ctx.fillRect(0,y+10,256,3);
+  for(let bay=0;bay<8;bay++){
+   const x=9+bay*30;
+   ctx.fillStyle='#283941';ctx.fillRect(x,y+2,21,7);
+   ctx.fillStyle='#101c23';
+   for(let slit=0;slit<5;slit++)ctx.fillRect(x+2+slit*4,y+3,2,5);
+   if(bay===1||bay===6){
+    ctx.fillStyle='#c68e46';ctx.fillRect(x+23,y+3,3,3);
+    ec.fillStyle='#9e632d';ec.fillRect(x+23,y+3,3,3);
+   }
+  }
+ }
  // Bake occupied-room glow into the existing emissive atlas once.
  // No new WebGL lights, meshes, textures or draw calls.
  ec.save();
