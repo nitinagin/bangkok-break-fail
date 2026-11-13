@@ -3459,27 +3459,27 @@ for(const side of [-1,1]){
 }
 // Weathered, curved canvas canopy: one low-poly roof replaces sphere + box.
 // Stitching, weave and rain stains are baked once; no new lights or frame work.
-const canopyCanvas=document.createElement('canvas');canopyCanvas.width=canopyCanvas.height=256;
-const canopyCtx=canopyCanvas.getContext('2d');
-canopyCtx.fillStyle='#783848';canopyCtx.fillRect(0,0,256,256);
+const playerCanopyCanvas=document.createElement('canvas');playerCanopyCanvas.width=playerCanopyCanvas.height=256;
+const playerCanopyCtx=playerCanopyCanvas.getContext('2d');
+playerCanopyCtx.fillStyle='#783848';playerCanopyCtx.fillRect(0,0,256,256);
 for(let i=0;i<256;i+=4){
- canopyCtx.fillStyle=i%8===0?'rgba(250,220,200,.055)':'rgba(15,9,15,.065)';
- canopyCtx.fillRect(i,0,1,256);canopyCtx.fillRect(0,i,256,1);
+ playerCanopyCtx.fillStyle=i%8===0?'rgba(250,220,200,.055)':'rgba(15,9,15,.065)';
+ playerCanopyCtx.fillRect(i,0,1,256);playerCanopyCtx.fillRect(0,i,256,1);
 }
 for(const x of [22,234]){
- canopyCtx.fillStyle='rgba(24,15,18,.38)';canopyCtx.fillRect(x-3,0,6,256);
- canopyCtx.fillStyle='rgba(221,172,144,.44)';canopyCtx.fillRect(x,0,1,256);
- for(let y=3;y<256;y+=10){canopyCtx.fillStyle='rgba(235,198,160,.65)';canopyCtx.fillRect(x-1,y,2,4)}
+ playerCanopyCtx.fillStyle='rgba(24,15,18,.38)';playerCanopyCtx.fillRect(x-3,0,6,256);
+ playerCanopyCtx.fillStyle='rgba(221,172,144,.44)';playerCanopyCtx.fillRect(x,0,1,256);
+ for(let y=3;y<256;y+=10){playerCanopyCtx.fillStyle='rgba(235,198,160,.65)';playerCanopyCtx.fillRect(x-1,y,2,4)}
 }
 for(let i=0;i<9;i++){
  const x=(i*79+31)%256,y=(i*47+19)%256;
- const stain=canopyCtx.createRadialGradient(x,y,1,x,y,34+i%3*12);
+ const stain=playerCanopyCtx.createRadialGradient(x,y,1,x,y,34+i%3*12);
  stain.addColorStop(0,'rgba(25,20,23,.18)');stain.addColorStop(1,'rgba(25,20,23,0)');
- canopyCtx.fillStyle=stain;canopyCtx.fillRect(x-52,y-52,104,104);
+ playerCanopyCtx.fillStyle=stain;playerCanopyCtx.fillRect(x-52,y-52,104,104);
 }
-const canopyTexture=new THREE.CanvasTexture(canopyCanvas);
-canopyTexture.colorSpace=THREE.SRGBColorSpace;canopyTexture.anisotropy=mobile?2:4;
-const canopyFabric=new THREE.MeshStandardMaterial({map:canopyTexture,roughness:.95,metalness:0,side:THREE.DoubleSide});
+const playerCanopyTexture=new THREE.CanvasTexture(playerCanopyCanvas);
+playerCanopyTexture.colorSpace=THREE.SRGBColorSpace;playerCanopyTexture.anisotropy=mobile?2:4;
+const canopyFabric=new THREE.MeshStandardMaterial({map:playerCanopyTexture,roughness:.95,metalness:0,side:THREE.DoubleSide});
 const canopyVertices=[],canopyUVs=[],canopyIndices=[],roofRows=8,roofCols=8;
 for(let j=0;j<=roofRows;j++){
  const v=j/roofRows,z=-1.40+3.06*v;
