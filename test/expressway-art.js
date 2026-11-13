@@ -78,6 +78,26 @@ export function createExpresswayArt(THREE){
    ec.fillRect(x-2,y-6,2,6);ec.fillRect(x+22,y-6,2,6);
   }
  }
+ // External service risers and maintenance ladders: narrow dark shafts,
+ // staggered metal rungs and landing cages break the tower silhouette into
+ // believable Bangkok high-rise infrastructure. Baked once into the facade.
+ for(let bay of [1,6]){
+  const x=5+bay*30;
+  ctx.fillStyle='rgba(9,18,25,.88)';ctx.fillRect(x,30,7,445);
+  ctx.fillStyle='rgba(123,137,143,.70)';
+  ctx.fillRect(x+1,30,1,445);ctx.fillRect(x+5,30,1,445);
+  for(let y=36;y<472;y+=7){
+   ctx.fillStyle='rgba(143,155,158,.67)';ctx.fillRect(x+1,y,5,1);
+  }
+  for(let y=87;y<460;y+=90){
+   ctx.fillStyle='rgba(12,22,29,.92)';ctx.fillRect(x-3,y,13,5);
+   ctx.fillStyle='rgba(137,149,152,.78)';ctx.fillRect(x-3,y,13,1);
+   ctx.fillStyle='rgba(86,104,112,.8)';
+   ctx.fillRect(x-3,y-8,1,8);ctx.fillRect(x+9,y-8,1,8);
+   ctx.fillRect(x-3,y-8,13,1);
+  }
+  ec.fillStyle='#000';ec.fillRect(x-3,30,13,445);
+ }
  // Recessed window reflections: offset skyline streaks and uneven wet-glass
  // specular bands break up the uniform facade without extra geometry.
  // Draw on the diffuse atlas only; do not brighten unlit emissive rooms.
