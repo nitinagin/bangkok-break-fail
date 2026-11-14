@@ -3274,9 +3274,9 @@ for(let i=0;i<tukCanopyVertices.count;i++){
  // Reuse the existing subdivided canopy mesh: no new materials or draw calls.
  const nose=(z+.54)/1.08;
  const taperedX=x*(.94+.06*(1-nose));
- const arch=.15*(1-Math.pow(Math.abs(x)/.915,2));
- const frontLift=.035*(.54-z)/1.08;
- const cornerDrop=.045*Math.pow(Math.abs(x)/.915,4);
+ const arch=.22*(1-Math.pow(Math.abs(x)/.915,2));
+ const frontLift=.065*(.54-z)/1.08;
+ const cornerDrop=.075*Math.pow(Math.abs(x)/.915,4);
  tukCanopyVertices.setXYZ(i,taperedX,tukCanopyVertices.getY(i)+arch+frontLift-cornerDrop,z);
 }
 tukCanopyVertices.needsUpdate=true;
