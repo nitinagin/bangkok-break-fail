@@ -43,6 +43,20 @@ function makeBusGlazing(THREE){
  ctx.beginPath();ctx.arc(190,215,22,0,Math.PI*2);ctx.stroke();
  ctx.beginPath();ctx.moveTo(190,215);ctx.lineTo(190,237);ctx.moveTo(190,215);ctx.lineTo(173,203);ctx.moveTo(190,215);ctx.lineTo(207,203);ctx.stroke();
  ctx.restore();
+ // Warm fluorescent cabin fixtures reflected in the wet windscreen.
+ // Baked into the shared glazing atlas: no emissive meshes or dynamic lights.
+ ctx.save();
+ ctx.globalCompositeOperation='screen';
+ for(const [x,y] of [[53,91],[130,89],[207,91]]){
+  const pool=ctx.createRadialGradient(x,y,2,x,y,33);
+  pool.addColorStop(0,'rgba(255,222,163,.25)');
+  pool.addColorStop(.35,'rgba(255,201,129,.11)');
+  pool.addColorStop(1,'rgba(255,185,105,0)');
+  ctx.fillStyle=pool;ctx.fillRect(x-34,y-34,68,68);
+  ctx.fillStyle='rgba(255,236,190,.42)';
+  ctx.fillRect(x-16,y-2,32,3);
+ }
+ ctx.restore();
  // Baked overhead passenger grab rail and hanging handles add interior depth
  // without extra meshes, lights, or animation on mobile.
  ctx.strokeStyle='rgba(197,171,119,.38)';ctx.lineWidth=4;
