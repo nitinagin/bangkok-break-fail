@@ -3242,6 +3242,22 @@ for(let x=0;x<256;x+=4){
  canopyCtx.fillStyle='rgba(191,195,181,.045)';
  for(let y=(x%8)*.5;y<256;y+=8)canopyCtx.fillRect(x,y,1,2);
 }
+// Baked sun-faded folds and rain-darkened edges, without extra draw calls.
+for(let panel=0;panel<5;panel++){
+ const x=panel*52-14;
+ const fade=canopyCtx.createLinearGradient(x,0,x+55,0);
+ fade.addColorStop(0,'rgba(7,12,16,.17)');
+ fade.addColorStop(.28,'rgba(150,160,153,.065)');
+ fade.addColorStop(.72,'rgba(185,181,164,.095)');
+ fade.addColorStop(1,'rgba(5,10,14,.13)');
+ canopyCtx.fillStyle=fade;canopyCtx.fillRect(Math.max(0,x),0,Math.min(55,256-Math.max(0,x)),256);
+}
+const rainStain=canopyCtx.createLinearGradient(0,0,0,256);
+rainStain.addColorStop(0,'rgba(4,9,12,.22)');
+rainStain.addColorStop(.18,'rgba(12,17,19,.04)');
+rainStain.addColorStop(.78,'rgba(148,146,128,.035)');
+rainStain.addColorStop(1,'rgba(4,9,12,.27)');
+canopyCtx.fillStyle=rainStain;canopyCtx.fillRect(0,0,256,256);
 // Subtle fabric tension ribs run front-to-back; stitched seams avoid toy stripes.
 for(const x of [18,128,238]){
  const rib=canopyCtx.createLinearGradient(x-7,0,x+7,0);
