@@ -3285,7 +3285,12 @@ for(let i=0;i<tukCanopyVertices.count;i++){
  const arch=.22*(1-Math.pow(Math.abs(x)/.915,2));
  const frontLift=.065*(.54-z)/1.08;
  const cornerDrop=.075*Math.pow(Math.abs(x)/.915,4);
- tukCanopyVertices.setXYZ(i,taperedX,tukCanopyVertices.getY(i)+arch+frontLift-cornerDrop,z);
+ // Three shallow stitched tension channels shape the vinyl between steel bows.
+ // Deform existing vertices only; collision, materials and draw count stay unchanged.
+ const ribDistance=Math.abs(Math.abs(x)-.46);
+ const tensionRib=.028*Math.exp(-Math.pow(ribDistance/.085,2));
+ const centerSeam=.018*Math.exp(-Math.pow(x/.10,2));
+ tukCanopyVertices.setXYZ(i,taperedX,tukCanopyVertices.getY(i)+arch+frontLift-cornerDrop+tensionRib+centerSeam,z);
 }
 tukCanopyVertices.needsUpdate=true;
 tukCanopyGeometry.computeVertexNormals();
