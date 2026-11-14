@@ -1346,7 +1346,9 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
  const stripe=new THREE.MeshStandardMaterial({color:0xc72b35,roughness:.55});
  const shape=new THREE.Shape();
  if(isBus){shape.moveTo(-2.22,.43);shape.lineTo(-2.22,2.62);shape.lineTo(-2.04,2.86);shape.lineTo(2.04,2.86);shape.lineTo(2.22,2.62);shape.lineTo(2.22,.43);}
- else{shape.moveTo(-1.77,.4);shape.lineTo(-1.55,.65);shape.lineTo(-.73,.74);shape.lineTo(-.31,1.2);shape.lineTo(.6,1.2);shape.lineTo(1.07,.73);shape.lineTo(1.55,.64);shape.lineTo(1.77,.4);}
+ // Low, swept GT coupe profile: longer hood, raked windscreen, curved roofline
+ // and tapering rear deck. Reuses the same extruded body mesh and collision size.
+ else{shape.moveTo(-1.77,.4);shape.lineTo(-1.62,.58);shape.lineTo(-1.18,.66);shape.lineTo(-.86,.69);shape.lineTo(-.48,1.04);shape.quadraticCurveTo(-.28,1.19,.05,1.21);shape.quadraticCurveTo(.42,1.21,.61,1.09);shape.lineTo(.98,.72);shape.lineTo(1.48,.62);shape.lineTo(1.77,.4);}
  shape.closePath();
  const geometry=new THREE.ExtrudeGeometry(shape,{depth:w,bevelEnabled:true,bevelSize:.035,bevelThickness:.035,bevelSegments:1});
  geometry.rotateY(Math.PI/2);geometry.translate(-w/2,0,0);
