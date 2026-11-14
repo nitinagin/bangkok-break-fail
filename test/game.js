@@ -220,6 +220,32 @@ wetRoadRoughnessTexture.repeat.set(2,26);
  wetRoadNormalTexture.repeat.set(2,26);
  wetRoadNormalTexture.anisotropy=Math.min(2,renderer.capabilities.getMaxAnisotropy());
 
+// Bangkok rain-worn asphalt: irregular branching hairline cracks and fine tar repairs.
+// Bake into the EXISTING albedo and roughness atlases once, not as extra road meshes.
+// Short broken paths avoid the artificial continuous grid pattern of procedural roads.
+for(let crack=0;crack<18;crack++){
+ const x0=(crack*79+29)%256,y0=(crack*43+17)%256;
+ const length=12+(crack*11)%24;
+ asphaltCtx.beginPath();
+ asphaltCtx.moveTo(x0,y0);
+ for(let step=1;step<=5;step++){
+  const drift=Math.sin(crack*2.7+step*1.9)*3.2;
+  asphaltCtx.lineTo(x0+drift+step*(crack%2?1.1:-.7),y0+length*step/5);
+ }
+ asphaltCtx.strokeStyle='rgba(10,14,18,.32)';
+ asphaltCtx.lineWidth=crack%4===0?1.5:.7;
+ asphaltCtx.stroke();
+ // Thin sealing tar is slightly smoother than the surrounding aggregate.
+ wetRoadRoughnessCtx.beginPath();
+ wetRoadRoughnessCtx.moveTo(x0,y0);
+ for(let step=1;step<=5;step++){
+  const drift=Math.sin(crack*2.7+step*1.9)*3.2;
+  wetRoadRoughnessCtx.lineTo(x0+drift+step*(crack%2?1.1:-.7),y0+length*step/5);
+ }
+ wetRoadRoughnessCtx.strokeStyle='rgba(75,75,75,.20)';
+ wetRoadRoughnessCtx.lineWidth=1.5;
+ wetRoadRoughnessCtx.stroke();
+}
 const asphaltTexture=new THREE.CanvasTexture(asphaltCanvas);asphaltTexture.colorSpace=THREE.SRGBColorSpace;asphaltTexture.wrapS=asphaltTexture.wrapT=THREE.RepeatWrapping;asphaltTexture.repeat.set(2,26);M.road.map=asphaltTexture;M.road.needsUpdate=true;
 // V6.7: inexpensive wet-road neon reflections for Yaowarat night.
 // One shared gradient texture and two materials; no dynamic lights or downloads.
