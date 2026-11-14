@@ -246,7 +246,11 @@ for(let crack=0;crack<18;crack++){
  wetRoadRoughnessCtx.lineWidth=1.5;
  wetRoadRoughnessCtx.stroke();
 }
-const asphaltTexture=new THREE.CanvasTexture(asphaltCanvas);asphaltTexture.colorSpace=THREE.SRGBColorSpace;asphaltTexture.wrapS=asphaltTexture.wrapT=THREE.RepeatWrapping;asphaltTexture.repeat.set(2,26);M.road.map=asphaltTexture;M.road.needsUpdate=true;
+const asphaltTexture=new THREE.CanvasTexture(asphaltCanvas);asphaltTexture.colorSpace=THREE.SRGBColorSpace;asphaltTexture.wrapS=asphaltTexture.wrapT=THREE.RepeatWrapping;asphaltTexture.repeat.set(2,26);
+// Keep oblique road markings, puddles and asphalt grain legible from the low iPhone camera.
+// Limit mobile anisotropy to 2x to protect bandwidth; reuse the existing PBR textures.
+const roadAnisotropy=Math.min(mobile?2:4,renderer.capabilities.getMaxAnisotropy());
+for(const roadTexture of [asphaltTexture,wetRoadRoughnessTexture,wetRoadNormalTexture])roadTexture.anisotropy=roadAnisotropy;M.road.map=asphaltTexture;M.road.needsUpdate=true;
 // V6.7: inexpensive wet-road neon reflections for Yaowarat night.
 // One shared gradient texture and two materials; no dynamic lights or downloads.
 const neonReflectionCanvas=document.createElement('canvas');
