@@ -1524,6 +1524,21 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
    aeroQuad([[x,.42,-1.44],[x,.42,1.43],[x-side*.065,.35,1.33],[x-side*.065,.35,-1.34]],0x171f23);
    aeroQuad([[x-side*.065,.35,-1.34],[x-side*.065,.35,1.33],[x-side*.095,.38,1.25],[x-side*.095,.38,-1.26]],0x5a252c);
   }
+  // Sculpted wing mirrors at the A-pillars: folded stalks, dark mirror
+  // housings and blue-grey reflective faces. All surfaces join the existing
+  // batched aero PBR mesh: no new draw call, material, texture or frame work.
+  // Keep the mirrors inside the vehicle's existing decorative width envelope.
+  for(const side of [-1,1]){
+   const inner=side*.77,outer=side*.98,z=.55;
+   aeroQuad([[inner,1.02,z-.035],[outer,1.07,z-.035],
+    [outer,1.11,z+.035],[inner,1.06,z+.035]],0x303b41);
+   aeroQuad([[outer-side*.10,1.035,z-.14],[outer,1.035,z-.14],
+    [outer,1.19,z+.035],[outer-side*.10,1.19,z+.035]],0x182329);
+   aeroQuad([[outer-side*.085,1.055,z+.039],[outer-side*.015,1.055,z+.039],
+    [outer-side*.015,1.17,z+.039],[outer-side*.085,1.17,z+.039]],0x72939d);
+   aeroQuad([[outer-side*.085,1.155,z+.042],[outer-side*.025,1.155,z+.042],
+    [outer-side*.045,1.175,z+.042],[outer-side*.085,1.175,z+.042]],0xb4c6c8);
+  }
   // Three diffuser fins create visible depth below the rear fascia.
   for(const x of [-.48,0,.48]){
    aeroQuad([[x-.027,.38,-1.76],[x+.027,.38,-1.76],
