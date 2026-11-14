@@ -88,6 +88,18 @@ function makeBusGlazing(THREE){
   ctx.fillStyle=i%3===0?'rgba(211,224,232,.16)':'rgba(159,175,182,.09)';
   ctx.fillRect(x,y,1,18+(i%5)*9);
  }
+ // Paired swept-wiper arcs cut through the grime on a rain-soaked Bangkok bus.
+ // Two translucent blade paths share the existing glazing atlas and draw call.
+ ctx.save();
+ for(const [pivotX,pivotY,radius] of [[75,231,103],[191,231,96]]){
+  ctx.strokeStyle='rgba(188,208,211,.22)';ctx.lineWidth=3;
+  ctx.beginPath();ctx.arc(pivotX,pivotY,radius,Math.PI*1.13,Math.PI*1.85);ctx.stroke();
+  ctx.strokeStyle='rgba(7,17,23,.23)';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.arc(pivotX,pivotY,radius+4,Math.PI*1.13,Math.PI*1.85);ctx.stroke();
+  ctx.strokeStyle='rgba(11,19,23,.62)';ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(pivotX,pivotY);ctx.lineTo(pivotX-radius*.45,pivotY-radius*.74);ctx.stroke();
+ }
+ ctx.restore();
  // Fine laminated windshield heating wires and the subtle top-edge shadow
  // are baked into the shared bus glass; no additional meshes or GPU draws.
  // These are deliberately low contrast so the driver's view stays readable.
