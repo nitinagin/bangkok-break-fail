@@ -734,6 +734,14 @@ function makeSportsCarRearFascia(THREE){
  const panel=ctx.createLinearGradient(0,0,0,64);
  panel.addColorStop(0,'#2d3034');panel.addColorStop(.42,'#0e131a');panel.addColorStop(1,'#25282b');
  ctx.fillStyle=panel;ctx.fillRect(0,0,256,64);
+ // Thai-style rear registration plate and recessed mounting hardware baked
+ // into the existing fascia atlas; legible silhouette without new geometry.
+ ctx.fillStyle='#080c11';ctx.fillRect(93,16,70,36);
+ ctx.fillStyle='#e7e6dd';ctx.fillRect(97,19,62,29);
+ ctx.fillStyle='#27313a';ctx.font='bold 13px sans-serif';ctx.textAlign='center';
+ ctx.fillText('กท 4582',128,33);
+ ctx.font='8px sans-serif';ctx.fillText('กรุงเทพมหานคร',128,43);
+ ctx.fillStyle='#6d7478';ctx.fillRect(100,21,3,2);ctx.fillRect(153,21,3,2);
  for(const left of [true,false]){
   const x=left?7:181;
   ctx.fillStyle='#420c15';ctx.fillRect(x,9,68,31);
