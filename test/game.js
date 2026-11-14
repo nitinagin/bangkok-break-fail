@@ -1048,19 +1048,28 @@ const yaowaratAwningRibMatrix=new THREE.Matrix4();
 const signMaterials=[mat(0xff267a),mat(0x086bd8),mat(0x1cbf7a)];function makeYaowaratNeonSign(index){
  const canvas=document.createElement('canvas');canvas.width=512;canvas.height=256;
  const ctx=canvas.getContext('2d'),colors=['#ff5688','#41f7e1','#ffcb55'],names=['เยาวราช','ทองคำ','อาหารจีน'],color=colors[index];
- ctx.fillStyle='#100d1c';ctx.fillRect(0,0,512,256);
- ctx.strokeStyle='#a48a65';ctx.lineWidth=14;ctx.strokeRect(10,10,492,236);
- ctx.strokeStyle='#30252a';ctx.lineWidth=7;ctx.strokeRect(23,23,466,210);
- ctx.textAlign='center';ctx.textBaseline='middle';
- ctx.font='bold 88px "Noto Sans Thai","Thonburi",sans-serif';
- ctx.shadowColor=color;ctx.shadowBlur=27;ctx.strokeStyle=color;ctx.lineWidth=8;
- ctx.strokeText(names[index],256,113,450);
- ctx.fillStyle='#fff7e5';ctx.fillText(names[index],256,113,450);
- ctx.shadowBlur=12;ctx.font='bold 33px sans-serif';ctx.fillStyle=color;
- ctx.fillText(['YAOWARAT','GOLD SHOP','CHINESE FOOD'][index],256,190,430);
- ctx.shadowBlur=0;
+ // Safari can rasterize Thai fallback glyphs before its font set is ready.
+ // Repaint the same atlas once fonts settle; no additional GPU textures.
+ const paint=()=>{
+  ctx.clearRect(0,0,512,256);
+  ctx.fillStyle='#100d1c';ctx.fillRect(0,0,512,256);
+  ctx.strokeStyle='#a48a65';ctx.lineWidth=14;ctx.strokeRect(10,10,492,236);
+  ctx.strokeStyle='#30252a';ctx.lineWidth=7;ctx.strokeRect(23,23,466,210);
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.font='bold 88px "Noto Sans Thai","Thonburi",sans-serif';
+  ctx.shadowColor=color;ctx.shadowBlur=27;ctx.strokeStyle=color;ctx.lineWidth=8;
+  ctx.strokeText(names[index],256,113,450);
+  ctx.fillStyle='#fff7e5';ctx.fillText(names[index],256,113,450);
+  ctx.shadowBlur=12;ctx.font='bold 33px sans-serif';ctx.fillStyle=color;
+  ctx.fillText(['YAOWARAT','GOLD SHOP','CHINESE FOOD'][index],256,190,430);
+  ctx.shadowBlur=0;
+ };
+ paint();
  const texture=new THREE.CanvasTexture(canvas);
  texture.colorSpace=THREE.SRGBColorSpace;texture.anisotropy=mobile?2:4;
+ if(document.fonts&&document.fonts.ready){
+  document.fonts.ready.then(()=>{paint();texture.needsUpdate=true;}).catch(()=>{});
+ }
  return new THREE.MeshBasicMaterial({map:texture,side:THREE.DoubleSide,toneMapped:false});
 }
 // Three shared baked Thai neon atlases, no dynamic lights or per-frame texture updates.
