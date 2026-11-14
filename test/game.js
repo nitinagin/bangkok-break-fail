@@ -5837,7 +5837,16 @@ function makeTukTuk(){
  glass.position.set(0,1.88,.79);glass.rotation.x=-.15;g.add(glass);
  rod(g,[-.7,1.53,.85],[-.7,2.23,.72],.027,tukTrim);
  rod(g,[.7,1.53,.85],[.7,2.23,.72],.027,tukTrim);
- g.add(cube(1.46,.055,.055,tukTrim,0,2.24,.72));
+ // Contoured windscreen header follows the tapered, bowed glass instead of
+ // a straight toy-like box beam. Nine points share one low-poly tube mesh.
+ const headerPoints=[];
+ for(let i=0;i<=8;i++){
+  const x=-.65+i*(1.30/8),nx=x/.65;
+  headerPoints.push(new THREE.Vector3(x,2.235+.018*(1-nx*nx),.72+.015*(1-nx*nx)));
+ }
+ const headerCurve=new THREE.CatmullRomCurve3(headerPoints);
+ const header=new THREE.Mesh(new THREE.TubeGeometry(headerCurve,8,.028,5,false),tukTrim);
+ header.name='tuktuk-contoured-windscreen-header';g.add(header);
 // Extended front canopy lip by 27cm: Bangkok-style rain/sun visor over the windscreen.
  // The curved roof, side valances and front hem share the same indexed mesh,
  // preserving the original single draw call and clear driving collision bounds.
