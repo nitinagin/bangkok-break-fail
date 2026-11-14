@@ -1045,7 +1045,26 @@ const awningColors=Array.from({length:3},(_,i)=>makeYaowaratAwning(i));
 const yaowaratAwningRibGeometry=new THREE.BoxGeometry(.042,.045,1.06);
 const yaowaratAwningRibMetal=new THREE.MeshStandardMaterial({color:0x66645e,metalness:.52,roughness:.77});
 const yaowaratAwningRibMatrix=new THREE.Matrix4();
-const signMaterials=[mat(0xff267a),mat(0x086bd8),mat(0x1cbf7a)];const neonSigns=[new THREE.MeshBasicMaterial({color:0xff3d96}),new THREE.MeshBasicMaterial({color:0x22ffe0}),new THREE.MeshBasicMaterial({color:0xffd64d})];const daySigns=signMaterials.slice();function applyDistrict(i){if(i===districtIndex)return;districtIndex=i;paintCockpitMirrorDistrict(i);cockpitMirrorTexture.needsUpdate=true;paintCockpitFinishDistrict(i);
+const signMaterials=[mat(0xff267a),mat(0x086bd8),mat(0x1cbf7a)];function makeYaowaratNeonSign(index){
+ const canvas=document.createElement('canvas');canvas.width=512;canvas.height=256;
+ const ctx=canvas.getContext('2d'),colors=['#ff5688','#41f7e1','#ffcb55'],names=['เยาวราช','ทองคำ','อาหารจีน'],color=colors[index];
+ ctx.fillStyle='#100d1c';ctx.fillRect(0,0,512,256);
+ ctx.strokeStyle='#a48a65';ctx.lineWidth=14;ctx.strokeRect(10,10,492,236);
+ ctx.strokeStyle='#30252a';ctx.lineWidth=7;ctx.strokeRect(23,23,466,210);
+ ctx.textAlign='center';ctx.textBaseline='middle';
+ ctx.font='bold 88px "Noto Sans Thai","Thonburi",sans-serif';
+ ctx.shadowColor=color;ctx.shadowBlur=27;ctx.strokeStyle=color;ctx.lineWidth=8;
+ ctx.strokeText(names[index],256,113,450);
+ ctx.fillStyle='#fff7e5';ctx.fillText(names[index],256,113,450);
+ ctx.shadowBlur=12;ctx.font='bold 33px sans-serif';ctx.fillStyle=color;
+ ctx.fillText(['YAOWARAT','GOLD SHOP','CHINESE FOOD'][index],256,190,430);
+ ctx.shadowBlur=0;
+ const texture=new THREE.CanvasTexture(canvas);
+ texture.colorSpace=THREE.SRGBColorSpace;texture.anisotropy=mobile?2:4;
+ return new THREE.MeshBasicMaterial({map:texture,side:THREE.DoubleSide,toneMapped:false});
+}
+// Three shared baked Thai neon atlases, no dynamic lights or per-frame texture updates.
+const neonSigns=Array.from({length:3},(_,i)=>makeYaowaratNeonSign(i));const daySigns=signMaterials.slice();function applyDistrict(i){if(i===districtIndex)return;districtIndex=i;paintCockpitMirrorDistrict(i);cockpitMirrorTexture.needsUpdate=true;paintCockpitFinishDistrict(i);
  const light=districtLightPresets[i]||districtLightPresets[0];
  skyFill.intensity=light[0];sun.intensity=light[1];
  skyFill.color.setHex(light[2]);skyFill.groundColor.setHex(light[3]);sun.color.setHex(light[4]);const fogRange=districtFogRanges[i]||districtFogRanges[0];scene.fog.near=fogRange[0];scene.fog.far=fogRange[1];districtLabel.textContent=['☀️ BANGKOK DAYTIME','🌃 YAOWARAT NIGHT · TEST 6.9','🌑 RAMA II · BLACKOUT CONSTRUCTION','🛍️ JJ MARKET · CHATUCHAK · 8000+','🛣️ BANGKOK EXPRESSWAY · 12000+','🌈 PATTAYA WALKING STREET · 16000+','🌑 DARK ROAD · 23000+'][i];for(let k=0;k<3;k++)signMaterials[k]=i===1?neonSigns[k]:daySigns[k];for(const b of props){if(b.userData.sign)b.userData.sign.material=signMaterials[b.userData.signIndex%3]}if(i===2)queueRamaExcavatorModel();const rama=i===2;M.grass.color.setHex(rama?0x78746d:0x34333b);M.road.color.setHex(rama?0x777b81:0x56535c);M.stripe.color.setHex(rama?0xe5e1d3:0xe2c579);shoulderPaint.color.setHex(rama?0x77736e:0x444148);curbPaint.color.setHex(rama?0x9d968b:0x756866);hint.textContent=['🛺 WELCOME TO BANGKOK!','🏮 WELCOME TO YAOWARAT!','🌇 SUNSET DRIVE!','🌿 JJ MARKET! WATCH THE TRAFFIC!','🛸 EXPRESSWAY! UFO LASERS INCOMING!','🌈 PATTAYA WALKING STREET!','🔦 DARK ROAD! HEADLIGHTS ONLY!'][i]}
