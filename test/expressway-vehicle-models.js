@@ -2020,7 +2020,13 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   // Reuse the near model's PBR material and geometry; no new textures.
   const rearLamps=group.children.filter(node=>node.material===tailLamps);
   if(rearLamps.length!==2)throw new Error('Bus LOD requires two rear lamps');
-  for(const part of [group.children[0],roof,tires,hubs,...rearLamps]){
+  // Preserve the route board and amber roof markers at distance: Bangkok
+  // buses should remain identifiable in neon traffic after glazing is culled.
+  // Reuse existing near-model meshes/materials; no new GPU assets or lights.
+  const routeBoard=group.children.find(node=>node.name==='bangkok-bus-front-route-panel');
+  const clearance=group.children.find(node=>node.name==='bangkok-bus-roof-clearance-lamps');
+  if(!routeBoard||!clearance)throw new Error('Bus LOD is missing route board or clearance lamps');
+  for(const part of [group.children[0],roof,routeBoard,clearance,tires,hubs,...rearLamps]){
    if(!part)throw new Error('Bus LOD is missing a silhouette part');
    distant.add(part.clone());
   }
