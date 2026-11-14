@@ -144,6 +144,18 @@ for(let track=0;track<2;track++){
   wetRoadRoughnessCtx.fillRect(x-5,y,10,3);
  }
 }
+// Wet aggregate pores break up unnaturally smooth wheel-track reflections.
+// Bake into existing albedo and roughness atlases once, with no new draw calls.
+for(let i=0;i<210;i++){
+ const track=i%2===0?76:180;
+ const y=(i*79+17)%256;
+ const x=track+Math.sin(y*.036+(i%2)*.8)*2.2+((i*43)%25)-12;
+ const w=1+(i%3),h=1+((i*7)%3);
+ asphaltCtx.fillStyle=i%5===0?'rgba(233,236,228,.23)':'rgba(13,18,22,.24)';
+ asphaltCtx.fillRect(x,y,w,h);
+ wetRoadRoughnessCtx.fillStyle=i%5===0?'rgba(240,240,240,.19)':'rgba(30,30,30,.16)';
+ wetRoadRoughnessCtx.fillRect(x,y,w,h);
+}
 // Weathered Thai shophouse neon reflections: narrow, vertically broken light
 // streaks baked into the existing asphalt albedo, not extra lights or meshes.
 // The staggered bands are aligned with the roadway UV direction and avoid
