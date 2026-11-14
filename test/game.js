@@ -5880,7 +5880,7 @@ function makeTukTuk(){
   for(let ix=0;ix<=segments;ix++){
    const u=ix/segments,x=-.86+1.72*u;
    // Match the front visor dip to the roof surface to avoid a visible seam.
-   const roofY=2.34+.16*(1-(x/.86)**2)+(end>0?-.055:0);
+   const roofY=2.34+.235*(1-(x/.86)**2)+(end>0?-.115:0);
    vertices.push(x,roofY,z,x,roofY-.11,z);
    uvs.push(u,end<0?.07:.93,u,end<0?.01:.99);
   }
@@ -5911,7 +5911,7 @@ function makeTukTuk(){
   framePart.updateMatrix();
   frame.setMatrixAt(frameIndex++,framePart.matrix);
  }
- const canopyY=x=>2.305+.16*(1-(x/.86)*(x/.86));
+ const canopyY=x=>2.34+.235*(1-(x/.86)*(x/.86))+.055*Math.sin(Math.PI/3)*(1-.35*Math.abs(x/.86));
  for(const z of [-1.33,-.30,.72]){
   for(let ix=0;ix<4;ix++){
    const x0=-.86+ix*.43,x1=x0+.43;
