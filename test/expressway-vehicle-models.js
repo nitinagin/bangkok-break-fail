@@ -57,6 +57,19 @@ function makeBusGlazing(THREE){
   ctx.fillRect(x-16,y-2,32,3);
  }
  ctx.restore();
+ // Recessed seat-back tops and chrome headrest posts give the bus cabin
+ // believable depth behind the windscreen. Painted into the existing atlas.
+ ctx.save();
+ for(const [x,y,w] of [[30,179,31],[92,182,30],[153,180,29],[221,183,27]]){
+  ctx.fillStyle='rgba(6,16,23,.44)';
+  ctx.beginPath();ctx.roundRect(x-w/2,y,w,46,7);ctx.fill();
+  ctx.strokeStyle='rgba(134,158,164,.24)';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(x-8,y+2);ctx.lineTo(x-8,y-12);
+  ctx.moveTo(x+8,y+2);ctx.lineTo(x+8,y-12);ctx.stroke();
+  ctx.strokeStyle='rgba(102,125,134,.18)';
+  ctx.beginPath();ctx.moveTo(x-w/2+4,y+8);ctx.lineTo(x+w/2-4,y+8);ctx.stroke();
+ }
+ ctx.restore();
  // Baked overhead passenger grab rail and hanging handles add interior depth
  // without extra meshes, lights, or animation on mobile.
  ctx.strokeStyle='rgba(197,171,119,.38)';ctx.lineWidth=4;
