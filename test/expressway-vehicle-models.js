@@ -1106,6 +1106,22 @@ function makeBusCurvedRoofHVAC(THREE){
    quad([-.47,3.14,z], [.47,3.14,z],
         [.47,3.14,z+.035],[-.47,3.14,z+.035],palette.edge);
   }
+  // Two dark circular condenser fan wells with radial guard spokes.
+  // Bake into the existing indexed roof mesh: no new materials or draw calls.
+  for(const fanZ of [centerZ-.19,centerZ+.19]){
+   const radius=.145,segments=12,ring=[];
+   const hub=vertex(0,3.144,fanZ,palette.grille);
+   for(let i=0;i<segments;i++){
+    const a=i*Math.PI*2/segments;
+    ring.push(vertex(Math.cos(a)*radius,3.144,fanZ+Math.sin(a)*radius,palette.edge));
+   }
+   for(let i=0;i<segments;i++)indices.push(hub,ring[i],ring[(i+1)%segments]);
+   // Narrow bright guard bars read as a fan grille at road-camera distance.
+   for(const offset of [-.065,0,.065]){
+    quad([offset-.009,3.147,fanZ-.123],[offset+.009,3.147,fanZ-.123],
+         [offset+.009,3.147,fanZ+.123],[offset-.009,3.147,fanZ+.123],palette.shell);
+   }
+  }
   // End cap folds distinguish pressed sheet metal from a toy block.
   quad([-.68,3.13,centerZ-.52],[.68,3.13,centerZ-.52],
        [.53,3.17,centerZ-.43],[-.53,3.17,centerZ-.43],palette.ridge);
