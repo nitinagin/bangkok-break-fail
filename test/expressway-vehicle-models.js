@@ -1676,6 +1676,38 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   group.add(new THREE.Mesh(sideGeometry,sideGlass));
 
 
+  // Recessed front air intakes and lower splitter give the approaching sports
+  // car a distinct low, wide bumper instead of a plain toy-like red nose.
+  // All three grilles and the satin splitter share one indexed PBR mesh.
+  // Decorative only: stays inside the original front collision envelope.
+  const intakeVertices=[],intakeColors=[],intakeFaces=[];
+  function intakeQuad(points,color){
+   const start=intakeVertices.length/3,c=new THREE.Color(color);
+   for(const p of points){intakeVertices.push(...p);intakeColors.push(c.r,c.g,c.b);}
+   intakeFaces.push(start,start+1,start+2,start,start+2,start+3);
+  }
+  for(const side of [-1,1]){
+   const x0=side<0?-.76:.29,x1=side<0?-.29:.76;
+   intakeQuad([[x0,.49,1.768],[x1,.49,1.768],[x1,.61,1.762],[x0,.61,1.762]],0x111820);
+   intakeQuad([[x0,.605,1.769],[x1,.605,1.769],[x1,.624,1.768],[x0,.624,1.768]],0x5c6267);
+   for(let j=0;j<3;j++){
+    const y=.51+j*.029;
+    intakeQuad([[x0+.025,y,1.772],[x1-.025,y,1.772],
+                [x1-.025,y+.008,1.772],[x0+.025,y+.008,1.772]],0x353b40);
+   }
+  }
+  intakeQuad([[-.19,.48,1.77],[.19,.48,1.77],[.19,.60,1.765],[-.19,.60,1.765]],0x111820);
+  intakeQuad([[-.81,.445,1.766],[.81,.445,1.766],[.75,.465,1.772],[-.75,.465,1.772]],0x41454a);
+  const intakeGeo=new THREE.BufferGeometry();
+  intakeGeo.setAttribute('position',new THREE.Float32BufferAttribute(intakeVertices,3));
+  intakeGeo.setAttribute('color',new THREE.Float32BufferAttribute(intakeColors,3));
+  intakeGeo.setIndex(intakeFaces);intakeGeo.computeVertexNormals();
+  const intakes=new THREE.Mesh(intakeGeo,new THREE.MeshStandardMaterial({
+   vertexColors:true,metalness:.32,roughness:.61,side:THREE.DoubleSide
+  }));
+  intakes.name='sports-car-batched-front-intakes';
+  group.add(intakes);
+
   // Sculpted bonnet: tapered nose, raised centre ridge and pressed shoulder creases.
   // One 96-triangle painted PBR mesh replaces the flat, toy-like hood silhouette.
   // Geometry is built only once for the shared sports-car template.
