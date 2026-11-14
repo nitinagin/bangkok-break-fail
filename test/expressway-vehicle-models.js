@@ -753,6 +753,12 @@ function makeSportsCarRearFascia(THREE){
   ctx.fillStyle='#bc6b24';ctx.fillRect(left?x+52:x+3,27,12,6);
   ctx.fillStyle='rgba(255,201,102,.75)';ctx.fillRect(left?x+54:x+5,28,8,2);
   ctx.fillStyle='#5a1017';ctx.fillRect(x+3,34,62,3);
+  // Clear reversing-lamp lens inset: crisp white optical segments distinguish
+  // the rear cluster from a flat red strip, baked into the shared atlas.
+  const reverseX=left?x+7:x+48;
+  ctx.fillStyle='#26353c';ctx.fillRect(reverseX,34,13,5);
+  ctx.fillStyle='#d9e9e9';ctx.fillRect(reverseX+1,35,11,2);
+  ctx.fillStyle='rgba(255,255,240,.72)';ctx.fillRect(reverseX+2,35,7,1);
  }
  // Fictional Thai plate with a dark recessed mounting panel.
  ctx.fillStyle='#080c11';ctx.fillRect(86,10,84,43);
