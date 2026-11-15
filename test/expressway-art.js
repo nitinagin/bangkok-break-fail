@@ -281,6 +281,30 @@ export function createExpresswayArt(THREE){
    ctx.fillRect(x+1,y+1,17,1);
   }
  }
+ // Street-level retail podiums: continuous shopfront glazing, deep awnings,
+ // uneven warm interiors and Thai-style narrow vertical sign boxes. Bake into
+ // the shared tower atlas, not new meshes or realtime lights.
+ for(let bay=0;bay<8;bay++){
+  const x=bay*30+5, y=476;
+  ctx.fillStyle='#101923';ctx.fillRect(x-3,y-2,29,36);
+  ec.fillStyle='#000';ec.fillRect(x-3,y-2,29,36);
+  const warm=(bay%3!==1);
+  ctx.fillStyle=warm?'#7d5b3d':'#2d5260';ctx.fillRect(x,y+7,23,24);
+  ec.fillStyle=warm?'#a46c35':'#35677b';ec.fillRect(x+2,y+9,19,19);
+  ctx.fillStyle='rgba(12,21,27,.64)';ctx.fillRect(x+11,y+7,2,24);
+  ec.fillStyle='#000';ec.fillRect(x+11,y+7,2,24);
+  ctx.fillStyle='#192a32';ctx.fillRect(x-3,y+2,29,7);
+  ctx.fillStyle=bay%2?'#8d4d36':'#476c72';ctx.fillRect(x-3,y+1,29,4);
+  ctx.fillStyle='rgba(232,213,164,.50)';ctx.fillRect(x-2,y+5,27,1);
+  ctx.fillStyle='#bca16f';ctx.fillRect(x+2,y+11,2,16);
+  ctx.fillStyle='rgba(5,14,20,.70)';ctx.fillRect(x+3,y+25,18,4);
+  if(bay%2===0){
+   ctx.fillStyle='#222b32';ctx.fillRect(x+19,y-10,6,21);
+   ctx.fillStyle='#f0bb77';ctx.fillRect(x+20,y-8,4,16);
+   ec.fillStyle='#db8c43';ec.fillRect(x+20,y-8,4,16);
+   ctx.fillStyle='#543a2d';ctx.fillRect(x+21,y-6,2,12);
+  }
+ }
  const windowTexture=new THREE.CanvasTexture(windowCanvas);windowTexture.colorSpace=THREE.SRGBColorSpace;
  const emissiveTexture=new THREE.CanvasTexture(emissiveCanvas);
  emissiveTexture.colorSpace=THREE.SRGBColorSpace;
