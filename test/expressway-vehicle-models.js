@@ -26,6 +26,21 @@ function makeBusGlazing(THREE){
  ctx.strokeStyle='rgba(215,237,246,.17)';ctx.lineWidth=2;
  ctx.beginPath();ctx.moveTo(0,67);ctx.bezierCurveTo(70,49,151,54,256,26);ctx.stroke();
  ctx.restore();
+ // Warm interior cabin glow under the route board: a broad overhead
+ // fluorescent wash and dark window mullion shadows, baked into the shared
+ // windshield atlas. This makes the occupied bus readable at night without
+ // adding dynamic lights, meshes, textures or per-frame GPU work.
+ ctx.save();
+ const cabinGlow=ctx.createLinearGradient(0,82,0,242);
+ cabinGlow.addColorStop(0,'rgba(255,205,133,.24)');
+ cabinGlow.addColorStop(.35,'rgba(238,178,104,.16)');
+ cabinGlow.addColorStop(1,'rgba(145,96,55,0)');
+ ctx.fillStyle=cabinGlow;ctx.fillRect(13,82,230,160);
+ ctx.fillStyle='rgba(6,17,23,.37)';
+ for(const x of [81,165])ctx.fillRect(x,87,5,151);
+ ctx.fillStyle='rgba(255,232,176,.46)';
+ ctx.fillRect(22,89,212,4);
+ ctx.restore();
  // Warm interior silhouettes, tempered-glass reflections, and rain streaks.
  ctx.fillStyle='rgba(12,17,23,.8)';
  for(let i=0;i<3;i++){
