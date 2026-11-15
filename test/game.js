@@ -1602,6 +1602,14 @@ const yaowaratDistantFacades=Array.from({length:3},(_,variant)=>{
    ctx.lineTo(x+58,level+90);ctx.lineTo(x+48,level+90);ctx.fill();
    ctx.fillStyle='#777b74';ctx.fillRect(x+40,level,4,91);
    ctx.fillRect(x,level+43,84,3);
+   // Recessed aluminum window frame, sun-faded curtains and uneven warm
+   // occupancy: large-scale detail survives the low-res mobile facade atlas.
+   ctx.fillStyle='rgba(9,15,19,.56)';ctx.fillRect(x+4,level+4,35,83);
+   ctx.fillStyle=variant===1?'rgba(234,178,111,.37)':'rgba(209,190,157,.24)';
+   ctx.fillRect(x+6,level+7,17,76);
+   ctx.fillStyle='rgba(16,25,30,.53)';ctx.fillRect(x+24,level+7,12,76);
+   ctx.fillStyle='rgba(174,187,182,.45)';ctx.fillRect(x+2,level+2,2,87);
+   ctx.fillRect(x+80,level+2,2,87);
   }
   ctx.fillStyle='#343d40';ctx.fillRect(10,level+88,236,7);
   for(let bar=0;bar<17;bar++)ctx.fillRect(12+bar*14,level+65,3,27);
