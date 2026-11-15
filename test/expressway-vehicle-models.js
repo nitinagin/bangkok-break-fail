@@ -1445,7 +1445,19 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   }
  // Low, swept GT coupe profile: longer hood, raked windscreen, curved roofline
  // and tapering rear deck. Reuses the same extruded body mesh and collision size.
- else{shape.moveTo(-1.77,.4);shape.lineTo(-1.62,.58);shape.lineTo(-1.18,.66);shape.lineTo(-.86,.69);shape.lineTo(-.48,1.04);shape.quadraticCurveTo(-.28,1.19,.05,1.21);shape.quadraticCurveTo(.42,1.21,.61,1.09);shape.lineTo(.98,.72);shape.lineTo(1.48,.62);shape.lineTo(1.77,.4);}
+ else{
+  // Sculpted low GT profile: continuous front splitter/hood, swept glass,
+  // rounded roof and muscular rear haunch. Same footprint and one body mesh.
+  shape.moveTo(-1.77,.4);
+  shape.quadraticCurveTo(-1.72,.53,-1.55,.57);
+  shape.quadraticCurveTo(-1.25,.65,-.91,.67);
+  shape.quadraticCurveTo(-.77,.71,-.53,.99);
+  shape.quadraticCurveTo(-.34,1.20,.01,1.21);
+  shape.quadraticCurveTo(.39,1.22,.62,1.05);
+  shape.quadraticCurveTo(.79,.83,.98,.75);
+  shape.quadraticCurveTo(1.20,.69,1.44,.64);
+  shape.quadraticCurveTo(1.67,.60,1.77,.4);
+ }
  shape.closePath();
  const geometry=new THREE.ExtrudeGeometry(shape,{depth:w,bevelEnabled:true,bevelSize:.035,bevelThickness:.035,bevelSegments:1});
  geometry.rotateY(Math.PI/2);geometry.translate(-w/2,0,0);
