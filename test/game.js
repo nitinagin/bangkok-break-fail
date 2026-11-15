@@ -3386,8 +3386,28 @@ for(const x of [2,252]){
 const canopyTexture=new THREE.CanvasTexture(canopyCanvas);
 canopyTexture.colorSpace=THREE.SRGBColorSpace;
 canopyTexture.anisotropy=Math.min(2,renderer.capabilities.getMaxAnisotropy());
+// Baked PBR micro-normal map: the vinyl weave and pressed seams catch moving
+// street lighting without extra geometry, dynamic lights, or per-frame work.
+const canopyNormalCanvas=document.createElement('canvas');
+canopyNormalCanvas.width=canopyNormalCanvas.height=128;
+const canopyNormalCtx=canopyNormalCanvas.getContext('2d');
+const canopyNormalPixels=canopyNormalCtx.createImageData(128,128);
+for(let y=0;y<128;y++)for(let x=0;x<128;x++){
+ const i=(y*128+x)*4;
+ const warp=Math.sin(x*Math.PI/2)*.14;
+ const weft=Math.sin(y*Math.PI/2)*.14;
+ const seam=Math.min(...[9,64,119].map(v=>Math.abs(x-v)));
+ const seamBump=seam<2?(2-seam)*.07:0;
+ canopyNormalPixels.data[i]=Math.round(128+warp*80+seamBump*70);
+ canopyNormalPixels.data[i+1]=Math.round(128+weft*80);
+ canopyNormalPixels.data[i+2]=250;
+ canopyNormalPixels.data[i+3]=255;
+}
+canopyNormalCtx.putImageData(canopyNormalPixels,0,0);
+const canopyNormalTexture=new THREE.CanvasTexture(canopyNormalCanvas);
+canopyNormalTexture.wrapS=canopyNormalTexture.wrapT=THREE.RepeatWrapping;
 const tukCanopyFabric=new THREE.Mesh(tukCanopyGeometry,new THREE.MeshStandardMaterial({
- color:0xc4c9c7,map:canopyTexture,roughness:.88,metalness:0,side:THREE.DoubleSide
+ color:0xc4c9c7,map:canopyTexture,normalMap:canopyNormalTexture,normalScale:new THREE.Vector2(.26,.26),roughness:.88,metalness:0,side:THREE.DoubleSide
 }));
 tukCanopyFabric.position.set(0,.91,-1.24);
 tukCanopyFabric.name='tuktuk-arched-canvas-roof';
