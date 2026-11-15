@@ -263,7 +263,11 @@ function makeBusCurvedWindshield(THREE,material){
    const x=nx*(.90-.025*t);
    // Crown is deepest at mid-glass, fading into the metal window seal.
    const crown=.042*(1-shoulder)*Math.sin(Math.PI*t);
-   const z=2.335-t*.055+.028*(1-shoulder)+crown-.014*shoulder*t;
+   // Progressive bus windscreen rake and subtly wrapped A-pillars: the upper
+   // glass sits farther back, with curved shoulders instead of a flat slab.
+   // Preserve the original front envelope at the lower seal and all collision logic.
+   const rake=.105*t*t;
+   const z=2.335-rake+.028*(1-shoulder)+crown-.026*shoulder*t;
    positions.push(x,y,z);uvs.push(i/segments,t);
   }
  }
