@@ -5768,6 +5768,16 @@ function makeTukTuk(){
  rearLamps.computeBoundingSphere();
  rearLamps.name='bangkok-tuktuk-three-chamber-tail-lamps';
  g.add(rearLamps);
+ // Bent steel exhaust and rear silencer, visible from the chase camera.
+ // One cached low-poly tube, below the passenger floor and within the hitbox.
+ const tukExhaustCurve=new THREE.CatmullRomCurve3([
+  new THREE.Vector3(.43,.56,-.28),new THREE.Vector3(.50,.45,-.67),
+  new THREE.Vector3(.52,.39,-1.04),new THREE.Vector3(.56,.34,-1.35),
+  new THREE.Vector3(.58,.33,-1.54)
+ ]);
+ const tukExhaust=new THREE.Mesh(new THREE.TubeGeometry(tukExhaustCurve,12,.042,6,false),
+  new THREE.MeshStandardMaterial({color:0x62666a,metalness:.72,roughness:.58}));
+ tukExhaust.name='bangkok-tuktuk-bent-steel-exhaust';g.add(tukExhaust);
  // Two flexible rear mudflaps: visible real-world silhouette behind the tyres.
  // Instanced in one draw call; no texture, dynamic lighting or collision edits.
  const flapOutline=new THREE.Shape();
