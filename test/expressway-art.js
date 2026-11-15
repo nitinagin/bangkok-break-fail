@@ -98,6 +98,32 @@ export function createExpresswayArt(THREE){
   }
   ec.fillStyle='#000';ec.fillRect(x-3,30,13,445);
  }
+ // Warm-lit glass stairwell: alternating flights and landings in the
+ // existing shared facade/emissive atlases, no new geometry or draw calls.
+ {
+  const sx=129,sy=27,sw=20,sh=445;
+  ctx.fillStyle='#101c28';ctx.fillRect(sx,sy,sw,sh);
+  ec.fillStyle='#000';ec.fillRect(sx,sy,sw,sh);
+  ctx.fillStyle='rgba(90,112,123,.65)';
+  ctx.fillRect(sx,sy,2,sh);ctx.fillRect(sx+sw-2,sy,2,sh);
+  for(let floor=0;floor<28;floor++){
+   const y=sy+floor*16,warm=floor%4!==1;
+   ctx.fillStyle=warm?'#6b5c49':'#273745';
+   ctx.fillRect(sx+3,y+2,sw-6,11);
+   if(warm){ec.fillStyle=floor%3===0?'#9a7954':'#695943';ec.fillRect(sx+3,y+2,sw-6,11);}
+   ctx.strokeStyle='rgba(20,28,35,.94)';
+   ctx.lineWidth=2;ctx.beginPath();
+   if(floor%2===0){ctx.moveTo(sx+4,y+12);ctx.lineTo(sx+sw-4,y+3);}
+   else{ctx.moveTo(sx+4,y+3);ctx.lineTo(sx+sw-4,y+12);}
+   ctx.stroke();
+   ctx.fillStyle='#303a40';ctx.fillRect(sx+2,y+13,sw-4,2);
+   ec.fillStyle='#000';ec.fillRect(sx+2,y+13,sw-4,2);
+   ctx.strokeStyle='rgba(151,162,161,.55)';
+   ctx.lineWidth=.7;ctx.beginPath();
+   ctx.moveTo(sx+4,y+11);ctx.lineTo(sx+sw-4,y+11);ctx.stroke();
+  }
+  ctx.fillStyle='rgba(173,207,217,.12)';ctx.fillRect(sx+3,sy+2,2,sh-4);
+ }
  // Recessed window reflections: offset skyline streaks and uneven wet-glass
  // specular bands break up the uniform facade without extra geometry.
  // Draw on the diffuse atlas only; do not brighten unlit emissive rooms.
