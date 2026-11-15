@@ -1351,7 +1351,17 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
  const rubber=new THREE.MeshStandardMaterial({color:0x171a1c,roughness:.96});
  const stripe=new THREE.MeshStandardMaterial({color:0xc72b35,roughness:.55});
  const shape=new THREE.Shape();
- if(isBus){shape.moveTo(-2.22,.43);shape.lineTo(-2.22,2.62);shape.lineTo(-2.04,2.86);shape.lineTo(2.04,2.86);shape.lineTo(2.22,2.62);shape.lineTo(2.22,.43);}
+ if(isBus){
+   // Rounded pressed-steel bus roof shoulders, preserving body footprint,
+   // collision envelope, existing PBR material and single body draw call.
+   shape.moveTo(-2.22,.43);shape.lineTo(-2.22,2.46);
+   shape.quadraticCurveTo(-2.22,2.76,-1.98,2.84);
+   shape.quadraticCurveTo(-1.72,2.88,-1.45,2.86);
+   shape.lineTo(1.72,2.86);
+   shape.quadraticCurveTo(2.08,2.86,2.18,2.64);
+   shape.quadraticCurveTo(2.22,2.54,2.22,2.40);
+   shape.lineTo(2.22,.43);
+  }
  // Low, swept GT coupe profile: longer hood, raked windscreen, curved roofline
  // and tapering rear deck. Reuses the same extruded body mesh and collision size.
  else{shape.moveTo(-1.77,.4);shape.lineTo(-1.62,.58);shape.lineTo(-1.18,.66);shape.lineTo(-.86,.69);shape.lineTo(-.48,1.04);shape.quadraticCurveTo(-.28,1.19,.05,1.21);shape.quadraticCurveTo(.42,1.21,.61,1.09);shape.lineTo(.98,.72);shape.lineTo(1.48,.62);shape.lineTo(1.77,.4);}
