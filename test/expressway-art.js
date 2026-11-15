@@ -61,6 +61,29 @@ export function createExpresswayArt(THREE){
    ctx.fillStyle='#29343c';for(let g=0;g<4;g++)ctx.fillRect(x+5+g*3,y+11,1,2);
   }
  }
+ // Large vertical Thai hotel neon, baked into the facade and emissive atlases.
+ // One readable sign occupies several storeys instead of adding tiny window details.
+ // Shared texture keeps the existing 24-tower instancing and draw-call budget.
+ {
+  const sx=222,sy=174,sw=28,sh=146;
+  ctx.fillStyle='#10232c';ctx.fillRect(sx,sy,sw,sh);
+  ctx.fillStyle='#183d48';ctx.fillRect(sx+2,sy+2,sw-4,sh-4);
+  ctx.strokeStyle='#3b8490';ctx.lineWidth=2;ctx.strokeRect(sx+2,sy+2,sw-4,sh-4);
+  ec.fillStyle='#09161b';ec.fillRect(sx,sy,sw,sh);
+  ec.strokeStyle='#117c92';ec.lineWidth=2;ec.strokeRect(sx+2,sy+2,sw-4,sh-4);
+  ctx.save();ec.save();
+  ctx.font='bold 19px sans-serif';ec.font='bold 19px sans-serif';
+  ctx.textAlign='center';ec.textAlign='center';
+  ctx.textBaseline='middle';ec.textBaseline='middle';
+  const letters=['โ','ร','ง','แ','ร','ม'];
+  for(let i=0;i<letters.length;i++){
+   const y=sy+17+i*22;
+   ctx.shadowColor='#ff4c87';ctx.shadowBlur=5;
+   ctx.fillStyle='#ffd9e5';ctx.fillText(letters[i],sx+sw/2,y);
+   ec.fillStyle='#ff4c87';ec.fillText(letters[i],sx+sw/2,y);
+  }
+  ctx.restore();ec.restore();
+ }
  // Realistic Bangkok facade depth: balcony slabs, shaded rails and irregular
  // air-conditioning ledges baked into the shared atlas (no extra draw calls).
  // Keep emissive windows occluded where concrete projects across the glazing.
