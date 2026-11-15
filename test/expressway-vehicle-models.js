@@ -345,6 +345,20 @@ function makeBusWingMirrors(THREE){
   quad([inner,2.69,2.28],[inner,2.70,2.28],
    [inner,2.69,1.58],[inner,2.68,1.58],gutterSteel);
  }
+ // Amber clearance lamps across the roofline: on Bangkok expressway buses
+ // these read as a continuous warm marker at night, not toy-like roof blocks.
+ // Fold all lenses and dark rubber surrounds into the existing mirror/visor
+ // vertex-colour PBR mesh: zero extra meshes, materials or draw calls.
+ const lampRubber=new THREE.Color(0x1a2226),lampAmber=new THREE.Color(0xe8a34d),
+  lampGlint=new THREE.Color(0xffd493);
+ for(const x of [-.72,-.36,0,.36,.72]){
+  const z=2.398,y=2.704,w=.068;
+  quad([x-w,y,z],[x+w,y,z],[x+w,y+.058,z],[x-w,y+.058,z],lampRubber);
+  quad([x-w+.012,y+.012,z+.004],[x+w-.012,y+.012,z+.004],
+   [x+w-.012,y+.049,z+.004],[x-w+.012,y+.049,z+.004],lampAmber);
+  quad([x-w+.017,y+.039,z+.006],[x+w-.017,y+.039,z+.006],
+   [x+w-.017,y+.046,z+.006],[x-w+.017,y+.046,z+.006],lampGlint);
+ }
  // Low-profile rooftop HVAC intake: a pressed-metal service housing with
  // recessed ventilation louvers, visible above Bangkok traffic silhouettes.
  // Fold into the existing vertex-colour bus mirror/visor mesh: zero extra draws.
