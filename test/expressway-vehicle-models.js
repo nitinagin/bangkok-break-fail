@@ -8,6 +8,17 @@ function makeBusGlazing(THREE){
  const ctx=canvas.getContext('2d'),g=ctx.createLinearGradient(0,0,256,256);
  g.addColorStop(0,'#4a6b7a');g.addColorStop(.24,'#243e4c');g.addColorStop(.7,'#132632');g.addColorStop(1,'#0c1a25');
  ctx.fillStyle=g;ctx.fillRect(0,0,256,256);
+ // Reflected Bangkok flyover girders and tower windows, baked into shared bus glazing.
+ ctx.save();ctx.globalCompositeOperation='screen';
+ for(const [x,w,h] of [[5,22,68],[34,17,92],[67,28,54],[114,18,78],[153,26,61],[208,20,89],[238,14,48]]){
+  ctx.fillStyle='rgba(119,153,167,.13)';ctx.fillRect(x,0,w,h);
+  ctx.fillStyle='rgba(247,201,132,.13)';
+  for(let y=13;y<h-5;y+=16)for(let dx=5;dx<w-3;dx+=10)ctx.fillRect(x+dx,y,3,5);
+ }
+ ctx.strokeStyle='rgba(201,219,223,.18)';ctx.lineWidth=3;
+ ctx.beginPath();ctx.moveTo(0,51);ctx.lineTo(256,30);ctx.stroke();
+ ctx.strokeStyle='rgba(12,26,34,.28)';ctx.lineWidth=6;
+ ctx.beginPath();ctx.moveTo(0,62);ctx.lineTo(256,41);ctx.stroke();ctx.restore();
  // Bangkok traffic-light reflections baked once into the shared bus glass atlas.
  ctx.save();ctx.globalCompositeOperation='screen';
  for(const [x,y,w,h,color] of [
