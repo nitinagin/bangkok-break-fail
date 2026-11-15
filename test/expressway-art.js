@@ -1030,6 +1030,29 @@ export function createExpresswayArt(THREE){
   bac.fillStyle='rgba(154,164,162,.09)';
   bac.fillRect(px+7,py+5,pw-17,2);bac.fillRect(px+12,py+ph-6,pw-25,1);
  }
+ // Recessed transverse steel expansion joints and drainage slots: a strong
+ // elevated-road cue, baked into the existing asphalt PBR atlas.
+ // Edge grates sit outside the central dodge corridor; no new draw calls.
+ for(const jointX of [72,184]){
+  bac.fillStyle='rgba(7,11,14,.67)';bac.fillRect(jointX,10,4,108);
+  bac.fillStyle='rgba(143,151,150,.34)';bac.fillRect(jointX+4,10,1,108);
+  bac.fillStyle='rgba(174,178,168,.23)';bac.fillRect(jointX-1,10,1,108);
+  for(let edge=0;edge<2;edge++){
+   const grateY=edge===0?11:109;
+   bac.fillStyle='rgba(8,13,17,.77)';bac.fillRect(jointX-7,grateY,17,8);
+   bac.strokeStyle='rgba(126,139,142,.48)';bac.lineWidth=1;
+   bac.strokeRect(jointX-7.5,grateY+.5,17,7);
+   for(let slit=0;slit<5;slit++){
+    bac.fillStyle='rgba(165,174,169,.31)';
+    bac.fillRect(jointX-5+slit*3,grateY+2,1,4);
+   }
+   // Rainwater trails from the grates into the road surface.
+   const stain=bac.createLinearGradient(jointX+7,0,jointX+30,0);
+   stain.addColorStop(0,'rgba(13,23,28,.26)');
+   stain.addColorStop(1,'rgba(13,23,28,0)');
+   bac.fillStyle=stain;bac.fillRect(jointX+7,grateY+2,23,3);
+  }
+ }
  bac.fillStyle='rgba(207,208,196,.48)';
  bac.fillRect(0,8,256,2);bac.fillRect(0,118,256,2);
  for(let x=9;x<256;x+=43){
