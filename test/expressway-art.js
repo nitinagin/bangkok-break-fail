@@ -833,6 +833,29 @@ export function createExpresswayArt(THREE){
   fc.fillStyle=i%5===0?'rgba(48,55,58,.20)':'rgba(230,229,218,.13)';
   fc.fillRect(x,y,1+(i%4),3+(i%13));
  }
+ // Large patched spalling scars on elevated concrete: irregular exposed
+ // aggregate, repair mortar and rust bleed at deck edges. Baked into the
+ // existing shared 128px atlas (no new mesh, material, or per-frame work).
+ for(let patch=0;patch<5;patch++){
+  const cx=17+(patch*47)%96,cy=20+(patch*61)%90;
+  fc.beginPath();
+  for(let k=0;k<9;k++){
+   const a=k*Math.PI*2/9;
+   const radius=7+((patch*13+k*7)%9);
+   const x=cx+Math.cos(a)*radius,y=cy+Math.sin(a)*radius*.65;
+   if(k===0)fc.moveTo(x,y);else fc.lineTo(x,y);
+  }
+  fc.closePath();fc.fillStyle='rgba(67,74,73,.38)';fc.fill();
+  fc.strokeStyle='rgba(208,207,192,.36)';fc.lineWidth=2;fc.stroke();
+  for(let grit=0;grit<12;grit++){
+   const gx=cx+((grit*11+patch*7)%19)-9;
+   const gy=cy+((grit*7+patch*3)%13)-6;
+   fc.fillStyle=grit%3===0?'rgba(173,150,125,.55)':'rgba(37,46,48,.42)';
+   fc.fillRect(gx,gy,1+(grit%3),1+(grit%2));
+  }
+  fc.fillStyle='rgba(113,66,46,.26)';
+  fc.fillRect(cx+3,cy+8,2,9+(patch%3)*4);
+ }
  // Long rain streaks and formwork seams read as weathered reinforced concrete.
  fc.fillStyle='rgba(54,61,65,.18)';
  for(let i=0;i<7;i++)fc.fillRect(0,17+i*19,128,1);
