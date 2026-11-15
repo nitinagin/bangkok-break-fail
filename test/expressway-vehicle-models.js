@@ -707,6 +707,28 @@ function makeBusSideWindows(THREE){
    ctx.fillStyle='rgba(197,209,207,.48)';ctx.fillRect(x+19,25,86,2);
    ctx.fillStyle='rgba(255,211,139,.18)';ctx.fillRect(x+21,20,82,1);
   }
+  // Fabric curtains add a recognizable Bangkok commuter-bus silhouette.
+  // Drawn into the existing side-window atlas, with no additional GPU draw.
+  if(i===0 || i===3){
+   const left=x+12,top=13,width=i===0?31:25,bottom=104;
+   const cloth=ctx.createLinearGradient(left,top,left+width,top);
+   cloth.addColorStop(0,'#303832');cloth.addColorStop(.3,'#8b806c');
+   cloth.addColorStop(.6,'#494c43');cloth.addColorStop(1,'#9c8a6e');
+   ctx.fillStyle=cloth;ctx.beginPath();ctx.moveTo(left,top);
+   ctx.lineTo(left+width,top);
+   ctx.bezierCurveTo(left+width-4,46,left+width+2,78,left+width-3,bottom);
+   ctx.quadraticCurveTo(left+width*.5,bottom+5,left,bottom-2);
+   ctx.closePath();ctx.fill();
+   ctx.strokeStyle='rgba(225,204,163,.28)';ctx.lineWidth=1;
+   for(let fold=1;fold<4;fold++){
+    const fx=left+fold*width/4;
+    ctx.beginPath();ctx.moveTo(fx,top);
+    ctx.bezierCurveTo(fx-3,46,fx+3,77,fx-1,bottom);ctx.stroke();
+   }
+   ctx.strokeStyle='rgba(31,33,29,.7)';ctx.lineWidth=3;
+   ctx.beginPath();ctx.moveTo(left,bottom-2);
+   ctx.quadraticCurveTo(left+width*.5,bottom+5,left+width-3,bottom);ctx.stroke();
+  }
   // Low-contrast seats and heads give the glazing depth without geometry.
   const cx=x+42+(i%2)*37;
   ctx.fillStyle='rgba(12,20,26,.52)';
