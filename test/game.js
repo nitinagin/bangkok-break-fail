@@ -1072,9 +1072,33 @@ const signMaterials=[mat(0xff267a),mat(0x086bd8),mat(0x1cbf7a)];function makeYao
  // Repaint the same atlas once fonts settle; no additional GPU textures.
  const paint=()=>{
   ctx.clearRect(0,0,512,256);
-  ctx.fillStyle='#100d1c';ctx.fillRect(0,0,512,256);
-  ctx.strokeStyle='#a48a65';ctx.lineWidth=14;ctx.strokeRect(10,10,492,236);
-  ctx.strokeStyle='#30252a';ctx.lineWidth=7;ctx.strokeRect(23,23,466,210);
+  // Enamelled steel signboard with aged brass extrusion and edge-mounted
+  // fluorescent tubes: baked into the three existing neon textures.
+  const enamel=ctx.createLinearGradient(0,0,512,256);
+  enamel.addColorStop(0,'#24212b');enamel.addColorStop(.48,'#100e18');
+  enamel.addColorStop(1,'#080b12');
+  ctx.fillStyle=enamel;ctx.fillRect(0,0,512,256);
+  ctx.fillStyle='#49413b';ctx.fillRect(4,4,504,248);
+  ctx.fillStyle='#15141d';ctx.fillRect(13,13,486,230);
+  ctx.strokeStyle='#a48a65';ctx.lineWidth=9;ctx.strokeRect(10,10,492,236);
+  ctx.strokeStyle='#30252a';ctx.lineWidth=5;ctx.strokeRect(23,23,466,210);
+  // Stamped rivets and rain streaks give the illuminated face a physical scale.
+  for(let bolt=0;bolt<12;bolt++){
+   const bx=35+bolt*40;
+   for(const by of [18,238]){
+    ctx.fillStyle='#08090d';ctx.beginPath();ctx.arc(bx+1,by+1,3,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#9d8d70';ctx.beginPath();ctx.arc(bx,by,2,0,Math.PI*2);ctx.fill();
+   }
+  }
+  for(let stain=0;stain<26;stain++){
+   const x=30+(stain*79+index*17)%450,y=28+(stain*43)%65;
+   ctx.fillStyle='rgba(13,10,12,.18)';
+   ctx.fillRect(x,y,1+(stain%2),8+(stain*7)%38);
+  }
+  // Warm edge lighting reads as actual tube hardware, not a flat pink rectangle.
+  ctx.save();ctx.shadowColor=color;ctx.shadowBlur=13;
+  ctx.strokeStyle=color;ctx.lineWidth=2.5;
+  ctx.strokeRect(30,29,452,198);ctx.restore();
   ctx.textAlign='center';ctx.textBaseline='middle';
   ctx.font='bold 88px "Noto Sans Thai","Thonburi",sans-serif';
   ctx.shadowColor=color;ctx.shadowBlur=27;ctx.strokeStyle=color;ctx.lineWidth=8;
