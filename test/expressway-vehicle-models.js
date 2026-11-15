@@ -411,9 +411,28 @@ function makeBusDestination(THREE){
  const ctx=canvas.getContext('2d');
  ctx.fillStyle='#08161c';ctx.fillRect(0,0,512,128);
  ctx.fillStyle='#e0a74e';ctx.fillRect(0,0,512,5);ctx.fillRect(0,123,512,5);
- ctx.fillStyle='#f9d582';ctx.font='bold 76px sans-serif';ctx.textBaseline='middle';ctx.fillText('511',14,65);
- ctx.fillStyle='#ffe8a4';ctx.font='bold 54px sans-serif';ctx.fillText('กรุงเทพฯ',195,56);
- ctx.fillStyle='#cbd8c7';ctx.font='bold 25px sans-serif';ctx.fillText('BANGKOK',205,100);
+ // Backlit amber dot-matrix route board: bloom is baked into this existing
+ // atlas, with a crisp LED core for readability on small mobile screens.
+ // A darker divider separates the service number from the destination.
+ ctx.fillStyle='#10272b';ctx.fillRect(173,15,3,98);
+ ctx.fillStyle='rgba(247,164,65,.20)';ctx.fillRect(181,17,3,94);
+ ctx.save();
+ ctx.textBaseline='middle';
+ ctx.shadowColor='#ff9c38';ctx.shadowBlur=12;
+ ctx.fillStyle='#e9a04b';ctx.font='bold 76px sans-serif';ctx.fillText('511',14,65);
+ ctx.font='bold 54px sans-serif';ctx.fillText('กรุงเทพฯ',195,56);
+ ctx.shadowBlur=0;
+ ctx.fillStyle='#ffe3a0';ctx.font='bold 76px sans-serif';ctx.fillText('511',14,65);
+ ctx.fillStyle='#ffe6ac';ctx.font='bold 54px sans-serif';ctx.fillText('กรุงเทพฯ',195,56);
+ ctx.fillStyle='#d5dbb8';ctx.font='bold 25px sans-serif';ctx.fillText('BANGKOK',205,100);
+ ctx.restore();
+ // Physical LED strip and small service indicators give the panel depth,
+ // without adding geometry, lighting or a second texture.
+ ctx.fillStyle='rgba(255,219,145,.30)';ctx.fillRect(10,8,492,2);
+ for(const x of [18,488]){
+  ctx.fillStyle='#df8d34';ctx.fillRect(x,111,6,3);
+  ctx.fillStyle='rgba(255,190,93,.32)';ctx.fillRect(x-2,109,10,1);
+ }
  // Subtle dark LED pixel gaps on the existing destination sign atlas.
  // The sign stays readable and requires no extra mesh or texture.
  ctx.save();
