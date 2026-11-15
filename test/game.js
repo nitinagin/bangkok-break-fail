@@ -5993,7 +5993,7 @@ function makeTukTuk(){
  // The curved roof, side valances and front hem share the same indexed mesh,
  // preserving the original single draw call and clear driving collision bounds.
  // Curved cloth canopy: a single low-poly strip instead of a flat slab.
- const vertices=[],indices=[],uvs=[],nx=8,nz=3;
+ const vertices=[],indices=[],uvs=[],nx=8,nz=8;
  for(let iz=0;iz<=nz;iz++)for(let ix=0;ix<=nx;ix++){
   const x=-.86+ix*1.72/nx,z=-1.38+iz*2.43/nz;
   // Sculpt the canvas in both axes: taut transverse crown, gentle longitudinal
@@ -6022,7 +6022,10 @@ function makeTukTuk(){
   for(let iz=0;iz<=segments;iz++){
    const v=iz/segments,z=-1.38+2.43*v;
    const scallop=.018*(1-Math.cos(6*Math.PI*v))*.5;
-   vertices.push(side*.86,2.34,z,side*.86,2.17+scallop,z);
+   const rearSag=-.115*Math.pow(1-v,2)*.75;
+   const frontDip=v===1?-.115:0;
+   const edgeY=2.34+rearSag+frontDip;
+   vertices.push(side*.86,edgeY,z,side*.86,edgeY-.17+scallop,z);
    uvs.push(side<0?.09:.91,v,side<0?.02:.98,v);
   }
   for(let iz=0;iz<segments;iz++){
@@ -6034,7 +6037,7 @@ function makeTukTuk(){
   for(let ix=0;ix<=segments;ix++){
    const u=ix/segments,x=-.86+1.72*u;
    // Match the front visor dip to the roof surface to avoid a visible seam.
-   const roofY=2.34+.235*(1-(x/.86)**2)+(end>0?-.115:0);
+   const roofY=2.34+.235*(1-(x/.86)**2)+(end>0?-.115:-.115*(1-.25*Math.abs(x/.86)));
    vertices.push(x,roofY,z,x,roofY-.11,z);
    uvs.push(u,end<0?.07:.93,u,end<0?.01:.99);
   }
