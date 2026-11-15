@@ -414,12 +414,18 @@ export function createExpresswayArt(THREE){
  // Stepped parapets and rooftop plant rooms give each scaled tower a
  // recognizable Bangkok high-rise silhouette, without adding tower meshes.
  const towerOutline=new THREE.Shape();
+ // A deeper mechanical crown, split roof decks and an asymmetric lift overrun
+ // read as real high-rise massing at night rather than a plain extruded box.
+ // The same single geometry is shared by all 24 instanced towers.
  towerOutline.moveTo(-.5,-.5);towerOutline.lineTo(.5,-.5);
- towerOutline.lineTo(.5,.36);towerOutline.lineTo(.43,.36);
- towerOutline.lineTo(.43,.43);towerOutline.lineTo(.21,.43);
- towerOutline.lineTo(.21,.5);towerOutline.lineTo(-.19,.5);
- towerOutline.lineTo(-.19,.44);towerOutline.lineTo(-.42,.44);
- towerOutline.lineTo(-.42,.37);towerOutline.lineTo(-.5,.37);
+ towerOutline.lineTo(.5,.31);towerOutline.lineTo(.45,.31);
+ towerOutline.lineTo(.45,.38);towerOutline.lineTo(.32,.38);
+ towerOutline.lineTo(.32,.44);towerOutline.lineTo(.17,.44);
+ towerOutline.lineTo(.17,.5);towerOutline.lineTo(-.045,.5);
+ towerOutline.lineTo(-.045,.405);towerOutline.lineTo(-.17,.405);
+ towerOutline.lineTo(-.17,.465);towerOutline.lineTo(-.34,.465);
+ towerOutline.lineTo(-.34,.37);towerOutline.lineTo(-.46,.37);
+ towerOutline.lineTo(-.46,.33);towerOutline.lineTo(-.5,.33);
  towerOutline.closePath();
  const towerGeometry=new THREE.ExtrudeGeometry(towerOutline,{depth:1,steps:1,bevelEnabled:false,curveSegments:1});
  towerGeometry.translate(0,0,-.5);
