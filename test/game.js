@@ -5970,7 +5970,10 @@ function makeTukTuk(){
   const transverseCrown=.235*(1-(x/.86)*(x/.86));
   const lengthTension=.055*Math.sin(Math.PI*iz/nz)*(1-.35*Math.abs(x/.86));
   const visorDip=iz===nz?-.115:0;
-  vertices.push(x,2.34+transverseCrown+lengthTension+visorDip,z);
+  // The rear canvas settles under its own weight; the front stays taut over
+  // the driver's windscreen. Keep the existing roof grid and one PBR draw call.
+  const rearSag=-.115*Math.pow(1-iz/nz,2)*(1-.25*Math.abs(x/.86));
+  vertices.push(x,2.34+transverseCrown+lengthTension+visorDip+rearSag,z);
   uvs.push(ix/nx,iz/nz);
  }
  for(let iz=0;iz<nz;iz++)for(let ix=0;ix<nx;ix++){
