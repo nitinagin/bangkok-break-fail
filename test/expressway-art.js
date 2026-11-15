@@ -151,6 +151,32 @@ export function createExpresswayArt(THREE){
    }
   }
  }
+ // Large-scale illuminated emergency stairwell cores on the existing facade atlas.
+ // Continuous diagonal flights, landing slabs and amber exit lamps read as
+ // recognizable building infrastructure from the expressway camera; all
+ // pixels are baked once, with no extra geometry or runtime draw calls.
+ for(let level=0;level<4;level++){
+  const y=22+level*120;
+  const x=184;
+  ctx.fillStyle='rgba(5,13,20,.93)';ctx.fillRect(x,y,51,93);
+  ec.fillStyle='#000';ec.fillRect(x,y,51,93);
+  ctx.fillStyle='#4b5b61';ctx.fillRect(x,y,2,93);ctx.fillRect(x+49,y,2,93);
+  for(let flight=0;flight<4;flight++){
+   const fy=y+5+flight*22;
+   const right=flight%2===0;
+   ctx.strokeStyle='rgba(152,164,161,.82)';ctx.lineWidth=2;
+   ctx.beginPath();ctx.moveTo(x+5,fy+(right?17:2));
+   ctx.lineTo(x+45,fy+(right?2:17));ctx.stroke();
+   ctx.fillStyle='#7a888a';ctx.fillRect(x+4,fy+18,43,2);
+   ctx.fillStyle='rgba(17,29,34,.95)';
+   for(let step=0;step<6;step++){
+    const sx=x+8+step*6,sy=fy+(right?15-step*2:3+step*2);
+    ctx.fillRect(sx,sy,5,1);
+   }
+  }
+  ctx.fillStyle='#d8b578';ctx.fillRect(x+39,y+4,6,4);
+  ec.fillStyle='#9f6c36';ec.fillRect(x+39,y+4,6,4);
+ }
  // Bake occupied-room glow into the existing emissive atlas once.
  // No new WebGL lights, meshes, textures or draw calls.
  ec.save();
