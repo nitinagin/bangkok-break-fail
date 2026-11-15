@@ -1817,10 +1817,20 @@ export function createExpresswayArt(THREE){
   sc.fillText(thai,x,91,435);
   sc.font='bold 45px Arial, sans-serif';
   sc.fillText(english,x,163,450);
-  // Vector arrows do not depend on font glyph coverage in iPhone Safari.
+  // Diverging overhead arrows distinguish the left Bang Na exit from
+  // the right Din Daeng branch; both remain baked into the existing atlas.
+  // A bent shaft and an independent arrowhead read clearly at driving speed.
+  const direction=x<512?-1:1;
   sc.strokeStyle='#f7faf4';sc.lineWidth=14;sc.lineCap='square';sc.lineJoin='miter';
-  sc.beginPath();sc.moveTo(x,277);sc.lineTo(x,218);
-  sc.moveTo(x-28,247);sc.lineTo(x,215);sc.lineTo(x+28,247);sc.stroke();
+  sc.beginPath();
+  sc.moveTo(x-direction*18,278);
+  sc.lineTo(x-direction*18,251);
+  sc.lineTo(x+direction*30,215);
+  sc.moveTo(x+direction*30,215);
+  sc.lineTo(x+direction*1,220);
+  sc.moveTo(x+direction*30,215);
+  sc.lineTo(x+direction*20,244);
+  sc.stroke();
  }
  // Expressway route shields and reflective lane legends, baked directly into
  // the existing 1024px sign atlas. These replace generic green empty corners
