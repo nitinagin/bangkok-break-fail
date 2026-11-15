@@ -1767,6 +1767,23 @@ export function createExpresswayArt(THREE){
   sc.beginPath();sc.moveTo(x,277);sc.lineTo(x,218);
   sc.moveTo(x-28,247);sc.lineTo(x,215);sc.lineTo(x+28,247);sc.stroke();
  }
+ // Expressway route shields and reflective lane legends, baked directly into
+ // the existing 1024px sign atlas. These replace generic green empty corners
+ // with recognisable Thai motorway wayfinding, without adding a draw call.
+ for(const [cx,route] of [[80,'1'],[592,'2']]){
+  sc.fillStyle='#f5f8ee';sc.fillRect(cx-35,35,70,44);
+  sc.fillStyle='#184f3c';sc.fillRect(cx-30,40,60,34);
+  sc.strokeStyle='#dce9da';sc.lineWidth=2;sc.strokeRect(cx-27,43,54,28);
+  sc.fillStyle='#f8fff5';sc.font='bold 24px Arial,sans-serif';
+  sc.fillText(route,cx,58);
+ }
+ // Thin retroreflective edge wear, concentrated at panel seams rather than
+ // painted across the Thai/English destination lettering.
+ for(let i=0;i<58;i++){
+  const x=32+(i*113)%955,y=i%2===0?31:288;
+  sc.fillStyle=i%3===0?'rgba(13,42,32,.34)':'rgba(248,252,239,.18)';
+  sc.fillRect(x,y,3+(i%4),1);
+ }
  // Small baked metal rivets avoid separate geometry and overdraw.
  sc.fillStyle='#a6b9ad';
  for(const x of [39,497,527,985])for(const y of [40,280]){
