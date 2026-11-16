@@ -1961,13 +1961,22 @@ vc.fillStyle='#080d0e';vc.fillRect(10,11,492,106);
 for(let y=17;y<113;y+=5)for(let x=16;x<499;x+=5){
  vc.fillStyle='rgba(106,68,26,.18)';vc.fillRect(x,y,2,2);
 }
+// Full-height LED hazard triangle, readable from the driver's viewpoint.
+// Baked into the existing 512x128 atlas; no mesh, light or GPU texture added.
+vc.save();
+vc.strokeStyle='#ffb348';vc.lineWidth=5;vc.lineJoin='round';
+vc.shadowColor='rgba(255,145,34,.6)';vc.shadowBlur=8;
+vc.beginPath();vc.moveTo(58,22);vc.lineTo(99,96);vc.lineTo(17,96);vc.closePath();vc.stroke();
+vc.fillStyle='#ffd07b';vc.fillRect(55,47,6,27);
+vc.beginPath();vc.arc(58,84,4,0,Math.PI*2);vc.fill();
+vc.restore();
 // Render Thai/English into a temporary canvas, then bake an amber LED matrix.
 // No per-frame canvas updates, shadow blur or additional textures on the GPU.
 const glyphCanvas=document.createElement('canvas');glyphCanvas.width=512;glyphCanvas.height=128;
 const gc=glyphCanvas.getContext('2d');gc.fillStyle='#fff';gc.textAlign='center';gc.textBaseline='middle';
 gc.font='bold 44px "Noto Sans Thai",Tahoma,sans-serif';
-gc.fillText('ระวังรถชะลอตัว',256,46,468);
-gc.font='bold 31px Arial,sans-serif';gc.fillText('SLOW TRAFFIC',256,91,460);
+gc.fillText('ระวังรถชะลอตัว',305,46,365);
+gc.font='bold 31px Arial,sans-serif';gc.fillText('SLOW TRAFFIC',305,91,360);
 const glyphPixels=gc.getImageData(0,0,512,128).data;
 for(let y=17;y<113;y+=5)for(let x=16;x<499;x+=5){
  if(glyphPixels[((y+1)*512+x+1)*4+3]<110)continue;
