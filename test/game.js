@@ -6622,6 +6622,9 @@ const arms=[];for(const side of [-1,1]){
  part(pivot,ball(.14,pearl,side*.45,-.08,.2));
  if(side===1){const palm=part(pivot,new THREE.Mesh(new THREE.BoxGeometry(.24,.30,.065),skinShade));palm.position.set(.63,.44,.5);palm.rotation.z=-.12;}
  arms.push(pivot)}
+// The procedural dancer was ~4.7 world metres tall; normalize to a human-scale ~2.0 m including chada.
+// Scale the root, not individual limbs, so head/arm animation pivots remain aligned.
+g.scale.setScalar(.43);
 g.userData.danceArms=arms;g.userData.danceHead=headPivot;g.userData.dance=true;return g}
 // AI-generated GLB: remote preview asset. Replace with a permanent repo-hosted asset for release.
 const DANCER_GLB='https://v3b.fal.media/files/b/0aaedcc4/8RK96n7S6Aiz1KkcI1Z6Q_model.glb';
