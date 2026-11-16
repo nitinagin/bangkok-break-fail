@@ -5202,7 +5202,21 @@ function makeTaxi(){
  const signTexture=new THREE.CanvasTexture(signCanvas);
  signTexture.colorSpace=THREE.SRGBColorSpace;signTexture.anisotropy=1;
  const signMaterial=new THREE.MeshBasicMaterial({map:signTexture,side:THREE.DoubleSide});
- part(g,cube(.8,.29,.25,taxiLight,0,2.08,-.07));
+ // A tapered, bevelled illuminated roof-sign housing replaces the toy-like box.
+ // Reuse the existing PBR taxiLight material and two sign decals; no extra draw calls.
+ const roofSignOutline=new THREE.Shape();
+ roofSignOutline.moveTo(-.40,-.145);
+ roofSignOutline.lineTo(.40,-.145);
+ roofSignOutline.lineTo(.33,.145);
+ roofSignOutline.lineTo(-.33,.145);
+ roofSignOutline.closePath();
+ const roofSignHousing=new THREE.Mesh(new THREE.ExtrudeGeometry(roofSignOutline,{
+  depth:.25,steps:1,bevelEnabled:true,bevelThickness:.012,
+  bevelSize:.012,bevelSegments:1,curveSegments:1
+ }),taxiLight);
+ roofSignHousing.position.set(0,2.08,-.195);
+ roofSignHousing.name='tapered-bangkok-taxi-meter-roof-sign';
+ g.add(roofSignHousing);
  for(const z of [-.201,.061]){
   const sign=new THREE.Mesh(new THREE.PlaneGeometry(.74,.23),signMaterial);
   sign.position.set(0,2.08,z);if(z<0)sign.rotation.y=Math.PI;
