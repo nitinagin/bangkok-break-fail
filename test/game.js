@@ -3484,6 +3484,43 @@ for(const side of [-1,1]){
  glass.scale.set(.161,.129,1);glass.position.set(side*1.12,.05,-1.474);
  cockpit.add(housing,glass);cockpitSideMirrors.push({side,housing,glass});
 }
+// Rear-view mirror ghost dancer: cheap canvas texture, no second camera/render pass.
+const rearMirrorCanvas=document.createElement('canvas');rearMirrorCanvas.width=320;rearMirrorCanvas.height=104;
+const rearMirrorCtx=rearMirrorCanvas.getContext('2d');
+const rearMirrorTexture=new THREE.CanvasTexture(rearMirrorCanvas);
+rearMirrorTexture.colorSpace=THREE.SRGBColorSpace;
+const rearMirrorFrame=new THREE.Mesh(new THREE.BoxGeometry(.83,.29,.065),new THREE.MeshStandardMaterial({color:0x171b20,metalness:.5,roughness:.36}));
+rearMirrorFrame.position.set(0,.73,-1.52);cockpit.add(rearMirrorFrame);
+const rearMirrorGlass=new THREE.Mesh(new THREE.PlaneGeometry(.77,.235),new THREE.MeshBasicMaterial({map:rearMirrorTexture,depthTest:false}));
+rearMirrorGlass.position.set(0,.73,-1.475);rearMirrorGlass.renderOrder=50;cockpit.add(rearMirrorGlass);
+let rearGhostUntil=0,rearGhostNext=850,rearGhostWasVisible=false;
+function paintRearMirror(ghost=false,elapsed=0){
+ const c=rearMirrorCtx,w=320,h=104;
+ const grad=c.createLinearGradient(0,0,0,h);grad.addColorStop(0,'#0a1928');grad.addColorStop(1,'#34424b');c.fillStyle=grad;c.fillRect(0,0,w,h);
+ c.fillStyle='#121b26';for(let i=0;i<9;i++){let xx=i*41-9;c.fillRect(xx,18+(i%3)*7,29,h);}
+ c.strokeStyle='#65757d';c.lineWidth=2;c.beginPath();c.moveTo(0,91);c.lineTo(320,91);c.stroke();
+ c.fillStyle='rgba(241,201,121,.55)';for(let i=0;i<7;i++)c.fillRect(i*49+12,45,3,9);
+ if(ghost){
+  const jerk=elapsed>.42&&elapsed<1.5?Math.sin(elapsed*38)*12:0;
+  const size=elapsed<.42?1:1.65,xx=160+jerk;
+  c.save();c.translate(xx,99);c.scale(size,size);
+  c.fillStyle='#e5d9ce';c.beginPath();c.moveTo(-13,-39);c.lineTo(-31,-5);c.lineTo(30,-5);c.lineTo(12,-39);c.fill();
+  c.fillStyle='#15151c';c.beginPath();c.ellipse(0,-51,17,25,0,0,Math.PI*2);c.fill();
+  c.fillStyle='#c4b7aa';c.beginPath();c.ellipse(jerk*.15,-53,12,16,jerk*.012,0,Math.PI*2);c.fill();
+  c.fillStyle='#0d1016';c.fillRect(-9,-57,6,5);c.fillRect(5,-57,6,5);
+  c.strokeStyle='#8b2d34';c.lineWidth=2;c.beginPath();c.moveTo(-5,-45);c.quadraticCurveTo(0,-41,6,-45);c.stroke();
+  c.restore();
+ }
+ rearMirrorTexture.needsUpdate=true;
+}
+paintRearMirror();
+function updateRearGhost(){
+ const score=meters+bonus;
+ if(score>=rearGhostNext&&score<23000&&!rearGhostUntil){rearGhostUntil=meters+90;rearGhostNext=score+1200+Math.random()*900;rearGhostWasVisible=false;}
+ const visible=rearGhostUntil>meters&&rearGhostUntil>0;
+ if(visible){const elapsed=(90-(rearGhostUntil-meters))/Math.max(speed/3.6,1);paintRearMirror(true,elapsed);if(!rearGhostWasVisible){sound(620,.16,'sawtooth');rearGhostWasVisible=true;}}
+ else if(rearGhostWasVisible){rearGhostUntil=0;rearGhostWasVisible=false;paintRearMirror();}
+}
 // Parked tuk-tuk windshield wipers below the driver's sightline, instanced for mobile.
 const wiperMetal=new THREE.MeshStandardMaterial({color:0x303538,metalness:.62,roughness:.52});
 const wiperRubber=new THREE.MeshStandardMaterial({color:0x101416,roughness:.94});
@@ -7294,7 +7331,7 @@ function crackWindshield(){
  paintWindshield();
  glassImpactSound(windshieldHits);
 }
-function reset(){windshieldHits=0;paintWindshield();for(const crossing of yaowaratCrosswalks){crossing.position.z=crossing.userData.startZ;crossing.visible=true;}updateYaowaratWires(0,true);updateYaowaratSkyline(0,true,true);nightCount=0;expresswayArt.group.visible=false;pattayaStreet.visible=false;darkRoadMarkers.visible=false;darkRoadReflectors.visible=false;darkRoadFoliage.visible=false;darkHeadlight.visible=false;darkRoadPaint.visible=false;darkRoadLowBeam.visible=false;darkRoadPaintTexture.offset.y=0;darkRoadWave=0;for(let i=0;i<darkMarkerZ.length;i++)darkMarkerZ[i]=9-i*8;updateDarkRoadMarkers(0);for(let i=0;i<darkRoadFoliageZ.length;i++)darkRoadFoliageZ[i]=10-i*7.5;updateDarkRoadFoliage(0);darkRoadTexture.offset.y=0;darkRoadNormalTexture.offset.y=0;darkRoadRoughnessTexture.offset.y=0;pattayaWave=0;for(let i=0;i<pattayaShops.length;i++)pattayaShops[i].position.z=-8-i*9.6;updatePattayaReflections();grandmaTriggeredNight=0;nextDarkGrandmaScore=24000;for(const mirror of cockpitSideMirrors){mirror.housing.visible=true;mirror.glass.visible=true}if(grandmaChase){scene.remove(grandmaChase.g);grandmaChase=null}storyProps.forEach(p=>scene.remove(p.g));storyProps.length=0;visualRush=0;camera.fov=76;camera.updateProjectionMatrix();cockpit.position.y=-.22;paused=false;$('pauseBtn').textContent='⏸';bossSpawned=false;bossBeaten=false;for(const p of props)p.visible=true;neonReflections.visible=true;for(const mesh of streetLampMeshes)mesh.visible=true;updateYaowaratStreetlights();updateYaowaratReflections();ramaBeaconPhase=-1;for(const p of ramaStructures){p.visible=false;p.position.z=p.userData.startZ;}for(const shop of roadsideShops){shop.g.visible=shop.stage===1;shop.g.position.z=shop.startZ;}for(const stall of marketStalls){stall.visible=false;stall.position.z=stall.userData.startZ;}for(const tent of marketCanopies){tent.visible=false;tent.position.z=tent.userData.startZ;}for(const bump of marketBumps){bump.visible=false;bump.position.z=bump.userData.startZ;}for(const mesh of marketCrowdMeshes)mesh.visible=false;canalGroup.visible=false;districtIndex=-1;applyDistrict(1);scene.background.copy(districtSkies[1]);scene.fog.color.copy(districtSkies[1]);spawnIndex=0;eventCount=0;lastEventMeters=-250;active=true;queueOptionalModels();meters=0;bonus=(new URLSearchParams(window.location.search).get('stage')==='dark-road'||window.location.pathname.endsWith('/dark-road.html'))?23000:0;missionDone=false;shake=0;speed=120;dialNeedlePivot.rotation.z=0;x=0;tilt=0;fallbackKeySteer=0;fallbackDragSteer=0;fallbackLeft=false;fallbackRight=false;fallbackPointer=null;neutral=lastGamma;smoothed=0;spawnClock=.45;inv=0;flips=0;combo=0;comboTime=0;challengeStage=0;challengeDisplay='';challenge.textContent='🎯 SURVIVE 500m · +250';misses=0;crashes=0;hazards.forEach(h=>scene.remove(h.g));hazards.length=0;trafficContactShadows.count=0;trafficRoadGlows.count=0;tyreSpray.count=0;tyreSpray.visible=false;trafficRoadGlows.visible=false;overlay.style.display='none';hint.textContent=bonus>=23000?'🌑 DARK ROAD · HEADLIGHTS ONLY · TILT TO STEER':'📱 SMALL TILTS TO STEER · 🎯 RECENTER'}
+function reset(){rearGhostUntil=0;rearGhostNext=850;rearGhostWasVisible=false;paintRearMirror();windshieldHits=0;paintWindshield();for(const crossing of yaowaratCrosswalks){crossing.position.z=crossing.userData.startZ;crossing.visible=true;}updateYaowaratWires(0,true);updateYaowaratSkyline(0,true,true);nightCount=0;expresswayArt.group.visible=false;pattayaStreet.visible=false;darkRoadMarkers.visible=false;darkRoadReflectors.visible=false;darkRoadFoliage.visible=false;darkHeadlight.visible=false;darkRoadPaint.visible=false;darkRoadLowBeam.visible=false;darkRoadPaintTexture.offset.y=0;darkRoadWave=0;for(let i=0;i<darkMarkerZ.length;i++)darkMarkerZ[i]=9-i*8;updateDarkRoadMarkers(0);for(let i=0;i<darkRoadFoliageZ.length;i++)darkRoadFoliageZ[i]=10-i*7.5;updateDarkRoadFoliage(0);darkRoadTexture.offset.y=0;darkRoadNormalTexture.offset.y=0;darkRoadRoughnessTexture.offset.y=0;pattayaWave=0;for(let i=0;i<pattayaShops.length;i++)pattayaShops[i].position.z=-8-i*9.6;updatePattayaReflections();grandmaTriggeredNight=0;nextDarkGrandmaScore=24000;for(const mirror of cockpitSideMirrors){mirror.housing.visible=true;mirror.glass.visible=true}if(grandmaChase){scene.remove(grandmaChase.g);grandmaChase=null}storyProps.forEach(p=>scene.remove(p.g));storyProps.length=0;visualRush=0;camera.fov=76;camera.updateProjectionMatrix();cockpit.position.y=-.22;paused=false;$('pauseBtn').textContent='⏸';bossSpawned=false;bossBeaten=false;for(const p of props)p.visible=true;neonReflections.visible=true;for(const mesh of streetLampMeshes)mesh.visible=true;updateYaowaratStreetlights();updateYaowaratReflections();ramaBeaconPhase=-1;for(const p of ramaStructures){p.visible=false;p.position.z=p.userData.startZ;}for(const shop of roadsideShops){shop.g.visible=shop.stage===1;shop.g.position.z=shop.startZ;}for(const stall of marketStalls){stall.visible=false;stall.position.z=stall.userData.startZ;}for(const tent of marketCanopies){tent.visible=false;tent.position.z=tent.userData.startZ;}for(const bump of marketBumps){bump.visible=false;bump.position.z=bump.userData.startZ;}for(const mesh of marketCrowdMeshes)mesh.visible=false;canalGroup.visible=false;districtIndex=-1;applyDistrict(1);scene.background.copy(districtSkies[1]);scene.fog.color.copy(districtSkies[1]);spawnIndex=0;eventCount=0;lastEventMeters=-250;active=true;queueOptionalModels();meters=0;bonus=(new URLSearchParams(window.location.search).get('stage')==='dark-road'||window.location.pathname.endsWith('/dark-road.html'))?23000:0;missionDone=false;shake=0;speed=120;dialNeedlePivot.rotation.z=0;x=0;tilt=0;fallbackKeySteer=0;fallbackDragSteer=0;fallbackLeft=false;fallbackRight=false;fallbackPointer=null;neutral=lastGamma;smoothed=0;spawnClock=.45;inv=0;flips=0;combo=0;comboTime=0;challengeStage=0;challengeDisplay='';challenge.textContent='🎯 SURVIVE 500m · +250';misses=0;crashes=0;hazards.forEach(h=>scene.remove(h.g));hazards.length=0;trafficContactShadows.count=0;trafficRoadGlows.count=0;tyreSpray.count=0;tyreSpray.visible=false;trafficRoadGlows.visible=false;overlay.style.display='none';hint.textContent=bonus>=23000?'🌑 DARK ROAD · HEADLIGHTS ONLY · TILT TO STEER':'📱 SMALL TILTS TO STEER · 🎯 RECENTER'}
 function finish(){
  active=false;
  const points=Math.floor(meters+bonus);
@@ -9303,7 +9340,7 @@ function spawnMarketPedestrians(){
  g.position.set(lane,0,-65);scene.add(g);
  hazards.push({g,type:kind,madness:null,boss:false,durianSide:0,passed:false,hit:false,phase:wave,baseX:lane,announced:false,nearAwarded:false,swerve:0,swerveStart:-100});
 }
-function update(dt,t){if(!active||paused)return;updateMusic();speed+=dt*(3+Math.sqrt(Math.max(0,speed-60))*.16);meters+=dt*speed/3.6;
+function update(dt,t){if(!active||paused)return;updateMusic();updateRearGhost();speed+=dt*(3+Math.sqrt(Math.max(0,speed-60))*.16);meters+=dt*speed/3.6;
 // Needle follows actual speed; clamp only its display, never the game speed.
 dialNeedlePivot.rotation.z=Math.PI*.72*(1-2*Math.min(speed,240)/240);
 // Defer the optional detailed guardian on mobile until the player has progressed.
