@@ -3504,11 +3504,24 @@ function paintRearMirror(ghost=false,elapsed=0){
   const jerk=elapsed>.42&&elapsed<1.5?Math.sin(elapsed*38)*12:0;
   const size=elapsed<.42?1:1.65,xx=160+jerk;
   c.save();c.translate(xx,99);c.scale(size,size);
-  c.fillStyle='#e5d9ce';c.beginPath();c.moveTo(-13,-39);c.lineTo(-31,-5);c.lineTo(30,-5);c.lineTo(12,-39);c.fill();
-  c.fillStyle='#15151c';c.beginPath();c.ellipse(0,-51,17,25,0,0,Math.PI*2);c.fill();
-  c.fillStyle='#c4b7aa';c.beginPath();c.ellipse(jerk*.15,-53,12,16,jerk*.012,0,Math.PI*2);c.fill();
-  c.fillStyle='#0d1016';c.fillRect(-9,-57,6,5);c.fillRect(5,-57,6,5);
-  c.strokeStyle='#8b2d34';c.lineWidth=2;c.beginPath();c.moveTo(-5,-45);c.quadraticCurveTo(0,-41,6,-45);c.stroke();
+  // Shaded silk costume and traditional chada headdress; no additional draw calls.
+  const silk=c.createLinearGradient(-25,-35,26,0);
+  silk.addColorStop(0,'#5e1c24');silk.addColorStop(.5,'#ad6d52');silk.addColorStop(1,'#27151b');
+  c.fillStyle=silk;c.beginPath();c.moveTo(-12,-39);c.lineTo(-25,-26);c.lineTo(-34,-4);c.lineTo(34,-4);c.lineTo(24,-27);c.lineTo(12,-39);c.fill();
+  c.strokeStyle='#b99b5a';c.lineWidth=2;c.beginPath();c.moveTo(-23,-27);c.lineTo(0,-12);c.lineTo(23,-27);c.stroke();
+  c.fillStyle='#bd944b';for(let j=-2;j<=2;j++)c.fillRect(j*8-2,-14,3,6);
+  c.fillStyle='#171419';c.beginPath();c.ellipse(0,-52,18,26,0,0,Math.PI*2);c.fill();
+  c.fillStyle='#ae8642';c.beginPath();c.moveTo(-12,-72);c.lineTo(-8,-83);c.lineTo(-4,-80);c.lineTo(0,-96);c.lineTo(4,-80);c.lineTo(8,-83);c.lineTo(12,-72);c.closePath();c.fill();
+  c.strokeStyle='#e0b96e';c.lineWidth=1;c.beginPath();c.moveTo(-11,-73);c.quadraticCurveTo(0,-79,11,-73);c.stroke();
+  const skin=c.createRadialGradient(-4,-57,2,0,-52,22);
+  skin.addColorStop(0,'#b9a99b');skin.addColorStop(.55,'#817a74');skin.addColorStop(1,'#34383b');
+  c.fillStyle=skin;c.beginPath();c.ellipse(jerk*.1,-53,12,17,jerk*.012,0,Math.PI*2);c.fill();
+  c.strokeStyle='rgba(32,25,29,.7)';c.lineWidth=.8;
+  for(let n=0;n<3;n++){c.beginPath();c.moveTo(-9,-50+n*4);c.lineTo(-5,-49+n*4);c.moveTo(5,-49+n*4);c.lineTo(9,-50+n*4);c.stroke();}
+  c.fillStyle='#10151a';c.beginPath();c.ellipse(-6,-57,3.6,2.7,0,0,Math.PI*2);c.ellipse(6,-57,3.6,2.7,0,0,Math.PI*2);c.fill();
+  c.fillStyle='#ddd9c9';c.fillRect(-6.5,-58,2,1.3);c.fillRect(5,-58,2,1.3);
+  c.strokeStyle='#4a1a20';c.lineWidth=2;c.beginPath();c.moveTo(-6,-44);c.quadraticCurveTo(0,-39,7,-44);c.stroke();
+  c.strokeStyle='rgba(209,184,130,.5)';c.lineWidth=1;c.beginPath();c.moveTo(-16,-61);c.lineTo(-19,-46);c.moveTo(16,-61);c.lineTo(19,-46);c.stroke();
   c.restore();
  }
  rearMirrorTexture.needsUpdate=true;
