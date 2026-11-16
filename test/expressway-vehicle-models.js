@@ -2260,7 +2260,11 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   }
   const lod=new THREE.LOD();
   lod.addLevel(group,0,.08);
-  lod.addLevel(distant,42,.08);
+  // Mobile GPUs spend disproportionately on distant transparent bus details.
+  // Switch to the existing silhouette LOD sooner on phones while retaining
+  // full near-field detail and the same collision envelope and gameplay.
+  const mobileLOD=typeof navigator!=='undefined' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  lod.addLevel(distant,mobileLOD?27:42,.08);
   lod.userData.type=type;
   return lod;
  }
@@ -2279,7 +2283,10 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   }
   const lod=new THREE.LOD();
   lod.addLevel(group,0,.08);
-  lod.addLevel(distant,36,.08);
+  // On compact screens, fine cabin/aero pieces are subpixel past 24m.
+  // Preserve headlights, rear fascia, wheels and the full near model.
+  const mobileLOD=typeof navigator!=='undefined' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  lod.addLevel(distant,mobileLOD?24:36,.08);
   lod.userData.type=type;
   return lod;
  }
