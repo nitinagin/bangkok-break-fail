@@ -90,8 +90,23 @@ body::after{content:"";position:fixed;inset:0;z-index:1;pointer-events:none;
  #overlay:has(#start) #start{position:absolute;z-index:3;left:50%;bottom:calc(env(safe-area-inset-bottom) + 6%);transform:translateX(-50%);width:min(82vw,380px);min-height:60px;margin:0}
 }
 
+/* Share action stays outside the driving corridor and uses no WebGL resources. */
+#shareBtn{border-color:rgba(246,198,107,.7)!important;color:#ffd88b!important}
 </style>
 </head>
-<body><div id="hud"><div id="score">0 PTS</div><div id="status">120 KM/H<br>❤️❤️❤️</div></div><div id="gameControls"><button id="pauseBtn" aria-label="Pause game">⏸</button><button id="soundBtn" aria-label="Toggle sound">🔊</button><button id="centerBtn" aria-label="Recenter steering">🎯</button></div><div id="challenge">🎯 SURVIVE 500m · +250</div><div id="district">🌃 BANGKOK NIGHT DRIVE</div><div id="hint">TILT TO STEER</div><div id="overlay"><div id="panel"><img id="coverArt" src="./game-cover.svg" width="900" height="600" alt="Cinematic tuk-tuk chase through neon Bangkok with Thai ghosts and a floating Krasue"><h1>🛺 NITINAGIN’S<br>BREAK FAIL!</h1><p>V6.7 — NEON NIGHT DRIVE</p><p>LIGHT OUT NIGHT : THAILAND<br>NO BRAKES. NO RULES.</p><p>เอียงมือถือเพื่อหลบสิ่งกีดขวาง</p><button id="start">START CHAOS</button><small>Hold phone comfortably before starting.<br>Use 🎯 to recenter tilt steering.</small></div></div><div id="error">3D could not load. Please check your internet connection and refresh Safari.</div>
+<body><div id="hud"><div id="score">0 PTS</div><div id="status">120 KM/H<br>❤️❤️❤️</div></div><div id="gameControls"><button id="pauseBtn" aria-label="Pause game">⏸</button><button id="soundBtn" aria-label="Toggle sound">🔊</button><button id="centerBtn" aria-label="Recenter steering">🎯</button><button id="shareBtn" aria-label="Share score and challenge friends">↗</button></div><div id="challenge">🎯 SURVIVE 500m · +250</div><div id="district">🌃 BANGKOK NIGHT DRIVE</div><div id="hint">TILT TO STEER</div><div id="overlay"><div id="panel"><img id="coverArt" src="./game-cover.svg" width="900" height="600" alt="Cinematic tuk-tuk chase through neon Bangkok with Thai ghosts and a floating Krasue"><h1>🛺 NITINAGIN’S<br>BREAK FAIL!</h1><p>V6.7 — NEON NIGHT DRIVE</p><p>LIGHT OUT NIGHT : THAILAND<br>NO BRAKES. NO RULES.</p><p>เอียงมือถือเพื่อหลบสิ่งกีดขวาง</p><button id="start">START CHAOS</button><small>Hold phone comfortably before starting.<br>Use 🎯 to recenter tilt steering.</small></div></div><div id="error">3D could not load. Please check your internet connection and refresh Safari.</div>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"}}</script>
+<script>
+/* Share the actual score without touching steering, speed or the render loop. */
+document.getElementById('shareBtn').addEventListener('click',async()=>{
+ const scoreText=document.getElementById('score').textContent.trim();
+ const url=new URL('./iphone.html',location.href).href;
+ const message='🛺 Bangkok Break Fail — '+scoreText+'! Beat my score in neon Bangkok.';
+ try{
+  if(navigator.share){await navigator.share({title:'Bangkok Break Fail',text:message,url});return;}
+  if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(message+' '+url);alert('Challenge link copied!');return;}
+  window.prompt('Copy this challenge link:',message+' '+url);
+ }catch(e){if(e.name!=='AbortError')window.prompt('Copy this challenge link:',message+' '+url);}
+});
+</script>
 <script type="module" src="./game.js"></script></body></html>
