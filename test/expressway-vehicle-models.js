@@ -570,15 +570,27 @@ function makeBusSideLivery(THREE){
  ctx.fillRect(270,10,6,38);ctx.fillRect(439,10,3,38);
  const map=new THREE.CanvasTexture(canvas);
  map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=2;
+ // Curved pressed-steel flank with recessed passenger-door bay; indexed
+ // vertices share the existing PBR atlas and one bus-side draw call.
  const geometry=new THREE.BufferGeometry(),positions=[],uvs=[],indices=[];
+ const lengthSteps=12,heightSteps=3;
  for(const side of [-1,1]){
-  const start=positions.length/3,x=side*1.085,low=1.20,high=1.64,half=1.92;
-  positions.push(x,low,-half,x,low,half,x,high,half,x,high,-half);
-  // Flip U on the opposite flank so the route lettering reads outward.
-  const u0=side<0?0:1,u1=1-u0;
-  uvs.push(u0,0,u1,0,u1,1,u0,1);
-  if(side<0)indices.push(start,start+1,start+2,start,start+2,start+3);
-  else indices.push(start,start+2,start+1,start,start+3,start+2);
+  const base=positions.length/3;
+  for(let row=0;row<=heightSteps;row++){
+   const v=row/heightSteps,y=1.20+.44*v;
+   for(let col=0;col<=lengthSteps;col++){
+    const u=col/lengthSteps,z=-1.92+3.84*u;
+    const crown=.036*Math.sin(Math.PI*v)*Math.sin(Math.PI*u);
+    const door=(u>.67&&u<.84)?-.014*Math.sin(Math.PI*(u-.67)/.17):0;
+    positions.push(side*(1.085+crown+door),y,z);
+    uvs.push(side<0?u:1-u,v);
+   }
+  }
+  for(let row=0;row<heightSteps;row++)for(let col=0;col<lengthSteps;col++){
+   const a=base+row*(lengthSteps+1)+col,b=a+1,c=a+lengthSteps+1,d=c+1;
+   if(side<0)indices.push(a,b,d,a,d,c);
+   else indices.push(a,d,b,a,c,d);
+  }
  }
  geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
  geometry.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));
