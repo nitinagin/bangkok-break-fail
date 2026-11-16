@@ -4557,6 +4557,22 @@ function makeBusSideGlazing(blue){
   ctx.beginPath();ctx.moveTo(x+7,17);ctx.lineTo(x+31,17);ctx.lineTo(x+13,110);ctx.lineTo(x+2,110);ctx.closePath();ctx.fill();
   ctx.strokeStyle='rgba(192,215,223,.20)';ctx.lineWidth=1;
   ctx.beginPath();ctx.moveTo(x+65,13);ctx.lineTo(x+39,108);ctx.stroke();
+  // Wet Yaowarat neon reflections and rain beads baked into the existing bus glass atlas.
+  // Static canvas work only: no new textures, meshes or per-frame draw calls.
+  for(let k=0;k<6;k++){
+   const rx=x+10+((k*23+i*11)%68),rw=3+(k%3)*3;
+   const reflection=ctx.createLinearGradient(rx,12,rx+rw+11,92);
+   reflection.addColorStop(0,'rgba(255,191,99,0)');
+   reflection.addColorStop(.42,k%2?'rgba(255,83,120,.17)':'rgba(74,194,237,.19)');
+   reflection.addColorStop(1,'rgba(255,191,99,0)');
+   ctx.fillStyle=reflection;ctx.fillRect(rx,14,rw+11,86);
+  }
+  ctx.lineWidth=.7;
+  for(let k=0;k<26;k++){
+   const dx=x+3+((k*37+i*19)%79),dy=14+((k*47+i*13)%89);
+   ctx.strokeStyle=k%3===0?'rgba(218,232,235,.32)':'rgba(172,201,209,.17)';
+   ctx.beginPath();ctx.moveTo(dx,dy);ctx.lineTo(dx-.8,dy+2+(k%4));ctx.stroke();
+  }
   ctx.fillStyle='rgba(202,196,172,.19)';
   for(let k=0;k<9;k++){const xx=x+((k*31+i*17)%85),yy=12+((k*29+i*13)%99);ctx.fillRect(xx,yy,2,1);}
  }
