@@ -436,6 +436,8 @@ function makeBusDestination(THREE){
  const ctx=canvas.getContext('2d');
  ctx.fillStyle='#08161c';ctx.fillRect(0,0,512,128);
  ctx.fillStyle='#e0a74e';ctx.fillRect(0,0,512,5);ctx.fillRect(0,123,512,5);
+ // Expressway-specific bilingual destination replaces the generic city label;
+ // keep the route number, text baselines, and existing texture budget.
  // Backlit amber dot-matrix route board: bloom is baked into this existing
  // atlas, with a crisp LED core for readability on small mobile screens.
  // A darker divider separates the service number from the destination.
@@ -445,11 +447,11 @@ function makeBusDestination(THREE){
  ctx.textBaseline='middle';
  ctx.shadowColor='#ff9c38';ctx.shadowBlur=12;
  ctx.fillStyle='#e9a04b';ctx.font='bold 76px sans-serif';ctx.fillText('511',14,65);
- ctx.font='bold 54px sans-serif';ctx.fillText('กรุงเทพฯ',195,56);
+ ctx.font='bold 54px sans-serif';ctx.fillText('ทางด่วน',195,56);
  ctx.shadowBlur=0;
  ctx.fillStyle='#ffe3a0';ctx.font='bold 76px sans-serif';ctx.fillText('511',14,65);
- ctx.fillStyle='#ffe6ac';ctx.font='bold 54px sans-serif';ctx.fillText('กรุงเทพฯ',195,56);
- ctx.fillStyle='#d5dbb8';ctx.font='bold 25px sans-serif';ctx.fillText('BANGKOK',205,100);
+ ctx.fillStyle='#ffe6ac';ctx.font='bold 54px sans-serif';ctx.fillText('ทางด่วน',195,56);
+ ctx.fillStyle='#d5dbb8';ctx.font='bold 25px sans-serif';ctx.fillText('EXPRESSWAY',205,100);
  ctx.restore();
  // Physical LED strip and small service indicators give the panel depth,
  // without adding geometry, lighting or a second texture.
