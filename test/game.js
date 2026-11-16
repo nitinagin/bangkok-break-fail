@@ -4863,6 +4863,19 @@ function makeBus(variant='red'){
  const body=new THREE.Mesh(busBodyGeometry,main);
  body.position.set(0,1.67,-2.65);part(g,body);
  part(g,new THREE.Mesh(busRoofGeometry,blue?busBlue:busRed));
+ // Two low-profile pressed-metal roof ventilators give the bus a believable
+ // silhouette. One shared instanced draw call, no new textures or lighting.
+ const roofVentGeometry=new THREE.BoxGeometry(.68,.065,.48);
+ const roofVents=new THREE.InstancedMesh(roofVentGeometry,busDark,2);
+ const roofVentPose=new THREE.Object3D();
+ for(let vent=0;vent<2;vent++){
+  roofVentPose.position.set(0,3.258,vent===0?-1.45:1.4);
+  roofVentPose.updateMatrix();
+  roofVents.setMatrixAt(vent,roofVentPose.matrix);
+ }
+ roofVents.instanceMatrix.needsUpdate=true;
+ roofVents.frustumCulled=false;
+ g.add(roofVents);
  part(g,cube(2.89,.23,5.34,accent,0,1.31,0));
  part(g,cube(2.9,.27,5.35,trim,0,.71,0));
  for(const side of [-1,1]){
