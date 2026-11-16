@@ -797,6 +797,24 @@ function makeShopfrontMaterial(glazed){
   p.font='bold 17px "Noto Sans Thai",Tahoma,sans-serif';
   p.fillStyle='#d9b76c';p.fillText('ห้างทอง เยาวราช',128,26,204);
   p.fillStyle='rgba(255,225,154,.30)';p.fillRect(22,16,212,1);
+  // Jewelry displays make the shared storefront read as a Yaowarat gold shop.
+  // Four dark velvet busts with double gold chains are baked into the existing
+  // 256px PBR albedo: no new meshes, textures, lights or per-frame operations.
+  for(let stand=0;stand<4;stand++){
+   const cx=44+stand*55,top=129+(stand%2)*6;
+   p.fillStyle='rgba(10,19,22,.88)';
+   p.beginPath();p.moveTo(cx-19,top+5);p.lineTo(cx-12,top);
+   p.lineTo(cx+12,top);p.lineTo(cx+19,top+5);
+   p.lineTo(cx+16,top+35);p.lineTo(cx-16,top+35);p.closePath();p.fill();
+   p.strokeStyle='rgba(234,182,76,.94)';p.lineWidth=2;
+   for(let chain=0;chain<2;chain++){
+    const span=12-chain*3,drop=17+chain*7;
+    p.beginPath();p.moveTo(cx-span,top+5);
+    p.quadraticCurveTo(cx,top+drop*2,cx+span,top+5);p.stroke();
+   }
+   p.fillStyle='#f2ca77';p.beginPath();p.ellipse(cx,top+27,2.5,4,0,0,Math.PI*2);p.fill();
+   p.fillStyle='rgba(235,192,104,.65)';p.fillRect(cx-18,top+36,36,2);
+  }
   // Baked gold-shop hanging ornaments and wet glazing, no extra meshes.
   for(let charm=0;charm<5;charm++){
    const x=38+charm*45,drop=52+(charm%2)*9;
