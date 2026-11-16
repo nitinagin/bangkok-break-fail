@@ -5015,6 +5015,9 @@ const taxiDoorMaterial=new THREE.MeshStandardMaterial({
  polygonOffsetFactor:-1
 });
 const taxiDoorGeometry=new THREE.PlaneGeometry(1.08,.37);
+// Shared low-poly rounded taxi mirror housings and inset glass.
+const taxiMirrorShellGeometry=new THREE.SphereGeometry(1,12,8);
+const taxiMirrorGlassGeometry=new THREE.SphereGeometry(1,10,8);
 function makeTaxi(){
  const g=new THREE.Group();
  // Extrude a sedan side profile along X; rounded bevels replace toy-like box edges.
@@ -5094,8 +5097,16 @@ function makeTaxi(){
   part(g,cube(.045,.045,1.48,taxiChrome,side*1.005,1.21,-.08));
   for(const z of [-.54,.47])part(g,cube(.045,.055,.2,taxiChrome,side*1.015,1.13,z));
   // Tyres and wheel-arch lips are instanced below for fewer mobile draw calls.
-  part(g,cube(.2,.12,.29,taxiPaintYellow,side*1.04,1.42,.68));
-  part(g,cube(.13,.065,.14,taxiTintedGlass,side*1.15,1.44,.71));
+  // Rounded wing mirrors replace box-shaped housings on both sides.
+  const mirrorShell=new THREE.Mesh(taxiMirrorShellGeometry,taxiPaintYellow);
+  mirrorShell.position.set(side*1.11,1.43,.72);
+  mirrorShell.scale.set(.19,.115,.27);
+  g.add(mirrorShell);
+  const mirrorGlass=new THREE.Mesh(taxiMirrorGlassGeometry,taxiTintedGlass);
+  mirrorGlass.position.set(side*1.215,1.43,.735);
+  mirrorGlass.rotation.y=side*.12;
+  mirrorGlass.scale.set(.015,.076,.19);
+  g.add(mirrorGlass);
   part(g,cube(.34,.16,.075,taxiLight,side*.71,.99,1.76));
   part(g,cube(.3,.16,.075,taxiBrakeLens,side*.73,.97,-1.75));
  }
