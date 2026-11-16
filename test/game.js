@@ -4728,6 +4728,31 @@ const busFrontFasciaMaterial=new THREE.MeshStandardMaterial({
  map:busFrontFasciaTexture,metalness:.3,roughness:.58,side:THREE.DoubleSide
 });
 const busFrontFasciaPane=new THREE.PlaneGeometry(1.75,.56);
+ // Shared headlamp and indicator atlas: realistic optical lenses without dynamic lights.
+const busHeadlampLensCanvas=document.createElement('canvas');
+busHeadlampLensCanvas.width=512;busHeadlampLensCanvas.height=80;
+const bl=busHeadlampLensCanvas.getContext('2d');
+bl.fillStyle='#161d24';bl.fillRect(0,0,512,80);
+for(const cx of [95,417]){
+ bl.fillStyle='#080d13';bl.fillRect(cx-68,6,136,68);
+ bl.fillStyle='#a3aeb0';bl.fillRect(cx-63,11,126,58);
+ const lens=bl.createRadialGradient(cx-12,28,4,cx,42,65);
+ lens.addColorStop(0,'#fffbe7');lens.addColorStop(.34,'#e2e6df');lens.addColorStop(.78,'#8197a2');lens.addColorStop(1,'#283b47');
+ bl.fillStyle=lens;bl.fillRect(cx-58,15,116,50);
+ bl.strokeStyle='rgba(255,255,255,.28)';bl.lineWidth=2;
+ for(let x=cx-51;x<cx+53;x+=12){bl.beginPath();bl.moveTo(x,17);bl.lineTo(x,63);bl.stroke();}
+ bl.fillStyle='rgba(255,249,216,.65)';bl.fillRect(cx-45,19,87,3);
+}
+for(const cx of [193,319]){
+ bl.fillStyle='#22282d';bl.fillRect(cx-13,14,26,53);
+ bl.fillStyle='#dc9c3b';bl.fillRect(cx-10,18,20,45);
+ bl.fillStyle='rgba(255,242,180,.65)';bl.fillRect(cx-8,20,5,40);
+}
+const busHeadlampLensTexture=new THREE.CanvasTexture(busHeadlampLensCanvas);
+busHeadlampLensTexture.colorSpace=THREE.SRGBColorSpace;
+const busHeadlampLensMaterial=new THREE.MeshStandardMaterial({map:busHeadlampLensTexture,roughness:.24,metalness:.1,emissive:0x302718,emissiveIntensity:.14,side:THREE.DoubleSide});
+const busHeadlampLensPane=new THREE.PlaneGeometry(2.48,.39);
+
 // Shared Bangkok bus wheel atlas: sidewall, steel rim, lug nuts and tyre tread
 // on a single PBR mesh per wheel (no extra draw calls or per-bus geometry).
 const busWheelCanvas=document.createElement('canvas');
@@ -4870,6 +4895,8 @@ function makeBus(variant='red'){
  // A single textured PBR grille replaces four rectangular meshes.
  const frontFascia=new THREE.Mesh(busFrontFasciaPane,busFrontFasciaMaterial);
  frontFascia.position.set(0,1.12,2.854);part(g,frontFascia);
+ const busHeadlampLenses=new THREE.Mesh(busHeadlampLensPane,busHeadlampLensMaterial);
+ busHeadlampLenses.position.set(0,.98,2.995);part(g,busHeadlampLenses);
  part(g,cube(2.64,.22,.18,busDark,0,.55,2.79));
  for(const side of [-1,1]){
   part(g,ball(.18,busLamp,side*.97,.98,2.81));
