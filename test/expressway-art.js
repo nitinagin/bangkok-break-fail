@@ -476,6 +476,25 @@ export function createExpresswayArt(THREE){
  }
  roofPlants.instanceMatrix.needsUpdate=true;
  roofPlants.frustumCulled=false;group.add(roofPlants);
+ // Offset rooftop AC condenser banks add recognizable Bangkok building machinery.
+ // All units are instanced in one draw call, remain outside the driving corridor,
+ // and share a single PBR material; no per-frame updates or network assets.
+ const condenserCount=24;
+ const condenserGeometry=new THREE.BoxGeometry(1,1,1);
+ const condenserMaterial=new THREE.MeshStandardMaterial({color:0xaeb9bd,metalness:.52,roughness:.58});
+ const condensers=new THREE.InstancedMesh(condenserGeometry,condenserMaterial,condenserCount);
+ condensers.name='bangkok-expressway-rooftop-ac-condensers';
+ for(let i=0;i<condenserCount;i++){
+  const side=i%2===0?-1:1,height=10+(i*13%19);
+  const width=4+(i*5%7),depth=5+(i*3%7);
+  const towerX=side*(12+(i*7%17)),towerZ=-15-Math.floor(i/2)*9;
+  // Place beside the existing rooftop plant, above the concrete roof.
+  dummy.position.set(towerX-width*.27,height-2+.29,towerZ+depth*.24);
+  dummy.scale.set(.75,.58,.48);
+  dummy.updateMatrix();condensers.setMatrixAt(i,dummy.matrix);
+ }
+ condensers.instanceMatrix.needsUpdate=true;
+ condensers.frustumCulled=false;group.add(condensers);
 
  // Rooftop cylindrical water tanks add a distinctly Bangkok residential silhouette.
  // Shared low-poly PBR geometry and one instanced draw call; static, outside road lanes.
