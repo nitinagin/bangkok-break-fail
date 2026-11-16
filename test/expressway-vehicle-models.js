@@ -1086,6 +1086,14 @@ function makeSportsCarProjectorHeadlights(THREE){
   ctx.strokeStyle='rgba(154,207,221,.68)';ctx.lineWidth=2;
   ctx.beginPath();ctx.moveTo(17,42);ctx.lineTo(26,31);
   ctx.lineTo(59,28);ctx.lineTo(108,33);ctx.stroke();
+  // Baked night-time DRL halation in the existing lens atlas: no extra lights,
+  // transparent meshes or draw calls for each traffic vehicle.
+  ctx.globalCompositeOperation='screen';
+  ctx.shadowColor='rgba(175,224,255,.85)';ctx.shadowBlur=12;
+  ctx.strokeStyle='rgba(192,231,255,.40)';ctx.lineWidth=7;
+  ctx.beginPath();ctx.moveTo(13,35);ctx.lineTo(22,24);
+  ctx.lineTo(59,20);ctx.lineTo(109,26);ctx.stroke();
+  ctx.shadowBlur=0;ctx.globalCompositeOperation='source-over';
   ctx.restore();
  }
  // Baked glass fluting softens the flat, toy-like projector lenses.
