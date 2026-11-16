@@ -81,6 +81,15 @@ body::after{content:"";position:fixed;inset:0;z-index:1;pointer-events:none;
 #panel button:active{transform:translateY(3px);box-shadow:0 3px 0 rgba(77,41,15,.85)}
 @media (prefers-reduced-motion:reduce){#panel button{transition:none}}
 
+/* iPhone portrait splash repair: full-bleed poster instead of a 250px letterbox. */
+@media (orientation:portrait){
+ #overlay:has(#start){inset:0;padding:0;overflow:hidden;display:block;background:#080911}
+ #overlay:has(#start) #panel{position:relative;display:block;width:100%;max-width:none;height:100%;max-height:none;padding:0;margin:0;overflow:hidden;border:0;border-radius:0;background:#080911;box-shadow:none}
+ #overlay:has(#start) #coverArt{position:absolute;inset:0;display:block;width:100%;max-width:none;height:100%;max-height:none;margin:0;border:0;border-radius:0;aspect-ratio:auto;object-fit:cover;object-position:center center;box-shadow:none}
+ #overlay:has(#start) #panel::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(0,0,0,.08) 0%,transparent 48%,rgba(0,0,0,.68) 100%)}
+ #overlay:has(#start) #start{position:absolute;z-index:3;left:50%;bottom:calc(env(safe-area-inset-bottom) + 6%);transform:translateX(-50%);width:min(82vw,380px);min-height:60px;margin:0}
+}
+
 </style>
 </head>
 <body><div id="hud"><div id="score">0 PTS</div><div id="status">120 KM/H<br>❤️❤️❤️</div></div><div id="gameControls"><button id="pauseBtn" aria-label="Pause game">⏸</button><button id="soundBtn" aria-label="Toggle sound">🔊</button><button id="centerBtn" aria-label="Recenter steering">🎯</button></div><div id="challenge">🎯 SURVIVE 500m · +250</div><div id="district">🌃 BANGKOK NIGHT DRIVE</div><div id="hint">TILT TO STEER</div><div id="overlay"><div id="panel"><img id="coverArt" src="./game-cover.svg" width="900" height="600" alt="Cinematic tuk-tuk chase through neon Bangkok with Thai ghosts and a floating Krasue"><h1>🛺 NITINAGIN’S<br>BREAK FAIL!</h1><p>V6.7 — NEON NIGHT DRIVE</p><p>LIGHT OUT NIGHT : THAILAND<br>NO BRAKES. NO RULES.</p><p>เอียงมือถือเพื่อหลบสิ่งกีดขวาง</p><button id="start">START CHAOS</button><small>Hold phone comfortably before starting.<br>Use 🎯 to recenter tilt steering.</small></div></div><div id="error">3D could not load. Please check your internet connection and refresh Safari.</div>
