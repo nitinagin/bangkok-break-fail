@@ -6066,7 +6066,13 @@ function makeTukTuk(){
   // The rear canvas settles under its own weight; the front stays taut over
   // the driver's windscreen. Keep the existing roof grid and one PBR draw call.
   const rearSag=-.115*Math.pow(1-iz/nz,2)*(1-.25*Math.abs(x/.86));
-  vertices.push(x,2.34+transverseCrown+lengthTension+visorDip+rearSag,z);
+  // Tensioned canvas develops shallow lengthwise creases between the steel bows.
+  // Fade them to zero at both hems so the existing valances stay watertight.
+  // Deform the current indexed roof only: no new triangles, materials or draws.
+  const seamFade=Math.sin(Math.PI*iz/nz);
+  const edgeFade=Math.max(0,1-Math.pow(Math.abs(x/.86),6));
+  const canvasFold=.022*Math.sin(6*Math.PI*ix/nx+.4)*seamFade*edgeFade;
+  vertices.push(x,2.34+transverseCrown+lengthTension+visorDip+rearSag+canvasFold,z);
   uvs.push(ix/nx,iz/nz);
  }
  for(let iz=0;iz<nz;iz++)for(let ix=0;ix<nx;ix++){
