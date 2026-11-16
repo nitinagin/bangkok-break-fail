@@ -897,13 +897,15 @@ function makeSportsCarRearFascia(THREE){
  }
  // Road spray and exhaust soot collect on the lower bumper in wet Bangkok traffic.
  // Deterministic, atlas-only weathering: no added geometry, textures or frame work.
- const roadFilm=ctx.createLinearGradient(0,42,0,64);
+ // Keep road grit on the bumper below the licence-plate enamel.
+ // Previously the film began at y=42 and darkened the Thai province line.
+ const roadFilm=ctx.createLinearGradient(0,49,0,64);
  roadFilm.addColorStop(0,'rgba(58,62,59,0)');
  roadFilm.addColorStop(.55,'rgba(77,72,62,.17)');
  roadFilm.addColorStop(1,'rgba(35,31,29,.32)');
- ctx.fillStyle=roadFilm;ctx.fillRect(4,42,248,22);
+ ctx.fillStyle=roadFilm;ctx.fillRect(4,49,248,15);
  for(let i=0;i<64;i++){
-  const x=7+(i*73%242),y=43+(i*19%19);
+  const x=7+(i*73%242),y=49+(i*19%13);
   ctx.fillStyle=i%4===0?'rgba(189,177,151,.24)':'rgba(22,24,24,.24)';
   ctx.fillRect(x,y,1+(i%3),1+(i%2));
  }
