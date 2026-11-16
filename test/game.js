@@ -5363,6 +5363,20 @@ for(const [x,rgb] of [[24,'255,72,122'],[207,'65,192,238']]){
  tukWindscreenCtx.closePath();tukWindscreenCtx.fill();
 }
 tukWindscreenCtx.restore();
+// Fine rain beads and downward streaks baked into the existing glass atlas.
+// Deterministic distribution avoids per-frame work or new draw calls.
+tukWindscreenCtx.save();
+for(let i=0;i<115;i++){
+ const x=14+(i*73+Math.floor(i/11)*17)%226;
+ const y=12+(i*47+Math.floor(i/9)*31)%99;
+ const length=2+(i%7)*1.7;
+ tukWindscreenCtx.strokeStyle=i%4===0?'rgba(230,244,247,.23)':'rgba(188,209,215,.13)';
+ tukWindscreenCtx.lineWidth=i%5===0?1.3:.65;
+ tukWindscreenCtx.beginPath();tukWindscreenCtx.moveTo(x,y);
+ tukWindscreenCtx.quadraticCurveTo(x+.8,y+length*.55,x+.2,y+length);
+ tukWindscreenCtx.stroke();
+}
+tukWindscreenCtx.restore();
 // A broad, faint wiper-cleared arc cuts through the dirty windshield film.
 // This is baked into the existing atlas rather than another transparent mesh.
 tukWindscreenCtx.save();
