@@ -4393,6 +4393,26 @@ busGlassCtx.lineTo(100,179);busGlassCtx.lineTo(27,179);busGlassCtx.closePath();b
 busGlassCtx.fillStyle='rgba(201,224,232,.075)';
 busGlassCtx.beginPath();busGlassCtx.moveTo(352,13);busGlassCtx.lineTo(408,13);
 busGlassCtx.lineTo(334,179);busGlassCtx.lineTo(291,179);busGlassCtx.closePath();busGlassCtx.fill();
+// Baked reflections from Yaowarat's neon shopfronts and wet traffic.
+// Soft, narrow glazing highlights sit behind the parked wipers; no live lights,
+// per-frame canvas updates or additional GPU textures are required.
+busGlassCtx.save();
+busGlassCtx.globalCompositeOperation='screen';
+for(const [x,width,tint] of [[118,21,'rgba(238,64,116,.19)'],[210,13,'rgba(54,184,224,.17)'],[384,25,'rgba(255,176,85,.15)']]){
+ const neon=busGlassCtx.createLinearGradient(x-width,0,x+width,0);
+ neon.addColorStop(0,'rgba(0,0,0,0)');
+ neon.addColorStop(.5,tint);
+ neon.addColorStop(1,'rgba(0,0,0,0)');
+ busGlassCtx.fillStyle=neon;
+ busGlassCtx.beginPath();
+ busGlassCtx.moveTo(x-width,13);
+ busGlassCtx.lineTo(x+width,13);
+ busGlassCtx.lineTo(x-width*.15,179);
+ busGlassCtx.lineTo(x-width*1.25,179);
+ busGlassCtx.closePath();
+ busGlassCtx.fill();
+}
+busGlassCtx.restore();
 // Fine rain streaks are baked, never simulated per frame.
 busGlassCtx.strokeStyle='rgba(197,216,221,.13)';busGlassCtx.lineWidth=1;
 for(let i=0;i<35;i++){
