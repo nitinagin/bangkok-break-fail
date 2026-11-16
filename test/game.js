@@ -5086,8 +5086,28 @@ const taxiDoorGeometry=new THREE.PlaneGeometry(1.08,.37);
 // Shared low-poly rounded taxi mirror housings and inset glass.
 const taxiMirrorShellGeometry=new THREE.SphereGeometry(1,12,8);
 const taxiMirrorGlassGeometry=new THREE.SphereGeometry(1,10,8);
+// Bangkok metered-taxi roof light: shared low-cost emissive sign atlas.
+const taxiRoofSignCanvas=document.createElement('canvas');
+taxiRoofSignCanvas.width=256;taxiRoofSignCanvas.height=96;
+const taxiRoofSignCtx=taxiRoofSignCanvas.getContext('2d');
+taxiRoofSignCtx.fillStyle='#efece0';taxiRoofSignCtx.fillRect(0,0,256,96);
+taxiRoofSignCtx.fillStyle='#b21f28';taxiRoofSignCtx.font='bold 65px Arial';taxiRoofSignCtx.textAlign='center';taxiRoofSignCtx.textBaseline='middle';taxiRoofSignCtx.fillText('TAXI',128,50);
+const taxiRoofSignTexture=new THREE.CanvasTexture(taxiRoofSignCanvas);taxiRoofSignTexture.colorSpace=THREE.SRGBColorSpace;
+const taxiRoofSignMaterial=new THREE.MeshStandardMaterial({map:taxiRoofSignTexture,emissive:0x5b352b,emissiveIntensity:.22,roughness:.47,metalness:0,side:THREE.DoubleSide});
+const taxiRoofSignGeometry=new THREE.PlaneGeometry(.55,.205);
+const taxiRoofSignBaseGeometry=new THREE.BoxGeometry(.63,.075,.23);
+const taxiRoofSignBaseMaterial=new THREE.MeshStandardMaterial({color:0x292b30,roughness:.68,metalness:.3});
 function makeTaxi(){
  const g=new THREE.Group();
+ const taxiRoofSignBase=new THREE.Mesh(taxiRoofSignBaseGeometry,taxiRoofSignBaseMaterial);
+ taxiRoofSignBase.position.set(0,1.97,-.09);g.add(taxiRoofSignBase);
+ for(const facing of [-1,1]){
+  const sign=new THREE.Mesh(taxiRoofSignGeometry,taxiRoofSignMaterial);
+  sign.position.set(0,2.115,-.09+facing*.12);
+  sign.rotation.y=facing===-1?Math.PI:0;
+  g.add(sign);
+ }
+
  // Extrude a sedan side profile along X; rounded bevels replace toy-like box edges.
  function profile(points,width,material){
   const outline=new THREE.Shape();
