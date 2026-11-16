@@ -4858,6 +4858,7 @@ const busRoofGeometry=new THREE.ExtrudeGeometry(busRoofProfile,{
  depth:5.38,steps:1,bevelEnabled:false,curveSegments:8
 });
 busRoofGeometry.translate(0,0,-2.69);
+const busWiperGeometry=new THREE.BoxGeometry(1.04,.035,.035);
 function makeBus(variant='red'){
  const g=new THREE.Group(),blue=variant==='blue',main=blue?busCream:busRed,trim=blue?busBlue:busCream,accent=blue?busYellow:busGreen;
  const body=new THREE.Mesh(busBodyGeometry,main);
@@ -4917,6 +4918,19 @@ function makeBus(variant='red'){
  door.rotation.y=-Math.PI/2;door.position.set(-1.516,1.81,1.67);part(g,door);
  const frontGlass=new THREE.Mesh(busFrontGlassPane,busWindshield);part(g,frontGlass);
  part(g,new THREE.Mesh(busFrontFrameGeometry,trim));
+ // Twin parked windshield wipers are visible against the reflective front glass.
+ // One instanced draw call per bus; geometry/material are shared by both liveries.
+ const wipers=new THREE.InstancedMesh(busWiperGeometry,busDark,2);
+ const wiperPose=new THREE.Object3D();
+ for(const side of [-1,1]){
+  wiperPose.position.set(side*.59,1.99,2.982);
+  wiperPose.rotation.set(0,0,side*.13);
+  wiperPose.updateMatrix();
+  wipers.setMatrixAt(side===-1?0:1,wiperPose.matrix);
+ }
+ wipers.instanceMatrix.needsUpdate=true;
+ g.add(wipers);
+
  part(g,cube(2.43,.51,.13,trim,0,3.02,2.73));
  part(g,cube(.86,.39,.15,busCream,0,3.06,2.82));
  const frontRoute=new THREE.Mesh(busRoutePane,blue?busRouteSigns.blue:busRouteSigns.red);
