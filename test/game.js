@@ -7337,22 +7337,22 @@ function musicTone(frequency,when,length,volume,wave='triangle'){
 }
 function updateMusic(){
  if(!active||paused||!soundOn||document.hidden||!audio||audio.state!=='running')return;
- if(!musicBus){musicBus=audio.createGain();musicBus.gain.value=.22;musicBus.connect(audio.destination);}
- const stage=meters>=23000?6:meters>=16000?5:meters>=12000?4:meters>=10000?3:meters>=8000?2:meters>=3000?1:0;
+ if(!musicBus){musicBus=audio.createGain();musicBus.gain.value=.65;musicBus.connect(audio.destination);}
+ const score=meters+bonus;const stage=score>=23000?6:score>=16000?5:score>=12000?4:score>=10000?3:score>=8000?2:score>=3000?1:0;
  const beat=.235-stage*.008;
  if(musicNext<audio.currentTime-.3)musicNext=audio.currentTime+.025;
  let count=0;
  while(musicNext<audio.currentTime+.15&&count++<3){
   const step=musicStep++%16,root=musicNotes[step]*(stage===1?.89:stage===3?1.12:stage===4?1.33:1);
-  if(root)musicTone(root,musicNext,beat*.82,.18,'sawtooth');
-  if(step%4===0)musicTone(55,musicNext,.16,.3,'sine');
-  if(step%4===2)musicTone(180,musicNext,.065,.075,'triangle');
+  if(root)musicTone(root,musicNext,beat*.92,.32,'sawtooth');
+  if(step%4===0)musicTone(65,musicNext,.19,.52,'sine');
+  if(step%4===2)musicTone(190,musicNext,.085,.22,'triangle');
   musicNext+=beat;
  }
 }
 function startMusic(){
  if(!soundOn)return;
- try{audio=audio||new (window.AudioContext||window.webkitAudioContext)();audio.resume().catch(()=>{});musicNext=0;musicStep=0;}catch(e){}
+ try{audio=audio||new (window.AudioContext||window.webkitAudioContext)();audio.resume().catch(()=>{});musicNext=0;musicStep=0;if(musicBus)musicBus.gain.value=.65;/* Prime an audible beat inside the user gesture for iOS Safari. */if(!musicBus){musicBus=audio.createGain();musicBus.gain.value=.65;musicBus.connect(audio.destination);}musicTone(110,audio.currentTime+.035,.28,.38,'sawtooth');musicTone(65,audio.currentTime+.035,.2,.5,'sine');}catch(e){}
 }
 // 8000-point stage: Chatuchak (JJ Market) craft, vintage and plant stalls.
 // Lightweight geometry keeps the center road playable for tilt steering.
@@ -9557,4 +9557,4 @@ addEventListener('keyup',e=>fallbackKeyboard(e,false));
 addEventListener('blur',()=>{fallbackKeySteer=0;fallbackDragSteer=0;fallbackLeft=false;fallbackRight=false;fallbackPointer=null});
 
 addEventListener('deviceorientation',e=>{if(Number.isFinite(e.gamma)){hasMotion=true;lastGamma=e.gamma;if(neutral===null)neutral=e.gamma;let difference=e.gamma-neutral;if(difference>180)difference-=360;if(difference< -180)difference+=360;const deadzone=3;const amount=Math.max(0,Math.abs(difference)-deadzone);const raw=THREE.MathUtils.clamp(Math.sign(difference)*amount/27,-1,1);tilt+=(raw-tilt)*.24}});
-$('centerBtn').onclick=()=>{if(lastGamma===null){hint.textContent='⚠️ MOTION SENSOR NOT READY';return}neutral=lastGamma;tilt=0;hint.textContent='🎯 CENTERED · TILT GENTLY'};$('pauseBtn').onclick=()=>{if(!active)return;paused=!paused;$('pauseBtn').textContent=paused?'▶':'⏸';hint.textContent=paused?'⏸ PAUSED · TAP ▶ TO RESUME':'🛺 GO!';last=performance.now()};$('soundBtn').onclick=()=>{soundOn=!soundOn;$('soundBtn').textContent=soundOn?'🔊':'🔇';if(soundOn)startMusic();else if(musicBus)musicBus.gain.value=0;else{};if(soundOn&&musicBus)musicBus.gain.value=.22};document.addEventListener('visibilitychange',()=>{if(document.hidden&&active&&!paused){paused=true;$('pauseBtn').textContent='▶';hint.textContent='⏸ PAUSED · TAP ▶ TO RESUME'}});$('start').onclick=async()=>{reset();startMusic();try{if(window.DeviceOrientationEvent&&typeof DeviceOrientationEvent.requestPermission==='function'){const permission=await DeviceOrientationEvent.requestPermission();if(permission!=='granted')hint.textContent='⚠️ MOTION OFF · SWIPE TO STEER'}}catch(e){hint.textContent='⚠️ MOTION OFF · SWIPE TO STEER'}};
+$('centerBtn').onclick=()=>{if(lastGamma===null){hint.textContent='⚠️ MOTION SENSOR NOT READY';return}neutral=lastGamma;tilt=0;hint.textContent='🎯 CENTERED · TILT GENTLY'};$('pauseBtn').onclick=()=>{if(!active)return;paused=!paused;$('pauseBtn').textContent=paused?'▶':'⏸';hint.textContent=paused?'⏸ PAUSED · TAP ▶ TO RESUME':'🛺 GO!';last=performance.now()};$('soundBtn').onclick=()=>{soundOn=!soundOn;$('soundBtn').textContent=soundOn?'🔊':'🔇';if(soundOn)startMusic();else if(musicBus)musicBus.gain.value=0;else{};if(soundOn&&musicBus)musicBus.gain.value=.65};document.addEventListener('visibilitychange',()=>{if(document.hidden&&active&&!paused){paused=true;$('pauseBtn').textContent='▶';hint.textContent='⏸ PAUSED · TAP ▶ TO RESUME'}});$('start').onclick=async()=>{reset();startMusic();try{if(window.DeviceOrientationEvent&&typeof DeviceOrientationEvent.requestPermission==='function'){const permission=await DeviceOrientationEvent.requestPermission();if(permission!=='granted')hint.textContent='⚠️ MOTION OFF · SWIPE TO STEER'}}catch(e){hint.textContent='⚠️ MOTION OFF · SWIPE TO STEER'}};
