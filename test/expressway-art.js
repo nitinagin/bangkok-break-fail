@@ -2182,6 +2182,36 @@ gantry.position.z=-75;group.add(gantry);
   laneArrows.instanceMatrix.needsUpdate=true;
  }
  placeLaneArrows();group.add(laneArrows);
+ // Broken tyre-wear streaks: low-contrast rubber on the elevated asphalt.
+ // One instanced draw call, no collision geometry or per-frame allocations.
+ const roadWearCanvas=document.createElement('canvas');roadWearCanvas.width=128;roadWearCanvas.height=128;
+ const rwc=roadWearCanvas.getContext('2d');
+ for(let track=0;track<2;track++){
+  const cx=track===0?34:94;
+  for(let y=0;y<128;y+=3){
+   const wobble=Math.sin(y*.13+track)*2,wear=(y*17+track*23)%19;
+   if(wear<4)continue;
+   rwc.fillStyle='rgba(8,11,15,'+(.10+(wear%7)*.025)+')';
+   rwc.fillRect(cx+wobble-6,y,12,2);
+   rwc.fillStyle='rgba(6,9,12,.11)';rwc.fillRect(cx+wobble-9,y,3,2);
+  }
+ }
+ const roadWearTexture=new THREE.CanvasTexture(roadWearCanvas);
+ roadWearTexture.colorSpace=THREE.SRGBColorSpace;roadWearTexture.anisotropy=2;
+ const roadWearMaterial=new THREE.MeshBasicMaterial({map:roadWearTexture,transparent:true,opacity:.45,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2,side:THREE.DoubleSide});
+ const roadWearCount=18,roadWearZ=[],roadWearPose=new THREE.Object3D();
+ const roadWearMesh=new THREE.InstancedMesh(new THREE.PlaneGeometry(1.95,7.5),roadWearMaterial,roadWearCount);
+ roadWearMesh.name='expressway-faded-traffic-tyre-tracks';roadWearMesh.frustumCulled=false;
+ for(let i=0;i<roadWearCount;i++)roadWearZ.push(-14-Math.floor(i/3)*17);
+ function placeRoadWear(){
+  for(let i=0;i<roadWearCount;i++){
+   roadWearPose.position.set(arrowX[i%3],.064,roadWearZ[i]);
+   roadWearPose.rotation.set(-Math.PI/2,0,0);
+   roadWearPose.updateMatrix();roadWearMesh.setMatrixAt(i,roadWearPose.matrix);
+  }
+  roadWearMesh.instanceMatrix.needsUpdate=true;
+ }
+ placeRoadWear();group.add(roadWearMesh);
  // Cast-iron storm drains along Bangkok's elevated expressway shoulders.
  // A shared 128px PBR atlas draws open slots, rust and worn raised ribs;
  // 32 grates use one instanced draw call and stay outside all dodge lanes.
@@ -2227,6 +2257,7 @@ gantry.position.z=-75;group.add(gantry);
   for(let i=0;i<acousticCount;i++){acousticZ[i]+=advance;if(acousticZ[i]>24)acousticZ[i]-=12*5.9;}placeAcousticScreens();placeRailMarkers();placeRailBolts();
   for(let i=0;i<studCount;i++){studZ[i]+=advance;if(studZ[i]>18)studZ[i]-=36*5.35;}placeStuds();
   for(let i=0;i<arrowCount;i++){arrowZ[i]+=advance;if(arrowZ[i]>22)arrowZ[i]-=168;}placeLaneArrows();
+  for(let i=0;i<roadWearCount;i++){roadWearZ[i]+=advance;if(roadWearZ[i]>22)roadWearZ[i]-=102;}placeRoadWear();
   for(let i=0;i<drainCount;i++){drainZ[i]+=advance;if(drainZ[i]>20)drainZ[i]-=16*11;}placeDrains();
   gantry.position.z+=advance;if(gantry.position.z>24)gantry.position.z-=195;
   for(let i=0;i<barrierCount;i++){barrierZ[i]+=advance;if(barrierZ[i]>20)barrierZ[i]-=22*barrierLength*1.15;}placeBarriers();
@@ -2244,5 +2275,6 @@ gantry.position.z=-75;group.add(gantry);
   skylineMarkerMaterial.dispose();plantMaterial.dispose();rooftopTankMaterial.dispose();antennaMaterial.dispose();
   windowTexture.dispose();emissiveTexture.dispose();facadeNormalTexture.dispose();poolTexture.dispose();signTexture.dispose();flyoverTexture.dispose();flyoverNormalTexture.dispose();acousticTexture.dispose();acousticNormalTexture.dispose();acousticRoughnessTexture.dispose();barrierTexture.dispose();reflectorTexture.dispose();vmsTexture.dispose();vmsMaterial.dispose();
   billboardMaterial.dispose();neonMap.dispose();neonGlowMap.dispose();
+  roadWearMesh.geometry.dispose();roadWearMaterial.dispose();roadWearTexture.dispose();
  }};
 }
