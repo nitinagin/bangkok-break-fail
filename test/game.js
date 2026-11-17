@@ -6250,6 +6250,28 @@ function makeTukTuk(){
  const backrest=new THREE.Mesh(makeTukCushion(1.31,.56,.10),tukSeat);
  backrest.position.set(0,1.68,-1.17);g.add(backrest);
  g.add(cube(1.43,.08,.09,tukTrim,0,1.38,-1.32));
+
+ // Curved stainless-steel passenger grab loops, replacing a toy-like empty cabin.
+ // Two handles are instanced in one draw call using the existing chrome PBR material.
+ const grabPath=new THREE.CatmullRomCurve3([
+  new THREE.Vector3(0,1.44,-1.23),
+  new THREE.Vector3(0,1.57,-1.27),
+  new THREE.Vector3(0,1.73,-1.29),
+  new THREE.Vector3(0,1.84,-1.23),
+  new THREE.Vector3(0,1.86,-1.12)
+ ]);
+ const grabGeometry=new THREE.TubeGeometry(grabPath,10,.025,5,false);
+ const passengerGrabs=new THREE.InstancedMesh(grabGeometry,tukTrim,2);
+ const grabPose=new THREE.Object3D();
+ for(const [i,side] of [-1,1].entries()){
+  grabPose.position.set(side*.59,0,0);
+  grabPose.updateMatrix();
+  passengerGrabs.setMatrixAt(i,grabPose.matrix);
+ }
+ passengerGrabs.instanceMatrix.needsUpdate=true;
+ passengerGrabs.computeBoundingSphere();
+ passengerGrabs.name='tuktuk-passenger-stainless-grab-loops';
+ g.add(passengerGrabs);
  // Exposed rear-mounted engine, cooling fins and soot-darkened exhaust.
  // All eleven steel parts share one InstancedMesh draw call per traffic tuk-tuk.
  // The geometry/material are shared by cached obstacle clones; no runtime textures.
