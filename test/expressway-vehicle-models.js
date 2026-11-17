@@ -1472,15 +1472,21 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
  else{
   // Sculpted low GT profile: continuous front splitter/hood, swept glass,
   // rounded roof and muscular rear haunch. Same footprint and one body mesh.
+  // Low production GT: raised rear deck with integrated ducktail,
+  // long wedge bonnet, sharply raked windscreen and a shallow roof crown.
+  // The existing extruded body remains one draw call, with unchanged
+  // 3.55m length and 1.8m width / collision footprint.
   shape.moveTo(-1.77,.4);
-  shape.quadraticCurveTo(-1.72,.53,-1.55,.57);
-  shape.quadraticCurveTo(-1.25,.65,-.91,.67);
-  shape.quadraticCurveTo(-.77,.71,-.53,.99);
-  shape.quadraticCurveTo(-.34,1.20,.01,1.21);
-  shape.quadraticCurveTo(.39,1.22,.62,1.05);
-  shape.quadraticCurveTo(.79,.83,.98,.75);
-  shape.quadraticCurveTo(1.20,.69,1.44,.64);
-  shape.quadraticCurveTo(1.67,.60,1.77,.4);
+  shape.quadraticCurveTo(-1.74,.56,-1.60,.61);
+  shape.quadraticCurveTo(-1.53,.64,-1.48,.72);
+  shape.quadraticCurveTo(-1.40,.74,-1.34,.67);
+  shape.quadraticCurveTo(-1.13,.65,-.88,.65);
+  shape.quadraticCurveTo(-.73,.70,-.52,.99);
+  shape.quadraticCurveTo(-.31,1.17,.03,1.20);
+  shape.quadraticCurveTo(.39,1.21,.59,1.04);
+  shape.quadraticCurveTo(.76,.82,.95,.73);
+  shape.quadraticCurveTo(1.22,.68,1.49,.61);
+  shape.quadraticCurveTo(1.69,.56,1.77,.4);
  }
  shape.closePath();
  const geometry=new THREE.ExtrudeGeometry(shape,{depth:w,bevelEnabled:true,bevelSize:.035,bevelThickness:.035,bevelSegments:1});
