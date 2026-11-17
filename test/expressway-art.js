@@ -1072,6 +1072,28 @@ export function createExpresswayArt(THREE){
   bac.fillStyle='rgba(154,164,162,.09)';
   bac.fillRect(px+7,py+5,pw-17,2);bac.fillRect(px+12,py+ph-6,pw-25,1);
  }
+ // Shallow, irregular rainwater pools collect beside bridge repairs and shoulders.
+ // Baked into the existing asphalt atlas (no extra textures or draw calls).
+ // Restrict to shoulders: the centre driving lane and faded markings remain clear.
+ for(const [cx,cy,rx,ry] of [[43,17,20,4],[149,112,25,3],[213,18,17,4],[122,111,14,3]]){
+  bac.save();bac.beginPath();
+  for(let k=0;k<=16;k++){
+   const a=k*Math.PI/8;
+   const jitter=1+.13*Math.sin(k*2.7+cx);
+   const x=cx+Math.cos(a)*rx*jitter,y=cy+Math.sin(a)*ry*jitter;
+   if(k===0)bac.moveTo(x,y);else bac.lineTo(x,y);
+  }
+  bac.closePath();bac.clip();
+  const pool=bac.createLinearGradient(cx,cy-ry,cx,cy+ry);
+  pool.addColorStop(0,'rgba(7,18,26,.05)');
+  pool.addColorStop(.5,'rgba(8,22,30,.30)');
+  pool.addColorStop(1,'rgba(9,19,25,.12)');
+  bac.fillStyle=pool;bac.fillRect(cx-rx-4,cy-ry-2,rx*2+8,ry*2+4);
+  bac.strokeStyle='rgba(152,171,178,.23)';bac.lineWidth=.8;
+  bac.beginPath();bac.moveTo(cx-rx*.7,cy-ry*.15);
+  bac.lineTo(cx+rx*.2,cy-ry*.32);bac.stroke();
+  bac.restore();
+ }
  // Recessed transverse steel expansion joints and drainage slots: a strong
  // elevated-road cue, baked into the existing asphalt PBR atlas.
  // Edge grates sit outside the central dodge corridor; no new draw calls.
