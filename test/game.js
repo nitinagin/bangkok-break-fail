@@ -6347,9 +6347,9 @@ function makeTukTuk(){
   // A raised central canvas ridge sheds rain toward both rolled side edges.
   // The deeper front lip reads as a real Bangkok tuk-tuk rain visor at night.
   // Preserve the existing indexed canopy mesh and its single draw call.
-  const transverseCrown=.235*(1-(x/.86)*(x/.86));
-  const lengthTension=.055*Math.sin(Math.PI*iz/nz)*(1-.35*Math.abs(x/.86));
-  const visorDip=iz===nz?-.115:0;
+  const transverseCrown=.315*(1-(x/.86)*(x/.86));
+  const lengthTension=.075*Math.sin(Math.PI*iz/nz)*(1-.35*Math.abs(x/.86));
+  const visorDip=iz===nz?-.16:0;
   // The rear canvas settles under its own weight; the front stays taut over
   // the driver's windscreen. Keep the existing roof grid and one PBR draw call.
   const rearSag=-.115*Math.pow(1-iz/nz,2)*(1-.25*Math.abs(x/.86));
