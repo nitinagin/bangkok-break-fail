@@ -4659,12 +4659,31 @@ const busSidePane=new THREE.PlaneGeometry(4.88,.84);
 function makeBusRouteMaterial(route){
  const canvas=document.createElement('canvas');canvas.width=256;canvas.height=96;
  const ctx=canvas.getContext('2d');
- ctx.fillStyle='#101a24';ctx.fillRect(0,0,256,96);
- ctx.strokeStyle='#d5c7a2';ctx.lineWidth=4;ctx.strokeRect(3,3,250,90);
- ctx.fillStyle='#fff0b9';ctx.textAlign='center';
- ctx.font=route==='203'?'bold 57px sans-serif':'bold 68px sans-serif';
- ctx.fillText(route,128,65);
- ctx.font='17px sans-serif';ctx.fillText('กรุงเทพฯ',128,88);
+ // Baked LED destination box: dark recessed bezel, amber dot-matrix
+ // numerals and Thai destination strip. Reuses the existing 256x96 atlas
+ // and front/rear sign planes; no added lights, geometry or draw calls.
+ const frame=ctx.createLinearGradient(0,0,0,96);
+ frame.addColorStop(0,'#667079');frame.addColorStop(.2,'#26313a');
+ frame.addColorStop(1,'#10151a');
+ ctx.fillStyle=frame;ctx.fillRect(0,0,256,96);
+ ctx.fillStyle='#060c10';ctx.fillRect(8,8,240,80);
+ ctx.strokeStyle='#899398';ctx.lineWidth=2;ctx.strokeRect(5,5,246,86);
+ ctx.textAlign='center';ctx.textBaseline='middle';
+ ctx.font=route==='203'?'bold 59px monospace':'bold 66px monospace';
+ // Draw the number through a dot-matrix mask, not a smooth cartoon glyph.
+ const mask=document.createElement('canvas');mask.width=256;mask.height=96;
+ const m=mask.getContext('2d');
+ m.fillStyle='#fff';m.textAlign='center';m.textBaseline='middle';
+ m.font=ctx.font;m.fillText(route,128,41);
+ const alpha=m.getImageData(0,0,256,96).data;
+ for(let y=12;y<65;y+=5)for(let x=18;x<240;x+=5){
+  if(alpha[(y*256+x)*4+3]>110){
+   ctx.fillStyle='#ffa52b';ctx.beginPath();ctx.arc(x,y,1.65,0,Math.PI*2);ctx.fill();
+  }
+ }
+ ctx.fillStyle='#d7ad61';ctx.fillRect(12,69,232,1);
+ ctx.fillStyle='#ffce75';ctx.font='bold 17px sans-serif';
+ ctx.fillText(route==='203'?'เยาวราช':'กรุงเทพฯ',128,82);
  const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
  return new THREE.MeshBasicMaterial({map:texture,side:THREE.DoubleSide});
 }
