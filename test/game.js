@@ -110,6 +110,28 @@ for(let i=0;i<6;i++){
   ctx.fillStyle=pool;ctx.fillRect(-1,-1,2,2);ctx.restore();
  }
 }
+// Wet Chinatown signage bounce: warm gold and cool cyan pools are baked into
+// the EXISTING asphalt albedo and roughness atlases. No extra textures, meshes,
+// lights, draw calls or per-frame work; irregular footprints avoid neon stripes.
+for(let reflection=0;reflection<8;reflection++){
+ const x=25+(reflection*83)%208,y=21+(reflection*59)%216;
+ const warm=reflection%2===0;
+ asphaltCtx.save();asphaltCtx.translate(x,y);asphaltCtx.rotate((reflection%3-1)*.16);
+ asphaltCtx.scale(8+(reflection*7)%13,19+(reflection*11)%23);
+ const glow=asphaltCtx.createRadialGradient(0,0,0,0,0,1);
+ glow.addColorStop(0,warm?'rgba(239,156,65,.20)':'rgba(57,179,204,.18)');
+ glow.addColorStop(.38,warm?'rgba(229,113,53,.12)':'rgba(43,129,172,.11)');
+ glow.addColorStop(1,'rgba(0,0,0,0)');
+ asphaltCtx.fillStyle=glow;asphaltCtx.fillRect(-1,-1,2,2);asphaltCtx.restore();
+ // Damp neon spill should be glossier than the surrounding coarse aggregate.
+ wetRoadRoughnessCtx.save();wetRoadRoughnessCtx.translate(x,y);
+ wetRoadRoughnessCtx.scale(8+(reflection*7)%13,19+(reflection*11)%23);
+ const sheen=wetRoadRoughnessCtx.createRadialGradient(0,0,0,0,0,1);
+ sheen.addColorStop(0,'rgba(48,48,48,.34)');
+ sheen.addColorStop(1,'rgba(48,48,48,0)');
+ wetRoadRoughnessCtx.fillStyle=sheen;wetRoadRoughnessCtx.fillRect(-1,-1,2,2);
+ wetRoadRoughnessCtx.restore();
+}
 // Baked asphalt repair seams: irregular joins in the existing road PBR atlases.
 // No new geometry, textures, lights or work inside the render loop.
 for(let patch=0;patch<5;patch++){
