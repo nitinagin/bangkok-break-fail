@@ -9497,7 +9497,7 @@ if(meters+bonus>=8000)queueExpresswayBusModel();const nextDistrict=Math.floor(me
  if(stall.visible)stall.userData.merchandise.visible=stall.position.z>-43;
 }for(const tent of marketCanopies)tent.visible=inMarket&&!canalActive;marketCanopyShadows.visible=inMarket&&!canalActive;for(const bump of marketBumps)bump.visible=inMarket;for(const mesh of marketCrowdMeshes)mesh.visible=inMarket;for(const shop of roadsideShops)shop.g.visible=!inMarket&&!onExpressway&&!inPattaya&&!inDarkRoad&&shop.stage===(onRamaII?2:1);const skyTarget=districtNightSkies[nextDistrict]||darkRoadSky;scene.background.lerp(skyTarget,Math.min(1,dt*.8));scene.fog.color.copy(scene.background);// Follow the district's PBR key-light preset. The old 1.65 daytime override
  // washed out Yaowarat and expressway neon within seconds of a stage change.
- sun.intensity+=(districtLightPresets[nextDistrict][1]-sun.intensity)*Math.min(1,dt*1.2);const control=hasMotion?tilt:(fallbackKeySteer||fallbackDragSteer);const steer=control===0?0:Math.sign(control)*Math.pow(Math.abs(control),.82);const desiredX=THREE.MathUtils.clamp(steer*4.1,-4.1,4.1);const oldX=x;x+=(desiredX-x)*(1-Math.exp(-dt*5.1));x=THREE.MathUtils.clamp(x,-4.3,4.3);// Keep the real spotlight aligned with the tuk-tuk in every district, not only Dark Road.
+ sun.intensity+=(districtLightPresets[nextDistrict][1]-sun.intensity)*Math.min(1,dt*1.2);const control=fallbackPointer!==null?fallbackDragSteer:(fallbackKeySteer|| (hasMotion?tilt:0));const steer=control===0?0:Math.sign(control)*Math.pow(Math.abs(control),.82);const desiredX=THREE.MathUtils.clamp(steer*4.1,-4.1,4.1);const oldX=x;x+=(desiredX-x)*(1-Math.exp(-dt*5.1));x=THREE.MathUtils.clamp(x,-4.3,4.3);// Keep the real spotlight aligned with the tuk-tuk in every district, not only Dark Road.
  // A small steering lead lights the dodge lane without swinging the beam off-road.
  darkHeadlight.position.x=x;
  darkHeadlight.target.position.x=THREE.MathUtils.clamp(x+smoothed*.65,-4.5,4.5);if(canalActive&&x>2.85){hint.textContent='💦 FALLEN INTO THE FLOATING MARKET CANAL!';shake=1;finish();return;}smoothed+=(THREE.MathUtils.clamp((x-oldX)/Math.max(dt,.001)/5,-1,1)-smoothed)*(1-Math.exp(-dt*9));car.position.set(x,0,3);car.rotation.z=-smoothed*.10+Math.sin(t*.01)*.015+Math.sin(flips)*Math.exp(-flips*.45)*.85;car.rotation.x=Math.sin(flips*.8)*Math.exp(-flips*.45)*.65;car.position.y=Math.abs(Math.sin(flips*1.2))*Math.exp(-flips*.32)*.6;flips=Math.max(0,flips-dt*3);const visualSpeed=60+300*(1-Math.exp(-(speed-60)/240));const advance=dt*visualSpeed*.22;if(inDarkRoad){updateDarkRoadMarkers(advance);updateDarkRoadFoliage(advance);updateDarkDust(advance,x);darkRoadTexture.offset.y-=advance*18/230;darkRoadNormalTexture.offset.y=darkRoadTexture.offset.y;darkRoadRoughnessTexture.offset.y=darkRoadTexture.offset.y;}if(onRamaII)ramaRoadTexture.offset.y-=advance*18/230;if(onExpressway){const roadScroll=advance*18/230;expresswayRoadTexture.offset.y-=roadScroll;expresswayRoughnessTexture.offset.y=expresswayRoadTexture.offset.y;}const wiresVisible=nextDistrict===1;for(const mesh of [wirePoles,wireArms,wireRuns])mesh.visible=wiresVisible;if(wiresVisible)updateYaowaratWires(advance);updateYaowaratSkyline(advance,wiresVisible);laneStripeMesh.visible=!inDarkRoad;if(!inDarkRoad){for(let i=0;i<stripeCount;i++){stripeZ[i]+=advance;if(stripeZ[i]>16)stripeZ[i]-=230;}placeLaneStripes();}for(const crossing of yaowaratCrosswalks){crossing.visible=nextDistrict===1;if(crossing.visible){crossing.position.z+=advance;if(crossing.position.z>18)crossing.position.z-=190;}}roadStuds.forEach(s=>{s.visible=!inDarkRoad;s.position.z+=advance;if(s.position.z>16)s.position.z-=228});props.forEach(p=>{
@@ -9689,16 +9689,16 @@ renderer.render(scene,camera);
  }else{perfFrames=0;perfStart=0}
  frameFailures=0}catch(e){frameFailures++;if(frameFailures===1){console.error(e);recoveryScreen('Rendering error: '+String(e.message||e).slice(0,100))}}}requestAnimationFrame(frame);
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
-// Sensor-free fallback: drag horizontally on the game canvas or use A/D and arrow keys.
-// It is inactive when real iPhone tilt data exists; no onscreen steering buttons are added.
+// Touch drag temporarily overrides tilt, even if the browser reports stale motion data.
+// Arrow/A-D keys remain available; tilt resumes as soon as the drag ends.
 let fallbackPointer=null,fallbackPointerX=0;
 renderer.domElement.addEventListener('pointerdown',e=>{
- if(!active||hasMotion||fallbackPointer!==null)return;
+ if(!active||fallbackPointer!==null)return;
  fallbackPointer=e.pointerId;fallbackPointerX=e.clientX;fallbackDragSteer=0;
  try{renderer.domElement.setPointerCapture(e.pointerId)}catch(error){}
 });
 renderer.domElement.addEventListener('pointermove',e=>{
- if(hasMotion||fallbackPointer!==e.pointerId)return;
+ if(fallbackPointer!==e.pointerId)return;
  fallbackDragSteer=THREE.MathUtils.clamp((e.clientX-fallbackPointerX)/Math.max(140,innerWidth*.26),-1,1);
 });
 function releaseFallbackPointer(e){
@@ -9709,7 +9709,6 @@ renderer.domElement.addEventListener('pointerup',releaseFallbackPointer);
 renderer.domElement.addEventListener('pointercancel',releaseFallbackPointer);
 function fallbackKeyboard(e,pressed){
  if(!['ArrowLeft','ArrowRight','a','A','d','D'].includes(e.key))return;
- if(hasMotion)return;
  e.preventDefault();
  if(e.key==='ArrowLeft'||e.key.toLowerCase()==='a')fallbackLeft=pressed;
  else fallbackRight=pressed;
