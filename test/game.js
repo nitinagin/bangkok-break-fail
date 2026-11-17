@@ -6056,7 +6056,18 @@ function makeTukTuk(){
  // Open-sided passenger compartment: no solid toy-box walls above the beltline.
  for(const side of [-1,1]){
   g.add(cube(.065,.45,1.12,tukPaint,side*.73,1.03,-.63));
-  g.add(cube(.045,.09,1.23,tukAccent,side*.765,1.28,-.61));
+  // Swept passenger-door waist rail: a shallow pressed-steel curve instead of
+  // a rigid rectangular toy-box edge. Same one mesh per side and shared PBR trim.
+  const waistCurve=new THREE.CatmullRomCurve3([
+   new THREE.Vector3(side*.765,1.27,-1.22),
+   new THREE.Vector3(side*.78,1.30,-.94),
+   new THREE.Vector3(side*.785,1.32,-.57),
+   new THREE.Vector3(side*.765,1.29,-.18),
+   new THREE.Vector3(side*.74,1.25,.02)
+  ]);
+  const waistRail=new THREE.Mesh(new THREE.TubeGeometry(waistCurve,10,.035,5,false),tukAccent);
+  waistRail.name='tuktuk-curved-passenger-door-waist-rail';
+  g.add(waistRail);
   // One shared atlas-mapped PBR wheel per side: tread, sidewall, steel rim and lug nuts.
   // Reuses the taxi/bus wheel geometry and material without extra textures or draw calls.
   const wheel=new THREE.Mesh(busWheelGeometry,busWheelMaterial);
