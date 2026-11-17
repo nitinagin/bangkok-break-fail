@@ -6403,7 +6403,8 @@ function makeTukTuk(){
   for(let ix=0;ix<=segments;ix++){
    const u=ix/segments,x=-.86+1.72*u;
    // Match the front visor dip to the roof surface to avoid a visible seam.
-   const roofY=2.34+.235*(1-(x/.86)**2)+(end>0?-.115:-.115*(1-.25*Math.abs(x/.86)));
+   // Match the actual roof edge: front visor dips 0.16m, rear hem sags 0.115m.
+   const roofY=2.34+.315*(1-(x/.86)**2)+(end>0?-.16:-.115*(1-.25*Math.abs(x/.86)));
    vertices.push(x,roofY,z,x,roofY-.11,z);
    uvs.push(u,end<0?.07:.93,u,end<0?.01:.99);
   }
