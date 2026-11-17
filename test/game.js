@@ -4077,6 +4077,15 @@ scene.add(car);
 const TUKTUK_GLB='https://v3b.fal.media/files/b/0aaedcfd/U0gjvaaq8RuKQVt3a8zrE_model.glb';
 let realTukTuk=null;
 function loadTukTukAsset(){
+ // Preserve the already-playable procedural vehicle on constrained phones.
+ // Avoid a large third-party GLB download on data-saver, 2G or low-memory devices.
+ // Unknown device capabilities are not treated as low-end.
+ const connection=navigator.connection||navigator.mozConnection||navigator.webkitConnection;
+ if(connection?.saveData||/^(slow-2g|2g)$/.test(connection?.effectiveType||'')||
+    (mobile&&navigator.deviceMemory&&navigator.deviceMemory<=2)){
+  console.info('Using lightweight tuk-tuk on constrained mobile connection/device');
+  return;
+ }
 new GLTFLoader().load(TUKTUK_GLB,glb=>{
  try{
   const raw=glb.scene;
