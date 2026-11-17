@@ -3405,6 +3405,29 @@ for(const x of [18,128,238]){
 for(const x of [2,252]){
  canopyCtx.fillStyle='rgba(9,14,18,.55)';canopyCtx.fillRect(x,0,2,256);
 }
+// Heat-welded front and rear canvas hems: baked double stitching and small
+// dull brass fasteners make the canopy read as real fitted tuk-tuk upholstery.
+// Paint into the existing 256px atlas; zero extra geometry or GPU draw calls.
+for(const edgeY of [8,247]){
+ canopyCtx.fillStyle='rgba(5,11,14,.46)';
+ canopyCtx.fillRect(0,edgeY-5,256,8);
+ canopyCtx.strokeStyle='rgba(181,177,154,.40)';
+ canopyCtx.lineWidth=1;
+ for(const offset of [-2,2]){
+  canopyCtx.beginPath();canopyCtx.moveTo(0,edgeY+offset+.5);
+  canopyCtx.lineTo(256,edgeY+offset+.5);canopyCtx.stroke();
+ }
+ for(let x=9;x<252;x+=11){
+  canopyCtx.fillStyle='rgba(215,207,175,.48)';
+  canopyCtx.fillRect(x,edgeY-2,5,1);
+ }
+ for(let x=22;x<250;x+=42){
+  canopyCtx.fillStyle='rgba(2,6,8,.72)';
+  canopyCtx.beginPath();canopyCtx.arc(x,edgeY,3,0,Math.PI*2);canopyCtx.fill();
+  canopyCtx.fillStyle='#827f69';
+  canopyCtx.beginPath();canopyCtx.arc(x-.45,edgeY-.5,1.65,0,Math.PI*2);canopyCtx.fill();
+ }
+}
 const canopyTexture=new THREE.CanvasTexture(canopyCanvas);
 canopyTexture.colorSpace=THREE.SRGBColorSpace;
 canopyTexture.anisotropy=Math.min(2,renderer.capabilities.getMaxAnisotropy());
