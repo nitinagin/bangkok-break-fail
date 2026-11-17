@@ -4477,14 +4477,8 @@ for(let i=0;i<35;i++){
  const x=21+(i*137)%470,y=17+(i*53)%133;
  busGlassCtx.beginPath();busGlassCtx.moveTo(x,y);busGlassCtx.lineTo(x-2,y+9+(i%13));busGlassCtx.stroke();
 }
-busGlassCtx.strokeStyle='#111b21';busGlassCtx.lineWidth=5;busGlassCtx.lineCap='round';
-for(const [x0,y0,x1,y1] of [[88,168,241,105],[426,168,271,105]]){
- busGlassCtx.beginPath();busGlassCtx.moveTo(x0,y0);busGlassCtx.lineTo(x1,y1);busGlassCtx.stroke();
-}
-busGlassCtx.strokeStyle='rgba(186,201,205,.5)';busGlassCtx.lineWidth=1.5;
-for(const [x0,y0,x1,y1] of [[88,168,241,105],[426,168,271,105]]){
- busGlassCtx.beginPath();busGlassCtx.moveTo(x0,y0-3);busGlassCtx.lineTo(x1,y1-3);busGlassCtx.stroke();
-}
+// The wiper blades are 3D instanced geometry in makeBus(). Avoid
+// double-rendering painted blades on the curved windshield atlas.
 const busGlassTexture=new THREE.CanvasTexture(busGlassCanvas);busGlassTexture.colorSpace=THREE.SRGBColorSpace;
 busGlassTexture.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());
 const busWindshield=new THREE.MeshPhysicalMaterial({map:busGlassTexture,metalness:0,roughness:.28,clearcoat:.55,clearcoatRoughness:.19,side:THREE.DoubleSide});
@@ -5020,7 +5014,9 @@ function makeBus(variant='red'){
  const wipers=new THREE.InstancedMesh(busWiperGeometry,busDark,2);
  const wiperPose=new THREE.Object3D();
  for(const side of [-1,1]){
-  wiperPose.position.set(side*.59,1.99,2.982);
+  // Seat each wiper just outside the curved, raked windshield.
+  const glassZ=2.82-.08*((1.99-1.84)/.88)-.06*Math.pow((side*.59)/1.175,2);
+  wiperPose.position.set(side*.59,1.99,glassZ+.018);
   wiperPose.rotation.set(0,0,side*.13);
   wiperPose.updateMatrix();
   wipers.setMatrixAt(side===-1?0:1,wiperPose.matrix);
