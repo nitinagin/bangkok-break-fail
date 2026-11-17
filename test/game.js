@@ -5592,6 +5592,23 @@ tukWindscreenCtx.arc(122,116,86,Math.PI*1.08,Math.PI*1.91);
 tukWindscreenCtx.strokeStyle='rgba(22,37,44,.14)';
 tukWindscreenCtx.lineWidth=2;tukWindscreenCtx.stroke();
 tukWindscreenCtx.restore();
+// Baked dark sun visor and Thai route placard on the traffic tuk-tuk glass.
+// Keep the central driving view clear; reuse the existing 256x128 atlas.
+tukWindscreenCtx.save();
+const visor=tukWindscreenCtx.createLinearGradient(0,10,0,37);
+visor.addColorStop(0,'rgba(6,19,26,.92)');
+visor.addColorStop(.75,'rgba(12,36,44,.72)');
+visor.addColorStop(1,'rgba(14,42,51,0)');
+tukWindscreenCtx.fillStyle=visor;
+tukWindscreenCtx.fillRect(11,10,234,29);
+tukWindscreenCtx.fillStyle='rgba(235,195,92,.85)';
+tukWindscreenCtx.fillRect(88,14,80,19);
+tukWindscreenCtx.fillStyle='#17252b';
+tukWindscreenCtx.font='bold 14px sans-serif';
+tukWindscreenCtx.textAlign='center';
+tukWindscreenCtx.textBaseline='middle';
+tukWindscreenCtx.fillText('เยาวราช',128,24,74);
+tukWindscreenCtx.restore();
 // Baked weathered rubber seal and bottom-mounted wiper, avoiding extra draw calls.
 tukWindscreenCtx.strokeStyle='rgba(12,17,21,.85)';
 tukWindscreenCtx.lineWidth=9;tukWindscreenCtx.strokeRect(4.5,4.5,247,119);
