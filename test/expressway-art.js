@@ -61,6 +61,24 @@ export function createExpresswayArt(THREE){
    ctx.fillStyle='#29343c';for(let g=0;g<4;g++)ctx.fillRect(x+5+g*3,y+11,1,2);
   }
  }
+
+ // Rain-soaked glass: subtle vertical runoff, uneven reflected neon and
+ // dark water trails on individual panes. Baked into the existing facade atlas;
+ // emissive windows remain independent, with no geometry or runtime draw calls.
+ for(let row=0;row<32;row++)for(let col=0;col<8;col++){
+  const x=10+col*30,y=14+row*15,seed=(row*43+col*71+row*col*11);
+  if(seed%5===0)continue;
+  ctx.fillStyle=seed%3===0?'rgba(169,207,222,.24)':'rgba(194,203,216,.13)';
+  ctx.fillRect(x+seed%16,y+1,1,3+seed%6);
+  if(seed%4===1){
+   ctx.fillStyle='rgba(8,19,31,.28)';
+   ctx.fillRect(x+3+seed%12,y+3,1,5);
+  }
+  if(seed%11===2){
+   ctx.fillStyle='rgba(233,92,133,.15)';
+   ctx.fillRect(x+4,y+2,8,1);
+  }
+ }
  // Large vertical Thai hotel neon, baked into the facade and emissive atlases.
  // One readable sign occupies several storeys instead of adding tiny window details.
  // Shared texture keeps the existing 24-tower instancing and draw-call budget.
