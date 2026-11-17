@@ -1122,8 +1122,12 @@ const signMaterials=[mat(0xff267a),mat(0x086bd8),mat(0x1cbf7a)];function makeYao
   ctx.shadowColor=color;ctx.shadowBlur=27;ctx.strokeStyle=color;ctx.lineWidth=8;
   ctx.strokeText(names[index],256,113,450);
   ctx.fillStyle='#fff7e5';ctx.fillText(names[index],256,113,450);
-  ctx.shadowBlur=12;ctx.font='bold 33px sans-serif';ctx.fillStyle=color;
-  ctx.fillText(['YAOWARAT','GOLD SHOP','CHINESE FOOD'][index],256,190,430);
+  // Chinatown shop signs pair Thai lettering with Chinese trade names.
+  // Reuse the existing 512x256 atlas; no additional materials or draw calls.
+  ctx.shadowBlur=10;
+  ctx.font='bold 37px "PingFang SC","Noto Sans CJK SC","Microsoft YaHei",sans-serif';
+  ctx.fillStyle=color;
+  ctx.fillText(['唐人街','金行','中餐厅'][index],256,190,430);
   ctx.shadowBlur=0;
  };
  paint();
