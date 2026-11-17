@@ -4134,13 +4134,19 @@ new GLTFLoader().load(TUKTUK_GLB,glb=>{
   const resizedImages=new Map();
   for(const [tex,{image,w,h,targetW,targetH}] of textureSizes){
    if(w<=maxEdge&&h<=maxEdge)continue;
-   let canvas=resizedImages.get(image);
+   // A source image can back multiple glTF texture slots. Cache by source AND
+   // target dimensions so differing aspect/size requirements never reuse a
+   // wrongly sized canvas (which blurs paint, decals and normal detail).
+   let variants=resizedImages.get(image);
+   if(!variants){variants=new Map();resizedImages.set(image,variants)}
+   const sizeKey=targetW+'x'+targetH;
+   let canvas=variants.get(sizeKey);
    if(!canvas){
     canvas=document.createElement('canvas');canvas.width=targetW;canvas.height=targetH;
     const context=canvas.getContext('2d');
     if(!context)throw Error('vehicle GLB texture resize unavailable');
     context.drawImage(image,0,0,targetW,targetH);
-    resizedImages.set(image,canvas);
+    variants.set(sizeKey,canvas);
    }
    tex.image=canvas;tex.needsUpdate=true;
   }
