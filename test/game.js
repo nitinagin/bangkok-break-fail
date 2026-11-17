@@ -5186,12 +5186,19 @@ for(let panel=0;panel<2;panel++){
   for(const cx of [69,187]){
    ctx.beginPath();ctx.arc(cx,220,133,Math.PI*1.13,Math.PI*1.87);ctx.stroke();
   }
-  ctx.strokeStyle='#1a252a';ctx.lineWidth=6;ctx.lineCap='round';
-  for(const [ax,ay,bx,by] of [[34,219,119,174],[222,219,139,175]]){
-   ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(bx,by);ctx.stroke();
-   ctx.strokeStyle='rgba(173,187,181,.5)';ctx.lineWidth=1.5;
-   ctx.beginPath();ctx.moveTo(ax+3,ay-3);ctx.lineTo(bx,by-3);ctx.stroke();
-   ctx.strokeStyle='#1a252a';ctx.lineWidth=6;
+  // Physical 3D wipers are attached to the windshield below; avoid
+  // duplicated painted wipers when the taxi is seen from an angle.
+  // Shared deterministic rain beads and gravity streaks, baked only once.
+  for(let drop=0;drop<76;drop++){
+   const x=24+(drop*73+17)%208,y=27+(drop*47+31)%198;
+   const length=2+(drop*11)%9;
+   ctx.strokeStyle=drop%4===0?'rgba(220,239,237,.26)':'rgba(173,206,213,.15)';
+   ctx.lineWidth=drop%5===0?1.5:.7;
+   ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-.7,y+length);ctx.stroke();
+   if(drop%7===0){
+    ctx.fillStyle='rgba(232,243,234,.28)';
+    ctx.beginPath();ctx.ellipse(x,y,1.5,2.3,0,0,Math.PI*2);ctx.fill();
+   }
   }
  }else{
   ctx.strokeStyle='rgba(178,132,91,.32)';ctx.lineWidth=1.4;
