@@ -97,6 +97,40 @@ export function createExpresswayArt(THREE){
    ctx.fillRect(x+4,y+2,8,1);
   }
  }
+ // Large illuminated Bangkok rooftop advertisement, baked into the existing
+ // shared albedo/emissive facade atlas. At night the broad sign reads from a
+ // moving vehicle rather than resembling a grid of toy windows. No extra mesh,
+ // texture, light or draw call, and no per-frame canvas painting.
+ {
+  const x=19,y=35,w=94,h=74;
+  ctx.fillStyle='#101820';ctx.fillRect(x-3,y-3,w+6,h+6);
+  ctx.fillStyle='#173a45';ctx.fillRect(x,y,w,h);
+  ec.fillStyle='#050e13';ec.fillRect(x-3,y-3,w+6,h+6);
+  const halo=ctx.createLinearGradient(x,y,x+w,y+h);
+  halo.addColorStop(0,'#167b8a');halo.addColorStop(.5,'#194e65');
+  halo.addColorStop(1,'#27304b');
+  ctx.fillStyle=halo;ctx.fillRect(x+3,y+3,w-6,h-6);
+  ctx.strokeStyle='#8cdddc';ctx.lineWidth=2;ctx.strokeRect(x+3,y+3,w-6,h-6);
+  ec.strokeStyle='#40c8d0';ec.lineWidth=2;ec.strokeRect(x+3,y+3,w-6,h-6);
+  ctx.save();ec.save();
+  ctx.textAlign=ec.textAlign='center';
+  ctx.textBaseline=ec.textBaseline='middle';
+  ctx.font=ec.font='bold 19px sans-serif';
+  ctx.shadowColor='#61e6f1';ctx.shadowBlur=5;
+  ctx.fillStyle='#e3fcfa';ec.fillStyle='#66dfe5';
+  ctx.fillText('กรุงเทพ',x+w/2,y+26);
+  ec.fillText('กรุงเทพ',x+w/2,y+26);
+  ctx.font=ec.font='bold 13px sans-serif';
+  ctx.shadowBlur=3;ctx.fillStyle='#ffdda1';ec.fillStyle='#e5a861';
+  ctx.fillText('BANGKOK',x+w/2,y+52);
+  ec.fillText('BANGKOK',x+w/2,y+52);
+  ctx.restore();ec.restore();
+  for(let i=0;i<6;i++){
+   const px=x+9+i*15;
+   ctx.fillStyle='#9bafb6';ctx.fillRect(px,y+h,2,6);
+   ec.fillStyle='#000';ec.fillRect(px,y+h,2,6);
+  }
+ }
  // Renovation floors: Bangkok's familiar green safety net and steel scaffold
  // occupy a broad, multi-storey facade section. The opaque net blocks interior
  // emission; diagonal braces and translucent mesh are baked into existing atlases.
