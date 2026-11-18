@@ -621,6 +621,24 @@ export function createExpresswayArt(THREE){
  towers.instanceMatrix.needsUpdate=true;
  if(towers.instanceColor)towers.instanceColor.needsUpdate=true;
  towers.frustumCulled=false;group.add(towers);
+ // Three deep, road-facing balcony slabs per high-rise add real silhouette
+ // parallax beyond the printed facade. 72 instances, one draw call, no shadows.
+ const balconyGeometry=new THREE.BoxGeometry(1,.085,.48);
+ const balconyMaterial=new THREE.MeshStandardMaterial({color:0x68747c,metalness:.12,roughness:.88});
+ const balconySlabs=new THREE.InstancedMesh(balconyGeometry,balconyMaterial,72);
+ balconySlabs.name='expressway-highrise-balcony-slabs';
+ for(let i=0;i<24;i++){
+  const side=i%2===0?-1:1,row=Math.floor(i/2);
+  const height=10+(i*13%19),width=4+(i*5%7),depth=5+(i*3%7);
+  const cx=side*(12+(i*7%17)),cz=-15-row*9;
+  for(let floor=0;floor<3;floor++){
+   dummy.position.set(cx,height*(.33+floor*.22)-2,cz+depth*.5+.16);
+   dummy.scale.set(width*.78,1,1);
+   dummy.updateMatrix();balconySlabs.setMatrixAt(i*3+floor,dummy.matrix);
+  }
+ }
+ balconySlabs.instanceMatrix.needsUpdate=true;
+ balconySlabs.frustumCulled=false;group.add(balconySlabs);
  // Rooftop mechanical plant rooms break up repeated tower silhouettes.
  // One instanced PBR mesh for 24 structures; no external assets or animation.
  const plantGeometry=new THREE.BoxGeometry(1,1,1);
