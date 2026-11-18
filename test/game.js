@@ -6301,6 +6301,23 @@ function makeTukTuk(){
  tukPlates.instanceMatrix.needsUpdate=true;
  tukPlates.computeBoundingSphere();
  g.add(tukPlates);
+ // A single welded rear passenger safety hoop gives the open-sided cabin a
+ // recognisable Thai tuk-tuk silhouette without closing the dodge-lane view.
+ // The swept steel tube is cached with the obstacle template, not rebuilt per frame.
+ const passengerHoopPath=new THREE.CatmullRomCurve3([
+  new THREE.Vector3(-.72,1.35,-1.22),
+  new THREE.Vector3(-.74,1.78,-1.23),
+  new THREE.Vector3(-.70,2.12,-1.26),
+  new THREE.Vector3(-.52,2.30,-1.27),
+  new THREE.Vector3(0,2.34,-1.28),
+  new THREE.Vector3(.52,2.30,-1.27),
+  new THREE.Vector3(.70,2.12,-1.26),
+  new THREE.Vector3(.74,1.78,-1.23),
+  new THREE.Vector3(.72,1.35,-1.22)
+ ],false,'catmullrom',.35);
+ const passengerHoop=new THREE.Mesh(new THREE.TubeGeometry(passengerHoopPath,24,.028,6,false),tukTrim);
+ passengerHoop.name='tuktuk-welded-passenger-safety-hoop';
+ g.add(passengerHoop);
  // Open cabin with stitched, rounded vinyl cushions (two shared-material meshes).
  // The front-facing backrest and horizontal bench retain the original clearances.
  const bench=new THREE.Mesh(makeTukCushion(1.31,.7,.14),tukSeat);
