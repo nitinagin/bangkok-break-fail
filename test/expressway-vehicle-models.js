@@ -2302,35 +2302,36 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
  }
  group.add(tires,hubs);
 
- // Low-cost headlight throw on wet expressway asphalt: two tapered pools
- // share one instanced transparent draw call. No dynamic lights or shadows.
- // Front of the sports car is +Z; stay inside its visual group, not its hitbox.
- if(!isBus){
+ // Both the Bangkok bus and GT project inexpensive, soft headlight pools onto
+ // wet asphalt. Share a single instanced mesh per vehicle (two lamps), with
+ // no shadow-casting lights, collision changes or extra network assets.
+ // Keep the beam below wheel height to avoid covering traffic silhouettes.
+ {
   const beamCanvas=document.createElement('canvas');
   beamCanvas.width=64;beamCanvas.height=128;
   const beamCtx=beamCanvas.getContext('2d');
   const beamGradient=beamCtx.createRadialGradient(32,102,3,32,63,70);
-  beamGradient.addColorStop(0,'rgba(229,244,255,.53)');
-  beamGradient.addColorStop(.34,'rgba(166,212,249,.24)');
+  beamGradient.addColorStop(0,isBus?'rgba(255,241,204,.47)':'rgba(229,244,255,.53)');
+  beamGradient.addColorStop(.34,isBus?'rgba(255,211,145,.22)':'rgba(166,212,249,.24)');
   beamGradient.addColorStop(1,'rgba(130,190,235,0)');
   beamCtx.fillStyle=beamGradient;beamCtx.fillRect(0,0,64,128);
   const beamMap=new THREE.CanvasTexture(beamCanvas);
   beamMap.colorSpace=THREE.SRGBColorSpace;
   const headlightPools=new THREE.InstancedMesh(
-   new THREE.PlaneGeometry(1.12,5.6),
+   new THREE.PlaneGeometry(isBus?1.42:1.12,isBus?6.7:5.6),
    new THREE.MeshBasicMaterial({map:beamMap,transparent:true,depthWrite:false,
-    blending:THREE.AdditiveBlending,side:THREE.DoubleSide,opacity:.62}),2
+    blending:THREE.AdditiveBlending,side:THREE.DoubleSide,opacity:isBus?.55:.62}),2
   );
   const beamMatrix=new THREE.Matrix4();
   for(let i=0;i<2;i++){
    beamMatrix.makeRotationX(-Math.PI/2);
-   beamMatrix.setPosition(i===0?-.53:.53,.028,3.66);
+   beamMatrix.setPosition((i===0?-1:1)*(isBus?.69:.53),.028,isBus?4.42:3.66);
    headlightPools.setMatrixAt(i,beamMatrix);
   }
   headlightPools.instanceMatrix.needsUpdate=true;
   headlightPools.frustumCulled=false;
   headlightPools.renderOrder=2;
-  headlightPools.name='sports-car-wet-asphalt-headlight-throw';
+  headlightPools.name=isBus?'bangkok-bus-warm-asphalt-headlight-throw':'sports-car-wet-asphalt-headlight-throw';
   group.add(headlightPools);
  }
 
