@@ -9471,6 +9471,52 @@ function makeExpresswayMotorcycle(){
  mesh(new THREE.SphereGeometry(1,14,10),paint,0,1.28,.31,.54,.29,.55);
  mesh(new THREE.SphereGeometry(1,12,8),paint,0,1.29,.85,.43,.38,.23);
  mesh(new THREE.BoxGeometry(.56,.13,.77),trim,0,1.3,-.48);
+ // Sculpted two-sided sport-bike fairing: tapered nose, recessed waist and
+ // flared tank shoulders. One shared indexed mesh instead of boxy toy panels.
+ const fairingVertices=[],fairingIndices=[];
+ for(const side of [-1,1]){
+  const offset=fairingVertices.length/3;
+  const sections=[
+   [-.58,1.11,.30],[-.30,1.13,.38],[.08,1.18,.42],
+   [.43,1.26,.34],[.79,1.33,.20],[1.05,1.29,.10]
+  ];
+  for(const [z,y,width] of sections){
+   fairingVertices.push(side*width,y,z);
+   fairingVertices.push(side*(width*.70),y-.37,z);
+  }
+  for(let j=0;j<sections.length-1;j++){
+   const k=offset+j*2;
+   if(side<0)fairingIndices.push(k,k+1,k+2,k+1,k+3,k+2);
+   else fairingIndices.push(k,k+2,k+1,k+1,k+2,k+3);
+  }
+ }
+ const fairingGeometry=new THREE.BufferGeometry();
+ fairingGeometry.setAttribute('position',new THREE.Float32BufferAttribute(fairingVertices,3));
+ fairingGeometry.setIndex(fairingIndices);
+ fairingGeometry.computeVertexNormals();
+ const fairingPaint=new THREE.MeshPhysicalMaterial({
+  color:0x234762,metalness:.62,roughness:.27,clearcoat:.72,
+  clearcoatRoughness:.24,side:THREE.DoubleSide
+ });
+ const fairing=new THREE.Mesh(fairingGeometry,fairingPaint);
+ fairing.name='expressway-motorcycle-sculpted-fairing';
+ g.add(fairing);
+ // Sloped smoked windscreen with an actual open cockpit silhouette.
+ const screenShape=new THREE.Shape();
+ screenShape.moveTo(-.31,0);screenShape.lineTo(.31,0);
+ screenShape.lineTo(.23,.44);screenShape.quadraticCurveTo(0,.54,-.23,.44);
+ screenShape.closePath();
+ const screen=new THREE.Mesh(
+  new THREE.ShapeGeometry(screenShape,6),
+  new THREE.MeshPhysicalMaterial({color:0x142b37,metalness:.12,
+   roughness:.16,transparent:true,opacity:.79,side:THREE.DoubleSide,
+   depthWrite:false})
+ );
+ screen.position.set(0,1.45,.72);
+ screen.rotation.x=-.31;
+ screen.name='expressway-motorcycle-smoked-windscreen';
+ g.add(screen);
+
  mesh(new THREE.BoxGeometry(.36,.19,.44),paint,0,.94,-.91);
  strut([.39,.79,-.23],[.46,.76,-1.1],.095,alloy);
  strut([-.48,1.53,.64],[.48,1.53,.64],.035,alloy);
