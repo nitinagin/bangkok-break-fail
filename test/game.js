@@ -6453,19 +6453,27 @@ function makeTukTuk(){
   framePart.updateMatrix();
   frame.setMatrixAt(frameIndex++,framePart.matrix);
  }
- const canopyY=x=>2.34+.235*(1-(x/.86)*(x/.86))+.055*Math.sin(Math.PI/3)*(1-.35*Math.abs(x/.86));
+ // Match the steel bows to the actual sculpted canvas rather than a lower,
+ // obsolete roof profile. This removes the visible floating canopy/frame gap.
+ const canopyY=(x,z)=>{
+  const v=Math.max(0,Math.min(1,(z+1.38)/2.43));
+  const crown=.315*(1-(x/.86)**2);
+  const tension=.075*Math.sin(Math.PI*v)*(1-.35*Math.abs(x/.86));
+  const sag=-.115*(1-v)**2*(1-.25*Math.abs(x/.86));
+  return 2.34+crown+tension+sag-.014;
+ };
  for(const z of [-1.33,-.30,.72]){
   for(let ix=0;ix<4;ix++){
    const x0=-.86+ix*.43,x1=x0+.43;
-   addCanopyTube(x0,canopyY(x0),z,x1,canopyY(x1),z);
+   addCanopyTube(x0,canopyY(x0,z),z,x1,canopyY(x1,z),z);
   }
  }
- for(const x of [-.85,.85])addCanopyTube(x,canopyY(x),-1.38,x,canopyY(x),.78);
+ for(const x of [-.85,.85])addCanopyTube(x,canopyY(x,-1.38),-1.38,x,canopyY(x,.78),.78);
  // Sloping front/rear support stays create the recognizable open-sided Bangkok
  // tuk-tuk silhouette; four extra instances, still one shared steel draw call.
  for(const side of [-1,1]){
-  addCanopyTube(side*.85,1.23,-.96,side*.85,canopyY(side*.85),-1.33);
-  addCanopyTube(side*.85,1.23,.39,side*.85,canopyY(side*.85),.72);
+  addCanopyTube(side*.85,1.23,-.96,side*.85,canopyY(side*.85,-1.33),-1.33);
+  addCanopyTube(side*.85,1.23,.39,side*.85,canopyY(side*.85,.72),.72);
  }
  // The same instanced chrome tubes form the motorcycle-style handlebar,
  // steering stem and brake levers (7 parts, no additional steel draw call).
