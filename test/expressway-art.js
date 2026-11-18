@@ -32,6 +32,24 @@ export function createExpresswayArt(THREE){
    ec.fillStyle='rgba(255,242,210,.18)';
    ec.fillRect(x+2,y+1,2,8);
   }
+  // Office interiors: desks, monitor silhouettes and occasional people at
+  // night. Drawn directly into the shared facade atlas, with corresponding
+  // emissive occlusion, so distant towers gain scale without extra geometry.
+  if(lit&&(row*17+col*29)%7<3){
+   const deskY=y+6;
+   ctx.fillStyle='rgba(13,24,31,.82)';ctx.fillRect(x+3,deskY,15,2);
+   ec.fillStyle='#000';ec.fillRect(x+3,deskY,15,2);
+   const monitorX=x+5+((row+col)%3)*3;
+   ctx.fillStyle='rgba(8,17,24,.95)';ctx.fillRect(monitorX,y+3,5,3);
+   ec.fillStyle='#000';ec.fillRect(monitorX,y+3,5,3);
+   ctx.fillStyle='rgba(103,179,192,.36)';ctx.fillRect(monitorX+1,y+3,3,1);
+   if((row*13+col*7)%11===0){
+    ctx.fillStyle='rgba(12,19,25,.94)';
+    ctx.fillRect(x+15,y+3,3,4);
+    ctx.fillRect(x+15,y+2,2,2);
+    ec.fillStyle='#000';ec.fillRect(x+15,y+2,3,5);
+   }
+  }
   // Curtains and blinds vary occupied rooms; mask emissive glazing too.
   const room=(row*37+col*23+row*col*3)%19;
   if(room===2||room===8||room===14){
