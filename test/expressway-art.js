@@ -120,6 +120,31 @@ export function createExpresswayArt(THREE){
   }
   ctx.restore();ec.restore();
  }
+ // A second, cool-white/teal vertical Thai pharmacy sign offsets the pink
+ // hotel neon and gives the skyline recognisable mixed-use Bangkok signage.
+ // Painted into existing albedo/emissive atlases: no geometry or draw calls.
+ {
+  const sx=151,sy=82,sw=24,sh=118;
+  ctx.fillStyle='#0a242a';ctx.fillRect(sx,sy,sw,sh);
+  ctx.fillStyle='#193940';ctx.fillRect(sx+2,sy+2,sw-4,sh-4);
+  ec.fillStyle='#06151a';ec.fillRect(sx,sy,sw,sh);
+  ctx.strokeStyle='#57b7b4';ec.strokeStyle='#36a6a5';
+  ctx.lineWidth=2;ec.lineWidth=2;
+  ctx.strokeRect(sx+2,sy+2,sw-4,sh-4);
+  ec.strokeRect(sx+2,sy+2,sw-4,sh-4);
+  ctx.save();ec.save();
+  ctx.font='bold 16px sans-serif';ec.font='bold 16px sans-serif';
+  ctx.textAlign='center';ec.textAlign='center';
+  ctx.textBaseline='middle';ec.textBaseline='middle';
+  const glyphs=['ร','้','า','น','ย','า'];
+  for(let i=0;i<glyphs.length;i++){
+   const gy=sy+13+i*17;
+   ctx.shadowColor='#64e3df';ctx.shadowBlur=4;
+   ctx.fillStyle='#d9fffb';ctx.fillText(glyphs[i],sx+sw/2,gy);
+   ec.fillStyle='#64d9d4';ec.fillText(glyphs[i],sx+sw/2,gy);
+  }
+  ctx.restore();ec.restore();
+ }
  // Realistic Bangkok facade depth: balcony slabs, shaded rails and irregular
  // air-conditioning ledges baked into the shared atlas (no extra draw calls).
  // Keep emissive windows occluded where concrete projects across the glazing.
