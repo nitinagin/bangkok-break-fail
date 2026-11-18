@@ -3788,6 +3788,32 @@ for(let i=0;i<9;i++){
  stain.addColorStop(0,'rgba(25,20,23,.18)');stain.addColorStop(1,'rgba(25,20,23,0)');
  playerCanopyCtx.fillStyle=stain;playerCanopyCtx.fillRect(x-52,y-52,104,104);
 }
+// Baked canvas panel seams, tension folds and runoff marks add readable roof scale
+// without additional meshes, draw calls, lights or network textures.
+for(const seamX of [86,170]){
+ playerCanopyCtx.fillStyle='rgba(23,13,20,.32)';
+ playerCanopyCtx.fillRect(seamX-2,0,4,256);
+ playerCanopyCtx.fillStyle='rgba(245,193,167,.22)';
+ playerCanopyCtx.fillRect(seamX+2,0,2,256);
+ for(let y=4;y<256;y+=9){
+  playerCanopyCtx.fillStyle='rgba(234,185,161,.55)';
+  playerCanopyCtx.fillRect(seamX-1,y,2,4);
+ }
+}
+for(let i=0;i<18;i++){
+ const x=12+i*13,y=16+(i*37)%188;
+ const fold=playerCanopyCtx.createLinearGradient(x,0,x+8,0);
+ fold.addColorStop(0,'rgba(17,11,19,0)');
+ fold.addColorStop(.4,'rgba(16,9,16,.14)');
+ fold.addColorStop(1,'rgba(234,179,165,.075)');
+ playerCanopyCtx.fillStyle=fold;
+ playerCanopyCtx.fillRect(x,y,8,45+(i%4)*10);
+}
+for(let i=0;i<22;i++){
+ const x=(i*41+17)%256,y=(i*67+11)%176;
+ playerCanopyCtx.fillStyle='rgba(30,22,25,.11)';
+ playerCanopyCtx.fillRect(x,y,1,25+(i%5)*9);
+}
 const playerCanopyTexture=new THREE.CanvasTexture(playerCanopyCanvas);
 playerCanopyTexture.colorSpace=THREE.SRGBColorSpace;playerCanopyTexture.anisotropy=mobile?2:4;
 const canopyFabric=new THREE.MeshStandardMaterial({map:playerCanopyTexture,roughness:.95,metalness:0,side:THREE.DoubleSide});
