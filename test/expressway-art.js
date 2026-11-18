@@ -1130,6 +1130,28 @@ export function createExpresswayArt(THREE){
   bac.lineTo(cx+rx*.2,cy-ry*.32);bac.stroke();
   bac.restore();
  }
+ // Long rain-polished headlight reflections along the flyover wheel paths.
+ // Broken, tapered highlights suggest wet asphalt rather than glowing lane paint.
+ // Baked into the existing 256x128 asphalt atlas: no extra GPU resources.
+ for(const [laneY,phase] of [[34,0],[92,13]]){
+  for(let segment=0;segment<7;segment++){
+   const x=8+segment*37+phase%9;
+   const span=14+(segment*11+phase)%19;
+   const sheen=bac.createLinearGradient(x,laneY,x+span,laneY);
+   sheen.addColorStop(0,'rgba(144,164,172,0)');
+   sheen.addColorStop(.24,'rgba(152,176,186,.11)');
+   sheen.addColorStop(.55,'rgba(199,185,160,.18)');
+   sheen.addColorStop(1,'rgba(140,162,173,0)');
+   bac.fillStyle=sheen;
+   bac.beginPath();
+   bac.moveTo(x,laneY-1);
+   bac.lineTo(x+span*.38,laneY-1.7);
+   bac.lineTo(x+span,laneY-.35);
+   bac.lineTo(x+span*.7,laneY+1);
+   bac.lineTo(x+span*.2,laneY+.8);
+   bac.closePath();bac.fill();
+  }
+ }
  // Recessed transverse steel expansion joints and drainage slots: a strong
  // elevated-road cue, baked into the existing asphalt PBR atlas.
  // Edge grates sit outside the central dodge corridor; no new draw calls.
