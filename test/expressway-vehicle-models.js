@@ -1497,13 +1497,30 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
  // and all geometry stays within the existing collision footprint.
  if(!isBus){
   const bonnetStripes=new THREE.InstancedMesh(
-   new THREE.PlaneGeometry(.14,.79),
+   new THREE.BufferGeometry(),
    new THREE.MeshStandardMaterial({color:0xe6ddd0,metalness:.24,roughness:.39,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-1}),
    2
   );
-  const stripeMatrix=new THREE.Matrix4(),stripeRotation=new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI/2,0,0));
+  // Tapered six-segment hood appliques follow the bonnet's longitudinal
+  // slope instead of floating as flat rectangles over its pressed steel.
+  // One shared indexed geometry keeps both stripes in a single draw call.
+  const vertices=[],uv=[],triangles=[];
+  for(let j=0;j<=6;j++){
+   const t=j/6,z=.72+t*.79;
+   const halfWidth=.07*(1-.27*t);
+   const y=.756-.105*t;
+   vertices.push(-halfWidth,y,z,halfWidth,y,z);
+   uv.push(0,t,1,t);
+   if(j<6){const k=j*2;triangles.push(k,k+1,k+2,k+1,k+3,k+2);}
+  }
+  const stripeGeo=bonnetStripes.geometry;
+  stripeGeo.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));
+  stripeGeo.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));
+  stripeGeo.setIndex(triangles);
+  stripeGeo.computeVertexNormals();
+  const stripeMatrix=new THREE.Matrix4();
   for(let i=0;i<2;i++){
-   stripeMatrix.compose(new THREE.Vector3(i===0?-.19:.19,.745,1.13),stripeRotation,new THREE.Vector3(1,1,1));
+   stripeMatrix.makeTranslation(i===0?-.19:.19,0,0);
    bonnetStripes.setMatrixAt(i,stripeMatrix);
   }
   bonnetStripes.instanceMatrix.needsUpdate=true;
