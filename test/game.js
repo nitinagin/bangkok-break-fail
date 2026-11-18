@@ -82,7 +82,7 @@ const districtLightPresets=[
  [.22,.080,0x88769e,0x1b1022,0xffb3d6], // Pattaya: colored nightlife bounce
  [.075,.035,0x536173,0x080a0d,0x8c98a4] // Dark Road: headlight only
 ];
-const mat=(c)=>new THREE.MeshLambertMaterial({color:c,flatShading:true});const M={road:mat(0x484b52),stripe:new THREE.MeshStandardMaterial({color:0xe2c579,roughness:.92,metalness:0}),grass:mat(0x34333b),blue:mat(0x18c5d2),gold:mat(0xffd64b),pink:mat(0xf56d85),black:mat(0x252333),glass:mat(0x4d91b9),wheel:mat(0x22212b),durian:mat(0x70b525),spike:mat(0xffe157),skin:mat(0xffcb95),white:mat(0xffffff),red:mat(0xe65a4e),green:mat(0x42ad76),purple:mat(0x8869b6)};
+const mat=(c)=>new THREE.MeshLambertMaterial({color:c,flatShading:true});const M={road:new THREE.MeshStandardMaterial({color:0x34383d,roughness:.97,metalness:0}),stripe:new THREE.MeshStandardMaterial({color:0xe2c579,roughness:.92,metalness:0}),grass:mat(0x34333b),blue:mat(0x18c5d2),gold:mat(0xffd64b),pink:mat(0xf56d85),black:mat(0x252333),glass:mat(0x4d91b9),wheel:mat(0x22212b),durian:mat(0x70b525),spike:mat(0xffe157),skin:mat(0xffcb95),white:mat(0xffffff),red:mat(0xe65a4e),green:mat(0x42ad76),purple:mat(0x8869b6)};
 function cube(w,h,d,m,x=0,y=0,z=0){const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);return o}
 function ball(r,m,x=0,y=0,z=0){const o=new THREE.Mesh(new THREE.SphereGeometry(r,9,7),m);o.position.set(x,y,z);return o}
 function wheel(x,z){const o=new THREE.Mesh(new THREE.CylinderGeometry(.38,.38,.22,12),M.wheel);o.rotation.z=Math.PI/2;o.position.set(x,.38,z);return o}
