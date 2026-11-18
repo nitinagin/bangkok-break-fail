@@ -1492,6 +1492,24 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
  const geometry=new THREE.ExtrudeGeometry(shape,{depth:w,bevelEnabled:true,bevelSize:.035,bevelThickness:.035,bevelSegments:1});
  geometry.rotateY(Math.PI/2);geometry.translate(-w/2,0,0);
  group.add(new THREE.Mesh(geometry,paint));
+ // Twin inset bonnet stripes give the expressway GT a recognisable racing
+ // silhouette at chase-camera distance. One instanced draw, no light sources,
+ // and all geometry stays within the existing collision footprint.
+ if(!isBus){
+  const bonnetStripes=new THREE.InstancedMesh(
+   new THREE.PlaneGeometry(.14,.79),
+   new THREE.MeshStandardMaterial({color:0xe6ddd0,metalness:.24,roughness:.39,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-1}),
+   2
+  );
+  const stripeMatrix=new THREE.Matrix4(),stripeRotation=new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI/2,0,0));
+  for(let i=0;i<2;i++){
+   stripeMatrix.compose(new THREE.Vector3(i===0?-.19:.19,.745,1.13),stripeRotation,new THREE.Vector3(1,1,1));
+   bonnetStripes.setMatrixAt(i,stripeMatrix);
+  }
+  bonnetStripes.instanceMatrix.needsUpdate=true;
+  bonnetStripes.name='gt-bonnet-twin-racing-stripes';
+  group.add(bonnetStripes);
+ }
  function box(x,y,z,a,b,c,material){const m=new THREE.Mesh(new THREE.BoxGeometry(a,b,c),material);m.position.set(x,y,z);group.add(m);}
  if(isBus){
   const busGlazing=makeBusGlazing(THREE),destination=makeBusDestination(THREE);
