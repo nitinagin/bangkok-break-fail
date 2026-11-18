@@ -97,6 +97,40 @@ export function createExpresswayArt(THREE){
    ctx.fillRect(x+4,y+2,8,1);
   }
  }
+ // Multi-storey open-air parking podium: deep shadowed bays, concrete
+ // spandrels, parked car silhouettes and security lights replace a broad
+ // uninterrupted window grid. Baked into the existing albedo/emissive atlases,
+ // so the urban massing reads as Bangkok mixed-use development at driving speed.
+ // Zero additional meshes, textures, lights or per-frame allocations.
+ {
+  const px=118,py=321,pw=91,ph=147;
+  ctx.fillStyle='#263039';ctx.fillRect(px,py,pw,ph);
+  ec.fillStyle='#000';ec.fillRect(px,py,pw,ph);
+  for(let floor=0;floor<6;floor++){
+   const fy=py+floor*24;
+   ctx.fillStyle='#111b24';ctx.fillRect(px+3,fy+3,pw-6,17);
+   ctx.fillStyle='#65717a';ctx.fillRect(px,fy+20,pw,4);
+   ctx.fillStyle='#202a32';ctx.fillRect(px,fy+23,pw,1);
+   for(let bay=0;bay<4;bay++){
+    const bx=px+5+bay*22;
+    ctx.fillStyle='#49535a';ctx.fillRect(bx,fy+2,3,18);
+    if((floor*7+bay*11)%5!==0){
+     ctx.fillStyle=(floor+bay)%3===0?'#4b5861':'#27323a';
+     ctx.fillRect(bx+5,fy+12,12,5);
+     ctx.fillStyle='#141c22';ctx.fillRect(bx+7,fy+10,8,3);
+     ctx.fillStyle='#111820';ctx.fillRect(bx+6,fy+16,3,2);
+     ctx.fillRect(bx+14,fy+16,3,2);
+    }
+   }
+   // Low-intensity security fixtures, occluded by structural columns.
+   for(const lx of [px+12,px+77]){
+    ctx.fillStyle='#b7a784';ctx.fillRect(lx,fy+4,5,2);
+    ec.fillStyle='#8a754f';ec.fillRect(lx,fy+4,5,2);
+   }
+  }
+  ctx.fillStyle='#7b8386';ctx.fillRect(px-2,py-3,pw+4,4);
+  ec.fillStyle='#000';ec.fillRect(px-2,py-3,pw+4,4);
+ }
  // Large illuminated Bangkok rooftop advertisement, baked into the existing
  // shared albedo/emissive facade atlas. At night the broad sign reads from a
  // moving vehicle rather than resembling a grid of toy windows. No extra mesh,
