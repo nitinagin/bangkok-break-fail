@@ -1809,6 +1809,36 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
     creaseIndices.push(a,b,a+1,a+1,b,b+1);
    }
   }
+  // Four pressed wheel-arch lips replace the GT's flat side cutouts.
+  // Build each semicircular arch into the existing shoulder-crease mesh:
+  // one shared PBR draw call, no new textures or per-frame work.
+  // Wheels are centred at z=+/-1.10 and y=.40 with radius .37.
+  for(const side of [-1,1]){
+   for(const axle of [-1,1]){
+    const centerZ=axle*1.10,segments=12,base=creasePositions.length/3;
+    for(let step=0;step<=segments;step++){
+     const angle=Math.PI*step/segments;
+     const z=centerZ+Math.cos(angle)*.43;
+     const y=.40+Math.sin(angle)*.43;
+     // Dark inner wheel-well shadow, painted fender edge, metal highlight.
+     for(const [radius,depth,hex] of [
+      [-.035,.915,0x161b20],
+      [0,.938,0x8e2936],
+      [.042,.933,0xd96b74]
+     ]){
+      creasePositions.push(side*depth,y+Math.sin(angle)*radius,z+Math.cos(angle)*radius);
+      const c=new THREE.Color(hex);
+      creaseColors.push(c.r,c.g,c.b);
+     }
+    }
+    for(let step=0;step<segments;step++){
+     for(let band=0;band<2;band++){
+      const a=base+step*3+band,b=a+3;
+      creaseIndices.push(a,b,a+1,a+1,b,b+1);
+     }
+    }
+   }
+  }
   const creaseGeometry=new THREE.BufferGeometry();
   creaseGeometry.setAttribute('position',new THREE.Float32BufferAttribute(creasePositions,3));
   creaseGeometry.setAttribute('color',new THREE.Float32BufferAttribute(creaseColors,3));
