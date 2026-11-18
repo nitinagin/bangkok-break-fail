@@ -2505,6 +2505,36 @@ gantry.position.z=-75;group.add(gantry);
   roadWearMesh.instanceMatrix.needsUpdate=true;
  }
  placeRoadWear();group.add(roadWearMesh);
+ // Recessed bridge-deck expansion joints: real elevated roads have transverse
+ // steel joints and dark rubber seals. Keep these flush with the road so they
+ // remain purely visual and never block any of the three dodge lanes.
+ const jointCanvas=document.createElement('canvas');jointCanvas.width=256;jointCanvas.height=32;
+ const jc=jointCanvas.getContext('2d');
+ jc.fillStyle='#343a3d';jc.fillRect(0,0,256,32);
+ jc.fillStyle='#11171b';jc.fillRect(0,10,256,11);
+ jc.fillStyle='#697174';jc.fillRect(0,8,256,2);
+ jc.fillStyle='#51595c';jc.fillRect(0,21,256,2);
+ for(let x=6;x<256;x+=19){
+  jc.fillStyle='#20292d';jc.fillRect(x,7,3,17);
+  jc.fillStyle='#8b8f88';jc.fillRect(x+1,8,1,2);
+ }
+ const jointTexture=new THREE.CanvasTexture(jointCanvas);
+ jointTexture.colorSpace=THREE.SRGBColorSpace;
+ const jointMaterial=new THREE.MeshStandardMaterial({map:jointTexture,roughness:.86,metalness:.28,side:THREE.DoubleSide,depthWrite:false});
+ const jointGeometry=new THREE.PlaneGeometry(10.2,.26);jointGeometry.rotateX(-Math.PI/2);
+ const jointCount=12,jointZ=[],jointPose=new THREE.Object3D();
+ const expansionJoints=new THREE.InstancedMesh(jointGeometry,jointMaterial,jointCount);
+ expansionJoints.name='expressway-recessed-steel-expansion-joints';
+ expansionJoints.frustumCulled=false;
+ for(let i=0;i<jointCount;i++)jointZ.push(-16-i*15);
+ function placeExpansionJoints(){
+  for(let i=0;i<jointCount;i++){
+   jointPose.position.set(0,.052,jointZ[i]);
+   jointPose.updateMatrix();expansionJoints.setMatrixAt(i,jointPose.matrix);
+  }
+  expansionJoints.instanceMatrix.needsUpdate=true;
+ }
+ placeExpansionJoints();group.add(expansionJoints);
  // Cast-iron storm drains along Bangkok's elevated expressway shoulders.
  // A shared 128px PBR atlas draws open slots, rust and worn raised ribs;
  // 32 grates use one instanced draw call and stay outside all dodge lanes.
@@ -2551,6 +2581,7 @@ gantry.position.z=-75;group.add(gantry);
   for(let i=0;i<studCount;i++){studZ[i]+=advance;if(studZ[i]>18)studZ[i]-=36*5.35;}placeStuds();
   for(let i=0;i<arrowCount;i++){arrowZ[i]+=advance;if(arrowZ[i]>22)arrowZ[i]-=168;}placeLaneArrows();
   for(let i=0;i<roadWearCount;i++){roadWearZ[i]+=advance;if(roadWearZ[i]>22)roadWearZ[i]-=102;}placeRoadWear();
+  for(let i=0;i<jointCount;i++){jointZ[i]+=advance;if(jointZ[i]>22)jointZ[i]-=jointCount*15;}placeExpansionJoints();
   for(let i=0;i<drainCount;i++){drainZ[i]+=advance;if(drainZ[i]>20)drainZ[i]-=16*11;}placeDrains();
   gantry.position.z+=advance;if(gantry.position.z>24)gantry.position.z-=195;
   for(let i=0;i<barrierCount;i++){barrierZ[i]+=advance;if(barrierZ[i]>20)barrierZ[i]-=22*barrierLength*1.15;}placeBarriers();
@@ -2560,7 +2591,7 @@ gantry.position.z=-75;group.add(gantry);
   bridgeAsphaltMaterial.dispose();bridgeAsphaltTexture.dispose();bridgeRoughTexture.dispose();
   studMaterial.dispose();studMesh.geometry.dispose();railMarkerMaterial.dispose();railBoltMaterial.dispose();
   arrowPaintMaterial.dispose();arrowPaintTexture.dispose();
-  drainMaterial.dispose();drainTexture.dispose();
+  drainMaterial.dispose();drainTexture.dispose();jointMaterial.dispose();jointTexture.dispose();
    bridgeHeadMaterial.dispose();bridgeTailMaterial.dispose();bridgeGlowMaterial.dispose();bridgeGlowTexture.dispose();
    carPaint.dispose();carGlass.dispose();tyreMaterial.dispose();
    taxiLiveryMaterial.dispose();taxiTexture.dispose();
