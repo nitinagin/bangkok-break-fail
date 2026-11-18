@@ -2094,6 +2094,30 @@ const vmsMaterial=new THREE.MeshBasicMaterial({map:vmsTexture,toneMapped:false,s
 const vmsPanel=new THREE.Mesh(new THREE.PlaneGeometry(6.5,1.65),vmsMaterial);
 vmsPanel.position.set(0,7.95,.16);vmsPanel.name='bangkok-expressway-amber-led-advisory';
 gantry.add(vmsPanel);
+// Baked amber road-light pool beneath the overhead traffic gantry. A soft
+// transparent decal follows the moving gantry without a costly real light,
+// and stays flush with the road rather than becoming a collision obstacle.
+const gantryLightCanvas=document.createElement('canvas');
+gantryLightCanvas.width=gantryLightCanvas.height=128;
+const glc=gantryLightCanvas.getContext('2d');
+const lightFalloff=glc.createRadialGradient(64,64,4,64,64,62);
+lightFalloff.addColorStop(0,'rgba(255,191,100,.24)');
+lightFalloff.addColorStop(.36,'rgba(247,168,75,.13)');
+lightFalloff.addColorStop(.72,'rgba(231,133,48,.045)');
+lightFalloff.addColorStop(1,'rgba(231,133,48,0)');
+glc.fillStyle=lightFalloff;glc.fillRect(0,0,128,128);
+const gantryLightTexture=new THREE.CanvasTexture(gantryLightCanvas);
+gantryLightTexture.colorSpace=THREE.SRGBColorSpace;
+const gantryLightMaterial=new THREE.MeshBasicMaterial({
+ map:gantryLightTexture,transparent:true,depthWrite:false,
+ polygonOffset:true,polygonOffsetFactor:-3,side:THREE.DoubleSide,
+ toneMapped:false
+});
+const gantryLightPool=new THREE.Mesh(new THREE.PlaneGeometry(8.6,13),gantryLightMaterial);
+gantryLightPool.name='gantry-amber-wet-road-light-pool';
+gantryLightPool.rotation.x=-Math.PI/2;
+gantryLightPool.position.set(0,.075,0);
+gantry.add(gantryLightPool);
 gantry.position.z=-75;group.add(gantry);
  // Concrete Jersey shoulder barriers: 44 instances, two batched draw calls.
  const barrierCount=44,barrierLength=4.4;
@@ -2381,5 +2405,6 @@ gantry.position.z=-75;group.add(gantry);
   windowTexture.dispose();emissiveTexture.dispose();facadeNormalTexture.dispose();poolTexture.dispose();signTexture.dispose();flyoverTexture.dispose();flyoverNormalTexture.dispose();acousticTexture.dispose();acousticNormalTexture.dispose();acousticRoughnessTexture.dispose();barrierTexture.dispose();reflectorTexture.dispose();vmsTexture.dispose();vmsMaterial.dispose();
   billboardMaterial.dispose();neonMap.dispose();neonGlowMap.dispose();
   roadWearMesh.geometry.dispose();roadWearMaterial.dispose();roadWearTexture.dispose();
+  gantryLightPool.geometry.dispose();gantryLightMaterial.dispose();gantryLightTexture.dispose();
  }};
 }
