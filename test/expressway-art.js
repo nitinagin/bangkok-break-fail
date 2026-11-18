@@ -537,6 +537,24 @@ export function createExpresswayArt(THREE){
  }
  roofPlants.instanceMatrix.needsUpdate=true;
  roofPlants.frustumCulled=false;group.add(roofPlants);
+ // Alternating stepped concrete crowns break the repeated cuboid skyline.
+ // Each crown is a low, inset roof volume (not a floating ornament), with
+ // weathered PBR concrete. Twelve instances cost one static draw call.
+ const crownMat=new THREE.MeshStandardMaterial({color:0x687681,metalness:.12,roughness:.88});
+ const crownMesh=new THREE.InstancedMesh(new THREE.BoxGeometry(1,1,1),crownMat,12);
+ crownMesh.name='expressway-stepped-highrise-roof-crowns';
+ for(let i=0;i<12;i++){
+  const tower=i*2+1,side=tower%2===0?-1:1;
+  const height=10+(tower*13%19),width=4+(tower*5%7),depth=5+(tower*3%7);
+  const crownHeight=.85+(i%3)*.34;
+  const towerX=side*(12+(tower*7%17)),towerZ=-15-Math.floor(tower/2)*9;
+  // The building box roof is at height-2; crown base rests directly on it.
+  dummy.position.set(towerX-width*.12,height-2+crownHeight*.5,towerZ-depth*.08);
+  dummy.scale.set(width*.52,crownHeight,depth*.58);
+  dummy.updateMatrix();crownMesh.setMatrixAt(i,dummy.matrix);
+ }
+ crownMesh.instanceMatrix.needsUpdate=true;
+ group.add(crownMesh);
  // Offset rooftop AC condenser banks add recognizable Bangkok building machinery.
  // All units are instanced in one draw call, remain outside the driving corridor,
  // and share a single PBR material; no per-frame updates or network assets.
