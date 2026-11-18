@@ -2,6 +2,28 @@
 // Usage: import {makeExpresswayVehicle} from './expressway-vehicle-models.js';
 // Add makeExpresswayVehicle(THREE,'sportsCar') or (THREE,'bus') to a scene.
 
+// Share the two asphalt-light atlases across all traffic instances. A weak key
+// keeps distinct Three.js runtimes isolated; cloning a vehicle reuses GPU assets.
+const asphaltLightAssets=new WeakMap();
+function getAsphaltLightAssets(THREE,isBus){
+ let variants=asphaltLightAssets.get(THREE);
+ if(!variants){variants=new Map();asphaltLightAssets.set(THREE,variants);}
+ const key=isBus?'bus':'sports';
+ if(variants.has(key))return variants.get(key);
+ const canvas=document.createElement('canvas');canvas.width=64;canvas.height=128;
+ const ctx=canvas.getContext('2d');
+ const gradient=ctx.createRadialGradient(32,102,3,32,63,70);
+ gradient.addColorStop(0,isBus?'rgba(255,241,204,.47)':'rgba(229,244,255,.53)');
+ gradient.addColorStop(.34,isBus?'rgba(255,211,145,.22)':'rgba(166,212,249,.24)');
+ gradient.addColorStop(1,'rgba(130,190,235,0)');
+ ctx.fillStyle=gradient;ctx.fillRect(0,0,64,128);
+ const map=new THREE.CanvasTexture(canvas);map.colorSpace=THREE.SRGBColorSpace;
+ const geometry=new THREE.PlaneGeometry(isBus?1.42:1.12,isBus?6.7:5.6);
+ const material=new THREE.MeshBasicMaterial({map,transparent:true,depthWrite:false,
+  blending:THREE.AdditiveBlending,side:THREE.DoubleSide,opacity:isBus?.55:.62});
+ const assets={geometry,material};variants.set(key,assets);return assets;
+}
+
 // Bake weathered bus glazing once per shared vehicle template, not per hazard.
 function makeBusGlazing(THREE){
  const canvas=document.createElement('canvas');canvas.width=256;canvas.height=256;
@@ -2307,21 +2329,8 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
  // no shadow-casting lights, collision changes or extra network assets.
  // Keep the beam below wheel height to avoid covering traffic silhouettes.
  {
-  const beamCanvas=document.createElement('canvas');
-  beamCanvas.width=64;beamCanvas.height=128;
-  const beamCtx=beamCanvas.getContext('2d');
-  const beamGradient=beamCtx.createRadialGradient(32,102,3,32,63,70);
-  beamGradient.addColorStop(0,isBus?'rgba(255,241,204,.47)':'rgba(229,244,255,.53)');
-  beamGradient.addColorStop(.34,isBus?'rgba(255,211,145,.22)':'rgba(166,212,249,.24)');
-  beamGradient.addColorStop(1,'rgba(130,190,235,0)');
-  beamCtx.fillStyle=beamGradient;beamCtx.fillRect(0,0,64,128);
-  const beamMap=new THREE.CanvasTexture(beamCanvas);
-  beamMap.colorSpace=THREE.SRGBColorSpace;
-  const headlightPools=new THREE.InstancedMesh(
-   new THREE.PlaneGeometry(isBus?1.42:1.12,isBus?6.7:5.6),
-   new THREE.MeshBasicMaterial({map:beamMap,transparent:true,depthWrite:false,
-    blending:THREE.AdditiveBlending,side:THREE.DoubleSide,opacity:isBus?.55:.62}),2
-  );
+  const beamAssets=getAsphaltLightAssets(THREE,isBus);
+  const headlightPools=new THREE.InstancedMesh(beamAssets.geometry,beamAssets.material,2);
   const beamMatrix=new THREE.Matrix4();
   for(let i=0;i<2;i++){
    beamMatrix.makeRotationX(-Math.PI/2);
