@@ -2314,8 +2314,35 @@ gantry.position.z=-75;group.add(gantry);
  // the last texel over each 4.4m segment.
  barrierTexture.repeat.set(.26,.68);
  barrierTexture.anisotropy=2;
+ // Fine cast-concrete relief, baked once into a 128x256 tangent-space normal map.
+ // The low-amplitude aggregate breaks flat specular highlights without extra meshes,
+ // draw calls, dynamic lights, or per-frame work on mobile GPUs.
+ const barrierNormalCanvas=document.createElement('canvas');
+ barrierNormalCanvas.width=128;barrierNormalCanvas.height=256;
+ const bnc=barrierNormalCanvas.getContext('2d');
+ const normalPixels=bnc.createImageData(128,256);
+ const heightAt=(x,y)=>{
+  const coarse=((x*17+y*31+Math.floor(x/7)*13+Math.floor(y/11)*23)%47)/47;
+  const fine=((x*73+y*101+x*y*3)%29)/29;
+  return coarse*.6+fine*.4;
+ };
+ for(let y=0;y<256;y++)for(let x=0;x<128;x++){
+  const dx=(heightAt((x+1)%128,y)-heightAt((x+127)%128,y))*.22;
+  const dy=(heightAt(x,(y+1)%256)-heightAt(x,(y+255)%256))*.22;
+  const length=Math.hypot(dx,dy,1),index=(y*128+x)*4;
+  normalPixels.data[index]=Math.round(128-127*dx/length);
+  normalPixels.data[index+1]=Math.round(128-127*dy/length);
+  normalPixels.data[index+2]=Math.round(128+127/length);
+  normalPixels.data[index+3]=255;
+ }
+ bnc.putImageData(normalPixels,0,0);
+ const barrierNormalTexture=new THREE.CanvasTexture(barrierNormalCanvas);
+ barrierNormalTexture.wrapS=barrierNormalTexture.wrapT=THREE.RepeatWrapping;
+ barrierNormalTexture.repeat.copy(barrierTexture.repeat);
+ barrierNormalTexture.anisotropy=2;
  const concrete=new THREE.MeshStandardMaterial({
-  color:0xd5d5d2,map:barrierTexture,roughness:.94,metalness:0
+  color:0xd5d5d2,map:barrierTexture,normalMap:barrierNormalTexture,
+  normalScale:new THREE.Vector2(.32,.32),roughness:.94,metalness:0
  });
  // Weathered retroreflective hazard chevrons replace flat yellow blocks.
  // One shared 128px baked atlas for all 44 existing instanced shoulder markers:
