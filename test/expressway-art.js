@@ -97,6 +97,39 @@ export function createExpresswayArt(THREE){
    ctx.fillRect(x+4,y+2,8,1);
   }
  }
+ // Renovation floors: Bangkok's familiar green safety net and steel scaffold
+ // occupy a broad, multi-storey facade section. The opaque net blocks interior
+ // emission; diagonal braces and translucent mesh are baked into existing atlases.
+ // No additional meshes, lights, textures, draw calls or render-loop work.
+ {
+  const left=13,top=294,width=94,height=174;
+  ctx.fillStyle='rgba(8,26,25,.92)';ctx.fillRect(left,top,width,height);
+  ec.fillStyle='#000';ec.fillRect(left,top,width,height);
+  ctx.fillStyle='rgba(18,91,72,.70)';ctx.fillRect(left+2,top+2,width-4,height-4);
+  ctx.save();ctx.beginPath();ctx.rect(left,top,width,height);ctx.clip();
+  for(let x=left;x<left+width;x+=5){
+   ctx.strokeStyle='rgba(135,198,156,.23)';ctx.lineWidth=.7;
+   ctx.beginPath();ctx.moveTo(x,top);ctx.lineTo(x,top+height);ctx.stroke();
+  }
+  for(let y=top;y<top+height;y+=5){
+   ctx.strokeStyle='rgba(133,194,149,.20)';ctx.lineWidth=.7;
+   ctx.beginPath();ctx.moveTo(left,y);ctx.lineTo(left+width,y);ctx.stroke();
+  }
+  for(let x=left+4;x<left+width;x+=29){
+   ctx.fillStyle='rgba(142,153,146,.80)';ctx.fillRect(x,top,2,height);
+  }
+  for(let y=top+8;y<top+height;y+=29){
+   ctx.fillStyle='rgba(135,149,143,.82)';ctx.fillRect(left,y,width,2);
+  }
+  ctx.strokeStyle='rgba(166,179,167,.68)';ctx.lineWidth=2;
+  for(let y=top+9;y<top+height-29;y+=58){
+   for(let x=left+5;x<left+width-29;x+=29){
+    ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+29,y+29);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(x+29,y);ctx.lineTo(x,y+29);ctx.stroke();
+   }
+  }
+  ctx.restore();
+ }
  // Large vertical Thai hotel neon, baked into the facade and emissive atlases.
  // One readable sign occupies several storeys instead of adding tiny window details.
  // Shared texture keeps the existing 24-tower instancing and draw-call budget.
