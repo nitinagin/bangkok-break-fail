@@ -88,6 +88,16 @@ function ball(r,m,x=0,y=0,z=0){const o=new THREE.Mesh(new THREE.SphereGeometry(r
 function wheel(x,z){const o=new THREE.Mesh(new THREE.CylinderGeometry(.38,.38,.22,12),M.wheel);o.rotation.z=Math.PI/2;o.position.set(x,.38,z);return o}
 // A single reusable procedural asphalt texture gives the long road fine grain without extra draw calls.
 const asphaltCanvas=document.createElement('canvas');asphaltCanvas.width=256;asphaltCanvas.height=256;const asphaltCtx=asphaltCanvas.getContext('2d');asphaltCtx.fillStyle='#b5b5b5';asphaltCtx.fillRect(0,0,256,256);for(let i=0;i<1900;i++){const px=Math.random()*256,py=Math.random()*256;asphaltCtx.fillStyle=i%3===0?'rgba(40,40,40,.23)':'rgba(255,255,255,.18)';asphaltCtx.fillRect(px,py,1+(i%3),1+(i%2));}
+// Longitudinal tyre wear baked into the shared asphalt texture; no new draws.
+for(let rut=0;rut<3;rut++){
+ const center=44+rut*83;
+ for(let y=0;y<256;y+=2){
+  const x=center+Math.sin(y*.021+rut*1.7)*3;
+  asphaltCtx.fillStyle=(y+rut*17)%23<5?'rgba(30,34,37,.09)':'rgba(35,39,43,.045)';
+  asphaltCtx.fillRect(x,y,5+(rut%2)*2,2);
+  if(y%13===0){asphaltCtx.fillStyle='rgba(239,233,215,.10)';asphaltCtx.fillRect(x+8,y,1,3)}
+ }
+}
 // Shared 256px puddle albedo and PBR roughness mask for rain-slick Yaowarat.
 // Matte aggregate and glossy standing water use the same UVs and no extra draw calls.
 const wetRoadRoughnessCanvas=document.createElement('canvas');
