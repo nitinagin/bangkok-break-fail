@@ -50,6 +50,20 @@ export function createExpresswayArt(THREE){
     ec.fillStyle='#000';ec.fillRect(x+15,y+2,3,5);
    }
   }
+  // Distant Bangkok apartment facades: small external AC condenser units
+  // baked into the shared atlas, avoiding extra geometry and draw calls.
+  // Position beneath selected windows, with a shadow, fan grille and brackets.
+  if((row*11+col*17)%9===0){
+   const ax=x+12,ay=y+9;
+   ctx.fillStyle='rgba(8,15,22,.72)';ctx.fillRect(ax+1,ay+1,9,4);
+   ctx.fillStyle='#879198';ctx.fillRect(ax,ay,8,4);
+   ctx.fillStyle='#46525c';ctx.fillRect(ax+1,ay+1,4,2);
+   ctx.fillStyle='#aab1b4';ctx.fillRect(ax+2,ay+1,1,2);
+   ctx.fillStyle='#aab1b4';ctx.fillRect(ax+1,ay+2,3,1);
+   ctx.fillStyle='#515b62';ctx.fillRect(ax+5,ay+1,2,2);
+   ctx.fillStyle='#a2a9aa';ctx.fillRect(ax+1,ay+4,1,1);ctx.fillRect(ax+6,ay+4,1,1);
+   ec.fillStyle='#000';ec.fillRect(ax,ay,9,5);
+  }
   // Curtains and blinds vary occupied rooms; mask emissive glazing too.
   const room=(row*37+col*23+row*col*3)%19;
   if(room===2||room===8||room===14){
