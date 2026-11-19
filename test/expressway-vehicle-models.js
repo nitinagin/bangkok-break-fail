@@ -1581,6 +1581,21 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   clearance.name='bangkok-bus-roof-clearance-lamps';
   group.add(clearance);
 
+  // Low-profile rooftop A/C condenser housings, typical of Bangkok city buses.
+  // Two shared PBR instances keep the silhouette readable without per-frame work.
+  const roofAC=new THREE.InstancedMesh(
+   new THREE.BoxGeometry(.98,.16,.78),
+   new THREE.MeshStandardMaterial({color:0xb3b8b4,metalness:.48,roughness:.68}),
+   2
+  );
+  const roofACMatrix=new THREE.Matrix4();
+  for(let n=0;n<2;n++){
+   roofACMatrix.makeTranslation(0,2.965,n===0?-.72:.72);
+   roofAC.setMatrixAt(n,roofACMatrix);
+  }
+  roofAC.instanceMatrix.needsUpdate=true;
+  roofAC.name='bangkok-bus-rooftop-ac-condensers';
+  group.add(roofAC);
   box(0,1.07,0,2.07,.25,4.4,stripe);
   group.add(makeBusSideLivery(THREE));
   // Pressed lower body panels with a continuous recessed beltline and
