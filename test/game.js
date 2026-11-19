@@ -8232,12 +8232,29 @@ const canalBoats=[];
 const boatWakeCanvas=document.createElement('canvas');
 boatWakeCanvas.width=128;boatWakeCanvas.height=256;
 const boatWakeCtx=boatWakeCanvas.getContext('2d');
-for(let streak=0;streak<9;streak++){
- const sx=9+streak*14,w=streak%3-1;
- boatWakeCtx.beginPath();boatWakeCtx.moveTo(sx,8);
- boatWakeCtx.bezierCurveTo(sx+w*8,70,sx-w*10,155,sx+w*6,246);
- boatWakeCtx.strokeStyle=streak%3===0?'rgba(222,234,209,.68)':'rgba(173,205,186,.35)';
- boatWakeCtx.lineWidth=streak%3===0?3:1.5;boatWakeCtx.stroke();
+// Kelvin-style divergent ripples and broken propeller turbulence baked once
+// into the existing shared wake atlas: no additional meshes or frame work.
+for(let bank=0;bank<2;bank++){
+ const direction=bank===0?-1:1;
+ for(let crest=0;crest<13;crest++){
+  const y=21+crest*16.5;
+  const x=64+direction*(7+crest*3.3);
+  boatWakeCtx.beginPath();
+  boatWakeCtx.moveTo(x-direction*(10+crest*.3),y-6);
+  boatWakeCtx.quadraticCurveTo(x,y+3,x+direction*(13+crest*.5),y+9);
+  boatWakeCtx.strokeStyle=crest%3===0?'rgba(233,241,226,.72)':'rgba(179,211,194,.43)';
+  boatWakeCtx.lineWidth=crest%4===0?2.5:1.2;
+  boatWakeCtx.stroke();
+ }
+}
+for(let bubble=0;bubble<75;bubble++){
+ const y=18+(bubble*47)%218;
+ const spread=5+y*.105;
+ const x=64+(((bubble*37)%101)/100*2-1)*spread;
+ const radius=.45+(bubble%4)*.34;
+ boatWakeCtx.beginPath();boatWakeCtx.arc(x,y,radius,0,Math.PI*2);
+ boatWakeCtx.fillStyle=bubble%3===0?'rgba(241,244,227,.50)':'rgba(177,211,196,.27)';
+ boatWakeCtx.fill();
 }
 const wakeFade=boatWakeCtx.createLinearGradient(0,0,0,256);
 wakeFade.addColorStop(0,'rgba(255,255,255,0)');
