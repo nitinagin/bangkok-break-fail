@@ -1596,6 +1596,37 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   roofAC.instanceMatrix.needsUpdate=true;
   roofAC.name='bangkok-bus-rooftop-ac-condensers';
   group.add(roofAC);
+  // Two inset circular fan guards make the roof condensers recognizable
+  // from elevated expressway cameras. Shared instancing, no animation.
+  const fanGuards=new THREE.InstancedMesh(
+   new THREE.RingGeometry(.19,.245,16),
+   new THREE.MeshStandardMaterial({color:0x4c5557,metalness:.68,roughness:.55,side:THREE.DoubleSide}),
+   2
+  );
+  const guardMatrix=new THREE.Matrix4();
+  for(let n=0;n<2;n++){
+   guardMatrix.makeRotationX(-Math.PI/2);
+   guardMatrix.setPosition(0,3.052,n===0?-.72:.72);
+   fanGuards.setMatrixAt(n,guardMatrix);
+  }
+  fanGuards.instanceMatrix.needsUpdate=true;
+  fanGuards.name='bangkok-bus-rooftop-condenser-fan-guards';
+  group.add(fanGuards);
+  const fanBlades=new THREE.InstancedMesh(
+   new THREE.BoxGeometry(.21,.012,.055),
+   new THREE.MeshStandardMaterial({color:0x596367,metalness:.52,roughness:.62}),
+   6
+  );
+  const bladeMatrix=new THREE.Matrix4();
+  for(let n=0;n<2;n++)for(let blade=0;blade<3;blade++){
+   const angle=blade*Math.PI*2/3;
+   bladeMatrix.makeRotationY(angle);
+   bladeMatrix.setPosition(Math.cos(angle)*.095,3.054,(n===0?-.72:.72)+Math.sin(angle)*.095);
+   fanBlades.setMatrixAt(n*3+blade,bladeMatrix);
+  }
+  fanBlades.instanceMatrix.needsUpdate=true;
+  fanBlades.name='bangkok-bus-rooftop-condenser-fan-blades';
+  group.add(fanBlades);
   box(0,1.07,0,2.07,.25,4.4,stripe);
   group.add(makeBusSideLivery(THREE));
   // Pressed lower body panels with a continuous recessed beltline and
