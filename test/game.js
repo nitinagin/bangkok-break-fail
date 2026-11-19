@@ -8425,6 +8425,14 @@ function makeCanalLongTailMotorGeometry(){
  }
  part(new THREE.BoxGeometry(1,1,1),0x555c5c,0,.57,-1.43,.49,.37,.44);
  part(new THREE.BoxGeometry(1,1,1),0x303739,0,.80,-1.46,.41,.14,.37);
+ // A compact fuel tank, raised intake and exposed flywheel make the
+ // stern-mounted long-tail engine read as machinery rather than a plain box.
+ // All parts are baked into the existing shared motor mesh (zero extra draws).
+ part(new THREE.BoxGeometry(1,1,1),0x6b3430,.30,.91,-1.48,.22,.16,.31);
+ part(new THREE.CylinderGeometry(1,1,1,12),0x282d2e,-.32,.59,-1.46,.23,.09,.23,0);
+ part(new THREE.CylinderGeometry(1,1,1,12),0xa4a8a2,-.32,.59,-1.46,.13,.10,.13,0);
+ part(new THREE.CylinderGeometry(1,1,1,8),0x454b4a,.14,1.00,-1.57,.055,.28,.055,.22);
+ part(new THREE.CylinderGeometry(1,1,1,8),0x747b77,.14,1.13,-1.62,.083,.09,.083,.22);
  for(let f=0;f<4;f++)
   part(new THREE.BoxGeometry(1,1,1),0x8c9390,0,.43+f*.085,-1.42,.54,.024,.46);
  part(new THREE.CylinderGeometry(1,1,1,7),0x727a79,0,.27,-2.17,.045,1.64,.045,-.32);
