@@ -75,10 +75,18 @@ function makeBusGlazing(THREE){
  ctx.fillRect(22,89,212,4);
  ctx.restore();
  // Warm interior silhouettes, tempered-glass reflections, and rain streaks.
- ctx.fillStyle='rgba(12,17,23,.8)';
- for(let i=0;i<3;i++){
-  const x=43+i*82;ctx.beginPath();ctx.ellipse(x,151,18,24,0,0,Math.PI*2);ctx.fill();
-  ctx.fillRect(x-21,170,42,80);
+ // Two passengers occupy the left and centre seats. Reserve the right-hand
+ // driver's sightline: the old third passenger overlapped the steering wheel
+ // and made the bus cabin read as a stack of flat cartoon silhouettes.
+ // Shoulders taper into seat backs; everything stays in the shared glass atlas.
+ ctx.fillStyle='rgba(12,17,23,.80)';
+ for(const [x,headY,headR] of [[45,151,17],[123,158,15]]){
+  ctx.beginPath();ctx.ellipse(x,headY,headR,headR*1.24,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.moveTo(x-headR-7,222);
+  ctx.quadraticCurveTo(x-headR-12,headY+26,x-8,headY+24);
+  ctx.lineTo(x+8,headY+24);
+  ctx.quadraticCurveTo(x+headR+12,headY+28,x+headR+7,222);
+  ctx.closePath();ctx.fill();
  }
  // Driver and steering-wheel silhouette seen through the lower windscreen.
  // Kept below the LED route board and baked into the existing 256px atlas.
