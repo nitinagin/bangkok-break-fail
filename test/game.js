@@ -8403,9 +8403,51 @@ const canalVendorGeometry=makeCanalVendorGeometry();
 const canalVendorMaterial=new THREE.MeshStandardMaterial({
  vertexColors:true,roughness:.91,metalness:0,flatShading:true
 });
+// Low-draw Thai long-tail outboard motor: cast engine block, cooling fins,
+// tilted driveshaft and propeller share one vertex-coloured PBR draw per boat.
+// Geometry is baked once; there are no per-frame motor updates or extra assets.
+function makeCanalLongTailMotorGeometry(){
+ const positions=[],normals=[],colors=[];
+ const tint=new THREE.Color();
+ function part(geometry,color,x,y,z,sx=1,sy=1,sz=1,rotationX=0){
+  const g=geometry.toNonIndexed();
+  const p=g.getAttribute('position'),n=g.getAttribute('normal');
+  tint.setHex(color);
+  const co=Math.cos(rotationX),si=Math.sin(rotationX);
+  for(let v=0;v<p.count;v++){
+   const px=p.getX(v)*sx,py=p.getY(v)*sy,pz=p.getZ(v)*sz;
+   positions.push(x+px,y+py*co-pz*si,z+py*si+pz*co);
+   const nx=n.getX(v)/sx,ny=n.getY(v)/sy,nz=n.getZ(v)/sz;
+   normals.push(nx,ny*co-nz*si,ny*si+nz*co);
+   colors.push(tint.r,tint.g,tint.b);
+  }
+  g.dispose();geometry.dispose();
+ }
+ part(new THREE.BoxGeometry(1,1,1),0x555c5c,0,.57,-1.43,.49,.37,.44);
+ part(new THREE.BoxGeometry(1,1,1),0x303739,0,.80,-1.46,.41,.14,.37);
+ for(let f=0;f<4;f++)
+  part(new THREE.BoxGeometry(1,1,1),0x8c9390,0,.43+f*.085,-1.42,.54,.024,.46);
+ part(new THREE.CylinderGeometry(1,1,1,7),0x727a79,0,.27,-2.17,.045,1.64,.045,-.32);
+ part(new THREE.CylinderGeometry(1,1,1,7),0x383e40,0,-.01,-2.88,.07,.16,.07,-.32);
+ for(let blade=0;blade<3;blade++){
+  const a=blade*Math.PI*2/3;
+  part(new THREE.BoxGeometry(1,1,1),0x6b7775,Math.sin(a)*.12,-.09+Math.cos(a)*.12,-2.93,.055,.23,.025,a);
+ }
+ const result=new THREE.BufferGeometry();
+ result.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+ result.setAttribute('normal',new THREE.Float32BufferAttribute(normals,3));
+ result.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));
+ result.normalizeNormals();result.computeBoundingSphere();
+ return result;
+}
+const canalMotorGeometry=makeCanalLongTailMotorGeometry();
+const canalMotorMaterial=new THREE.MeshStandardMaterial({
+ vertexColors:true,roughness:.67,metalness:.55,side:THREE.FrontSide
+});
 for(let i=0;i<10;i++){
  const boat=new THREE.Group();
  boat.add(new THREE.Mesh(boatHullGeometry,boatWoodMaterial));
+ boat.add(new THREE.Mesh(canalMotorGeometry,canalMotorMaterial));
  const vendor=new THREE.Mesh(canalVendorGeometry,canalVendorMaterial);
  boat.add(vendor);boat.userData.vendor=vendor;
  // One instanced mango draw and one instanced stem draw per boat:
