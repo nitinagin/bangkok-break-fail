@@ -7887,6 +7887,33 @@ canalHouses.instanceMatrix.needsUpdate=true;
 canalHouses.instanceColor.needsUpdate=true;
 canalHouses.computeBoundingSphere();
 canalGroup.add(canalHouses);
+// Thin raised seams on the corrugated metal roof panels. The ribs follow the
+// existing roof pitches and repeat across the length of each house. All 108
+// ribs share one instanced draw, avoiding dozens of mobile draw calls.
+const canalRoofRibsPerSlope=9;
+const canalRoofRibs=new THREE.InstancedMesh(
+ new THREE.BoxGeometry(1,1,1),
+ new THREE.MeshStandardMaterial({color:0x706d65,roughness:.78,metalness:.32}),
+ canalHouseCount*2*canalRoofRibsPerSlope
+);
+const roofRibPose=new THREE.Object3D();
+let roofRibIndex=0;
+for(let i=0;i<canalHouseCount;i++){
+ const z=-22-i*34,baseX=14.7+(i%3)*.4;
+ for(const side of [-1,1]){
+  for(let rib=0;rib<canalRoofRibsPerSlope;rib++){
+   roofRibPose.position.set(baseX+side*.86,3.935,z-2.35+rib*(4.7/(canalRoofRibsPerSlope-1)));
+   roofRibPose.rotation.set(0,0,side*.38);
+   roofRibPose.scale.set(2.14,.026,.028);
+   roofRibPose.updateMatrix();
+   canalRoofRibs.setMatrixAt(roofRibIndex++,roofRibPose.matrix);
+  }
+ }
+}
+if(roofRibIndex!==canalRoofRibs.count)throw new Error('Canal roof rib instance count mismatch');
+canalRoofRibs.instanceMatrix.needsUpdate=true;
+canalRoofRibs.computeBoundingSphere();
+canalGroup.add(canalRoofRibs);
 // Shaded timber lattice windows on the canal-facing walls: 12 dark recessed
 // openings with warm wooden crossbars, batched into one instanced PBR draw.
 // Kept beyond the road/canal collision area and updated only at startup.
