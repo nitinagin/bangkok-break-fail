@@ -2570,28 +2570,63 @@ gantry.position.z=-75;group.add(gantry);
   drains.instanceMatrix.needsUpdate=true;
  }
  placeDrains();group.add(drains);
- // Two distant tower cranes give the expressway a recognisable Bangkok
- // construction skyline. All structural members share one low-cost PBR
- // material; cranes are static and remain well outside the playable lanes.
- const craneSteel=new THREE.MeshStandardMaterial({color:0x8a7965,metalness:.58,roughness:.73});
- const craneParts=new THREE.Group();craneParts.name='distant-construction-cranes';
- const craneBeam=(w,h,d,x,y,z)=>{
-  const beam=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),craneSteel);
-  beam.position.set(x,y,z);craneParts.add(beam);return beam;
- };
- for(const [side,depth,height] of [[-1,-91,24],[1,-124,30]]){
-  const x=side*31;
-  craneBeam(.65,height,.65,x,height/2,depth); // lattice mast silhouette
-  craneBeam(21,.36,.52,x+side*4,height,depth); // working jib
-  craneBeam(6,.48,.58,x-side*9,height,depth); // counter-jib
-  const tip=x+side*14;
-  const cable=craneBeam(.055,7,.055,tip,height-3.5,depth);
-  cable.material=craneSteel;
-  // Slender diagonal support from the tower top to the jib.
-  const brace=craneBeam(.12,Math.hypot(8,4),.12,x+side*4,height+2,depth);
-  brace.rotation.z=side*Math.atan2(8,4);
-  craneBeam(1.5,.8,1.2,x,height-1.1,depth); // operator cabin
+ // Two distant construction cranes use open trusswork rather than solid
+ // toy-block beams. Batched steel struts keep the skyline mobile-friendly.
+ const craneSteel=new THREE.MeshStandardMaterial({color:0x897b69,metalness:.57,roughness:.69});
+ const craneCabMat=new THREE.MeshStandardMaterial({color:0x3b4850,metalness:.35,roughness:.42});
+ const craneParts=new THREE.Group();craneParts.name='distant-lattice-tower-cranes';
+ const struts=[];
+ function addCraneStrut(a,b,r=.065){
+  const from=new THREE.Vector3(...a),to=new THREE.Vector3(...b);
+  struts.push({from,to,r});
  }
+ for(const [side,depth,height] of [[-1,-91,24],[1,-124,30]]){
+  const x=side*31,half=.42;
+  // Four mast chords, with diagonal X-bracing on all four faces.
+  for(const dx of [-half,half])for(const dz of [-half,half])
+   addCraneStrut([x+dx,0,depth+dz],[x+dx,height,depth+dz],.095);
+  for(let y=0;y<height-1;y+=2){
+   const top=Math.min(height,y+2);
+   for(const dz of [-half,half]){
+    addCraneStrut([x-half,y,depth+dz],[x+half,top,depth+dz],.047);
+    addCraneStrut([x+half,y,depth+dz],[x-half,top,depth+dz],.047);
+   }
+   for(const dx of [-half,half]){
+    addCraneStrut([x+dx,y,depth-half],[x+dx,top,depth+half],.047);
+   }
+  }
+  // Triangular lattice jib and shorter counter-jib, not a solid rectangle.
+  for(const [from,to] of [[-10,15],[0,-12]]){
+   const a=x+side*from,b=x+side*to;
+   addCraneStrut([a,height,depth],[b,height,depth],.105);
+   addCraneStrut([a,height-.68,depth],[b,height-.68,depth],.075);
+   const segments=Math.ceil(Math.abs(to-from)/2.5);
+   for(let j=0;j<segments;j++){
+    const u=j/segments,v=(j+1)/segments;
+    const xa=a+(b-a)*u,xb=a+(b-a)*v;
+    addCraneStrut([xa,height-.68,depth],[xb,height,depth],.045);
+   }
+  }
+  addCraneStrut([x,height+3,depth],[x+side*15,height,depth],.055);
+  addCraneStrut([x,height+3,depth],[x-side*12,height,depth],.055);
+  addCraneStrut([x+side*13,height,depth],[x+side*13,height-7,depth],.028);
+  // One compact operator cab, suspended below the slewing platform.
+  const cab=new THREE.Mesh(new THREE.BoxGeometry(1.45,.82,1.2),craneCabMat);
+  cab.position.set(x,height-.92,depth);craneParts.add(cab);
+ }
+ const craneStrutGeo=new THREE.CylinderGeometry(1,1,1,5);
+ const craneStrutMesh=new THREE.InstancedMesh(craneStrutGeo,craneSteel,struts.length);
+ const cranePose=new THREE.Object3D(),up=new THREE.Vector3(0,1,0);
+ struts.forEach(({from,to,r},i)=>{
+  const delta=to.clone().sub(from);
+  cranePose.position.copy(from).add(to).multiplyScalar(.5);
+  cranePose.quaternion.setFromUnitVectors(up,delta.clone().normalize());
+  cranePose.scale.set(r,delta.length(),r);cranePose.updateMatrix();
+  craneStrutMesh.setMatrixAt(i,cranePose.matrix);
+ });
+ craneStrutMesh.instanceMatrix.needsUpdate=true;
+ craneStrutMesh.computeBoundingSphere();
+ craneParts.add(craneStrutMesh);
  group.add(craneParts);
  group.visible=false;
  return {group,update(dt,speed){
