@@ -7745,11 +7745,16 @@ for(let y=0;y<256;y++)for(let x=0;x<256;x++){
  const wave=.54*Math.sin(a)+.3*Math.sin(b)+.16*Math.sin(c);
  canalWaterHeights[i]=wave;
  const reflection=Math.pow(Math.max(0,Math.sin(canalTau*(3*x+y)/256)),16);
+ // Irregular, elongated reflected light from the waterside houses.
+ // Baked into the existing tileable 256px albedo map; zero extra draw calls.
+ const bankGlint=Math.pow(Math.max(0,Math.sin(canalTau*(x+2*y)/256)),24);
+ const brokenGlint=.55+.45*Math.sin(canalTau*(7*x-3*y)/256);
+ const warmReflection=bankGlint*brokenGlint*18;
  const silt=Math.sin(canalTau*(2*x+5*y)/256)*3;
  const p=i*4;
- canalWaterColor.data[p]=Math.round(46+wave*9+silt+reflection*34);
- canalWaterColor.data[p+1]=Math.round(71+wave*11+silt+reflection*29);
- canalWaterColor.data[p+2]=Math.round(59+wave*9+silt+reflection*18);
+ canalWaterColor.data[p]=Math.round(46+wave*9+silt+reflection*34+warmReflection);
+ canalWaterColor.data[p+1]=Math.round(71+wave*11+silt+reflection*29+warmReflection*.78);
+ canalWaterColor.data[p+2]=Math.round(59+wave*9+silt+reflection*18+warmReflection*.42);
  canalWaterColor.data[p+3]=255;
 }
 for(let y=0;y<256;y++)for(let x=0;x<256;x++){
