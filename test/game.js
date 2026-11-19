@@ -7811,7 +7811,40 @@ canalGroup.add(cube(.28,.38,220,canalEdge,3.65,.12,-86));
 // replace an empty horizon. One instanced PBR draw for all six houses; no animation.
 // The near edge starts at x=13.0, beyond the canal water (ending at x=12.7).
 const canalHouseCount=6,canalHouseParts=15;
-const canalHouseMat=new THREE.MeshStandardMaterial({vertexColors:false,roughness:.89,metalness:0});
+// Shared low-resolution weathered timber atlas: plank seams, sun-bleached grain
+// and nail marks add readable material detail to all canal houses at no extra
+// draw calls. Generated once locally, with no asset downloads or frame work.
+const canalHouseCanvas=document.createElement('canvas');
+canalHouseCanvas.width=canalHouseCanvas.height=128;
+const canalHouseCtx=canalHouseCanvas.getContext('2d');
+canalHouseCtx.fillStyle='#c4b6a0';
+canalHouseCtx.fillRect(0,0,128,128);
+for(let plank=0;plank<8;plank++){
+ const y=plank*16;
+ canalHouseCtx.fillStyle=plank%3===0?'rgba(68,52,39,.10)':plank%2===0?'rgba(255,244,211,.12)':'rgba(106,77,51,.06)';
+ canalHouseCtx.fillRect(0,y,128,15);
+ canalHouseCtx.fillStyle='rgba(35,29,24,.35)';
+ canalHouseCtx.fillRect(0,y+15,128,1);
+ canalHouseCtx.fillStyle='rgba(248,224,181,.19)';
+ canalHouseCtx.fillRect(0,y+1,128,1);
+ for(let grain=0;grain<10;grain++){
+  const gy=y+2+(grain*7+plank*3)%12;
+  canalHouseCtx.strokeStyle=grain%4===0?'rgba(50,36,27,.18)':'rgba(255,244,216,.13)';
+  canalHouseCtx.lineWidth=.6;
+  canalHouseCtx.beginPath();
+  canalHouseCtx.moveTo((grain*31+plank*13)%47-25,gy);
+  canalHouseCtx.bezierCurveTo(36,gy-1.4,79,gy+1.2,135,gy-.6);
+  canalHouseCtx.stroke();
+ }
+ for(const nx of [7,120]){
+  canalHouseCtx.fillStyle='rgba(42,35,29,.48)';
+  canalHouseCtx.fillRect(nx,y+5,2,2);
+ }
+}
+const canalHouseTexture=new THREE.CanvasTexture(canalHouseCanvas);
+canalHouseTexture.colorSpace=THREE.SRGBColorSpace;
+canalHouseTexture.anisotropy=Math.min(2,renderer.capabilities.getMaxAnisotropy());
+const canalHouseMat=new THREE.MeshStandardMaterial({map:canalHouseTexture,vertexColors:false,roughness:.89,metalness:0});
 const canalHouses=new THREE.InstancedMesh(
  new THREE.BoxGeometry(1,1,1),canalHouseMat,canalHouseCount*canalHouseParts
 );
