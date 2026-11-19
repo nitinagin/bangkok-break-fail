@@ -8178,7 +8178,34 @@ function makeBoatCanopyGeometry(){
  geometry.computeVertexNormals();return geometry;
 }
 const boatCanopyGeometry=makeBoatCanopyGeometry();
-const boatCanopyMaterial=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.94,metalness:0,side:THREE.DoubleSide});
+// Shared woven-canvas detail on floating-market parasols: tiny dyed threads,
+// sun-faded bands and stitched seams. All ten boats reuse one 128px texture.
+const boatCanopyCanvas=document.createElement('canvas');
+boatCanopyCanvas.width=boatCanopyCanvas.height=128;
+const bcc=boatCanopyCanvas.getContext('2d');
+bcc.fillStyle='#f0e5cc';bcc.fillRect(0,0,128,128);
+for(let y=0;y<128;y+=4){
+ bcc.fillStyle=y%8===0?'rgba(91,70,49,.13)':'rgba(255,255,255,.19)';
+ bcc.fillRect(0,y,128,1);
+}
+for(let x=0;x<128;x+=4){
+ bcc.fillStyle=x%8===0?'rgba(73,57,43,.13)':'rgba(255,255,255,.14)';
+ bcc.fillRect(x,0,1,128);
+}
+for(let x=0;x<128;x+=32){
+ bcc.fillStyle='rgba(92,62,39,.14)';bcc.fillRect(x,0,3,128);
+ bcc.fillStyle='rgba(255,250,226,.22)';bcc.fillRect(x+4,0,2,128);
+}
+for(let k=0;k<170;k++){
+ const x=(k*53+17)%128,y=(k*79+23)%128;
+ bcc.fillStyle=k%3===0?'rgba(92,69,48,.15)':'rgba(255,249,223,.22)';
+ bcc.fillRect(x,y,1+k%2,1+k%3);
+}
+const boatCanopyTexture=new THREE.CanvasTexture(boatCanopyCanvas);
+boatCanopyTexture.colorSpace=THREE.SRGBColorSpace;
+boatCanopyTexture.wrapS=boatCanopyTexture.wrapT=THREE.RepeatWrapping;
+boatCanopyTexture.anisotropy=Math.min(2,renderer.capabilities.getMaxAnisotropy());
+const boatCanopyMaterial=new THREE.MeshStandardMaterial({map:boatCanopyTexture,vertexColors:true,roughness:.94,metalness:0,side:THREE.DoubleSide});
 for(let i=0;i<10;i++){
  const boat=new THREE.Group();
  boat.add(new THREE.Mesh(boatHullGeometry,boatWoodMaterial));
