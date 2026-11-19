@@ -7807,6 +7807,53 @@ canalGroup.add(cube(.28,.38,220,canalEdge,3.65,.12,-86));
  canalRippleSurface.position.set(8.2,-.118,-86);
  canalRippleSurface.renderOrder=1;
  canalGroup.add(canalRippleSurface);
+// Canal-side timber stilt houses on the opposite bank: broad, readable silhouettes
+// replace an empty horizon. One instanced PBR draw for all six houses; no animation.
+// The near edge starts at x=13.0, beyond the canal water (ending at x=12.7).
+const canalHouseCount=6,canalHouseParts=15;
+const canalHouseMat=new THREE.MeshStandardMaterial({vertexColors:false,roughness:.89,metalness:0});
+const canalHouses=new THREE.InstancedMesh(
+ new THREE.BoxGeometry(1,1,1),canalHouseMat,canalHouseCount*canalHouseParts
+);
+const housePose=new THREE.Object3D();
+const houseColors=[0x9e8062,0x766a58,0xb59a79,0x857e6a,0x64594b,0x65594d,
+ 0x3d3935,0x4d463d,0x3b3430,0x746b60].map(c=>new THREE.Color(c));
+let housePart=0;
+function addCanalHousePart(x,y,z,w,h,d,color,tilt=0){
+ housePose.position.set(x,y,z);
+ housePose.rotation.set(0,0,tilt);
+ housePose.scale.set(w,h,d);
+ housePose.updateMatrix();
+ canalHouses.setMatrixAt(housePart,housePose.matrix);
+ canalHouses.setColorAt(housePart,houseColors[color]);
+ housePart++;
+}
+for(let i=0;i<canalHouseCount;i++){
+ const z=-22-i*34,baseX=14.7+(i%3)*.4;
+ // Tall piles, open undercroft and elevated timber floor characteristic of
+ // traditional waterside homes, rather than solid cuboid buildings.
+ for(const dx of [-1.35,1.35])for(const dz of [-2.0,2.0])
+  addCanalHousePart(baseX+dx,.45,z+dz,.16,2.5,.18,7);
+ addCanalHousePart(baseX,1.55,z,3.25,.17,4.7,1);
+ addCanalHousePart(baseX,2.65,z,3.12,2.02,4.35,i%3);
+ // Two pitched corrugated roof slopes with generous overhangs.
+ addCanalHousePart(baseX-.86,3.85,z,2.18,.14,5.15,6,-.38);
+ addCanalHousePart(baseX+.86,3.85,z,2.18,.14,5.15,6,.38);
+ // Dark openings and projecting shaded balcony facing the water.
+ addCanalHousePart(baseX-1.58,2.7,z-.72,.045,1.03,1.02,8);
+ addCanalHousePart(baseX-1.58,2.7,z+1.03,.045,1.03,.82,8);
+ addCanalHousePart(baseX-1.83,1.73,z,1.0,.12,4.5,2);
+ for(const dz of [-1.8,1.8])
+  addCanalHousePart(baseX-2.27,2.13,z+dz,.10,.75,.10,7);
+ addCanalHousePart(baseX-2.27,2.5,z,.1,.1,4.15,7);
+ // Weathered shutters on the front-facing gable.
+ addCanalHousePart(baseX,2.68,z-2.19,1.06,1.02,.055,9);
+}
+if(housePart!==canalHouseCount*canalHouseParts)throw new Error('Canal stilt-house instance count mismatch');
+canalHouses.instanceMatrix.needsUpdate=true;
+canalHouses.instanceColor.needsUpdate=true;
+canalHouses.computeBoundingSphere();
+canalGroup.add(canalHouses);
 // Shared 128x256 weathered wood atlas and tapered open Thai market hulls.
 const boatWoodCanvas=document.createElement('canvas');boatWoodCanvas.width=128;boatWoodCanvas.height=256;
 const boatWoodCtx=boatWoodCanvas.getContext('2d');
