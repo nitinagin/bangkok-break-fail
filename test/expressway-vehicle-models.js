@@ -2322,6 +2322,24 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   // Keep distinct front and rear lamps.
   if(isBus)box(side*w*.37,.8,-length/2-.04,.27,.14,.06,tailLamps);
  }
+ // Recessed ventilated brake rotors sit behind the alloy spokes on the near
+ // sports-car LOD. Four instances share one draw call; far LOD stays unchanged.
+ // The rotors are inset from the outer hub faces, with no collision changes.
+ if(!isBus){
+  const rotorGeometry=new THREE.CylinderGeometry(.265,.265,.018,20);
+  rotorGeometry.rotateZ(Math.PI/2);
+  const rotorMaterial=new THREE.MeshStandardMaterial({color:0x7d858b,metalness:.82,roughness:.48});
+  const rotors=new THREE.InstancedMesh(rotorGeometry,rotorMaterial,4);
+  const rotorMatrix=new THREE.Matrix4();
+  let rotorIndex=0;
+  for(const side of [-1,1])for(const axle of [-1,1]){
+   rotorMatrix.makeTranslation(side*(w*.48+.072),.4,axle*1.1);
+   rotors.setMatrixAt(rotorIndex++,rotorMatrix);
+  }
+  rotors.instanceMatrix.needsUpdate=true;
+  rotors.name='sports-car-recessed-brake-rotors';
+  group.add(rotors);
+ }
  group.add(tires,hubs);
 
  // Both the Bangkok bus and GT project inexpensive, soft headlight pools onto
