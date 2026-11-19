@@ -8165,6 +8165,24 @@ function makeMarketBoatHull(){
   quad(e,g,h,f);
   if(side===1)quad(g,h,[-ws[j+1]*.61,.07,zs[j+1]],[-ws[j]*.61,.07,zs[j]]);
  }
+ // Curved, weathered gunwale rails and closely spaced hull plank seams.
+ // Bake them into the existing hull geometry: no extra draw calls or per-frame work.
+ const railTint=[.76,.58,.39],seamTint=[.43,.31,.20];
+ for(const side of [-1,1]){
+  for(let j=0;j<zs.length-1;j++){
+   const x0=side*ws[j],x1=side*ws[j+1];
+   // Narrow raised lip follows the tapered sheer of each traditional wooden boat.
+   quad([x0, .315,zs[j]],[x1,.315,zs[j+1]],
+        [x1*.975,.355,zs[j+1]],[x0*.975,.355,zs[j]],railTint);
+   // Three restrained plank seams track the sloping outer hull.
+   for(const t of [.24,.49,.74]){
+    const y=.31-t*.44,m=1-t*.28;
+    const a=[side*ws[j]*m,y,zs[j]],b=[side*ws[j+1]*m,y,zs[j+1]];
+    const inset=.009;
+    quad(a,b,[b[0],y+inset,b[2]],[a[0],y+inset,a[2]],seamTint);
+   }
+  }
+ }
  // Two shallow, woven bamboo produce trays under the existing six mangoes.
  // They are baked into the hull BufferGeometry: no new meshes or draw calls.
  const bamboo=[1.48,1.27,.94],darkWeave=[.93,.74,.51],rim=[1.66,1.43,1.08];
