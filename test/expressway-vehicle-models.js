@@ -1803,6 +1803,27 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
    aeroQuad([[x-.027,.38,-1.76],[x+.027,.38,-1.76],
     [x+.018,.28,-1.59],[x-.018,.28,-1.59]],0x20272b);
   }
+  // Low-profile GT rear deck wing: a thin cambered aerofoil and two angled
+  // mounting pylons. Batched into the existing PBR aero mesh (zero extra
+  // draw calls, materials, textures or per-frame updates). The wing remains
+  // within the existing car footprint and does not affect collision geometry.
+  for(const side of [-1,1]){
+   const x=side*.48;
+   aeroQuad([[x-.055,.79,-1.43],[x+.055,.79,-1.43],
+    [x+.045,.99,-1.53],[x-.045,.99,-1.53]],0x222b32);
+   aeroQuad([[x-.045,.99,-1.53],[x+.045,.99,-1.53],
+    [x+.045,1.01,-1.64],[x-.045,1.01,-1.64]],0x59636a);
+  }
+  // Two broad, gently pitched wing surfaces and dark end plates.
+  aeroQuad([[-.78,1.04,-1.67],[.78,1.04,-1.67],
+   [.75,1.015,-1.47],[-.75,1.015,-1.47]],0x222c34);
+  aeroQuad([[-.78,1.047,-1.68],[.78,1.047,-1.68],
+   [.76,1.065,-1.61],[-.76,1.065,-1.61]],0x8c9497);
+  for(const side of [-1,1]){
+   const x=side*.78;
+   aeroQuad([[x,1.00,-1.72],[x,1.09,-1.72],
+    [x,1.07,-1.43],[x,1.00,-1.43]],0x172127);
+  }
   const aeroGeometry=new THREE.BufferGeometry();
   aeroGeometry.setAttribute('position',new THREE.Float32BufferAttribute(aeroVertices,3));
   aeroGeometry.setAttribute('color',new THREE.Float32BufferAttribute(aeroColors,3));
