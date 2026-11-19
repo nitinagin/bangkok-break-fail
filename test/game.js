@@ -7854,6 +7854,29 @@ canalHouses.instanceMatrix.needsUpdate=true;
 canalHouses.instanceColor.needsUpdate=true;
 canalHouses.computeBoundingSphere();
 canalGroup.add(canalHouses);
+// Shaded timber lattice windows on the canal-facing walls: 12 dark recessed
+// openings with warm wooden crossbars, batched into one instanced PBR draw.
+// Kept beyond the road/canal collision area and updated only at startup.
+const canalWindowCount=canalHouseCount*2;
+const canalWindows=new THREE.InstancedMesh(
+ new THREE.BoxGeometry(1,1,1),
+ new THREE.MeshStandardMaterial({color:0x382d24,roughness:.91,metalness:0}),
+ canalWindowCount
+);
+const canalWindowPose=new THREE.Object3D();
+for(let i=0;i<canalHouseCount;i++){
+ const z=-22-i*34,baseX=14.7+(i%3)*.4;
+ for(let j=0;j<2;j++){
+  canalWindowPose.position.set(baseX-1.585,2.68,z+(j===0?-1.25:1.25));
+  canalWindowPose.rotation.set(0,0,0);
+  canalWindowPose.scale.set(.06,.84,.64);
+  canalWindowPose.updateMatrix();
+  canalWindows.setMatrixAt(i*2+j,canalWindowPose.matrix);
+ }
+}
+canalWindows.instanceMatrix.needsUpdate=true;
+canalWindows.computeBoundingSphere();
+canalGroup.add(canalWindows);
 // Shared 128x256 weathered wood atlas and tapered open Thai market hulls.
 const boatWoodCanvas=document.createElement('canvas');boatWoodCanvas.width=128;boatWoodCanvas.height=256;
 const boatWoodCtx=boatWoodCanvas.getContext('2d');
