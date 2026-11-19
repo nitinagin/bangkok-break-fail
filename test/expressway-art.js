@@ -2570,6 +2570,29 @@ gantry.position.z=-75;group.add(gantry);
   drains.instanceMatrix.needsUpdate=true;
  }
  placeDrains();group.add(drains);
+ // Two distant tower cranes give the expressway a recognisable Bangkok
+ // construction skyline. All structural members share one low-cost PBR
+ // material; cranes are static and remain well outside the playable lanes.
+ const craneSteel=new THREE.MeshStandardMaterial({color:0x8a7965,metalness:.58,roughness:.73});
+ const craneParts=new THREE.Group();craneParts.name='distant-construction-cranes';
+ const craneBeam=(w,h,d,x,y,z)=>{
+  const beam=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),craneSteel);
+  beam.position.set(x,y,z);craneParts.add(beam);return beam;
+ };
+ for(const [side,depth,height] of [[-1,-91,24],[1,-124,30]]){
+  const x=side*31;
+  craneBeam(.65,height,.65,x,height/2,depth); // lattice mast silhouette
+  craneBeam(21,.36,.52,x+side*4,height,depth); // working jib
+  craneBeam(6,.48,.58,x-side*9,height,depth); // counter-jib
+  const tip=x+side*14;
+  const cable=craneBeam(.055,7,.055,tip,height-3.5,depth);
+  cable.material=craneSteel;
+  // Slender diagonal support from the tower top to the jib.
+  const brace=craneBeam(.12,Math.hypot(8,4),.12,x+side*4,height+2,depth);
+  brace.rotation.z=side*Math.atan2(8,4);
+  craneBeam(1.5,.8,1.2,x,height-1.1,depth); // operator cabin
+ }
+ group.add(craneParts);
  group.visible=false;
  return {group,update(dt,speed){
   const advance=dt*Math.min(95,30+speed*.12);
