@@ -8340,30 +8340,41 @@ const boatCanopyMaterial=new THREE.MeshStandardMaterial({map:boatCanopyTexture,v
 // An anatomically proportioned seated torso, head, hat and rowing arms replace
 // empty unmanned fruit boats; geometry is assembled once at startup.
 function makeCanalVendorGeometry(){
+ // Shared single-draw vendor silhouette: shaped shirt, neck, tapered arms,
+ // proper cylindrical woven hat and brim instead of a stack of spheres.
  const positions=[],normals=[],colors=[];
  const parts=[
-  // [x,y,z, scaleX,scaleY,scaleZ, color] in boat-local metres
-  [0,.66,1.07,.31,.34,.23,0x386c72], // cotton shirt
-  [0,.98,1.07,.17,.19,.17,0xb88b69], // face
-  [0,1.15,1.07,.24,.045,.23,0x69503b], // broad straw hat brim
-  [0,1.20,1.07,.16,.075,.16,0x9b835a], // woven hat crown
-  [-.28,.67,1.05,.09,.23,.09,0xb88b69], // arm
-  [.28,.67,1.05,.09,.23,.09,0xb88b69],
-  [-.13,.40,1.16,.17,.12,.25,0x333c46], // seated legs
-  [.13,.40,1.16,.17,.12,.25,0x333c46]
+  // x,y,z, scaleX,scaleY,scaleZ, colour, primitive
+  [0,.66,1.07,.30,.33,.22,0x386c72,'torso'],
+  [0,.94,1.07,.075,.10,.075,0xb88b69,'neck'],
+  [0,1.05,1.07,.17,.19,.16,0xb88b69,'head'],
+  [0,1.225,1.07,.285,.022,.265,0x806c47,'brim'],
+  [0,1.28,1.07,.155,.075,.15,0xa88d5d,'crown'],
+  [-.265,.68,1.05,.075,.22,.078,0xb88b69,'arm'],
+  [.265,.68,1.05,.075,.22,.078,0xb88b69,'arm'],
+  [-.13,.40,1.16,.15,.12,.24,0x333c46,'leg'],
+  [.13,.40,1.16,.15,.12,.24,0x333c46,'leg']
  ];
- const src=new THREE.SphereGeometry(1,7,5).toNonIndexed();
- const p=src.getAttribute('position'),n=src.getAttribute('normal');
+ const sources={
+  torso:new THREE.CylinderGeometry(.80,1,2,9,2).toNonIndexed(),
+  neck:new THREE.CylinderGeometry(1,1,2,8).toNonIndexed(),
+  head:new THREE.SphereGeometry(1,10,8).toNonIndexed(),
+  brim:new THREE.CylinderGeometry(1,1,2,16).toNonIndexed(),
+  crown:new THREE.CylinderGeometry(.82,1,2,12).toNonIndexed(),
+  arm:new THREE.CylinderGeometry(.8,1,2,8).toNonIndexed(),
+  leg:new THREE.SphereGeometry(1,8,6).toNonIndexed()
+ };
  const tint=new THREE.Color();
- for(const part of parts){
-  const [cx,cy,cz,sx,sy,sz,color]=part;tint.setHex(color);
+ for(const [cx,cy,cz,sx,sy,sz,color,primitive] of parts){
+  const src=sources[primitive],p=src.getAttribute('position'),n=src.getAttribute('normal');
+  tint.setHex(color);
   for(let i=0;i<p.count;i++){
    positions.push(cx+p.getX(i)*sx,cy+p.getY(i)*sy,cz+p.getZ(i)*sz);
    normals.push(n.getX(i)/sx,n.getY(i)/sy,n.getZ(i)/sz);
    colors.push(tint.r,tint.g,tint.b);
   }
  }
- src.dispose();
+ Object.values(sources).forEach(g=>g.dispose());
  const g=new THREE.BufferGeometry();
  g.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
  g.setAttribute('normal',new THREE.Float32BufferAttribute(normals,3));
