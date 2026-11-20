@@ -740,8 +740,15 @@ function makeBusFrontFascia(THREE){
   const shoulder=1-.035*Math.pow(Math.abs(v-.52)*2,2);
   for(let i=0;i<=segments;i++){
    const nx=i/segments*2-1;
-   const crown=(1-nx*nx);
-   const z=.035*crown+.026*crown*(1-Math.pow(v*2-1,2))-.018*(1-v)*Math.abs(nx);
+   // Rounded pressed-steel nose: outer lamp pockets turn back into the
+   // side panels, while the central grille stands forward of the apron.
+   // All deformation stays within 6cm of the original decorative fascia.
+   const crown=1-nx*nx;
+   const edgeTurn=.052*Math.pow(Math.abs(nx),3);
+   const grilleBulge=.039*Math.exp(-Math.pow(nx/.57,4))*Math.sin(Math.PI*v);
+   const bumperRoll=.026*Math.sin(Math.PI*v)*crown;
+   const z=.035*crown+bumperRoll+grilleBulge-edgeTurn
+    -.018*(1-v)*Math.abs(nx);
    positions.push(nx*shoulder,y,z);
    uvs.push(i/segments,v);
   }
