@@ -2311,7 +2311,13 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
    for(const across of roofAcross){
     const edge=Math.pow(Math.abs(across),1.6);
     roofVertices.push(across*halfWidth,centerY+.024*(1-edge)-.046*edge,z);
-    const tint=roofPaint.clone().multiplyScalar(1.02-.13*edge);
+    // Recessed panoramic glass tint is baked into the existing roof mesh.
+    // Leave painted roof rails and front/rear header strips for a realistic
+    // coupe silhouette, without extra geometry, textures or draw calls.
+    const panoramic=Math.abs(across)<=.46 && z>-.43 && z<.44;
+    const tint=panoramic
+     ? new THREE.Color(0x152b36).multiplyScalar(1.06-.20*edge)
+     : roofPaint.clone().multiplyScalar(1.02-.13*edge);
     roofColors.push(tint.r,tint.g,tint.b);
    }
   }
