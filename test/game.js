@@ -1777,7 +1777,7 @@ const yaowaratDistantFacades=Array.from({length:3},(_,variant)=>{
 function building(x,z,i){
  const g=new THREE.Group(),h=7.9+(i%7)*1.1,paint=facadeMaterials[i%facadeMaterials.length];
  g.add(cube(3.9,h,5,paint,0,h/2,0));for(const edge of [-1,1])g.add(cube(.16,h,5.15,brickTrim,edge*1.94,h/2,0));for(let fy=3.1;fy<h;fy+=2.6)g.add(cube(4.05,.14,5.15,oldGold,0,fy,0));
- g.add(cube(4.15,.22,5.2,shopTrim,0,h+.08,0));if(i%4===0)g.add(cube(3.6,.75,.32,paint,0,h+.47,0));else if(i%4===1)g.add(cube(1.6,1.15,2.4,paint,-.85,h+.65,-.8));else if(i%4===2)for(const edge of [-1.65,1.65])g.add(cube(.12,.8,4.5,oldGold,edge,h+.52,0));g.add(cube(4.05,.17,5.05,M.purple,0,.22,0));
+ g.add(cube(4.15,.22,5.2,shopTrim,0,h+.08,0));if(i%4===0)g.add(cube(3.6,.75,.22,brickTrim,0,h+.47,x<0?2.40:-2.40));else if(i%4===1)g.add(cube(1.6,1.15,2.4,paint,-.85,h+.65,-.8));else if(i%4===2)for(const edge of [-1.65,1.65])g.add(cube(.12,.8,4.5,oldGold,edge,h+.52,0));g.add(cube(4.05,.17,5.05,M.purple,0,.22,0));
  // Facade faces the road, with ground floor shutter and striped awning.
  const front=x<0?2.56:-2.56;
  // Reuse the existing frontage mesh; 25% shuttered shops, 75% glazed displays.
