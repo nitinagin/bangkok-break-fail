@@ -3381,14 +3381,17 @@ for(let i=0;i<tukCanopyVertices.count;i++){
  const nose=(z+.54)/1.08;
  const taperedX=x*(.94+.06*(1-nose));
  const arch=.22*(1-Math.pow(Math.abs(x)/.915,2));
- const frontLift=.065*(.54-z)/1.08;
- const cornerDrop=.075*Math.pow(Math.abs(x)/.915,4);
+ // Full-size Bangkok tuk-tuk canvas profile: a raised central bow, lowered
+ // outer drip edges and a gently swept rear. Shape existing vertices only.
+ const frontLift=.09*(.54-z)/1.08;
+ const cornerDrop=.14*Math.pow(Math.abs(x)/.915,4);
+ const rearSweep=.055*Math.pow(Math.max(0,(z+.10)/.64),2);
  // Three shallow stitched tension channels shape the vinyl between steel bows.
  // Deform existing vertices only; collision, materials and draw count stay unchanged.
  const ribDistance=Math.abs(Math.abs(x)-.46);
  const tensionRib=.028*Math.exp(-Math.pow(ribDistance/.085,2));
  const centerSeam=.018*Math.exp(-Math.pow(x/.10,2));
- tukCanopyVertices.setXYZ(i,taperedX,tukCanopyVertices.getY(i)+arch+frontLift-cornerDrop+tensionRib+centerSeam,z);
+ tukCanopyVertices.setXYZ(i,taperedX,tukCanopyVertices.getY(i)+arch+frontLift-cornerDrop-rearSweep+tensionRib+centerSeam,z);
 }
 tukCanopyVertices.needsUpdate=true;
 tukCanopyGeometry.computeVertexNormals();
