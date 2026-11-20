@@ -1036,7 +1036,16 @@ function makeBusStampedSteelWheel(THREE){
  const rim=ctx.createRadialGradient(-14,-18,4,0,0,63);
  rim.addColorStop(0,'#d5d7d1');rim.addColorStop(.43,'#a5adb0');
  rim.addColorStop(.79,'#5a666d');rim.addColorStop(1,'#222b31');
- disc(63,'#13191d');disc(58,rim);
+ // Recessed tyre shoulder and brake-dust ring create a believable heavy-bus
+ // wheel profile at driving distance, baked into the existing shared 128px map.
+ const tyre=ctx.createRadialGradient(-10,-13,25,0,0,64);
+ tyre.addColorStop(0,'#737c7d');tyre.addColorStop(.67,'#353b40');
+ tyre.addColorStop(.83,'#151a1e');tyre.addColorStop(.94,'#252b2e');
+ tyre.addColorStop(1,'#080c10');
+ disc(63,tyre);
+ ctx.strokeStyle='rgba(157,167,166,.35)';ctx.lineWidth=1.5;
+ ctx.beginPath();ctx.arc(0,0,59,0,Math.PI*2);ctx.stroke();
+ disc(54,rim);
  ctx.strokeStyle='#c8d0cd';ctx.lineWidth=2;
  ctx.beginPath();ctx.arc(0,0,54,0,Math.PI*2);ctx.stroke();
  disc(48,'#465057');disc(43,'#8f999b');disc(37,'#68757b');
