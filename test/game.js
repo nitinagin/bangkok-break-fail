@@ -5743,6 +5743,27 @@ tukWindscreenCtx.textAlign='center';
 tukWindscreenCtx.textBaseline='middle';
 tukWindscreenCtx.fillText('เยาวราช',128,24,74);
 tukWindscreenCtx.restore();
+// Road-spray grime and runoff, baked into the existing traffic tuk-tuk glass atlas.
+tukWindscreenCtx.save();
+const spray=tukWindscreenCtx.createLinearGradient(0,78,0,123);
+spray.addColorStop(0,'rgba(112,96,75,0)');
+spray.addColorStop(.6,'rgba(112,96,75,.12)');
+spray.addColorStop(1,'rgba(80,72,59,.35)');
+tukWindscreenCtx.fillStyle=spray;tukWindscreenCtx.fillRect(10,78,236,45);
+for(let i=0;i<180;i++){
+ const px=12+(i*67+Math.floor(i/13)*23)%232;
+ const py=91+(i*37+Math.floor(i/17)*11)%27;
+ tukWindscreenCtx.fillStyle=i%5===0?'rgba(198,183,151,.27)':'rgba(51,48,43,.19)';
+ tukWindscreenCtx.fillRect(px,py,1+i%3,1+i%2);
+}
+for(const x of [17,239]){
+ const drain=tukWindscreenCtx.createLinearGradient(x-5,0,x+5,0);
+ drain.addColorStop(0,'rgba(14,27,31,0)');
+ drain.addColorStop(.5,'rgba(10,24,28,.32)');
+ drain.addColorStop(1,'rgba(14,27,31,0)');
+ tukWindscreenCtx.fillStyle=drain;tukWindscreenCtx.fillRect(x-5,30,10,86);
+}
+tukWindscreenCtx.restore();
 // Baked weathered rubber seal and bottom-mounted wiper, avoiding extra draw calls.
 tukWindscreenCtx.strokeStyle='rgba(12,17,21,.85)';
 tukWindscreenCtx.lineWidth=9;tukWindscreenCtx.strokeRect(4.5,4.5,247,119);
