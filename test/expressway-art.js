@@ -2219,12 +2219,20 @@ for(let y=17;y<113;y+=5)for(let x=16;x<499;x+=5){
 }
 // Full-height LED hazard triangle, readable from the driver's viewpoint.
 // Baked into the existing 512x128 atlas; no mesh, light or GPU texture added.
+// A true dot-matrix warning triangle instead of a continuous painted line.
+// All lamps are baked once into the existing VMS canvas, with no runtime lights.
 vc.save();
-vc.strokeStyle='#ffb348';vc.lineWidth=5;vc.lineJoin='round';
-vc.shadowColor='rgba(255,145,34,.6)';vc.shadowBlur=8;
-vc.beginPath();vc.moveTo(58,22);vc.lineTo(99,96);vc.lineTo(17,96);vc.closePath();vc.stroke();
-vc.fillStyle='#ffd07b';vc.fillRect(55,47,6,27);
-vc.beginPath();vc.arc(58,84,4,0,Math.PI*2);vc.fill();
+const ledSegment=(ax,ay,bx,by)=>{
+ const length=Math.hypot(bx-ax,by-ay),count=Math.max(1,Math.round(length/5));
+ for(let i=0;i<=count;i++){
+  const x=ax+(bx-ax)*i/count,y=ay+(by-ay)*i/count;
+  vc.fillStyle='rgba(255,144,31,.28)';vc.fillRect(x-3,y-3,8,8);
+  vc.fillStyle='#ffc36b';vc.fillRect(x,y,3,3);
+ }
+};
+ledSegment(58,22,99,96);ledSegment(99,96,17,96);ledSegment(17,96,58,22);
+ledSegment(58,49,58,73);
+vc.fillStyle='#ffc36b';vc.fillRect(57,84,4,4);
 vc.restore();
 // Render Thai/English into a temporary canvas, then bake an amber LED matrix.
 // No per-frame canvas updates, shadow blur or additional textures on the GPU.
