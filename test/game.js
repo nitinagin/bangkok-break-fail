@@ -5358,8 +5358,11 @@ function makeTaxi(){
     const across=taxiPanelAcross[col],edge=Math.abs(across)/.94;
     // Crown, twin pressed shoulder lines and a shallow center crease
     // catch shopfront reflections without extra lights or textures.
-    const shoulder=.008*Math.exp(-Math.pow((Math.abs(across)-.62)/.11,2));
-    const crown=.019*(1-edge*edge)+shoulder-.004*Math.exp(-Math.pow(across/.12,2));
+    // Two stamped longitudinal swage lines flank a broad bonnet crown.
+    // Wider shoulders catch the night skyline without extra meshes or lights.
+    const shoulder=.022*Math.exp(-Math.pow((Math.abs(across)-.69)/.105,2));
+    const centerRidge=.007*Math.exp(-Math.pow(across/.16,2));
+    const crown=.033*(1-edge*edge)+shoulder+centerRidge;
     taxiPanelPositions.push(across*.98,baseY+crown,z);
     taxiPanelUvs.push((across/.94+1)*.5,row/(stations.length-1));
    }
