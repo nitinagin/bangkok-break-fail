@@ -853,11 +853,33 @@ function makeBusSideWindows(THREE){
    ctx.beginPath();ctx.moveTo(left,bottom-2);
    ctx.quadraticCurveTo(left+width*.5,bottom+5,left+width-3,bottom);ctx.stroke();
   }
-  // Low-contrast seats and heads give the glazing depth without geometry.
-  const cx=x+42+(i%2)*37;
-  ctx.fillStyle='rgba(12,20,26,.52)';
-  ctx.beginPath();ctx.ellipse(cx,80,14,17,0,0,Math.PI*2);ctx.fill();
-  ctx.fillRect(cx-19,91,38,26);
+  // Seat backs, articulated shoulders and alternating occupied seats read
+  // as a real night commuter cabin rather than identical floating head blobs.
+  // Everything remains in the existing shared side-window texture atlas.
+  ctx.fillStyle='rgba(10,21,28,.70)';
+  ctx.fillRect(x+12,91,106,23);
+  ctx.fillStyle='rgba(111,127,124,.32)';
+  for(const seatX of [x+26,x+75]){
+   ctx.beginPath();ctx.roundRect(seatX,77,34,34,7);ctx.fill();
+  }
+  if(i!==2){
+   const cx=x+(i===0?83:i===1?42:73);
+   ctx.fillStyle='rgba(12,19,25,.87)';
+   ctx.beginPath();ctx.ellipse(cx,69,11,14,-.07,0,Math.PI*2);ctx.fill();
+   ctx.beginPath();ctx.moveTo(cx-15,87);
+   ctx.quadraticCurveTo(cx-13,80,cx-5,81);
+   ctx.lineTo(cx+9,81);ctx.quadraticCurveTo(cx+18,82,cx+19,92);
+   ctx.lineTo(cx+16,108);ctx.lineTo(cx-17,108);ctx.closePath();ctx.fill();
+   ctx.fillStyle='rgba(188,157,118,.15)';
+   ctx.fillRect(cx-10,84,20,2);
+  }
+  // Warm overhead grab rail and two suspended straps create cabin depth.
+  ctx.strokeStyle='rgba(218,178,104,.45)';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(x+17,30);ctx.lineTo(x+109,30);ctx.stroke();
+  for(const strapX of [x+54,x+96]){
+   ctx.beginPath();ctx.moveTo(strapX,30);ctx.lineTo(strapX,42);
+   ctx.moveTo(strapX-4,42);ctx.lineTo(strapX+4,42);ctx.stroke();
+  }
   ctx.fillStyle='rgba(211,230,233,.16)';
   ctx.beginPath();ctx.moveTo(x+20,12);ctx.lineTo(x+43,12);
   ctx.lineTo(x+22,114);ctx.lineTo(x+12,114);ctx.closePath();ctx.fill();
