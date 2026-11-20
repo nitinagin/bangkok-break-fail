@@ -1729,15 +1729,30 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   // Batch both side-window strips into one indexed PBR mesh. Preserve the
   // original outward-reading UV orientation and two-sided glazing material,
   // while halving the side-window draw calls on every expressway bus.
+  // Subtle compound-curved glazing replaces flat flank billboards.
+  // Three vertical bands follow the bus tumblehome; longitudinal subdivisions
+  // add a shallow bow while retaining one indexed mesh and the same PBR atlas.
+  // Maximum outward offset is 0.012m; decorative collision remains unchanged.
   const windowPositions=[],windowUVs=[],windowIndices=[];
+  const longitudinalSegments=4,verticalSegments=3;
   for(const side of [-1,1]){
-   const base=windowPositions.length/3,x=side*1.082;
-   windowPositions.push(x,1.845,-1.91,x,1.845,1.91,
-                        x,2.495,1.91,x,2.495,-1.91);
-   const uAtNegativeZ=side<0?0:1,uAtPositiveZ=1-uAtNegativeZ;
-   windowUVs.push(uAtNegativeZ,0,uAtPositiveZ,0,
-                  uAtPositiveZ,1,uAtNegativeZ,1);
-   windowIndices.push(base,base+1,base+2,base,base+2,base+3);
+   const base=windowPositions.length/3;
+   for(let row=0;row<=verticalSegments;row++){
+    const v=row/verticalSegments,y=1.845+.65*v;
+    const tumblehome=-.023*v*v;
+    for(let col=0;col<=longitudinalSegments;col++){
+     const t=col/longitudinalSegments,z=-1.91+3.82*t;
+     const crown=.012*Math.sin(Math.PI*t)*Math.sin(Math.PI*v);
+     windowPositions.push(side*(1.082+tumblehome+crown),y,z);
+     windowUVs.push(side<0?t:1-t,v);
+    }
+   }
+   for(let row=0;row<verticalSegments;row++)
+    for(let col=0;col<longitudinalSegments;col++){
+     const a=base+row*(longitudinalSegments+1)+col;
+     const b=a+1,c=a+longitudinalSegments+1,d=c+1;
+     windowIndices.push(a,b,c,b,d,c);
+    }
   }
   const windowGeometry=new THREE.BufferGeometry();
   windowGeometry.setAttribute('position',new THREE.Float32BufferAttribute(windowPositions,3));
