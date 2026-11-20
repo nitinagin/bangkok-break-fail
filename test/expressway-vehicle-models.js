@@ -538,6 +538,22 @@ function makeBusSideLivery(THREE){
  ctx.fillStyle=sideLight;ctx.fillRect(0,7,512,43);
  ctx.fillStyle='rgba(246,239,211,.17)';ctx.fillRect(0,10,512,2);
  ctx.fillStyle='rgba(3,17,26,.22)';ctx.fillRect(0,46,512,3);
+ // Baked broad sodium-vapor and passing-traffic reflections on enamel.
+ // Uses the existing side atlas and material, without extra draw calls.
+ ctx.save();
+ ctx.beginPath();ctx.rect(0,7,512,43);ctx.clip();
+ ctx.globalCompositeOperation='screen';
+ for(const [x,width,alpha] of [[-35,120,.13],[170,92,.10],[405,138,.15]]){
+  const reflection=ctx.createLinearGradient(x,0,x+width,0);
+  reflection.addColorStop(0,'rgba(255,207,135,0)');
+  reflection.addColorStop(.36,'rgba(255,207,135,'+alpha+')');
+  reflection.addColorStop(.55,'rgba(250,237,208,'+(alpha*.8)+')');
+  reflection.addColorStop(1,'rgba(255,207,135,0)');
+  ctx.fillStyle=reflection;
+  ctx.beginPath();ctx.moveTo(x+12,7);ctx.lineTo(x+width,7);
+  ctx.lineTo(x+width-38,50);ctx.lineTo(x-12,50);ctx.closePath();ctx.fill();
+ }
+ ctx.restore();
  ctx.fillStyle='#d9b16a';ctx.fillRect(0,4,512,3);
  ctx.fillStyle='#f3d69a';ctx.fillRect(0,51,512,4);
  // Route number, Thai destination and an English identifier are painted on
