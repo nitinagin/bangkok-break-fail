@@ -866,6 +866,22 @@ function makeShopfrontMaterial(glazed){
    p.bezierCurveTo(x-2,y+length*.3,x+2,y+length*.7,x-1,y+length);
    p.stroke();
   }
+  // Recessed folding security grille and shopfront reveal, baked into the
+  // existing glass atlas without new geometry, textures or draw calls.
+  p.fillStyle='rgba(6,12,17,.62)';
+  p.fillRect(11,41,7,174);p.fillRect(238,41,7,174);
+  p.fillStyle='rgba(192,177,146,.46)';
+  p.fillRect(18,41,2,174);p.fillRect(236,41,2,174);
+  for(let bay=0;bay<5;bay++){
+   const gx=22+bay*43;
+   p.strokeStyle='rgba(18,27,31,.54)';p.lineWidth=2;
+   p.beginPath();p.moveTo(gx,42);p.lineTo(gx+35,212);
+   p.moveTo(gx+35,42);p.lineTo(gx,212);p.stroke();
+   p.strokeStyle='rgba(191,184,162,.35)';p.lineWidth=.7;
+   p.beginPath();p.moveTo(gx+2,42);p.lineTo(gx+37,212);p.stroke();
+  }
+  p.fillStyle='rgba(14,19,22,.66)';p.fillRect(12,204,232,9);
+  p.fillStyle='rgba(226,195,143,.28)';p.fillRect(12,204,232,2);
   // Dark counter edge and glass door remain legible behind exterior reflections.
   p.fillStyle='rgba(17,20,21,.72)';p.fillRect(12,216,232,18);
   const glare=p.createLinearGradient(0,0,256,0);
