@@ -2301,8 +2301,11 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   // A single shared PBR mesh gives the coupe a rounded greenhouse silhouette,
   // replacing the flat-looking roof edge without extra textures or animation.
   const roofStations=[
-   [-.62,.47,1.205],[-.49,.59,1.238],[-.31,.65,1.262],
-   [-.08,.67,1.274],[.16,.66,1.266],[.35,.59,1.241],[.56,.46,1.205]
+   // Taper the fastback roof toward the rear, with a taller curved canopy
+   // above the driver and a gently descending rear glassline. This changes
+   // the vehicle silhouette rather than adding tiny surface details.
+   [-.62,.43,1.174],[-.49,.53,1.216],[-.31,.61,1.259],
+   [-.08,.66,1.289],[.16,.65,1.287],[.35,.57,1.247],[.56,.44,1.192]
   ];
   const roofAcross=[-1,-.76,-.46,0,.46,.76,1];
   const roofVertices=[],roofColors=[],roofIndices=[];
