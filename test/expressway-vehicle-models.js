@@ -910,8 +910,20 @@ function makeSportsCarRearFascia(THREE){
  // Avoid painting a second, hidden plate underneath it on the same atlas.
  for(const left of [true,false]){
   const x=left?7:181;
-  ctx.fillStyle='#420c15';ctx.fillRect(x,9,68,31);
-  ctx.fillStyle='#9b1822';ctx.fillRect(x+3,12,62,23);
+  // Sculpted tapered lamp housings follow the GT rear haunches instead of
+  // reading as two flat rectangular decals. All shading is baked once.
+  ctx.save();
+  ctx.beginPath();
+  if(left){ctx.moveTo(x+3,11);ctx.lineTo(x+64,9);ctx.quadraticCurveTo(x+69,10,x+66,17);ctx.lineTo(x+60,38);ctx.lineTo(x+9,40);ctx.quadraticCurveTo(x+2,36,x+3,11);}
+  else{ctx.moveTo(x+4,9);ctx.lineTo(x+65,11);ctx.quadraticCurveTo(x+66,36,x+59,40);ctx.lineTo(x+8,38);ctx.quadraticCurveTo(x-1,12,x+4,9);}
+  ctx.closePath();ctx.clip();
+  const lens=ctx.createLinearGradient(x,9,x+68,40);
+  lens.addColorStop(0,'#23090f');lens.addColorStop(.32,'#8b1724');
+  lens.addColorStop(.64,'#b42b30');lens.addColorStop(1,'#290b12');
+  ctx.fillStyle=lens;ctx.fillRect(x,8,68,34);
+  ctx.fillStyle='rgba(255,212,197,.18)';ctx.fillRect(x+5,12,58,2);
+  ctx.fillStyle='rgba(7,8,12,.38)';ctx.fillRect(x+4,36,60,4);
+  ctx.restore();
   for(let j=0;j<4;j++){
    const lx=x+6+j*15;
    ctx.fillStyle='#ff3c3a';ctx.fillRect(lx,14,11,6);
