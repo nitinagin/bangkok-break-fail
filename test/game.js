@@ -1794,7 +1794,10 @@ function building(x,z,i){
   g.add(cube(.055,2.03,.13,oldGold,0,1.18,front+(x<0?.06:-.06)));
   for(const y of [.2,2.16])g.add(cube(2.58,.06,.13,oldGold,0,y,front+(x<0?.06:-.06)));
  }
- const canopy=cube(3.8,.12,1.0,awningColors[i%3],0,2.45,front+(x<0?.48:-.48));g.add(canopy);
+ const canopy=cube(3.8,.12,1.0,awningColors[i%3],0,2.45,front+(x<0?.48:-.48));
+ // A shallow streetward pitch sheds monsoon rain; retain the existing canopy mesh.
+ canopy.rotation.x=(x<0?1:-1)*.18;
+ g.add(canopy);
   // Five slim, weathered metal awning ribs replace oversized toy-like cream blocks.
   // Shared geometry and one instanced draw call per storefront (previously five).
   const awningRibs=new THREE.InstancedMesh(yaowaratAwningRibGeometry,yaowaratAwningRibMetal,5);
