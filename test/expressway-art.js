@@ -2503,6 +2503,23 @@ gantry.position.z=-75;group.add(gantry);
    rwc.fillStyle='rgba(6,9,12,.11)';rwc.fillRect(cx+wobble-9,y,3,2);
   }
  }
+ // Broad, irregular asphalt repair seams are baked into the existing tyre-wear
+ // atlas. They read as road maintenance at driving speed, without new geometry,
+ // texture memory, draw calls, or obstacles in any dodge lane.
+ for(let patch=0;patch<3;patch++){
+  const py=17+patch*39,px=patch===1?19:63;
+  rwc.fillStyle='rgba(10,14,18,.24)';
+  rwc.beginPath();
+  rwc.moveTo(px-13,py+3);rwc.lineTo(px+15,py);
+  rwc.lineTo(px+20,py+13);rwc.lineTo(px-9,py+17);
+  rwc.closePath();rwc.fill();
+  rwc.strokeStyle='rgba(119,126,127,.17)';rwc.lineWidth=1;
+  rwc.beginPath();rwc.moveTo(px-12,py+3);
+  rwc.lineTo(px+15,py);rwc.lineTo(px+20,py+13);rwc.stroke();
+  rwc.strokeStyle='rgba(5,8,11,.32)';
+  rwc.beginPath();rwc.moveTo(px-8,py+16);
+  rwc.lineTo(px+1,py+14);rwc.lineTo(px+8,py+16);rwc.stroke();
+ }
  const roadWearTexture=new THREE.CanvasTexture(roadWearCanvas);
  roadWearTexture.colorSpace=THREE.SRGBColorSpace;roadWearTexture.anisotropy=2;
  const roadWearMaterial=new THREE.MeshBasicMaterial({map:roadWearTexture,transparent:true,opacity:.45,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2,side:THREE.DoubleSide});
