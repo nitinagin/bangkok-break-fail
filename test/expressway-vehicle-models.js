@@ -361,6 +361,20 @@ function makeBusWingMirrors(THREE){
  quad([-.94,2.66,2.39],[.94,2.66,2.39],[.91,2.72,2.25],[-.91,2.72,2.25],visorTop);
  quad([-.94,2.66,2.39],[.94,2.66,2.39],[.94,2.625,2.405],[-.94,2.625,2.405],visorLip);
  quad([-.94,2.625,2.405],[.94,2.625,2.405],[.91,2.72,2.25],[-.91,2.72,2.25],visorShade);
+ // Pressed-steel A-pillars and a lower scuttle frame the curved windshield.
+ // Share the existing wing-mirror vertex-colour PBR mesh: no new draw calls.
+ const pillarOuter=new THREE.Color(0x65747a),pillarInset=new THREE.Color(0x202e35),
+  scuttleTop=new THREE.Color(0x89969a);
+ for(const side of [-1,1]){
+  const lowerInner=side*.895,upperInner=side*.87;
+  const lowerOuter=side*.965,upperOuter=side*.94;
+  quad([lowerInner,1.73,2.374],[lowerOuter,1.73,2.374],
+   [upperOuter,2.645,2.365],[upperInner,2.645,2.365],pillarOuter);
+  quad([lowerInner,1.76,2.382],[lowerInner+side*.017,1.76,2.382],
+   [upperInner+side*.017,2.62,2.372],[upperInner,2.62,2.372],pillarInset);
+ }
+ quad([-.91,1.735,2.39],[.91,1.735,2.39],
+  [.91,1.785,2.39],[-.91,1.785,2.39],scuttleTop);
  // Raised pressed-steel roof rain gutters on the Bangkok bus cab. Their
  // shallow outward lips catch the silhouette above the windshield, rather
  // than relying on a flat texture. Share the existing mirror/visor PBR mesh:
