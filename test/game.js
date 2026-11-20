@@ -5302,8 +5302,13 @@ const taxiMirrorGlassGeometry=new THREE.SphereGeometry(1,10,8);
 const taxiRoofSignCanvas=document.createElement('canvas');
 taxiRoofSignCanvas.width=256;taxiRoofSignCanvas.height=96;
 const taxiRoofSignCtx=taxiRoofSignCanvas.getContext('2d');
-taxiRoofSignCtx.fillStyle='#efece0';taxiRoofSignCtx.fillRect(0,0,256,96);
-taxiRoofSignCtx.fillStyle='#b21f28';taxiRoofSignCtx.font='bold 65px Arial';taxiRoofSignCtx.textAlign='center';taxiRoofSignCtx.textBaseline='middle';taxiRoofSignCtx.fillText('TAXI',128,50);
+taxiRoofSignCtx.fillStyle='#f5f1df';taxiRoofSignCtx.fillRect(0,0,256,96);
+// Bangkok taxi-meter light: legible two-line red lettering and a molded border.
+// Bake everything into the existing canvas atlas (no extra geometry or draw calls).
+taxiRoofSignCtx.strokeStyle='#aa252c';taxiRoofSignCtx.lineWidth=5;taxiRoofSignCtx.strokeRect(5,5,246,86);
+taxiRoofSignCtx.fillStyle='#b21f28';taxiRoofSignCtx.textAlign='center';taxiRoofSignCtx.textBaseline='middle';
+taxiRoofSignCtx.font='bold 48px Arial, sans-serif';taxiRoofSignCtx.fillText('TAXI',128,33);
+taxiRoofSignCtx.font='bold 29px Arial, sans-serif';taxiRoofSignCtx.fillText('METER',128,73);
 const taxiRoofSignTexture=new THREE.CanvasTexture(taxiRoofSignCanvas);taxiRoofSignTexture.colorSpace=THREE.SRGBColorSpace;
 const taxiRoofSignMaterial=new THREE.MeshStandardMaterial({map:taxiRoofSignTexture,emissive:0x5b352b,emissiveIntensity:.22,roughness:.47,metalness:0,side:THREE.DoubleSide});
 const taxiRoofSignGeometry=new THREE.PlaneGeometry(.55,.205);
