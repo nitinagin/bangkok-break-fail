@@ -94,6 +94,38 @@ export function createExpresswayArt(THREE){
   }
  }
 
+ // Large Bangkok night-drive billboard baked into the existing skyline atlas.
+ // No new mesh, draw call, texture, or frame-time update.
+ {
+  const x=119,y=210,w=90,h=91;
+  ctx.fillStyle='#0b1019';ctx.fillRect(x-3,y-3,w+6,h+6);
+  ec.fillStyle='#000';ec.fillRect(x-3,y-3,w+6,h+6);
+  const sky=ctx.createLinearGradient(x,y,x+w,y+h);
+  sky.addColorStop(0,'#14233d');sky.addColorStop(.55,'#672f52');sky.addColorStop(1,'#d16b48');
+  ctx.fillStyle=sky;ctx.fillRect(x,y,w,h);
+  ec.fillStyle='#291323';ec.fillRect(x,y,w,h);
+  for(let i=0;i<13;i++){
+   const bx=x+i*7,bh=12+(i*17%24);
+   ctx.fillStyle=i%3===0?'#111a2a':'#1c2434';
+   ctx.fillRect(bx,y+58-bh,6,bh);
+   for(let j=0;j<3;j++)if((i+j)%3!==0){
+    ctx.fillStyle='#efba7a';ctx.fillRect(bx+1+j*2,y+60-bh,1,2);
+   }
+  }
+  ctx.fillStyle='#101925';ctx.fillRect(x,y+58,w,33);
+  ctx.fillStyle='#384354';ctx.beginPath();ctx.moveTo(x,y+69);
+  ctx.lineTo(x+w,y+59);ctx.lineTo(x+w,y+66);ctx.lineTo(x,y+77);ctx.fill();
+  ctx.strokeStyle='#edac75';ctx.lineWidth=2;ctx.beginPath();
+  ctx.moveTo(x,y+69);ctx.lineTo(x+w,y+59);ctx.stroke();
+  ctx.font='bold 15px sans-serif';ctx.textAlign='center';
+  ctx.fillStyle='#fff0d5';ctx.shadowColor='#f8b36c';ctx.shadowBlur=4;
+  ctx.fillText('กรุงเทพฯ',x+w/2,y+19);
+  ctx.shadowBlur=0;ctx.font='bold 10px sans-serif';ctx.fillStyle='#e6c9b1';
+  ctx.fillText('NIGHT DRIVE',x+w/2,y+31);
+  ec.fillStyle='#d39b73';ec.fillRect(x+13,y+10,w-26,2);
+  ec.fillRect(x+13,y+25,w-26,1);
+  ctx.strokeStyle='#9f8c83';ctx.lineWidth=2;ctx.strokeRect(x,y,w,h);
+ }
  // Rain-soaked glass: subtle vertical runoff, uneven reflected neon and
  // dark water trails on individual panes. Baked into the existing facade atlas;
  // emissive windows remain independent, with no geometry or runtime draw calls.
