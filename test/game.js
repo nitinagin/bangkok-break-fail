@@ -75,7 +75,7 @@ function updateDarkDust(advance,driverX){
 // Reusing these two lights adds zero lights/draw calls/textures and avoids per-frame work.
 const districtLightPresets=[
  [.10,.045,0x657386,0x080a0d,0x8c98a4], // fallback
- [.23,.085,0x7387a0,0x1a1118,0xe7b2a0], // Yaowarat: neon and shopfront bounce
+ [.30,.115,0x6aa9ba,0x21131b,0xffb36e], // Yaowarat: cool cyan shopfront bounce against warm tungsten street lamps
  [.075,.035,0x536173,0x080a0d,0x8c98a4], // Rama II: blackout construction
  [.25,.105,0x8b9eaf,0x1b1918,0xe8c9a7], // JJ Market: warm stalls
  [.20,.085,0x7488a0,0x15171d,0xffc68b], // expressway: sodium-vapor spill
