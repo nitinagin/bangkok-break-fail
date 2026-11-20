@@ -1465,6 +1465,26 @@ function facadeMaterial(seed){
      a.fillStyle='rgba(192,164,127,.35)';a.fillRect(shutterX+3,sy-1,15,1);
     }
    }
+   // Recessed wrought-iron Juliet balconies: shadowed stone ledge, curved
+   // iron scrolls and worn handrail. Baked into the eight existing PBR facades
+   // for upper-floor silhouettes without extra meshes or draw calls.
+   if(floor>0){
+    const railY=y+60;
+    a.fillStyle='rgba(12,15,18,.45)';a.fillRect(x-11,railY-1,104,28);
+    a.fillStyle='rgba(121,104,83,.85)';a.fillRect(x-13,railY+26,108,7);
+    a.fillStyle='rgba(230,207,171,.47)';a.fillRect(x-13,railY+26,108,2);
+    a.strokeStyle='rgba(21,27,29,.92)';a.lineWidth=3;
+    a.beginPath();a.moveTo(x-9,railY);a.lineTo(x+90,railY);a.stroke();
+    a.lineWidth=1.7;
+    for(let bar=0;bar<8;bar++){
+     const bx=x-5+bar*13;
+     a.beginPath();a.moveTo(bx,railY+2);
+     a.bezierCurveTo(bx-8,railY+10,bx+8,railY+17,bx,railY+25);
+     a.stroke();
+    }
+    a.strokeStyle='rgba(157,149,130,.38)';a.lineWidth=.8;
+    a.beginPath();a.moveTo(x-8,railY-2);a.lineTo(x+89,railY-2);a.stroke();
+   }
    a.fillStyle='rgba(28,25,25,.28)';a.fillRect(x-9,y+83,100,5);
    a.fillStyle='rgba(238,222,194,.6)';a.fillRect(x-10,y+82,101,2);
   }
