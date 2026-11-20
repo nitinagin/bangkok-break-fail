@@ -1145,6 +1145,23 @@ const signMaterials=[mat(0xff267a),mat(0x086bd8),mat(0x1cbf7a)];function makeYao
    ctx.fillStyle='rgba(13,10,12,.18)';
    ctx.fillRect(x,y,1+(stain%2),8+(stain*7)%38);
   }
+  // Baked Chinatown lanterns frame the large neon shop signs, without meshes.
+  for(const cx of [57,455]){
+   ctx.save();ctx.shadowBlur=0;
+   ctx.fillStyle='#a48856';ctx.fillRect(cx-1,32,2,20);
+   ctx.fillStyle='#cf342d';ctx.beginPath();ctx.ellipse(cx,66,12,18,0,0,Math.PI*2);ctx.fill();
+   ctx.strokeStyle='#f8c26b';ctx.lineWidth=2;
+   ctx.beginPath();ctx.ellipse(cx,66,10,16,0,0,Math.PI*2);ctx.stroke();
+   for(const dx of [-5,0,5]){
+    ctx.strokeStyle='rgba(255,219,151,.72)';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(cx+dx,53);ctx.lineTo(cx+dx,79);ctx.stroke();
+   }
+   ctx.fillStyle='#efb45c';ctx.fillRect(cx-7,48,14,4);ctx.fillRect(cx-7,80,14,4);
+   ctx.strokeStyle='#d8a24c';ctx.beginPath();ctx.moveTo(cx,84);ctx.lineTo(cx,95);ctx.stroke();
+   ctx.restore();
+  }
+  ctx.fillStyle='#66503c';ctx.fillRect(31,215,450,7);
+  ctx.fillStyle='#c9a16a';ctx.fillRect(31,215,450,2);
   // Warm edge lighting reads as actual tube hardware, not a flat pink rectangle.
   ctx.save();ctx.shadowColor=color;ctx.shadowBlur=13;
   ctx.strokeStyle=color;ctx.lineWidth=2.5;
