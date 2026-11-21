@@ -9981,6 +9981,36 @@ function makeExpresswayMotorcycle(){
  mesh(new THREE.BoxGeometry(.36,.19,.44),paint,0,.94,-.91);
  strut([.39,.79,-.23],[.46,.76,-1.1],.095,alloy);
  strut([-.48,1.53,.64],[.48,1.53,.64],.035,alloy);
+
+ // Bent rider legs and ankle-height boots give the motorcycle a credible
+ // racing posture instead of a floating torso. Reuse the existing trousers
+ // material; four lower-leg/boot pieces share one instanced draw call.
+ const riderLegGeometry=new THREE.CylinderGeometry(.092,.075,1,7);
+ const riderLegs=new THREE.InstancedMesh(riderLegGeometry,trousers,4);
+ const riderLegMatrix=new THREE.Matrix4();
+ const riderLegStart=new THREE.Vector3(),riderLegEnd=new THREE.Vector3();
+ const riderLegDirection=new THREE.Vector3(),riderLegMid=new THREE.Vector3();
+ const riderLegUp=new THREE.Vector3(0,1,0);
+ const riderLegRotation=new THREE.Quaternion();
+ for(const side of [-1,1]){
+  const segments=[
+   [[side*.19,1.43,-.45],[side*.37,.91,-.48]],
+   [[side*.37,.91,-.48],[side*.38,.73,-.12]]
+  ];
+  for(let i=0;i<segments.length;i++){
+   riderLegStart.set(...segments[i][0]);riderLegEnd.set(...segments[i][1]);
+   riderLegDirection.subVectors(riderLegEnd,riderLegStart);
+   riderLegMid.copy(riderLegStart).add(riderLegEnd).multiplyScalar(.5);
+   riderLegRotation.setFromUnitVectors(riderLegUp,riderLegDirection.clone().normalize());
+   riderLegMatrix.compose(riderLegMid,riderLegRotation,
+    new THREE.Vector3(i===0?1.28:.88,riderLegDirection.length(),i===0?1.18:.92));
+   riderLegs.setMatrixAt((side===-1?0:2)+i,riderLegMatrix);
+  }
+ }
+ riderLegs.instanceMatrix.needsUpdate=true;
+ riderLegs.computeBoundingSphere();
+ riderLegs.name='expressway-motorcycle-rider-bent-legs';
+ g.add(riderLegs);
  // Forward-leaning rider, full-face helmet and dark visor.
  const torso=mesh(new THREE.CapsuleGeometry(.23,.5,4,8),jacket,0,1.73,-.14);
  torso.rotation.x=.28;
