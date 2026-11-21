@@ -3448,12 +3448,16 @@ for(let i=0;i<tukCanopyVertices.count;i++){
  const frontLift=.09*(.54-z)/1.08;
  const cornerDrop=.14*Math.pow(Math.abs(x)/.915,4);
  const rearSweep=.055*Math.pow(Math.max(0,(z+.10)/.64),2);
+ // A transverse roof bow and a rolled-down rear hem break the flat box
+ // silhouette without introducing any extra geometry or mobile draw calls.
+ const longitudinalBow=.075*(1-Math.pow(Math.min(1,Math.abs(z)/.54),2));
+ const rearHem=.065*Math.pow(Math.max(0,(z-.25)/.29),2);
  // Three shallow stitched tension channels shape the vinyl between steel bows.
  // Deform existing vertices only; collision, materials and draw count stay unchanged.
  const ribDistance=Math.abs(Math.abs(x)-.46);
  const tensionRib=.028*Math.exp(-Math.pow(ribDistance/.085,2));
  const centerSeam=.018*Math.exp(-Math.pow(x/.10,2));
- tukCanopyVertices.setXYZ(i,taperedX,tukCanopyVertices.getY(i)+arch+frontLift-cornerDrop-rearSweep+tensionRib+centerSeam,z);
+ tukCanopyVertices.setXYZ(i,taperedX,tukCanopyVertices.getY(i)+arch+frontLift+longitudinalBow-cornerDrop-rearSweep-rearHem+tensionRib+centerSeam,z);
 }
 tukCanopyVertices.needsUpdate=true;
 tukCanopyGeometry.computeVertexNormals();
