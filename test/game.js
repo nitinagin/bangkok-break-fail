@@ -6189,7 +6189,7 @@ function makeTukTuk(){
  // A tapered, stepped steel nose and low rear engine skirt give the tuk-tuk
  // a recognizable three-wheeler profile rather than a rectangular toy body.
  // This reshapes the existing shell mesh: no new materials or draw calls.
- sideShell([[-1.34,.55],[-.94,.54],[-.65,.58],[.72,.58],[1.27,.65],[1.45,.79],[1.43,.94],[1.28,1.18],[1.02,1.43],[.79,1.48],[.43,1.34],[-.28,1.12],[-.91,1.07],[-1.31,1.02]],1.5,tukPaint);
+ sideShell([[-1.34,.55],[-.94,.54],[-.65,.58],[.72,.58],[1.19,.63],[1.38,.72],[1.45,.84],[1.40,1.00],[1.23,1.20],[.98,1.39],[.77,1.44],[.47,1.32],[-.28,1.12],[-.91,1.07],[-1.31,1.02]],1.5,tukPaint);
  sideShell([[.62,1.12],[1.26,1.14],[1.32,1.22],[.84,1.31]],1.54,tukAccent);
  // Rounded cast-metal mirror housings and inset PBR reflective lenses.
  // Allocate geometry once per cached obstacle template, never per animation frame.
