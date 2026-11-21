@@ -1802,7 +1802,9 @@ function building(x,z,i){
   // Shared geometry and one instanced draw call per storefront (previously five).
   const awningRibs=new THREE.InstancedMesh(yaowaratAwningRibGeometry,yaowaratAwningRibMetal,5);
   for(let rib=0;rib<5;rib++){
-   yaowaratAwningRibMatrix.makeTranslation((rib-2)*.68,2.47,front+(x<0?.49:-.49));
+   // Steel ribs follow the pitched fabric plane rather than floating horizontally.
+   yaowaratAwningRibMatrix.makeRotationX(canopy.rotation.x);
+   yaowaratAwningRibMatrix.setPosition((rib-2)*.68,2.45,front+(x<0?.48:-.48));
    awningRibs.setMatrixAt(rib,yaowaratAwningRibMatrix);
   }
   awningRibs.instanceMatrix.needsUpdate=true;
