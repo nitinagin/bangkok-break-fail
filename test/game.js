@@ -1936,9 +1936,13 @@ function updateTaxiNeonGlints(){
    const distance=Math.abs(sign.position.z-h.g.position.z);
    if(distance<bestDistance){bestDistance=distance;nearest=sign;}
   }
-  // The glint only appears when the taxi passes an actual neon shop sign.
+  // Restrict reflected neon to nearby storefronts on the taxi's side of the road.
+  // Opposite-side signs should not illuminate a windscreen across six traffic lanes.
   if(!nearest||bestDistance>=23)continue;
-  const intensity=Math.max(.12,1-bestDistance/23);
+  const lateralDistance=Math.abs(nearest.position.x-h.g.position.x);
+  const lateralFalloff=THREE.MathUtils.clamp(1-(lateralDistance-4)/10,0,1);
+  if(lateralFalloff<=0)continue;
+  const intensity=Math.max(.12,1-bestDistance/23)*lateralFalloff;
   const heading=h.g.rotation.y;
   taxiGlintDummy.position.set(
    h.g.position.x+Math.sin(heading)*.87,
