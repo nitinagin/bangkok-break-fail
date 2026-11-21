@@ -1116,9 +1116,25 @@ function makeSportsCarAlloyWheel(THREE){
  const canvas=document.createElement('canvas');canvas.width=canvas.height=128;
  const ctx=canvas.getContext('2d');ctx.translate(64,64);
  const circle=(r,color)=>{ctx.fillStyle=color;ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.fill();};
- // Machined rim, dark recess and drilled ventilated brake rotor.
- circle(63,'#0b1016');circle(59,'#5d6973');circle(56,'#b5c1c7');
+ // Machined rim with directional metal highlights, baked into the existing atlas.
+ circle(63,'#0b1016');
+ const rim=ctx.createLinearGradient(-48,-46,49,51);
+ rim.addColorStop(0,'#3a444c');rim.addColorStop(.25,'#b5c1c7');
+ rim.addColorStop(.51,'#6d7982');rim.addColorStop(.78,'#d7dfe1');
+ rim.addColorStop(1,'#424d56');
+ circle(59,rim);circle(56,'#b5c1c7');
  circle(52,'#172029');circle(46,'#67737c');circle(43,'#27333d');
+ // Fine concentric lathe rings and sparse curb scuffs break up the flat silver rim.
+ for(let radius=53;radius<=58;radius+=1.5){
+  ctx.strokeStyle=radius<56?'rgba(23,31,38,.25)':'rgba(240,244,243,.23)';
+  ctx.lineWidth=.55;ctx.beginPath();ctx.arc(0,0,radius,0,Math.PI*2);ctx.stroke();
+ }
+ for(let i=0;i<15;i++){
+  const angle=i*137.5*Math.PI/180;
+  ctx.strokeStyle=i%3===0?'rgba(230,236,234,.32)':'rgba(20,29,36,.24)';
+  ctx.lineWidth=.7;ctx.beginPath();
+  ctx.arc(0,0,56+(i%3)*.7,angle,angle+.07+(i%4)*.025);ctx.stroke();
+ }
  ctx.strokeStyle='#a4adb3';ctx.lineWidth=3;ctx.beginPath();ctx.arc(0,0,51,0,Math.PI*2);ctx.stroke();
  for(let i=0;i<20;i++){
   const a=i*Math.PI/10;
