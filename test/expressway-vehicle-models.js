@@ -2575,6 +2575,20 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   rotors.instanceMatrix.needsUpdate=true;
   rotors.name='sports-car-recessed-brake-rotors';
   group.add(rotors);
+  // Four compact fixed calipers make the ventilated rotor assembly legible
+  // behind the GT spokes at near LOD. One instanced PBR draw call, no lights,
+  // external assets, wheelbase changes or gameplay/collision changes.
+  const caliperMaterial=new THREE.MeshStandardMaterial({color:0xb8241b,metalness:.48,roughness:.39});
+  const calipers=new THREE.InstancedMesh(new THREE.BoxGeometry(.095,.19,.13),caliperMaterial,4);
+  const caliperMatrix=new THREE.Matrix4();
+  let caliperIndex=0;
+  for(const side of [-1,1])for(const axle of [-1,1]){
+   caliperMatrix.makeTranslation(side*(w*.48+.095),.54,axle*1.1-.13);
+   calipers.setMatrixAt(caliperIndex++,caliperMatrix);
+  }
+  calipers.instanceMatrix.needsUpdate=true;
+  calipers.name='sports-car-fixed-brake-calipers';
+  group.add(calipers);
  }
  group.add(tires,hubs);
 
