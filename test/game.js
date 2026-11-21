@@ -1991,10 +1991,17 @@ function updateTukNeonGlints(){
   if(h.type!=='tuktuk'||h.g.userData.detailedTukTuk||count>=tukNeonGlints.count)continue;
   let nearest=null,bestDistance=Infinity;
   for(const sign of reflectionSignAnchors){
-   const distance=Math.abs(sign.position.z-h.g.position.z);
+   // Select the closest storefront in road space, not just along the road.
+   // Prevent neon on the far pavement from lighting the opposite tuk-tuk flank.
+   const longitudinal=Math.abs(sign.position.z-h.g.position.z);
+   const lateral=Math.abs(sign.position.x-h.g.position.x);
+   const distance=Math.hypot(longitudinal,lateral*.85);
    if(distance<bestDistance){bestDistance=distance;nearest=sign;}
   }
   if(!nearest||bestDistance>=22)continue;
+  const lateralDistance=Math.abs(nearest.position.x-h.g.position.x);
+  const lateralFalloff=THREE.MathUtils.clamp(1-(lateralDistance-4)/10,0,1);
+  if(lateralFalloff<=0)continue;
   const side=nearest.position.x>0?1:-1;
   const heading=h.g.rotation.y,scale=h.g.scale.x;
   const localX=side*.83*scale,localZ=.17*scale;
@@ -2008,7 +2015,7 @@ function updateTukNeonGlints(){
   tukGlintDummy.updateMatrix();
   tukNeonGlints.setMatrixAt(count,tukGlintDummy.matrix);
   tukGlintColor.setHex(neonReflectionPalette[nearest.userData.neonReflectionColorIndex]);
-  tukGlintColor.multiplyScalar(.25+.75*(1-bestDistance/22));
+  tukGlintColor.multiplyScalar((.25+.75*(1-bestDistance/22))*lateralFalloff);
   tukNeonGlints.setColorAt(count,tukGlintColor);
   count++;
  }
