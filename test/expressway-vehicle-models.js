@@ -1602,6 +1602,28 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
  const geometry=new THREE.ExtrudeGeometry(shape,{depth:w,bevelEnabled:true,bevelSize:.035,bevelThickness:.035,bevelSegments:1});
  geometry.rotateY(Math.PI/2);geometry.translate(-w/2,0,0);
  group.add(new THREE.Mesh(geometry,paint));
+ // Road-car mirrors are paired, sculpted housings rather than floating flat
+ // rectangles. One instanced PBR draw call, no extra lights or animations.
+ // Both sit within the existing sports-car collision width.
+ if(!isBus){
+  const mirrors=new THREE.InstancedMesh(
+   new THREE.SphereGeometry(1,10,6),
+   new THREE.MeshStandardMaterial({color:0x242a31,metalness:.46,roughness:.31}),
+   2
+  );
+  const pose=new THREE.Object3D();
+  for(let i=0;i<2;i++){
+   pose.position.set(i===0?-.82:.82,.86,-.34);
+   pose.scale.set(.18,.085,.13);
+   pose.rotation.set(0,i===0?-.20:.20,0);
+   pose.updateMatrix();
+   mirrors.setMatrixAt(i,pose.matrix);
+  }
+  mirrors.instanceMatrix.needsUpdate=true;
+  mirrors.computeBoundingSphere();
+  mirrors.name='gt-paired-aerodynamic-wing-mirrors';
+  group.add(mirrors);
+ }
  // Twin inset bonnet stripes give the expressway GT a recognisable racing
  // silhouette at chase-camera distance. One instanced draw, no light sources,
  // and all geometry stays within the existing collision footprint.
