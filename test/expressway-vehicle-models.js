@@ -2586,7 +2586,12 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   const routeBoard=group.children.find(node=>node.name==='bangkok-bus-front-route-panel');
   const clearance=group.children.find(node=>node.name==='bangkok-bus-roof-clearance-lamps');
   if(!routeBoard||!clearance)throw new Error('Bus LOD is missing route board or clearance lamps');
-  for(const part of [group.children[0],roof,routeBoard,clearance,tires,hubs,...rearLamps]){
+  // Preserve the existing warm road-light footprint across the bus LOD switch.
+  // Without this, the headlamp spill abruptly disappears at 27m on phones.
+  // Clone shares its two-instance geometry and material; no new textures or lights.
+  const distantHeadlightPools=group.children.find(node=>node.name==='bangkok-bus-warm-asphalt-headlight-throw');
+  if(!distantHeadlightPools)throw new Error('Bus LOD is missing its asphalt headlight pool');
+  for(const part of [group.children[0],roof,routeBoard,clearance,tires,hubs,...rearLamps,distantHeadlightPools]){
    if(!part)throw new Error('Bus LOD is missing a silhouette part');
    distant.add(part.clone());
   }
