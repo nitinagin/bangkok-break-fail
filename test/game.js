@@ -5473,8 +5473,8 @@ function makeTaxi(){
   g.add(glass);
  }
  for(const side of [-1,1]){
-  sideWindow([[-.77,1.39],[-.59,1.73],[-.13,1.75],[-.13,1.39]],side);
-  sideWindow([[-.06,1.39],[-.06,1.75],[.4,1.75],[.68,1.39]],side);
+  sideWindow([[-.77,1.39],[-.59,1.72],[-.43,1.82],[-.13,1.83],[-.13,1.39]],side);
+  sideWindow([[-.06,1.39],[-.06,1.83],[.20,1.83],[.38,1.80],[.52,1.68],[.68,1.39]],side);
   part(g,cube(.045,.51,.06,taxiRubber,side*.855,1.59,-.09));
   // Lower door beltline and door handles.
   part(g,cube(.045,.045,1.48,taxiChrome,side*1.005,1.21,-.08));
