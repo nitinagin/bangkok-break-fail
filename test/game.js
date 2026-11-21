@@ -5381,14 +5381,9 @@ const taxiRoofSignBaseGeometry=new THREE.BoxGeometry(.63,.075,.23);
 const taxiRoofSignBaseMaterial=new THREE.MeshStandardMaterial({color:0x292b30,roughness:.68,metalness:.3});
 function makeTaxi(){
  const g=new THREE.Group();
- const taxiRoofSignBase=new THREE.Mesh(taxiRoofSignBaseGeometry,taxiRoofSignBaseMaterial);
- taxiRoofSignBase.position.set(0,1.97,-.09);g.add(taxiRoofSignBase);
- for(const facing of [-1,1]){
-  const sign=new THREE.Mesh(taxiRoofSignGeometry,taxiRoofSignMaterial);
-  sign.position.set(0,2.115,-.09+facing*.12);
-  sign.rotation.y=facing===-1?Math.PI:0;
-  g.add(sign);
- }
+ // Single tapered illuminated taxi-meter roof sign is assembled below.
+ // Do not duplicate the old block sign here: overlapping transparent decals
+ // cause z-fighting and make the taxi silhouette look like stacked toy boxes.
 
  // Extrude a sedan side profile along X; rounded bevels replace toy-like box edges.
  function profile(points,width,material){
