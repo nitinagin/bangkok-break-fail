@@ -806,6 +806,25 @@ function makeBusSideWindows(THREE){
    ctx.fillStyle='rgba(255,220,152,.35)';
    ctx.fillRect(x+37,14,52,2);
   }
+  // Reflections of the expressway's concrete parapets and elevated towers.
+  // A faint, skewed horizon across each pane breaks up the flat blue glazing;
+  // all marks are baked into the existing shared 512x128 atlas (zero draw calls).
+  ctx.save();
+  ctx.beginPath();ctx.rect(x+11,11,106,102);ctx.clip();
+  ctx.globalCompositeOperation='screen';
+  ctx.fillStyle='rgba(145,170,179,.10)';
+  for(const [offset,width,height] of [[13,17,31],[36,12,45],[59,22,27],[91,15,39]]){
+   ctx.fillRect(x+offset,17,width,height);
+   ctx.fillStyle='rgba(226,194,146,.12)';
+   for(let wy=23;wy<17+height;wy+=12)
+    ctx.fillRect(x+offset+4,wy,3,4);
+   ctx.fillStyle='rgba(145,170,179,.10)';
+  }
+  ctx.strokeStyle='rgba(211,223,222,.17)';ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(x+9,60+i*2);ctx.lineTo(x+120,44+i*2);ctx.stroke();
+  ctx.strokeStyle='rgba(14,26,33,.22)';ctx.lineWidth=5;
+  ctx.beginPath();ctx.moveTo(x+9,68+i*2);ctx.lineTo(x+120,52+i*2);ctx.stroke();
+  ctx.restore();
   // Streetlight reflection and rain tracks baked into existing bus window atlas.
   const lamp=ctx.createLinearGradient(x+16,0,x+110,0);
   lamp.addColorStop(0,'rgba(255,214,151,0)');
