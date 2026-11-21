@@ -26,6 +26,19 @@ export function createExpresswayArt(THREE){
   ctx.fillStyle='#111e2b';ctx.fillRect(x-1,y-1,23,12);
   ctx.fillStyle=lit?((row+col)%3===0?'#e4bb83':'#94aeba'):'#273a49';
   ctx.fillRect(x+1,y+1,19,8);
+  // Monsoon runoff and soot collect below recessed windows on Bangkok towers.
+  // Baked into the existing shared facade atlas: zero extra textures or draws.
+  const runoff=(row*41+col*23+row*col*5)%17;
+  if(runoff<11){
+   const dripX=x+2+(runoff*7)%17;
+   const dripLength=2+(row+col*3)%4;
+   ctx.fillStyle='rgba(9,18,25,.24)';
+   ctx.fillRect(dripX,y+9,runoff%3===0?2:1,dripLength);
+   if(runoff%4===0){
+    ctx.fillStyle='rgba(119,130,132,.12)';
+    ctx.fillRect(dripX+2,y+10,1,2);
+   }
+  }
   if(lit){
    ec.fillStyle=(row+col)%3===0?'#e4bb83':'#94aeba';
    ec.fillRect(x+1,y+1,19,8);
