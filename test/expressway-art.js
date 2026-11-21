@@ -107,6 +107,32 @@ export function createExpresswayArt(THREE){
   }
  }
 
+ // Recessed apartment balconies and metal guardrails break up the repetitive
+ // office-window grid on the shared Bangkok skyline atlas. Deep balcony
+ // shadows, concrete slab lips and alternating laundry/plant silhouettes
+ // make the towers read as lived-in residential buildings from the road.
+ // Painted once into the existing albedo + emissive atlases: zero new GPU
+ // textures, geometry, draw calls or animation-loop work.
+ for(let floor=0;floor<7;floor++){
+  const y=344+floor*19;
+  for(let bay=0;bay<3;bay++){
+   const x=12+bay*32,seed=floor*13+bay*17;
+   ctx.fillStyle='#101b24';ctx.fillRect(x,y,27,13);
+   ec.fillStyle='#000';ec.fillRect(x,y,27,13);
+   ctx.fillStyle='#58646a';ctx.fillRect(x-1,y+12,29,3);
+   ctx.fillStyle='#252f35';ctx.fillRect(x-1,y+15,29,2);
+   ctx.fillStyle='rgba(164,177,178,.48)';
+   ctx.fillRect(x,y+6,27,1);
+   for(const railX of [x+2,x+10,x+18,x+25])ctx.fillRect(railX,y+6,1,7);
+   if(seed%3===0){
+    ctx.fillStyle='#a8a092';ctx.fillRect(x+4,y+2,5,8);
+    ctx.fillStyle='#637c84';ctx.fillRect(x+9,y+3,4,7);
+   }else if(seed%3===1){
+    ctx.fillStyle='#344b3c';ctx.fillRect(x+18,y+6,6,6);
+    ctx.fillStyle='#5b7758';ctx.fillRect(x+19,y+2,4,6);
+   }
+  }
+ }
  // Large Bangkok night-drive billboard baked into the existing skyline atlas.
  // No new mesh, draw call, texture, or frame-time update.
  {
