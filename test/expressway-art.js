@@ -2573,6 +2573,27 @@ gantry.position.z=-75;group.add(gantry);
   rwc.beginPath();rwc.moveTo(px-8,py+16);
   rwc.lineTo(px+1,py+14);rwc.lineTo(px+8,py+16);rwc.stroke();
  }
+ // Directional rain sheen baked into the existing road-wear atlas: thin,
+ // broken specular-looking highlights follow wheel ruts on wet Bangkok asphalt.
+ // Deterministic strokes avoid flicker and add no textures, meshes or draw calls.
+ for(let rut=0;rut<2;rut++){
+  const x0=rut===0?34:94;
+  for(let y=2;y<126;y+=11){
+   const offset=Math.sin(y*.13+rut)*2;
+   const length=4+(y+rut*7)%8;
+   rwc.strokeStyle='rgba(164,187,194,'+(.08+((y+rut*3)%5)*.014)+')';
+   rwc.lineWidth=.7;
+   rwc.beginPath();
+   rwc.moveTo(x0+offset-3,y);
+   rwc.lineTo(x0+offset-3.5,y+length);
+   rwc.stroke();
+   rwc.strokeStyle='rgba(91,118,132,.07)';
+   rwc.beginPath();
+   rwc.moveTo(x0+offset+5,y+2);
+   rwc.lineTo(x0+offset+5,y+length-1);
+   rwc.stroke();
+  }
+ }
  const roadWearTexture=new THREE.CanvasTexture(roadWearCanvas);
  roadWearTexture.colorSpace=THREE.SRGBColorSpace;roadWearTexture.anisotropy=2;
  const roadWearMaterial=new THREE.MeshBasicMaterial({map:roadWearTexture,transparent:true,opacity:.45,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2,side:THREE.DoubleSide});
