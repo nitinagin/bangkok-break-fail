@@ -1640,7 +1640,7 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   for(let j=0;j<=6;j++){
    const t=j/6,z=.72+t*.79;
    const halfWidth=.07*(1-.27*t);
-   const y=.756-.105*t;
+   // The stripe is paint on the pressed bonnet, not a floating ribbon.\n   // Follow the body's .65m hood and .61m nose with a 1cm offset.\n   const y=.66-.04*t;
    vertices.push(-halfWidth,y,z,halfWidth,y,z);
    uv.push(0,t,1,t);
    if(j<6){const k=j*2;triangles.push(k,k+1,k+2,k+1,k+3,k+2);}
