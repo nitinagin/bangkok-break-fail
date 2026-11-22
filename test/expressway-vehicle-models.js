@@ -584,8 +584,8 @@ function makeBusSideLivery(THREE){
  ctx.fillStyle='#183b50';ctx.font='bold 26px sans-serif';
  ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('511',47,28);
  ctx.textAlign='left';ctx.fillStyle='#fff2d4';
- ctx.font='bold 23px sans-serif';ctx.fillText('กรุงเทพฯ',95,28);
- ctx.font='bold 13px sans-serif';ctx.fillText('BANGKOK CITY BUS',96,44);
+ ctx.font='bold 23px sans-serif';ctx.fillText('ทางด่วน',95,28);
+ ctx.font='bold 13px sans-serif';ctx.fillText('EXPRESSWAY SERVICE',96,44);
  ctx.fillStyle='rgba(26,36,41,.15)';
  for(let i=0;i<54;i++){
   const x=(i*79+23)%512,y=(i*17+11)%64;
