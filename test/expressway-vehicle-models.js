@@ -993,6 +993,17 @@ function makeSportsCarRearFascia(THREE){
   ctx.fillStyle='#d9e9e9';ctx.fillRect(reverseX+1,35,11,2);
   ctx.fillStyle='rgba(255,255,240,.72)';ctx.fillRect(reverseX+2,35,7,1);
  }
+ // Slim high-mounted GT brake light between the sculpted rear lamp clusters.
+ // The dark gasket, red diffuser and reflected wet-paint edge share the existing
+ // 256x64 rear atlas; no geometry, draw calls, animation or collision changes.
+ ctx.fillStyle='#080d12';ctx.fillRect(77,3,102,8);
+ const brakeGlow=ctx.createLinearGradient(77,0,179,0);
+ brakeGlow.addColorStop(0,'#561c22');brakeGlow.addColorStop(.2,'#ec383a');
+ brakeGlow.addColorStop(.5,'#ff6b5c');brakeGlow.addColorStop(.8,'#ec383a');
+ brakeGlow.addColorStop(1,'#561c22');
+ ctx.fillStyle=brakeGlow;ctx.fillRect(81,5,94,3);
+ ctx.fillStyle='rgba(255,213,194,.58)';ctx.fillRect(92,5,72,1);
+ ctx.fillStyle='rgba(185,51,47,.19)';ctx.fillRect(84,10,88,2);
  // Fictional Thai plate with a dark recessed mounting panel.
  ctx.fillStyle='#080c11';ctx.fillRect(86,10,84,43);
  // Warm twin plate lamps, retroreflective enamel and a recessed plate frame
