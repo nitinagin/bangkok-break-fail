@@ -40,7 +40,12 @@ function getAsphaltLightAssets(THREE,isBus){
 }
 
 // Bake weathered bus glazing once per shared vehicle template, not per hazard.
+const busGlazingAssets=new WeakMap();
 function makeBusGlazing(THREE){
+ // All bus instances reuse one baked windshield atlas and PBR material.
+ // Avoid repeating 256px canvas drawing and GPU texture uploads on mobile.
+ const cached=busGlazingAssets.get(THREE);
+ if(cached)return cached;
  const canvas=document.createElement('canvas');canvas.width=256;canvas.height=256;
  const ctx=canvas.getContext('2d'),g=ctx.createLinearGradient(0,0,256,256);
  g.addColorStop(0,'#4a6b7a');g.addColorStop(.24,'#243e4c');g.addColorStop(.7,'#132632');g.addColorStop(1,'#0c1a25');
@@ -319,7 +324,9 @@ function makeBusGlazing(THREE){
  // simplified wiper pass used to overpaint the detailed blades and rubber seal,
  // creating four overlapping arms on the windshield at mobile resolution.
  const map=new THREE.CanvasTexture(canvas);map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=2;
- return new THREE.MeshStandardMaterial({map,metalness:.18,roughness:.29});
+ const material=new THREE.MeshStandardMaterial({map,metalness:.18,roughness:.29});
+ busGlazingAssets.set(THREE,material);
+ return material;
 }
 // Compound-curved laminated bus windscreen: a softly crowned centre, tapered
 // shoulders and progressive rake. One indexed mesh and the existing PBR atlas;
