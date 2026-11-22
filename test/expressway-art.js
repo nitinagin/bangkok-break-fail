@@ -1098,6 +1098,23 @@ export function createExpresswayArt(THREE){
    pc.fillStyle=glimmer;pc.fillRect(x,y,width,height);
   }
  }
+ // Crosswise wet expansion-joint glints: broken, narrow reflections follow
+ // the real transverse seams of an elevated Bangkok expressway. Bake into
+ // the existing lamp-pool canvas; no new meshes, textures or frame updates.
+ for(let seam=0;seam<5;seam++){
+  const y=31+seam*46;
+  for(let fragment=0;fragment<7;fragment++){
+   const x=12+fragment*16+((seam*7+fragment*3)%5);
+   const w=6+((seam+fragment*3)%8);
+   const sheen=pc.createLinearGradient(x,y,x,y+4);
+   sheen.addColorStop(0,'rgba(255,234,195,0)');
+   sheen.addColorStop(.45,'rgba(255,234,195,.23)');
+   sheen.addColorStop(1,'rgba(255,234,195,0)');
+   pc.fillStyle=sheen;pc.fillRect(x,y,w,4);
+   pc.fillStyle='rgba(12,24,35,.13)';
+   pc.fillRect(x,y+4,w,1);
+  }
+ }
  const poolTexture=new THREE.CanvasTexture(poolCanvas);poolTexture.colorSpace=THREE.SRGBColorSpace;
  const poolMaterial=new THREE.MeshBasicMaterial({
   map:poolTexture,color:0xffe8c5,transparent:true,opacity:.38,
