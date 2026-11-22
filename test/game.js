@@ -9965,6 +9965,30 @@ function makeExpresswayMotorcycle(){
  const fairing=new THREE.Mesh(fairingGeometry,fairingPaint);
  fairing.name='expressway-motorcycle-sculpted-fairing';
  g.add(fairing);
+ // Recessed side air ducts are inset into the lower front fairing, not raised
+ // toy-like blocks. Both ducts share a single six-triangle indexed draw.
+ // Keep the vents behind the front tyre and outside the clear dodge silhouette.
+ const ductVertices=[],ductIndices=[];
+ for(const side of [-1,1]){
+  const base=ductVertices.length/3;
+  const outline=[
+   [side*.312,1.055,.42],[side*.294,.997,.72],
+   [side*.207,.968,.85],[side*.242,1.083,.58]
+  ];
+  for(const v of outline)ductVertices.push(...v);
+  if(side<0)ductIndices.push(base,base+1,base+2,base,base+2,base+3);
+  else ductIndices.push(base,base+2,base+1,base,base+3,base+2);
+ }
+ const ductGeometry=new THREE.BufferGeometry();
+ ductGeometry.setAttribute('position',new THREE.Float32BufferAttribute(ductVertices,3));
+ ductGeometry.setIndex(ductIndices);
+ ductGeometry.computeVertexNormals();
+ const ducts=new THREE.Mesh(ductGeometry,new THREE.MeshStandardMaterial({
+  color:0x080f17,metalness:.12,roughness:.81,side:THREE.DoubleSide,
+  polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1
+ }));
+ ducts.name='expressway-motorcycle-recessed-side-air-ducts';
+ g.add(ducts);
  // Sloped smoked windscreen with an actual open cockpit silhouette.
  const screenShape=new THREE.Shape();
  screenShape.moveTo(-.31,0);screenShape.lineTo(.31,0);
