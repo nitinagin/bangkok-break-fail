@@ -342,9 +342,13 @@ export function createExpresswayArt(THREE){
   ctx.font='bold 19px sans-serif';ec.font='bold 19px sans-serif';
   ctx.textAlign='center';ec.textAlign='center';
   ctx.textBaseline='middle';ec.textBaseline='middle';
-  const letters=['โ','ร','ง','แ','ร','ม'];
+  // Render complete Thai words, never isolated leading vowels: mobile fonts
+  // position โ and แ relative to their consonants, not as separate signs.
+  // Larger lettering also stays legible at driving speed.
+  const letters=['โรง','แรม'];
+  ctx.font='bold 18px sans-serif';ec.font='bold 18px sans-serif';
   for(let i=0;i<letters.length;i++){
-   const y=sy+17+i*22;
+   const y=sy+48+i*52;
    ctx.shadowColor='#ff4c87';ctx.shadowBlur=5;
    ctx.fillStyle='#ffd9e5';ctx.fillText(letters[i],sx+sw/2,y);
    ec.fillStyle='#ff4c87';ec.fillText(letters[i],sx+sw/2,y);
