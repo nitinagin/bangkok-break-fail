@@ -156,6 +156,28 @@ export function createExpresswayArt(THREE){
    ec.fillStyle='#763a29';ec.fillRect(x+17,y+4,3,3);
   }
  }
+ // Rooftop plant-room silhouettes: louvred enclosures, tank profiles and
+ // parapet coping, baked into the existing skyline atlas. No new draw calls.
+ {
+  const baseY=22;
+  ctx.fillStyle='#222f39';ctx.fillRect(3,baseY,248,5);
+  ctx.fillStyle='#89959a';ctx.fillRect(3,baseY,248,2);
+  for(const [rx,rw,rh] of [[14,32,9],[72,22,12],[120,38,8],[181,28,11]]){
+   const top=baseY-rh;
+   ctx.fillStyle='#121e27';ctx.fillRect(rx+2,top+2,rw,rh);
+   ctx.fillStyle='#64737b';ctx.fillRect(rx,top,rw,2);
+   ctx.fillStyle='#43535d';ctx.fillRect(rx+2,top+3,rw-4,rh-5);
+   ctx.fillStyle='#1b2932';
+   for(let slit=rx+5;slit<rx+rw-3;slit+=5)ctx.fillRect(slit,top+4,2,Math.max(2,rh-7));
+   ec.fillStyle='#000';ec.fillRect(rx,top,rw+2,rh+5);
+  }
+  // Rounded water-tank silhouette, with shadowed support legs.
+  ctx.fillStyle='#66777d';ctx.fillRect(220,baseY-13,18,11);
+  ctx.fillStyle='#a0adae';ctx.fillRect(222,baseY-14,14,2);
+  ctx.fillStyle='#24323a';ctx.fillRect(223,baseY-2,2,4);
+  ctx.fillRect(233,baseY-2,2,4);
+  ec.fillStyle='#000';ec.fillRect(220,baseY-14,18,18);
+ }
  // Large Bangkok night-drive billboard baked into the existing skyline atlas.
  // No new mesh, draw call, texture, or frame-time update.
  {
