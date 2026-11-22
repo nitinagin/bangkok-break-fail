@@ -1428,6 +1428,27 @@ export function createExpresswayArt(THREE){
   bac.fillStyle='rgba(231,222,188,.53)';bac.fillRect(x,62,26,3);
   bac.fillStyle='rgba(53,57,59,.38)';bac.fillRect(x+4,63,7,1);
  }
+ // Broad irregular asphalt resurfacing patches with sealed tar seams and
+ // exposed aggregate. Baked once into the existing road atlas: no extra
+ // geometry, texture allocations, lights, or per-frame work.
+ // Keep all patches between shoulder markings so the dodge lane stays clear.
+ for(const patch of [[20,30,42,17],[108,76,51,21],[203,33,37,16]]){
+  const [px,py,pw,ph]=patch;
+  bac.beginPath();
+  bac.moveTo(px+3,py+2);bac.lineTo(px+pw*.32,py);
+  bac.lineTo(px+pw-4,py+3);bac.lineTo(px+pw,py+ph*.62);
+  bac.lineTo(px+pw-6,py+ph);bac.lineTo(px+pw*.23,py+ph-2);
+  bac.lineTo(px,py+ph*.48);bac.closePath();
+  bac.fillStyle='rgba(16,24,28,.38)';bac.fill();
+  bac.strokeStyle='rgba(7,12,15,.54)';bac.lineWidth=1.5;bac.stroke();
+  bac.save();bac.clip();
+  for(let grain=0;grain<36;grain++){
+   const gx=px+(grain*17+pw*3)%pw,gy=py+(grain*11+ph*5)%ph;
+   bac.fillStyle=grain%4===0?'rgba(153,159,151,.18)':'rgba(101,119,124,.13)';
+   bac.fillRect(gx,gy,grain%3===0?2:1,1);
+  }
+  bac.restore();
+ }
  // Faded diagonal shoulder-hazard hatching on both edges of the elevated deck.
  // Painted directly into the shared asphalt atlas: no geometry, lighting or draw-call cost.
  // Low-opacity strokes preserve the worn, rain-darkened Bangkok road surface.
