@@ -17,6 +17,21 @@ function getAsphaltLightAssets(THREE,isBus){
  gradient.addColorStop(.34,isBus?'rgba(255,211,145,.22)':'rgba(166,212,249,.24)');
  gradient.addColorStop(1,'rgba(130,190,235,0)');
  ctx.fillStyle=gradient;ctx.fillRect(0,0,64,128);
+ // Wet asphalt produces broken, elongated reflections rather than a flat
+ // circular glow. Bake faint longitudinal streaks into the shared 64x128
+ // light atlas; both headlamps reuse it, with no additional GPU draws.
+ ctx.save();ctx.globalCompositeOperation='screen';
+ for(let i=0;i<11;i++){
+  const x=9+(i*17)%47,top=22+(i*23)%64;
+  const width=1+(i%3),length=15+(i*7)%35;
+  const streak=ctx.createLinearGradient(x,top,x,top+length);
+  const strength=i%3===0?.17:.09;
+  streak.addColorStop(0,'rgba(255,238,202,0)');
+  streak.addColorStop(.45,isBus?'rgba(255,210,142,'+strength+')':'rgba(191,224,255,'+strength+')');
+  streak.addColorStop(1,'rgba(255,238,202,0)');
+  ctx.fillStyle=streak;ctx.fillRect(x,top,width,length);
+ }
+ ctx.restore();
  const map=new THREE.CanvasTexture(canvas);map.colorSpace=THREE.SRGBColorSpace;
  const geometry=new THREE.PlaneGeometry(isBus?1.42:1.12,isBus?6.7:5.6);
  const material=new THREE.MeshBasicMaterial({map,transparent:true,depthWrite:false,
