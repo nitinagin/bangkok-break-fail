@@ -2478,7 +2478,7 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   // Sports-car grille, splitter, rear wing, supports and side ducts:
   // Nine carbon-finish pieces in one instanced draw call, no texture upload.
   const carbon=new THREE.MeshStandardMaterial({color:0x111820,metalness:.24,roughness:.54});
-  const aero=new THREE.InstancedMesh(new THREE.BoxGeometry(1,1,1),carbon,12);
+  const aero=new THREE.InstancedMesh(new THREE.BoxGeometry(1,1,1),carbon,14);
   const aeroMatrix=new THREE.Matrix4();
   function aeroPart(i,x,y,z,sx,sy,sz){
    aeroMatrix.makeScale(sx,sy,sz);
@@ -2502,7 +2502,12 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   aeroPart(9,-.845,.435,0,.075,.085,2.34); // left rocker / side skirt
   aeroPart(10,.845,.435,0,.075,.085,2.34); // right rocker / side skirt
   aeroPart(11,0,.435,-1.755,1.30,.09,.20); // recessed rear diffuser
+  // GT rear-wing endplates frame the aerofoil instead of leaving a floating slab.
+  // Both share the carbon material and instanced draw call; no new GPU assets.
+  aeroPart(12,-.77,1.005,-1.48,.045,.16,.30);
+  aeroPart(13,.77,1.005,-1.48,.045,.16,.30);
   aero.instanceMatrix.needsUpdate=true;
+  aero.name='sports-car-carbon-aero';
   group.add(aero);
   // Baked cooling ducts curve across the front, above the splitter.
   group.add(makeSportsCarFrontIntake(THREE));
@@ -2668,7 +2673,9 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   // the projector lamps remain visible. Reuse the existing shared atlas.
   const distantHeadlightPools=group.children.find(node=>node.name==='sports-car-wet-asphalt-headlight-throw');
   if(!distantHeadlightPools)throw new Error('Sports-car LOD is missing its asphalt headlight pool');
-  for(const part of [group.children[0],roof,rear,headlights,led,tires,hubs,distantHeadlightPools]){
+  const aeroSilhouette=group.children.find(node=>node.name==='sports-car-carbon-aero');
+  if(!aeroSilhouette)throw new Error('Sports-car LOD is missing its rear-wing silhouette');
+  for(const part of [group.children[0],roof,rear,headlights,led,tires,hubs,distantHeadlightPools,aeroSilhouette]){
    if(!part)throw new Error('Sports-car LOD is missing a silhouette part');
    distant.add(part.clone());
   }
