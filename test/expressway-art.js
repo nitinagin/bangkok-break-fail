@@ -2286,6 +2286,14 @@ export function createExpresswayArt(THREE){
   sc.fillStyle='#f8fff5';sc.font='bold 24px Arial,sans-serif';
   sc.fillText(route,cx,58);
  }
+ // High-contrast bilingual exit tabs make the overhead direction readable
+ // at driving speed. Baked into the existing sign atlas, not new geometry.
+ for(const cx of [256,768]){
+  sc.fillStyle='#eef4e8';sc.fillRect(cx-86,177,172,34);
+  sc.fillStyle='#174b39';sc.fillRect(cx-82,181,164,26);
+  sc.font='bold 19px Arial,sans-serif';sc.fillStyle='#f5fbef';
+  sc.fillText('EXIT',cx,194);
+ }
  // Thin retroreflective edge wear, concentrated at panel seams rather than
  // painted across the Thai/English destination lettering.
  for(let i=0;i<58;i++){
