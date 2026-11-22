@@ -133,6 +133,29 @@ export function createExpresswayArt(THREE){
    }
   }
  }
+ // Narrow exterior fire-escape stairwell: alternating concrete landings,
+ // diagonal steel flights and safety rails. Baked into the shared facade
+ // atlas so distant Bangkok blocks gain readable human-scale architecture
+ // without additional geometry, textures, draw calls or per-frame work.
+ for(let floor=0;floor<24;floor++){
+  const x=226,y=8+floor*20;
+  ctx.fillStyle='#17232c';ctx.fillRect(x,y,24,19);
+  ec.fillStyle='#000';ec.fillRect(x,y,24,19);
+  ctx.fillStyle='#56616a';ctx.fillRect(x,y+16,24,3);
+  ctx.strokeStyle='#89949b';ctx.lineWidth=2;
+  ctx.beginPath();
+  if(floor%2===0){ctx.moveTo(x+3,y+15);ctx.lineTo(x+21,y+3);}
+  else{ctx.moveTo(x+3,y+3);ctx.lineTo(x+21,y+15);}
+  ctx.stroke();
+  ctx.strokeStyle='#a1a9a9';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(x+2,y+2);ctx.lineTo(x+2,y+16);
+  ctx.moveTo(x+22,y+2);ctx.lineTo(x+22,y+16);ctx.stroke();
+  ctx.fillStyle='#343f49';ctx.fillRect(x+1,y+1,22,2);
+  if(floor%6===0){
+   ctx.fillStyle='#a85b43';ctx.fillRect(x+17,y+4,3,3);
+   ec.fillStyle='#763a29';ec.fillRect(x+17,y+4,3,3);
+  }
+ }
  // Large Bangkok night-drive billboard baked into the existing skyline atlas.
  // No new mesh, draw call, texture, or frame-time update.
  {
