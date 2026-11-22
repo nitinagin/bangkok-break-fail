@@ -1883,6 +1883,20 @@ export function createExpresswayArt(THREE){
   bw.beginPath();bw.moveTo(x+7,19);bw.lineTo(x+15,19);
   bw.lineTo(x+7,74);bw.lineTo(x+3,74);bw.closePath();bw.fill();
  }
+ // Warm interior grab poles and ceiling lamps behind the tinted glass make
+ // elevated Bangkok buses read as occupied public transport at night.
+ // Painted into the existing shared 256x96 atlas: zero new draw calls.
+ for(let panel=0;panel<6;panel++){
+  const x=8+panel*41;
+  bw.fillStyle='rgba(245,190,106,.22)';
+  bw.fillRect(x+3,20,29,3);
+  bw.fillStyle='rgba(218,182,114,.33)';
+  bw.fillRect(x+11,26,2,43);
+  bw.fillRect(x+26,26,2,43);
+  bw.strokeStyle='rgba(227,194,133,.24)';
+  bw.lineWidth=1;
+  bw.beginPath();bw.moveTo(x+7,30);bw.lineTo(x+30,30);bw.stroke();
+ }
  // Bangkok city-bus glazing: continuous aluminum belt rail, route plate,
  // rubber window seals and road-film streaks baked into the existing atlas.
  // Adds no geometry, texture, draw call or animation cost.
