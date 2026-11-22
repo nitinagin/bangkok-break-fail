@@ -10011,6 +10011,31 @@ function makeExpresswayMotorcycle(){
  riderLegs.computeBoundingSphere();
  riderLegs.name='expressway-motorcycle-rider-bent-legs';
  g.add(riderLegs);
+ // Rear swingarm and chain drive make the exposed wheel mechanically legible.
+ // Instanced side rails and chain runs keep the extra geometry to two draws;
+ // both assemblies stay inside the existing motorcycle silhouette and collision bounds.
+ const swingarmMaterial=new THREE.MeshStandardMaterial({color:0x697780,metalness:.78,roughness:.39});
+ const swingarmBars=new THREE.InstancedMesh(new THREE.CylinderGeometry(.035,.045,1,7),swingarmMaterial,4);
+ const chainMaterial=new THREE.MeshStandardMaterial({color:0x343a3e,metalness:.65,roughness:.55});
+ const chainRuns=new THREE.InstancedMesh(new THREE.CylinderGeometry(.012,.012,1,6),chainMaterial,2);
+ function placeMotorcycleLink(inst,index,start,end){
+  const a=new THREE.Vector3(...start),b=new THREE.Vector3(...end);
+  const d=b.clone().sub(a),mid=a.add(b).multiplyScalar(.5);
+  const q=new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0),d.clone().normalize());
+  inst.setMatrixAt(index,new THREE.Matrix4().compose(mid,q,new THREE.Vector3(1,d.length(),1)));
+ }
+ for(const side of [-1,1]){
+  const i=side===-1?0:2;
+  placeMotorcycleLink(swingarmBars,i,[side*.17,.73,-.33],[side*.17,.47,-1.02]);
+  placeMotorcycleLink(swingarmBars,i+1,[side*.17,.47,-1.02],[side*.17,.68,-.72]);
+  placeMotorcycleLink(chainRuns,side===-1?0:1,[side*.21,.57,-.34],[side*.21,.49,-.98]);
+ }
+ swingarmBars.instanceMatrix.needsUpdate=true;
+ chainRuns.instanceMatrix.needsUpdate=true;
+ swingarmBars.computeBoundingSphere();chainRuns.computeBoundingSphere();
+ swingarmBars.name='expressway-motorcycle-rear-swingarm';
+ chainRuns.name='expressway-motorcycle-chain-drive';
+ g.add(swingarmBars,chainRuns);
  // Forward-leaning rider, full-face helmet and dark visor.
  const torso=mesh(new THREE.CapsuleGeometry(.23,.5,4,8),jacket,0,1.73,-.14);
  torso.rotation.x=.28;
