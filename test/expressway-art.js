@@ -2777,6 +2777,24 @@ gantry.position.z=-75;group.add(gantry);
   rwc.beginPath();rwc.moveTo(px-8,py+16);
   rwc.lineTo(px+1,py+14);rwc.lineTo(px+8,py+16);rwc.stroke();
  }
+ // Tar-sealed road repairs and chipped aggregate: baked once into the
+ // existing asphalt-wear atlas, with no extra geometry or per-frame work.
+ for(let cut=0;cut<4;cut++){
+  const cy=11+cut*31,baseX=17+(cut*29)%83;
+  rwc.lineWidth=2.2;rwc.strokeStyle='rgba(5,9,12,.32)';
+  rwc.beginPath();rwc.moveTo(baseX-18,cy+2);
+  rwc.lineTo(baseX-7,cy-1);rwc.lineTo(baseX+5,cy+3);
+  rwc.lineTo(baseX+16,cy);rwc.lineTo(baseX+24,cy+2);rwc.stroke();
+  rwc.lineWidth=.7;rwc.strokeStyle='rgba(139,147,144,.17)';
+  rwc.beginPath();rwc.moveTo(baseX-17,cy+4);
+  rwc.lineTo(baseX-7,cy+1);rwc.lineTo(baseX+5,cy+5);
+  rwc.lineTo(baseX+16,cy+2);rwc.stroke();
+  for(let chip=0;chip<14;chip++){
+   const cx=baseX-16+(chip*17%42),yy=cy-5+(chip*11%12);
+   rwc.fillStyle=chip%3===0?'rgba(167,175,170,.18)':'rgba(19,25,29,.21)';
+   rwc.fillRect(cx,yy,1+(chip%2),1);
+  }
+ }
  // Directional rain sheen baked into the existing road-wear atlas: thin,
  // broken specular-looking highlights follow wheel ruts on wet Bangkok asphalt.
  // Deterministic strokes avoid flicker and add no textures, meshes or draw calls.
