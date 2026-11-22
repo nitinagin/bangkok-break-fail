@@ -14,6 +14,20 @@ body::after{content:"";position:fixed;inset:0;z-index:1;pointer-events:none;
 #howToPlay p{margin:7px 0}
 #howToPlay small{margin:8px 0 0;font-size:11px;color:#ffe9a5}
 @media(max-height:680px){#howToPlay{padding:7px 11px;margin:7px auto;font-size:11px}#howToPlay p{margin:4px 0}#howToPlay strong{font-size:13px}}
+
+/* Cinematic, mobile-safe first-play treatment: dark glass and Bangkok sodium
+   streetlight accents replace the toy-purple splash. Pure CSS, no GPU meshes. */
+#overlay{background:linear-gradient(180deg,rgba(4,9,15,.80),rgba(3,7,13,.94));backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);z-index:5}
+#panel{background:linear-gradient(155deg,rgba(19,30,39,.97),rgba(7,13,22,.98));border:1px solid rgba(237,184,105,.42);border-radius:16px;box-shadow:0 22px 70px rgba(0,0,0,.8),inset 0 1px rgba(255,255,255,.08)}
+#panel h1{color:#f7e7c9;text-shadow:0 2px 14px rgba(244,141,56,.25);letter-spacing:.015em}
+#panel>p{color:#c4d0d5;letter-spacing:.08em;font-size:12px;font-weight:750}
+#panel>p:first-of-type{color:#f0b978}
+#howToPlay{background:rgba(3,10,17,.78);border-color:rgba(218,168,105,.34);color:#e2e8e9}
+#howToPlay strong{color:#f0b978}
+#howToPlay small{color:#b9cbd0}
+#start{width:100%;background:linear-gradient(180deg,#f1c489,#c98a4c);color:#161c22;border:1px solid rgba(255,235,194,.7);box-shadow:0 5px 20px rgba(0,0,0,.35);letter-spacing:.025em}
+#start:focus-visible{outline:3px solid #fff;outline-offset:3px}
+@media(prefers-reduced-transparency:reduce){#overlay{backdrop-filter:none;-webkit-backdrop-filter:none}}
 </style><link rel="stylesheet" href="./splash.css"></head>
 <body><div id="hud"><div id="score">0 PTS</div><div id="status">120 KM/H<br>❤️❤️❤️</div></div><div id="gameControls"><button id="pauseBtn" aria-label="Pause game">⏸</button><button id="soundBtn" aria-label="Toggle sound">🔊</button><button id="centerBtn" aria-label="Recenter steering">🎯</button></div><div id="challenge">🎯 SURVIVE 500m · +250</div><div id="district">☀️ BANGKOK DAYTIME</div><div id="hint">TILT TO STEER</div><div id="overlay"><div id="panel"><img id="coverArt" src="./game-cover.svg" width="900" height="600" alt="Cinematic tuk-tuk chase through neon Bangkok with Thai ghosts and a floating Krasue"><h1>🛺 NITINAGIN’S<br>BREAK FAIL!</h1><p>V6.7 — NEON NIGHT DRIVE</p><p>LIGHT OUT NIGHT : THAILAND<br>NO BRAKES. NO RULES.</p><section id="howToPlay" aria-label="How to play"><strong>🎮 HOW TO PLAY</strong><p>📱 <b>TILT LEFT OR RIGHT</b> to steer and dodge traffic.</p><p>👆 <b>NO MOTION SENSOR?</b> Drag left or right on the road to steer.</p><p>⌨️ <b>DESKTOP:</b> Use ← → or A / D keys.</p><p>🎯 Tap recenter to reset your steering position.</p><small>On iPhone, tap <b>Allow</b> if asked for Motion &amp; Orientation access.</small></section><button id="start">GOT IT · START CHAOS</button><small>Hold your phone comfortably before starting.</small></div></div><div id="error">3D could not load. Please check your internet connection and refresh Safari.</div>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"}}</script>
