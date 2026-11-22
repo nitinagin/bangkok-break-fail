@@ -10044,7 +10044,19 @@ function makeExpresswayMotorcycle(){
  torso.rotation.x=.28;
  mesh(new THREE.SphereGeometry(.32,14,10),helmet,0,2.22,.1);
  mesh(new THREE.SphereGeometry(1,12,8),visor,0,2.23,.39,.25,.15,.065);
- mesh(new THREE.SphereGeometry(.15,10,8),headlamp,0,1.29,1.07);
+ // Twin recessed projector lamps read as a sport-bike nose at approach distance.
+ // One instanced draw replaces the former single exposed spherical bulb.
+ const projectorGlass=new THREE.InstancedMesh(new THREE.SphereGeometry(1,12,8),headlamp,2);
+ const projectorMatrix=new THREE.Matrix4();
+ for(let i=0;i<2;i++){
+  projectorMatrix.makeScale(.105,.075,.045);
+  projectorMatrix.setPosition(i===0?-.16:.16,1.28,1.083);
+  projectorGlass.setMatrixAt(i,projectorMatrix);
+ }
+ projectorGlass.instanceMatrix.needsUpdate=true;
+ projectorGlass.computeBoundingSphere();
+ projectorGlass.name='expressway-motorcycle-twin-projector-lamps';
+ g.add(projectorGlass);
  mesh(new THREE.BoxGeometry(.35,.11,.07),tailLamp,0,1.09,-1.18);
  g.userData.expresswayMotorcycle=true;
  expresswayMotorcycleTemplate=g;
