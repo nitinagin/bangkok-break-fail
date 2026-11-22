@@ -367,9 +367,13 @@ export function createExpresswayArt(THREE){
   ctx.font='bold 16px sans-serif';ec.font='bold 16px sans-serif';
   ctx.textAlign='center';ec.textAlign='center';
   ctx.textBaseline='middle';ec.textBaseline='middle';
-  const glyphs=['ร','้','า','น','ย','า'];
+  // Keep Thai combining marks attached to their base consonants; isolated
+  // tone marks render as floating artifacts on many mobile system fonts.
+  // Three legible stacked syllable groups fill the same existing sign atlas.
+  const glyphs=['ร้าน','ขาย','ยา'];
+  ctx.font='bold 12px sans-serif';ec.font='bold 12px sans-serif';
   for(let i=0;i<glyphs.length;i++){
-   const gy=sy+13+i*17;
+   const gy=sy+25+i*35;
    ctx.shadowColor='#64e3df';ctx.shadowBlur=4;
    ctx.fillStyle='#d9fffb';ctx.fillText(glyphs[i],sx+sw/2,gy);
    ec.fillStyle='#64d9d4';ec.fillText(glyphs[i],sx+sw/2,gy);
