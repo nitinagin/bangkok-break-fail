@@ -805,9 +805,14 @@ function makeBusFrontFascia(THREE){
  return mesh;
 }
 
+// Cache the 512x128 bus side-glazing atlas and PBR material per Three.js runtime.
+// Repeated buses share the GPU upload; the four varied windows stay unchanged.
+const busSideGlazingAssets=new WeakMap();
 // Four side windows are baked into one weathered PBR atlas per expressway bus.
 // Two planes replace eight separate glazing boxes: six fewer draw calls per bus.
 function makeBusSideWindows(THREE){
+ const cached=busSideGlazingAssets.get(THREE);
+ if(cached)return cached;
  const canvas=document.createElement('canvas');canvas.width=512;canvas.height=128;
  const ctx=canvas.getContext('2d');
  ctx.fillStyle='#d8d1c4';ctx.fillRect(0,0,512,128);
@@ -951,9 +956,11 @@ function makeBusSideWindows(THREE){
  }
  const map=new THREE.CanvasTexture(canvas);
  map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=2;
- return new THREE.MeshStandardMaterial({
+ const material=new THREE.MeshStandardMaterial({
   map,metalness:.12,roughness:.36,side:THREE.DoubleSide
  });
+ busSideGlazingAssets.set(THREE,material);
+ return material;
 }
 // One 256x64 baked rear light/plate atlas replaces two separate car tail lamps.
 // The texture is created once per shared template, not on each hazard spawn.
