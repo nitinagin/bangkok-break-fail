@@ -107,6 +107,25 @@ export function createExpresswayArt(THREE){
   }
  }
 
+
+ // In Bangkok's mixed-use towers, dark service floors interrupt the regular
+ // window grid. Subtle slab bands and rain-stained concrete make these read as
+ // actual building levels, not repeated illuminated toy windows. Bake once
+ // into the existing albedo/emissive atlases without new GPU resources.
+ for(const level of [7,18,27]){
+  const y=13+level*15;
+  ctx.fillStyle='rgba(8,16,23,.82)';ctx.fillRect(0,y-2,256,12);
+  ec.fillStyle='#000';ec.fillRect(0,y-2,256,12);
+  ctx.fillStyle='#56616a';ctx.fillRect(0,y+9,256,2);
+  ctx.fillStyle='rgba(154,169,173,.22)';ctx.fillRect(0,y+11,256,1);
+  for(let vent=0;vent<8;vent++){
+   const vx=7+vent*30;
+   ctx.fillStyle='#25323b';ctx.fillRect(vx,y+1,20,6);
+   ctx.fillStyle='rgba(127,147,153,.40)';
+   for(let blade=0;blade<3;blade++)ctx.fillRect(vx+2,y+2+blade*2,16,1);
+  }
+ }
+
  // Recessed apartment balconies and metal guardrails break up the repetitive
  // office-window grid on the shared Bangkok skyline atlas. Deep balcony
  // shadows, concrete slab lips and alternating laundry/plant silhouettes
