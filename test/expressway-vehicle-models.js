@@ -1583,11 +1583,18 @@ function makeBusRearFascia(THREE){
   ec.fillStyle='#ee1822';ec.fillRect(x+1,155,29,18);
   ec.fillStyle='#422016';ec.fillRect(x+1,177,29,8);
  }
- ctx.fillStyle='#eee9d8';ctx.fillRect(86,208,84,29);
- ctx.strokeStyle='#353d3e';ctx.lineWidth=2;ctx.strokeRect(86,208,84,29);
- ctx.fillStyle='#1a282d';ctx.font='bold 15px Tahoma,sans-serif';
- ctx.fillText('10-4821',128,226);
- ctx.font='9px Tahoma,sans-serif';ctx.fillText('กรุงเทพมหานคร',128,235);
+ // The plate must sit ABOVE the reflective chevron strip. Previously its
+ // 29px backing covered the centre of the safety tape, leaving a broken
+ // warning pattern. Keep the complete tape visible at approach distance.
+ ctx.fillStyle='#eee9d8';ctx.fillRect(86,206,84,17);
+ ctx.strokeStyle='#353d3e';ctx.lineWidth=2;ctx.strokeRect(86,206,84,17);
+ ctx.fillStyle='#1a282d';ctx.font='bold 13px Tahoma,sans-serif';
+ ctx.fillText('10-4821',128,219);
+ // High-mounted centre brake lamp, integrated with the existing rear fascia
+ // atlas and emissive map; one clear red night-time cue, zero new draw calls.
+ ctx.fillStyle='#161b20';ctx.fillRect(93,135,70,9);
+ ctx.fillStyle='#b61f29';ctx.fillRect(97,137,62,5);
+ ec.fillStyle='#e93435';ec.fillRect(98,138,60,3);
  // Deterministic grime at the lower tailgate; no per-frame texture uploads.
  for(let i=0;i<90;i++){
   const x=(i*53+17)%256,y=178+(i*31)%62;
