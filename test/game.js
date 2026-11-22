@@ -9924,7 +9924,10 @@ function makeExpresswayMotorcycle(){
  strut([0,.7,-.95],[0,1.2,.36],.065,alloy);
  strut([0,1.2,.36],[0,.75,.82],.055,trim);
  for(const side of [-1,1]){
-  strut([side*.24,.47,1.02],[side*.27,1.48,.64],.045,alloy);
+  // Two-stage telescopic fork: thicker brushed lower slider and slim dark upper stanchion.
+  // Both segments meet on the original fork axis, preserving silhouette and hitbox.
+  strut([side*.24,.47,1.02],[side*.255,.92,.87],.061,alloy);
+  strut([side*.255,.92,.87],[side*.27,1.48,.64],.038,trim);
   strut([side*.19,1.12,-.35],[side*.35,.8,-.77],.07,trousers);
   strut([side*.2,1.85,-.04],[side*.42,1.51,.65],.075,jacket);
  }
