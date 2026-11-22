@@ -794,6 +794,24 @@ export function createExpresswayArt(THREE){
  }
  roofPlants.instanceMatrix.needsUpdate=true;
  roofPlants.frustumCulled=false;group.add(roofPlants);
+ // Rooftop cylindrical water tanks on selected residential blocks. Their
+ // round silhouettes interrupt the boxy skyline; one static instanced PBR
+ // draw call, no shadow maps, network assets or per-frame updates.
+ const tankGeometry=new THREE.CylinderGeometry(.5,.5,1,10);
+ const tankMaterial=new THREE.MeshStandardMaterial({color:0x84939a,metalness:.42,roughness:.63});
+ const roofTanks=new THREE.InstancedMesh(tankGeometry,tankMaterial,12);
+ roofTanks.name='expressway-residential-rooftop-water-tanks';
+ for(let i=0;i<12;i++){
+  const tower=i*2,side=tower%2===0?-1:1;
+  const height=10+(tower*13%19),width=4+(tower*5%7),depth=5+(tower*3%7);
+  const tankHeight=.75+(i%3)*.16;
+  dummy.position.set(side*(12+(tower*7%17))-width*.22,
+   height-2+tankHeight*.5,-15-Math.floor(tower/2)*9+depth*.18);
+  dummy.scale.set(.9+(i%3)*.18,tankHeight,.9+(i%3)*.18);
+  dummy.updateMatrix();roofTanks.setMatrixAt(i,dummy.matrix);
+ }
+ roofTanks.instanceMatrix.needsUpdate=true;
+ roofTanks.frustumCulled=false;group.add(roofTanks);
  // Alternating stepped concrete crowns break the repeated cuboid skyline.
  // Each crown is a low, inset roof volume (not a floating ornament), with
  // weathered PBR concrete. Twelve instances cost one static draw call.
