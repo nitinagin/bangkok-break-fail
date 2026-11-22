@@ -2258,6 +2258,34 @@ export function createExpresswayArt(THREE){
  for(const side of [-1,1])gantry.add(box(.24,9.1,.24,steel,side*4.7,4.55,-.24));
  gantry.add(box(9.5,.18,.2,steel,0,7,-.24));
  gantry.add(box(9.5,.2,.2,steel,0,9,-.24));
+ // Reflective amber/black impact guards on the gantry legs, outside the lanes.
+ // Both panels share one baked atlas and one instanced draw call.
+ const hazardGuardCanvas=document.createElement('canvas');
+ hazardGuardCanvas.width=64;hazardGuardCanvas.height=128;
+ const hazardGuardCtx=hazardGuardCanvas.getContext('2d');
+ hazardGuardCtx.fillStyle='#d6a12e';hazardGuardCtx.fillRect(0,0,64,128);
+ hazardGuardCtx.save();hazardGuardCtx.beginPath();hazardGuardCtx.rect(0,0,64,128);hazardGuardCtx.clip();
+ hazardGuardCtx.strokeStyle='#161c20';hazardGuardCtx.lineWidth=17;
+ for(let y=-90;y<210;y+=32){
+  hazardGuardCtx.beginPath();hazardGuardCtx.moveTo(-18,y);hazardGuardCtx.lineTo(82,y+88);hazardGuardCtx.stroke();
+ }
+ hazardGuardCtx.restore();
+ hazardGuardCtx.fillStyle='rgba(255,240,171,.35)';hazardGuardCtx.fillRect(2,0,3,128);
+ hazardGuardCtx.fillStyle='rgba(10,17,20,.30)';hazardGuardCtx.fillRect(59,0,3,128);
+ const hazardGuardTexture=new THREE.CanvasTexture(hazardGuardCanvas);
+ hazardGuardTexture.colorSpace=THREE.SRGBColorSpace;
+ const hazardGuardPanels=new THREE.InstancedMesh(
+  new THREE.PlaneGeometry(.30,1.55),
+  new THREE.MeshBasicMaterial({map:hazardGuardTexture,side:THREE.DoubleSide}),2
+ );
+ const hazardGuardPose=new THREE.Object3D();
+ for(let i=0;i<2;i++){
+  hazardGuardPose.position.set((i===0?-1:1)*4.7,1.65,-.085);
+  hazardGuardPose.updateMatrix();hazardGuardPanels.setMatrixAt(i,hazardGuardPose.matrix);
+ }
+ hazardGuardPanels.instanceMatrix.needsUpdate=true;
+ hazardGuardPanels.name='gantry-reflective-impact-guards';
+ gantry.add(hazardGuardPanels);
  const trussBraceCount=16,trussSpan=9.2,trussStep=trussSpan/trussBraceCount;
  const trussBraces=new THREE.InstancedMesh(
   new THREE.CylinderGeometry(.045,.045,1,6),steel,trussBraceCount
