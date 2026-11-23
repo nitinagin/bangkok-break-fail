@@ -2814,6 +2814,22 @@ gantry.position.z=-75;group.add(gantry);
   rwc.beginPath();rwc.moveTo(px-8,py+16);
   rwc.lineTo(px+1,py+14);rwc.lineTo(px+8,py+16);rwc.stroke();
  }
+ // Transverse expansion-joint seals on an elevated Bangkok roadway: narrow
+ // recessed rubber lines, worn concrete lips and staggered bolt shadows.
+ // All details are baked into the existing road-wear atlas, keeping the
+ // driving lane clear and adding no geometry, textures or frame-time work.
+ for(let joint=0;joint<2;joint++){
+  const jy=30+joint*62;
+  rwc.strokeStyle='rgba(5,9,13,.39)';rwc.lineWidth=2;
+  rwc.beginPath();rwc.moveTo(4,jy);rwc.lineTo(124,jy+2);rwc.stroke();
+  rwc.strokeStyle='rgba(173,183,182,.18)';rwc.lineWidth=.75;
+  rwc.beginPath();rwc.moveTo(4,jy+3);rwc.lineTo(124,jy+5);rwc.stroke();
+  for(let bolt=0;bolt<7;bolt++){
+   const bx=10+bolt*18,by=jy+bolt/7;
+   rwc.fillStyle='rgba(7,11,14,.34)';rwc.fillRect(bx,by-1,2,2);
+   rwc.fillStyle='rgba(169,174,171,.16)';rwc.fillRect(bx+1,by+1,2,1);
+  }
+ }
  // Tar-sealed road repairs and chipped aggregate: baked once into the
  // existing asphalt-wear atlas, with no extra geometry or per-frame work.
  for(let cut=0;cut<4;cut++){
