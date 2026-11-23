@@ -2851,6 +2851,28 @@ gantry.position.z=-75;group.add(gantry);
    rwc.stroke();
   }
  }
+ // Broken neon and sodium-vapour reflections on rain-darkened flyover asphalt.
+ // Bake into the existing road-wear atlas, avoiding dynamic lights, new
+ // textures or draw calls. The centre remains subdued for dodge readability.
+ rwc.save();
+ rwc.globalCompositeOperation='screen';
+ for(const [cx,tint,phase] of [
+  [19,'255,164,82',0],[108,'67,184,215',7]
+ ]){
+  for(let streak=0;streak<12;streak++){
+   const y=4+streak*10+((streak*7+phase)%5);
+   const width=2+(streak*3+phase)%8;
+   const offset=((streak*11+phase)%17)-8;
+   const length=3+(streak*5+phase)%12;
+   const gleam=rwc.createLinearGradient(cx+offset,y,cx+offset,y+length);
+   gleam.addColorStop(0,'rgba('+tint+',0)');
+   gleam.addColorStop(.5,'rgba('+tint+','+(streak%3===0?.22:.12)+')');
+   gleam.addColorStop(1,'rgba('+tint+',0)');
+   rwc.fillStyle=gleam;
+   rwc.fillRect(cx+offset,y,width,length);
+  }
+ }
+ rwc.restore();
  const roadWearTexture=new THREE.CanvasTexture(roadWearCanvas);
  roadWearTexture.colorSpace=THREE.SRGBColorSpace;roadWearTexture.anisotropy=2;
  const roadWearMaterial=new THREE.MeshBasicMaterial({map:roadWearTexture,transparent:true,opacity:.45,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2,side:THREE.DoubleSide});
