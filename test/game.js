@@ -5411,7 +5411,8 @@ function makeTaxi(){
  // Retains the same PBR material, extruded mesh and draw-call count.
  // Longer, smoothly raked Bangkok sedan greenhouse: stepped roof stations
  // soften the windscreen/rear-window break and keep a believable passenger cabin.
- profile([[-1.16,1.2],[-1.09,1.29],[-1.01,1.43],[-.91,1.61],[-.78,1.78],[-.63,1.88],[-.47,1.934],[-.31,1.955],[.20,1.955],[.36,1.939],[.49,1.89],[.61,1.78],[.72,1.60],[.84,1.34],[.94,1.2]],1.59,taxiPaintYellow);
+ // Lower, subtly crowned sedan roof with a continuous raked rear pillar; preserve body width and hitbox.
+ profile([[-1.16,1.2],[-1.09,1.29],[-1.01,1.43],[-.91,1.61],[-.78,1.77],[-.63,1.865],[-.47,1.913],[-.31,1.932],[-.06,1.944],[.16,1.939],[.36,1.918],[.49,1.87],[.61,1.76],[.72,1.60],[.84,1.34],[.94,1.2]],1.59,taxiPaintYellow);
  // Sculpted bonnet and boot replace the flat sedan silhouette seen from the
  // driver's lane. Both pressed-metal skins are batched into ONE shared mesh,
  // using the taxi's existing weathered green PBR paint and 128px maps.
