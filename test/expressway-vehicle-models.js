@@ -1690,12 +1690,29 @@ function makeBusRearFascia(THREE){
  mesh.rotation.y=Math.PI;mesh.name='bangkok-bus-weathered-rear-fascia';
  return mesh;
 }
+// Reuse immutable PBR surface materials for every traffic spawn. Previously
+// each bus/GT allocated five GPU materials even when the geometry was shared.
+// A WeakMap per THREE runtime avoids cross-context resource sharing.
+const sharedTrafficMaterials=new WeakMap();
+function getTrafficMaterials(THREE){
+ let materials=sharedTrafficMaterials.get(THREE);
+ if(!materials){
+  materials={
+   busPaint:new THREE.MeshStandardMaterial({color:0xf0e6d4,metalness:.15,roughness:.65}),
+   gtPaint:new THREE.MeshPhysicalMaterial({color:0xb12438,metalness:.62,roughness:.26,clearcoat:.75,clearcoatRoughness:.22}),
+   glass:new THREE.MeshStandardMaterial({color:0x173542,metalness:.2,roughness:.16}),
+   rubber:new THREE.MeshStandardMaterial({color:0x171a1c,roughness:.96}),
+   stripe:new THREE.MeshStandardMaterial({color:0xc72b35,roughness:.55})
+  };
+  sharedTrafficMaterials.set(THREE,materials);
+ }
+ return materials;
+}
 export function makeExpresswayVehicle(THREE,type='sportsCar'){
  const isBus=type==='bus',group=new THREE.Group(),w=isBus?2.05:1.8,length=isBus?4.45:3.55;
- const paint=isBus?new THREE.MeshStandardMaterial({color:0xf0e6d4,metalness:.15,roughness:.65}):new THREE.MeshPhysicalMaterial({color:0xb12438,metalness:.62,roughness:.26,clearcoat:.75,clearcoatRoughness:.22});
- const glass=new THREE.MeshStandardMaterial({color:0x173542,metalness:.2,roughness:.16});
- const rubber=new THREE.MeshStandardMaterial({color:0x171a1c,roughness:.96});
- const stripe=new THREE.MeshStandardMaterial({color:0xc72b35,roughness:.55});
+ const surfaces=getTrafficMaterials(THREE);
+ const paint=isBus?surfaces.busPaint:surfaces.gtPaint;
+ const glass=surfaces.glass,rubber=surfaces.rubber,stripe=surfaces.stripe;
  const shape=new THREE.Shape();
  if(isBus){
    // Rounded pressed-steel bus roof shoulders, preserving body footprint,
