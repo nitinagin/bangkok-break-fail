@@ -1691,8 +1691,12 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
   shape.quadraticCurveTo(-.31,1.17,.03,1.20);
   shape.quadraticCurveTo(.39,1.21,.59,1.04);
   shape.quadraticCurveTo(.76,.82,.95,.73);
-  shape.quadraticCurveTo(1.22,.68,1.49,.61);
-  shape.quadraticCurveTo(1.69,.56,1.77,.4);
+  // Rear haunch stays high over the driven axle before falling into the
+  // integrated bumper: a recognisable production GT quarter-panel in profile.
+  // Existing extruded body, same footprint, zero extra meshes or draws.
+  shape.quadraticCurveTo(1.15,.83,1.38,.77);
+  shape.quadraticCurveTo(1.60,.69,1.69,.54);
+  shape.quadraticCurveTo(1.74,.47,1.77,.4);
  }
  shape.closePath();
  const geometry=new THREE.ExtrudeGeometry(shape,{depth:w,bevelEnabled:true,bevelSize:.035,bevelThickness:.035,bevelSegments:1});
