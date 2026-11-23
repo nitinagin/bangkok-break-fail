@@ -2,6 +2,53 @@
 // Usage: import {makeExpresswayVehicle} from './expressway-vehicle-models.js';
 // Add makeExpresswayVehicle(THREE,'sportsCar') or (THREE,'bus') to a scene.
 
+// Shared side glazing across all GT instances, including mobile traffic spawns.
+const gtSideGlazingAssets=new WeakMap();
+function getSharedGTGlazing(THREE){
+ const cached=gtSideGlazingAssets.get(THREE);
+ if(cached)return cached;
+ const canvas=document.createElement('canvas');
+ canvas.width=canvas.height=128;
+ const ctx=canvas.getContext('2d');
+ const gradient=ctx.createLinearGradient(0,0,128,128);
+ gradient.addColorStop(0,'#56717c');
+ gradient.addColorStop(.38,'#243e4b');
+ gradient.addColorStop(1,'#0d1d28');
+ ctx.fillStyle=gradient;ctx.fillRect(0,0,128,128);
+ ctx.fillStyle='rgba(220,238,237,.19)';
+ ctx.beginPath();ctx.moveTo(15,0);ctx.lineTo(33,0);
+ ctx.lineTo(86,128);ctx.lineTo(65,128);ctx.closePath();ctx.fill();
+ ctx.fillStyle='rgba(194,219,224,.09)';
+ ctx.beginPath();ctx.moveTo(101,0);ctx.lineTo(111,0);
+ ctx.lineTo(73,128);ctx.lineTo(65,128);ctx.closePath();ctx.fill();
+ ctx.strokeStyle='rgba(203,221,220,.11)';ctx.lineWidth=1;
+ for(let streak=0;streak<6;streak++){
+  const x=12+streak*19;
+  ctx.beginPath();ctx.moveTo(x,18);ctx.lineTo(x-5,82);ctx.stroke();
+ }
+ // Subtle reflected Thai street lighting, not emissive lights in the cabin.
+ ctx.globalCompositeOperation='screen';
+ for(const [x,width,color] of [
+  [23,7,'rgba(255,171,76,.25)'],
+  [72,4,'rgba(73,211,236,.22)'],
+  [107,6,'rgba(255,78,119,.19)']
+ ]){
+  const glow=ctx.createLinearGradient(x-width,0,x+width,0);
+  glow.addColorStop(0,'rgba(0,0,0,0)');
+  glow.addColorStop(.5,color);
+  glow.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=glow;ctx.fillRect(x-width,6,width*2,108);
+ }
+ ctx.globalCompositeOperation='source-over';
+ const map=new THREE.CanvasTexture(canvas);
+ map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=2;
+ const material=new THREE.MeshStandardMaterial({
+  map,metalness:.18,roughness:.24,side:THREE.DoubleSide
+ });
+ gtSideGlazingAssets.set(THREE,material);
+ return material;
+}
+
 // Share the two asphalt-light atlases across all traffic instances. A weak key
 // keeps distinct Three.js runtimes isolated; cloning a vehicle reuses GPU assets.
 const asphaltLightAssets=new WeakMap();
@@ -2210,30 +2257,10 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
 
   // Four flush side panes (two per flank) replace the solid, toy-like cabin.
   // Bake reflections once and draw all eight triangles in a single PBR mesh.
-  const sideCanvas=document.createElement('canvas');
-  sideCanvas.width=sideCanvas.height=128;
-  const sideCtx=sideCanvas.getContext('2d');
-  const sideGradient=sideCtx.createLinearGradient(0,0,128,128);
-  sideGradient.addColorStop(0,'#56717c');
-  sideGradient.addColorStop(.38,'#243e4b');
-  sideGradient.addColorStop(1,'#0d1d28');
-  sideCtx.fillStyle=sideGradient;sideCtx.fillRect(0,0,128,128);
-  sideCtx.fillStyle='rgba(220,238,237,.19)';
-  sideCtx.beginPath();sideCtx.moveTo(15,0);sideCtx.lineTo(33,0);
-  sideCtx.lineTo(86,128);sideCtx.lineTo(65,128);sideCtx.closePath();sideCtx.fill();
-  sideCtx.fillStyle='rgba(194,219,224,.09)';
-  sideCtx.beginPath();sideCtx.moveTo(101,0);sideCtx.lineTo(111,0);
-  sideCtx.lineTo(73,128);sideCtx.lineTo(65,128);sideCtx.closePath();sideCtx.fill();
-  sideCtx.strokeStyle='rgba(203,221,220,.11)';sideCtx.lineWidth=1;
-  for(let streak=0;streak<6;streak++){
-   const sx=12+streak*19;
-   sideCtx.beginPath();sideCtx.moveTo(sx,18);sideCtx.lineTo(sx-5,82);sideCtx.stroke();
-  }
-  const sideMap=new THREE.CanvasTexture(sideCanvas);
-  sideMap.colorSpace=THREE.SRGBColorSpace;sideMap.anisotropy=2;
-  const sideGlass=new THREE.MeshStandardMaterial({
-   map:sideMap,metalness:.18,roughness:.24,side:THREE.DoubleSide
-  });
+  // Shared laminated side-glass atlas: one texture upload for the whole GT fleet.
+  // Baked sodium and cyan city-light streaks add Bangkok night reflections
+  // without per-car canvases, additional meshes or draw calls.
+  const sideGlass=getSharedGTGlazing(THREE);
   const sidePositions=[],sideUvs=[];
   function sidePane(side,nearZ,farZ,nearTop,farTop){
    const x=side*.945;
