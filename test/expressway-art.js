@@ -1895,10 +1895,22 @@ export function createExpresswayArt(THREE){
  tx.fillStyle='#1b5b40';tx.fillRect(5,5,246,118);
  tx.fillStyle='#f4f1df';tx.fillRect(10,10,236,108);
  tx.fillStyle='#17613c';tx.fillRect(13,13,230,7);
- tx.fillStyle='#163f34';tx.font='bold 54px Arial,sans-serif';
- tx.textAlign='center';tx.textBaseline='middle';tx.fillText('TAXI',128,55);
- tx.fillStyle='#286d4b';tx.font='bold 22px Arial,sans-serif';
- tx.fillText('METER  BANGKOK',128,96);
+ // Bangkok taxi meter roof / door livery: illuminated ivory face, deep
+ // green border and Thai service lettering. Baked into the existing 256x128
+ // atlas used by all flyover taxis: no extra texture, mesh or draw call.
+ const taxiGlow=tx.createLinearGradient(0,12,0,114);
+ taxiGlow.addColorStop(0,'#fffbea');
+ taxiGlow.addColorStop(.48,'#f5f0d5');
+ taxiGlow.addColorStop(1,'#d2d5bc');
+ tx.fillStyle=taxiGlow;tx.fillRect(13,20,230,94);
+ tx.fillStyle='#14613e';tx.fillRect(13,13,230,7);
+ tx.fillStyle='#174d39';tx.fillRect(13,108,230,7);
+ tx.fillStyle='#153e32';tx.font='bold 49px Arial,sans-serif';
+ tx.textAlign='center';tx.textBaseline='middle';tx.fillText('TAXI',128,49);
+ tx.fillStyle='#17613c';tx.font='bold 20px Tahoma,Arial,sans-serif';
+ tx.fillText('แท็กซี่มิเตอร์',128,86);
+ tx.fillStyle='#395c4b';tx.font='bold 11px Arial,sans-serif';
+ tx.fillText('BANGKOK  •  METER',128,103);
  const taxiTexture=new THREE.CanvasTexture(taxiCanvas);
  taxiTexture.colorSpace=THREE.SRGBColorSpace;taxiTexture.anisotropy=2;
  const taxiLiveryMaterial=new THREE.MeshBasicMaterial({
