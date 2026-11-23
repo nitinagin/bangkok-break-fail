@@ -5874,6 +5874,27 @@ for(const x of [17,239]){
  tukWindscreenCtx.fillStyle=drain;tukWindscreenCtx.fillRect(x-5,30,10,86);
 }
 tukWindscreenCtx.restore();
+// Fine monsoon rivulets cling to the upper glass outside the wiper sweep.
+// Deterministic, atlas-only detail: no extra transparent planes or GPU passes.
+tukWindscreenCtx.save();
+tukWindscreenCtx.beginPath();tukWindscreenCtx.rect(13,37,230,74);tukWindscreenCtx.clip();
+for(let i=0;i<38;i++){
+ const x=18+(i*73+Math.floor(i/7)*19)%219;
+ const y=40+(i*29)%41;
+ const length=8+(i*11)%27;
+ const drift=(i%3-1)*3;
+ const water=tukWindscreenCtx.createLinearGradient(x,y,x+drift,y+length);
+ water.addColorStop(0,'rgba(216,237,238,0)');
+ water.addColorStop(.28,'rgba(216,237,238,.19)');
+ water.addColorStop(.85,'rgba(166,204,211,.12)');
+ water.addColorStop(1,'rgba(216,237,238,0)');
+ tukWindscreenCtx.beginPath();
+ tukWindscreenCtx.moveTo(x,y);
+ tukWindscreenCtx.bezierCurveTo(x+drift*.2,y+length*.3,x+drift*1.4,y+length*.65,x+drift,y+length);
+ tukWindscreenCtx.strokeStyle=water;tukWindscreenCtx.lineWidth=i%5===0?1.5:.75;
+ tukWindscreenCtx.stroke();
+}
+tukWindscreenCtx.restore();
 // Baked weathered rubber seal and bottom-mounted wiper, avoiding extra draw calls.
 tukWindscreenCtx.strokeStyle='rgba(12,17,21,.85)';
 tukWindscreenCtx.lineWidth=9;tukWindscreenCtx.strokeRect(4.5,4.5,247,119);
