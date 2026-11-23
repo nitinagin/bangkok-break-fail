@@ -2567,18 +2567,24 @@ gantry.add(gantryLightPool);
  const coneCount=12,conePose=new THREE.Object3D();
  const coneBodyMaterial=new THREE.MeshStandardMaterial({color:0xd95c1f,roughness:.76,metalness:0});
  const coneCollarMaterial=new THREE.MeshBasicMaterial({color:0xf4e9c9});
+ // Heavy rubber square feet anchor each cone to the wet elevated shoulder.
+ // One shared instanced draw call, no collision objects or per-frame work.
+ const coneBaseMaterial=new THREE.MeshStandardMaterial({color:0x171b1c,roughness:.96,metalness:0});
+ const coneBases=new THREE.InstancedMesh(new THREE.BoxGeometry(.64,.065,.64),coneBaseMaterial,coneCount);
+ coneBases.name='expressway-roadworks-cone-rubber-feet';
  const coneBody=new THREE.InstancedMesh(new THREE.CylinderGeometry(.045,.29,.82,8,1),coneBodyMaterial,coneCount);
  const coneCollars=new THREE.InstancedMesh(new THREE.CylinderGeometry(.115,.17,.14,8,1),coneCollarMaterial,coneCount);
  coneBody.name='expressway-roadworks-shoulder-cones';
  coneCollars.name='expressway-cone-reflective-collars';
  for(let i=0;i<coneCount;i++){
   const side=i%2===0?-1:1,z=-24-Math.floor(i/2)*7.8;
+  conePose.position.set(side*5.75,.065,z);conePose.updateMatrix();coneBases.setMatrixAt(i,conePose.matrix);
   conePose.position.set(side*5.75,.43,z);conePose.updateMatrix();coneBody.setMatrixAt(i,conePose.matrix);
   conePose.position.y=.56;conePose.updateMatrix();coneCollars.setMatrixAt(i,conePose.matrix);
  }
- coneBody.instanceMatrix.needsUpdate=true;coneCollars.instanceMatrix.needsUpdate=true;
- coneBody.computeBoundingSphere();coneCollars.computeBoundingSphere();
- gantry.add(coneBody,coneCollars);
+ coneBases.instanceMatrix.needsUpdate=true;coneBody.instanceMatrix.needsUpdate=true;coneCollars.instanceMatrix.needsUpdate=true;
+ coneBases.computeBoundingSphere();coneBody.computeBoundingSphere();coneCollars.computeBoundingSphere();
+ gantry.add(coneBases,coneBody,coneCollars);
  gantry.position.z=-75;group.add(gantry);
  // Concrete Jersey shoulder barriers: 44 instances, two batched draw calls.
  const barrierCount=44,barrierLength=4.4;
@@ -3063,7 +3069,7 @@ gantry.add(gantryLightPool);
   for(let i=0;i<barrierCount;i++){barrierZ[i]+=advance;if(barrierZ[i]>20)barrierZ[i]-=22*barrierLength*1.15;}placeBarriers();
  },dispose(){
   group.traverse(obj=>{if(obj.geometry)obj.geometry.dispose();});
-  for(const material of [towerMat,mastMaterial,beaconMaterial,steel,warm,poolMaterial,sign.material,concrete,reflective,flyoverConcrete,acousticMat,coneBodyMaterial,coneCollarMaterial])material.dispose();
+  for(const material of [towerMat,mastMaterial,beaconMaterial,steel,warm,poolMaterial,sign.material,concrete,reflective,flyoverConcrete,acousticMat,coneBodyMaterial,coneCollarMaterial,coneBaseMaterial])material.dispose();
   bridgeAsphaltMaterial.dispose();bridgeAsphaltTexture.dispose();bridgeRoughTexture.dispose();
   studMaterial.dispose();studMesh.geometry.dispose();railMarkerMaterial.dispose();railBoltMaterial.dispose();
   arrowPaintMaterial.dispose();arrowPaintTexture.dispose();
