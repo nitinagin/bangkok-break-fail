@@ -2563,7 +2563,23 @@ gantryLightPool.name='gantry-amber-wet-road-light-pool';
 gantryLightPool.rotation.x=-Math.PI/2;
 gantryLightPool.position.set(0,.075,0);
 gantry.add(gantryLightPool);
-gantry.position.z=-75;group.add(gantry);
+// Instanced construction delineators outside the playable expressway corridor.
+ const coneCount=12,conePose=new THREE.Object3D();
+ const coneBodyMaterial=new THREE.MeshStandardMaterial({color:0xd95c1f,roughness:.76,metalness:0});
+ const coneCollarMaterial=new THREE.MeshBasicMaterial({color:0xf4e9c9});
+ const coneBody=new THREE.InstancedMesh(new THREE.CylinderGeometry(.045,.29,.82,8,1),coneBodyMaterial,coneCount);
+ const coneCollars=new THREE.InstancedMesh(new THREE.CylinderGeometry(.115,.17,.14,8,1),coneCollarMaterial,coneCount);
+ coneBody.name='expressway-roadworks-shoulder-cones';
+ coneCollars.name='expressway-cone-reflective-collars';
+ for(let i=0;i<coneCount;i++){
+  const side=i%2===0?-1:1,z=-24-Math.floor(i/2)*7.8;
+  conePose.position.set(side*5.75,.43,z);conePose.updateMatrix();coneBody.setMatrixAt(i,conePose.matrix);
+  conePose.position.y=.56;conePose.updateMatrix();coneCollars.setMatrixAt(i,conePose.matrix);
+ }
+ coneBody.instanceMatrix.needsUpdate=true;coneCollars.instanceMatrix.needsUpdate=true;
+ coneBody.computeBoundingSphere();coneCollars.computeBoundingSphere();
+ gantry.add(coneBody,coneCollars);
+ gantry.position.z=-75;group.add(gantry);
  // Concrete Jersey shoulder barriers: 44 instances, two batched draw calls.
  const barrierCount=44,barrierLength=4.4;
  // One baked 128x256 PBR albedo for all 44 Jersey barriers. Deterministic
@@ -3047,7 +3063,7 @@ gantry.position.z=-75;group.add(gantry);
   for(let i=0;i<barrierCount;i++){barrierZ[i]+=advance;if(barrierZ[i]>20)barrierZ[i]-=22*barrierLength*1.15;}placeBarriers();
  },dispose(){
   group.traverse(obj=>{if(obj.geometry)obj.geometry.dispose();});
-  for(const material of [towerMat,mastMaterial,beaconMaterial,steel,warm,poolMaterial,sign.material,concrete,reflective,flyoverConcrete,acousticMat])material.dispose();
+  for(const material of [towerMat,mastMaterial,beaconMaterial,steel,warm,poolMaterial,sign.material,concrete,reflective,flyoverConcrete,acousticMat,coneBodyMaterial,coneCollarMaterial])material.dispose();
   bridgeAsphaltMaterial.dispose();bridgeAsphaltTexture.dispose();bridgeRoughTexture.dispose();
   studMaterial.dispose();studMesh.geometry.dispose();railMarkerMaterial.dispose();railBoltMaterial.dispose();
   arrowPaintMaterial.dispose();arrowPaintTexture.dispose();
