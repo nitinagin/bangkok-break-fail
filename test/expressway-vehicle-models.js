@@ -1661,7 +1661,11 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
    shape.lineTo(-2.06,2.46);
    shape.quadraticCurveTo(-2.04,2.76,-1.84,2.84);
    shape.quadraticCurveTo(-1.68,2.88,-1.45,2.86);
-   shape.lineTo(1.72,2.86);
+   // A gently crowned pressed-steel roof, with a rounded front header:
+   // the long flat roof used to read as a rectangular toy-bus silhouette.
+   // Retain the original roof height and the same extruded body draw call.
+   shape.quadraticCurveTo(-.55,2.895,.28,2.895);
+   shape.quadraticCurveTo(1.17,2.895,1.72,2.86);
    shape.quadraticCurveTo(2.08,2.86,2.18,2.64);
    shape.quadraticCurveTo(2.22,2.54,2.22,2.40);
    // Roll the lower bus nose inward instead of a vertical slab bumper.
