@@ -1924,8 +1924,16 @@ export function createExpresswayArt(THREE){
  );
  const taxiPose=new THREE.Object3D();
  const glassShape=new THREE.Shape();
- glassShape.moveTo(-.33,.33);glassShape.lineTo(-.20,.52);
- glassShape.lineTo(.16,.51);glassShape.lineTo(.34,.33);glassShape.closePath();
+ // Curved laminated taxi side glazing: rounded upper corners and a sloped
+ // rear pillar replace the flat four-point toy-like window silhouette.
+ // Same instanced mesh and collision geometry; no extra draw calls.
+ glassShape.moveTo(-.33,.33);
+ glassShape.quadraticCurveTo(-.29,.46,-.20,.51);
+ glassShape.quadraticCurveTo(-.17,.53,-.12,.53);
+ glassShape.lineTo(.12,.52);
+ glassShape.quadraticCurveTo(.18,.51,.21,.47);
+ glassShape.lineTo(.34,.33);
+ glassShape.closePath();
  const glassGeometry=new THREE.ShapeGeometry(glassShape);
  const carGlass=new THREE.MeshStandardMaterial({color:0x172c3a,metalness:.32,roughness:.19,side:THREE.DoubleSide});
  const bridgeCarWindows=new THREE.InstancedMesh(glassGeometry,carGlass,bridgeCarCount*2);
