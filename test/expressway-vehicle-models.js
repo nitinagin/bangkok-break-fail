@@ -380,9 +380,11 @@ function makeBusWingMirrors(THREE){
  // Folded pressed-metal rain visor over the bus windscreen; the existing
  // vertex-colour mirror mesh carries all three surfaces in one draw call.
  const visorTop=new THREE.Color(0x66767b),visorLip=new THREE.Color(0x29363c),visorShade=new THREE.Color(0x121e24);
- quad([-.94,2.66,2.39],[.94,2.66,2.39],[.91,2.72,2.25],[-.91,2.72,2.25],visorTop);
- quad([-.94,2.66,2.39],[.94,2.66,2.39],[.94,2.625,2.405],[-.94,2.625,2.405],visorLip);
- quad([-.94,2.625,2.405],[.94,2.625,2.405],[.91,2.72,2.25],[-.91,2.72,2.25],visorShade);
+ quad([-.94,2.66,2.265],[.94,2.66,2.265],[.91,2.72,2.25],[-.91,2.72,2.25],visorTop);
+ quad([-.94,2.66,2.265],[.94,2.66,2.265],[.94,2.625,2.28],[-.94,2.625,2.28],visorLip);
+ quad([-.94,2.625,2.28],[.94,2.625,2.28],[.91,2.72,2.25],[-.91,2.72,2.25],visorShade);
+ // Follow the raked upper glass with the visor and A-pillars; otherwise the
+ // old upright trim floats visibly ahead of the windscreen at the roofline.
  // Pressed-steel A-pillars and a lower scuttle frame the curved windshield.
  // Share the existing wing-mirror vertex-colour PBR mesh: no new draw calls.
  const pillarOuter=new THREE.Color(0x65747a),pillarInset=new THREE.Color(0x202e35),
@@ -391,9 +393,9 @@ function makeBusWingMirrors(THREE){
   const lowerInner=side*.895,upperInner=side*.87;
   const lowerOuter=side*.965,upperOuter=side*.94;
   quad([lowerInner,1.73,2.374],[lowerOuter,1.73,2.374],
-   [upperOuter,2.645,2.365],[upperInner,2.645,2.365],pillarOuter);
+   [upperOuter,2.645,2.235],[upperInner,2.645,2.235],pillarOuter);
   quad([lowerInner,1.76,2.382],[lowerInner+side*.017,1.76,2.382],
-   [upperInner+side*.017,2.62,2.372],[upperInner,2.62,2.372],pillarInset);
+   [upperInner+side*.017,2.62,2.245],[upperInner,2.62,2.245],pillarInset);
  }
  quad([-.91,1.735,2.39],[.91,1.735,2.39],
   [.91,1.785,2.39],[-.91,1.785,2.39],scuttleTop);
