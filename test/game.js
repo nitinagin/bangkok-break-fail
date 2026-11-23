@@ -1176,6 +1176,29 @@ const signMaterials=[mat(0xff267a),mat(0x086bd8),mat(0x1cbf7a)];function makeYao
    ctx.strokeStyle='#d8a24c';ctx.beginPath();ctx.moveTo(cx,84);ctx.lineTo(cx,95);ctx.stroke();
    ctx.restore();
   }
+  // Recessed neon tube backing and broken specular halos: Chinatown sign depth
+  // is baked into the existing canvas rather than added as mobile draw calls.
+  for(const side of [32,480]){
+   const g=ctx.createLinearGradient(side-12,0,side+12,0);
+   g.addColorStop(0,'rgba(0,0,0,.88)');
+   g.addColorStop(.45,'rgba(155,125,92,.55)');
+   g.addColorStop(1,'rgba(0,0,0,.8)');
+   ctx.fillStyle=g;ctx.fillRect(side-7,39,14,168);
+   ctx.save();ctx.shadowColor=color;ctx.shadowBlur=16;
+   ctx.strokeStyle=color;ctx.lineWidth=2;
+   ctx.beginPath();ctx.moveTo(side,103);ctx.lineTo(side,194);ctx.stroke();ctx.restore();
+  }
+  // Two deliberately uneven glass tubes and their metal clips suggest
+  // real shopfront hardware while leaving the central Thai lettering clear.
+  for(const y of [37,225]){
+   ctx.save();ctx.shadowColor=color;ctx.shadowBlur=17;
+   ctx.strokeStyle=color;ctx.lineWidth=2.4;
+   ctx.beginPath();ctx.moveTo(87,y);ctx.lineTo(425,y);ctx.stroke();ctx.restore();
+   for(const x of [105,256,407]){
+    ctx.fillStyle='#756b62';ctx.fillRect(x-3,y-4,6,8);
+    ctx.fillStyle='#c6b9a2';ctx.fillRect(x-1,y-3,2,6);
+   }
+  }
   ctx.fillStyle='#66503c';ctx.fillRect(31,215,450,7);
   ctx.fillStyle='#c9a16a';ctx.fillRect(31,215,450,2);
   // Warm edge lighting reads as actual tube hardware, not a flat pink rectangle.
