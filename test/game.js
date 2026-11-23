@@ -4265,7 +4265,22 @@ new GLTFLoader().load(TUKTUK_GLB,glb=>{
   // Keep paint and decals legible at oblique camera angles with bounded filtering.
   const anisotropy=Math.min(mobile?2:4,renderer.capabilities.getMaxAnisotropy());
   for(const map of colorMaps){if((map.anisotropy||1)<anisotropy){map.anisotropy=anisotropy;map.needsUpdate=true}}
-  raw.traverse(o=>{if(o.isMesh)o.frustumCulled=true});
+  // Bound implausible generated-GLB scalar finishes while preserving PBR maps.
+  // One-time tuning: no added geometry, textures or per-frame allocations.
+  const tunedMaterials=new Set();
+  raw.traverse(o=>{
+   if(!o.isMesh)return;
+   o.frustumCulled=true;
+   const materials=Array.isArray(o.material)?o.material:[o.material];
+   for(const mat of materials){
+    if(!mat||tunedMaterials.has(mat)||!mat.isMeshStandardMaterial)continue;
+    tunedMaterials.add(mat);
+    if(!mat.roughnessMap&&Number.isFinite(mat.roughness))
+     mat.roughness=Math.max(.18,Math.min(.94,mat.roughness));
+    if(!mat.metalnessMap&&Number.isFinite(mat.metalness))
+     mat.metalness=Math.max(0,Math.min(1,mat.metalness));
+   }
+  });
   raw.updateMatrixWorld(true);
   const box=new THREE.Box3().setFromObject(raw),sz=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
   if(!Number.isFinite(sz.x)||!Number.isFinite(sz.y)||!Number.isFinite(sz.z)||Math.min(sz.x,sz.y,sz.z)<=.001)throw Error('invalid vehicle bounds');
