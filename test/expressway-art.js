@@ -126,6 +126,21 @@ export function createExpresswayArt(THREE){
   }
  }
 
+ // Bangkok monsoon drainage stacks: continuous weathered downpipes with
+ // metal couplings and sodium-vapor edge highlights. These break up the
+ // uniform tower grid at driving distance without any extra draw calls.
+ for(const pipeX of [4,108,214]){
+  ctx.fillStyle='rgba(5,13,20,.64)';ctx.fillRect(pipeX+3,0,6,512);
+  ctx.fillStyle='#46565d';ctx.fillRect(pipeX,0,5,512);
+  ctx.fillStyle='rgba(194,158,110,.24)';ctx.fillRect(pipeX+1,0,1,512);
+  ctx.fillStyle='rgba(10,23,31,.44)';ctx.fillRect(pipeX+4,0,1,512);
+  ec.fillStyle='#000';ec.fillRect(pipeX,0,9,512);
+  for(let clampY=19;clampY<512;clampY+=60){
+   ctx.fillStyle='#8b9696';ctx.fillRect(pipeX-2,clampY,9,3);
+   ctx.fillStyle='#202d34';ctx.fillRect(pipeX-2,clampY+3,9,2);
+  }
+ }
+
  // Recessed apartment balconies and metal guardrails break up the repetitive
  // office-window grid on the shared Bangkok skyline atlas. Deep balcony
  // shadows, concrete slab lips and alternating laundry/plant silhouettes
