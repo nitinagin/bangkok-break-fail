@@ -1651,9 +1651,14 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
  if(isBus){
    // Rounded pressed-steel bus roof shoulders, preserving body footprint,
    // collision envelope, existing PBR material and single body draw call.
-   shape.moveTo(-2.22,.43);shape.lineTo(-2.22,2.46);
-   shape.quadraticCurveTo(-2.22,2.76,-1.98,2.84);
-   shape.quadraticCurveTo(-1.72,2.88,-1.45,2.86);
+   // Pressed-steel lower nose stays at the original collision extent.
+   // Above the beltline the windscreen header leans back 16cm, giving
+   // the bus a real raked front rather than a vertical toy-box facade.
+   // This only changes vertices of the existing extruded body (zero new draws).
+   shape.moveTo(-2.22,.43);shape.lineTo(-2.22,1.05);
+   shape.lineTo(-2.06,2.46);
+   shape.quadraticCurveTo(-2.04,2.76,-1.84,2.84);
+   shape.quadraticCurveTo(-1.68,2.88,-1.45,2.86);
    shape.lineTo(1.72,2.86);
    shape.quadraticCurveTo(2.08,2.86,2.18,2.64);
    shape.quadraticCurveTo(2.22,2.54,2.22,2.40);
