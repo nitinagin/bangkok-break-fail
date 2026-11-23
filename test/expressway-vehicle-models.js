@@ -307,8 +307,13 @@ function makeBusGlazing(THREE){
  // All details are baked into the existing windshield atlas.
  ctx.textBaseline='middle';ctx.textAlign='left';ctx.fillStyle='#ffd179';
  ctx.font='bold 31px sans-serif';ctx.fillText('511',75,48);
+ // Bilingual destination display on the existing 256px bus windscreen atlas.
+ // Route 511 remains prominent while the destination reads as a working
+ // Bangkok service rather than a generic bus. No new mesh or GPU texture.
  ctx.textAlign='right';ctx.fillStyle='#edb962';
- ctx.font='bold 14px sans-serif';ctx.fillText('สาย',182,49);
+ ctx.font='bold 11px sans-serif';ctx.fillText('อนุสาวรีย์',185,45);
+ ctx.fillStyle='rgba(255,210,135,.78)';
+ ctx.font='bold 8px sans-serif';ctx.fillText('VICTORY MON.',185,58);
  // LED route-board side markers: paired amber corner lamps and a dim housing
  // highlight make the destination display readable as a physical bus fixture.
  // All pixels share the existing 256px windshield atlas and incur no draw calls.
