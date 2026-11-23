@@ -1664,7 +1664,10 @@ export function makeExpresswayVehicle(THREE,type='sportsCar'){
    shape.lineTo(1.72,2.86);
    shape.quadraticCurveTo(2.08,2.86,2.18,2.64);
    shape.quadraticCurveTo(2.22,2.54,2.22,2.40);
-   shape.lineTo(2.22,.43);
+   // Roll the lower bus nose inward instead of a vertical slab bumper.
+   // Keep the glass rake and maximum forward extent unchanged.
+   shape.lineTo(2.22,.82);
+   shape.quadraticCurveTo(2.22,.56,2.08,.43);
   }
  // Low, swept GT coupe profile: longer hood, raked windscreen, curved roofline
  // and tapering rear deck. Reuses the same extruded body mesh and collision size.
