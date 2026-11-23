@@ -40,6 +40,25 @@ function getSharedGTGlazing(THREE){
   ctx.fillStyle=glow;ctx.fillRect(x-width,6,width*2,108);
  }
  ctx.globalCompositeOperation='source-over';
+ // Monsoon windshield weathering: tiny wind-swept droplets and runnels
+ // baked into the shared GT side-glass atlas. No new meshes or draw calls.
+ ctx.save();
+ ctx.lineCap='round';
+ for(let drop=0;drop<31;drop++){
+  const x=5+(drop*43)%117,y=7+(drop*29)%110;
+  const length=3+(drop*7)%12;
+  ctx.strokeStyle=drop%4===0?'rgba(215,235,239,.21)':'rgba(170,200,211,.11)';
+  ctx.lineWidth=drop%6===0?1.4:.65;
+  ctx.beginPath();
+  ctx.moveTo(x,y);
+  ctx.quadraticCurveTo(x-1.5,y+length*.55,x-3,y+length);
+  ctx.stroke();
+  if(drop%3===0){
+   ctx.fillStyle='rgba(222,239,242,.24)';
+   ctx.beginPath();ctx.ellipse(x,y,1.1,1.7,-.25,0,Math.PI*2);ctx.fill();
+  }
+ }
+ ctx.restore();
  const map=new THREE.CanvasTexture(canvas);
  map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=2;
  const material=new THREE.MeshStandardMaterial({
