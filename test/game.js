@@ -6620,13 +6620,13 @@ function makeTukTuk(){
  // indexed roof mesh: one shared weathered PBR atlas, one draw call, no lights.
  // The open passenger sides, windshield clearance and obstacle bounds remain.
  for(const side of [-1,1]){
-  const base=vertices.length/3,segments=12;
+  const base=vertices.length/3,segments=nz;
   for(let iz=0;iz<=segments;iz++){
    const v=iz/segments,z=-1.38+2.43*v;
    const scallop=.018*(1-Math.cos(6*Math.PI*v))*.5;
-   const rearSag=-.115*Math.pow(1-v,2)*.75;
-   const frontDip=v===1?-.115:0;
-   const edgeY=2.34+rearSag+frontDip;
+   // Reuse the exact roof boundary vertices, including tension and visor dip.
+   // Matching subdivisions eliminate light leaks along the canvas side hems.
+   const edgeY=vertices[3*(iz*(nx+1)+(side<0?0:nx))+1];
    vertices.push(side*.86,edgeY,z,side*.86,edgeY-.17+scallop,z);
    uvs.push(side<0?.09:.91,v,side<0?.02:.98,v);
   }
