@@ -4938,9 +4938,9 @@ const busRearLampAtlas=new THREE.CanvasTexture(busRearLampCanvas);
 busRearLampAtlas.colorSpace=THREE.SRGBColorSpace;
 busRearLampAtlas.anisotropy=Math.min(2,renderer.capabilities.getMaxAnisotropy());
 const busRearLampMaterial=new THREE.MeshStandardMaterial({
- map:busRearLampAtlas,transparent:true,alphaTest:.15,depthWrite:false,
+ map:busRearLampAtlas,alphaTest:.5,depthWrite:true,
  metalness:.12,roughness:.43,emissive:0x38100b,emissiveIntensity:.18,
- side:THREE.DoubleSide
+ side:THREE.FrontSide
 });
 const busRearLampPane=new THREE.PlaneGeometry(2.85,.56);
 
