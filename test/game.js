@@ -5294,7 +5294,7 @@ taxiGlassTexture.anisotropy=Math.min(2,renderer.capabilities.getMaxAnisotropy())
 const taxiReflectiveGlass=new THREE.MeshPhysicalMaterial({
  map:taxiGlassTexture,color:0xffffff,metalness:.04,roughness:.2,
  clearcoat:.78,clearcoatRoughness:.13,transparent:true,opacity:.94,
- side:THREE.DoubleSide,depthWrite:false
+ side:THREE.FrontSide,depthWrite:false
 });
 const taxiRubber=new THREE.MeshStandardMaterial({color:0x1d252b,roughness:.92});
 const taxiBrakeLens=new THREE.MeshStandardMaterial({color:0xb52431,emissive:0x4b0710,emissiveIntensity:.28,metalness:.08,roughness:.34});
@@ -5364,7 +5364,7 @@ taxiWindshieldTexture.anisotropy=Math.min(2,renderer.capabilities.getMaxAnisotro
 const taxiWindshieldMaterial=new THREE.MeshPhysicalMaterial({
  map:taxiWindshieldTexture,metalness:.06,roughness:.19,
  clearcoat:.8,clearcoatRoughness:.12,transparent:true,opacity:.95,
- side:THREE.DoubleSide,depthWrite:false
+ side:THREE.FrontSide,depthWrite:false
 });
 function taxiWindshieldShape(rear=false){
  // Narrower at the roof, using one half of the shared texture per pane.
@@ -5498,7 +5498,9 @@ function makeTaxi(){
  // Four side panes follow the actual sloped roofline, not rectangular stickers.
  function sideWindow(points,side){
   const shape=new THREE.Shape();
-  points.forEach(([z,y],i)=>i?shape.lineTo(-z,y):shape.moveTo(-z,y));
+  // Mirror the local outline, not the world-space window position: both
+  // exterior panes face outward and need only one transparent render pass.
+  points.forEach(([z,y],i)=>i?shape.lineTo(-side*z,y):shape.moveTo(-side*z,y));
   shape.closePath();
   const geometry=new THREE.ShapeGeometry(shape);
   // ShapeGeometry UVs use world coordinates; fit the shared atlas to each pane.
@@ -5508,7 +5510,7 @@ function makeTaxi(){
   for(let i=0;i<uv.count;i++)uv.setXY(i,(position.getX(i)-bounds.min.x)/width,(position.getY(i)-bounds.min.y)/height);
   uv.needsUpdate=true;
   const glass=new THREE.Mesh(geometry,taxiReflectiveGlass);
-  glass.rotation.y=Math.PI/2;glass.position.x=side*.835;
+  glass.rotation.y=side*Math.PI/2;glass.position.x=side*.835;
   g.add(glass);
  }
  for(const side of [-1,1]){
@@ -5602,7 +5604,8 @@ function makeTaxi(){
   frontGlass.add(wiper);
  }
  const rearGlass=new THREE.Mesh(taxiRearWindshieldGeometry,taxiWindshieldMaterial);
- rearGlass.position.set(0,1.55,-.83);rearGlass.rotation.x=.62;g.add(rearGlass);
+ // Face the rear glass outward so the baked demister is not back-facing.
+ rearGlass.position.set(0,1.55,-.83);rearGlass.rotation.set(.62,Math.PI,0);g.add(rearGlass);
  // Distinct Bangkok TAXI-METER roof sign, painted once for all traffic clones.
  const signCanvas=document.createElement('canvas');signCanvas.width=256;signCanvas.height=128;
  const ctx=signCanvas.getContext('2d');
