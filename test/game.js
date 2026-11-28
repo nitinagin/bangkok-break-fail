@@ -1540,6 +1540,20 @@ function makeShopWindowMaterial(variant){
   p.fillStyle='rgba(115,171,187,.12)';p.fillRect(variant===2?13:88,6,18,115);
   p.fillStyle='rgba(8,17,27,.44)';p.fillRect(6,91,116,31);
  }
+ // Broken neon reflections on upper-storey glass, baked into the existing atlas.
+ // Soft halos and narrow cores suggest reflected vertical signs, not extra lights.
+ for(let j=0;j<2;j++){
+  const x=variant%2===0?18+j*15:81+j*13;
+  const y=15+j*19,h=38+j*12;
+  const rgb=j===0?'244,69,104':'65,193,219';
+  const halo=p.createLinearGradient(x-6,0,x+7,0);
+  halo.addColorStop(0,'rgba('+rgb+',0)');
+  halo.addColorStop(.5,'rgba('+rgb+','+(lit?.15:.29)+')');
+  halo.addColorStop(1,'rgba('+rgb+',0)');
+  p.fillStyle=halo;p.fillRect(x-6,y,13,h);
+  p.fillStyle='rgba('+rgb+','+(lit?.12:.24)+')';
+  for(let k=0;k<3;k++)p.fillRect(x,y+k*(h/3),2,h/3-3);
+ }
  p.save();p.transform(1,0,-.32,1,22,0);
  const sheen=p.createLinearGradient(18,0,53,0);
  sheen.addColorStop(0,'rgba(181,222,226,0)');
