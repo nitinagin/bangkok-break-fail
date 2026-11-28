@@ -1708,7 +1708,27 @@ for(let spoke=0;spoke<8;spoke++){
  yaowaratACPaint.beginPath();yaowaratACPaint.moveTo(64,65);
  yaowaratACPaint.lineTo(64+34*Math.cos(a),65+34*Math.sin(a));yaowaratACPaint.stroke();
 }
+// Recessed curved fan blades, fasteners and manufacturer plate baked into the shared grille.
+yaowaratACPaint.save();
+yaowaratACPaint.translate(64,65);
+for(let blade=0;blade<5;blade++){
+ yaowaratACPaint.save();yaowaratACPaint.rotate(blade*Math.PI*2/5);
+ yaowaratACPaint.fillStyle='rgba(100,116,119,.65)';
+ yaowaratACPaint.beginPath();yaowaratACPaint.moveTo(4,-3);
+ yaowaratACPaint.quadraticCurveTo(18,-25,29,-13);
+ yaowaratACPaint.quadraticCurveTo(25,2,5,5);yaowaratACPaint.closePath();yaowaratACPaint.fill();
+ yaowaratACPaint.restore();
+}
+yaowaratACPaint.restore();
+yaowaratACPaint.strokeStyle='#aab5b6';yaowaratACPaint.lineWidth=1.5;
+for(let ring=13;ring<=34;ring+=10){yaowaratACPaint.beginPath();yaowaratACPaint.arc(64,65,ring,0,Math.PI*2);yaowaratACPaint.stroke();}
 yaowaratACPaint.fillStyle='#d1d4cd';yaowaratACPaint.fillRect(61,62,6,6);
+for(const x of [9,119])for(const y of [9,119]){
+ yaowaratACPaint.fillStyle='#343f43';yaowaratACPaint.fillRect(x-2,y-2,4,4);
+ yaowaratACPaint.fillStyle='#b5bdbb';yaowaratACPaint.fillRect(x-1,y-1,2,1);
+}
+yaowaratACPaint.fillStyle='#c5cbc7';yaowaratACPaint.fillRect(89,104,22,8);
+yaowaratACPaint.fillStyle='#46585e';yaowaratACPaint.fillRect(92,106,15,2);
 for(let k=0;k<12;k++){
  const x=10+(k*37)%109,y=8+(k*23)%113;
  yaowaratACPaint.fillStyle=k%3===0?'rgba(139,70,35,.4)':'rgba(16,28,29,.25)';
