@@ -4636,7 +4636,7 @@ for(let i=0;i<35;i++){
 // The wiper blades are 3D instanced geometry in makeBus(). Avoid
 // double-rendering painted blades on the curved windshield atlas.
 const busGlassTexture=new THREE.CanvasTexture(busGlassCanvas);busGlassTexture.colorSpace=THREE.SRGBColorSpace;
-busGlassTexture.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());
+busGlassTexture.anisotropy=Math.min(mobile?2:4,renderer.capabilities.getMaxAnisotropy());
 const busWindshield=new THREE.MeshPhysicalMaterial({map:busGlassTexture,metalness:0,roughness:.28,clearcoat:.55,clearcoatRoughness:.19,side:THREE.DoubleSide});
 // A shallow crowned, rearward-raked front windscreen follows the bus roof
 // rather than reading as a flat toy-like rectangle. Shared by both liveries.
@@ -5049,7 +5049,7 @@ for(let n=0;n<6;n++){
 }
 const busWheelTexture=new THREE.CanvasTexture(busWheelCanvas);
 busWheelTexture.colorSpace=THREE.SRGBColorSpace;
-busWheelTexture.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());
+busWheelTexture.anisotropy=Math.min(mobile?2:4,renderer.capabilities.getMaxAnisotropy());
 const busWheelMaterial=new THREE.MeshStandardMaterial({map:busWheelTexture,metalness:.22,roughness:.76});
 const busWheelGeometry=new THREE.CylinderGeometry(.48,.48,.21,18);
 // Shared pressed-rubber wheel-arch lips soften the bus side silhouette.
@@ -5746,7 +5746,7 @@ for(const y of [63,128,193]){
 }
 const tukRoofTexture=new THREE.CanvasTexture(tukRoofPattern);
 tukRoofTexture.colorSpace=THREE.SRGBColorSpace;
-tukRoofTexture.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());
+tukRoofTexture.anisotropy=Math.min(mobile?2:4,renderer.capabilities.getMaxAnisotropy());
 // Separate linear roughness mask: waterproofed seams and rain pools catch neon
 // while dry woven vinyl stays matte. Baked once; no additional draw calls.
 const tukRoughCanvas=document.createElement('canvas');
